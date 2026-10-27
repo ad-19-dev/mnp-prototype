@@ -36,18 +36,18 @@ export function StatusTag({ s }: { s: Status }) {
   return <Tag size="sm" color={ST[s].color as any} icon={ST[s].icon}>{statusLabel(s)}</Tag>
 }
 
-// channel icons with a tooltip each. Plain icons, no box: they mark data, and a bordered square
-// would read as an icon button (DS: Tag/indicator vs Button)
+// channel icons with a tooltip each, drawn as icon-only DS Tags so they read like the Status tag next
+// to them (data indicators, not buttons). The Tag's empty text slot is hidden so the icon sits centred.
 export function ChIcons({ list }: { list: Channel[] }) {
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center gap-1">
       {list.map(k => {
         const c = chn(k), I = c.icon
         return (
           <Tooltip key={k}>
             <TooltipTrigger asChild>
-              <span tabIndex={0} aria-label={c.name} className="inline-flex rounded-sm text-fg-secondary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
-                <I className="size-4" aria-hidden />
+              <span tabIndex={0} aria-label={c.name} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
+                <Tag size="sm" color="neutral" icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
               </span>
             </TooltipTrigger>
             <TooltipContent>{c.name}</TooltipContent>
