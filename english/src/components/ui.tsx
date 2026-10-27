@@ -46,17 +46,18 @@ export function FmtChips({ list }: { list: Fmt[] }) {
   return <ChIcons list={chs} />
 }
 
-// channel icons with a tooltip each; SMS is tinted as the fallback
+// channel icons with a tooltip each. Plain icons, no box: they mark data, and a bordered square
+// would read as an icon button (DS: Tag/indicator vs Button)
 export function ChIcons({ list }: { list: Channel[] }) {
   return (
-    <span className="inline-flex items-center gap-1">
+    <span className="inline-flex items-center gap-2">
       {list.map(k => {
         const I = CHN[k].icon
         return (
           <Tooltip key={k}>
             <TooltipTrigger asChild>
-              <span tabIndex={0} aria-label={CHN[k].name} className={cn('inline-flex size-6 items-center justify-center rounded-md border border-divider', k === 'sms' ? 'bg-warning-subtle text-warning-text' : 'bg-surface text-fg-secondary')}>
-                <I className="size-3.5" aria-hidden />
+              <span tabIndex={0} aria-label={CHN[k].name} className="inline-flex rounded-sm text-fg-secondary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
+                <I className="size-4" aria-hidden />
               </span>
             </TooltipTrigger>
             <TooltipContent>{CHN[k].name}</TooltipContent>

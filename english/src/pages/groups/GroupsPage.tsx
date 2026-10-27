@@ -279,7 +279,7 @@ function GroupEditor({ m }: { m: GCtl }) {
       // which number gets the SMS shows on hover
       return (
         <Tooltip>
-          <TooltipTrigger asChild><span tabIndex={0} className="inline-flex rounded-sm focus-visible:focus-ring"><Cv ok>{co || pp}</Cv></span></TooltipTrigger>
+          <TooltipTrigger asChild><span tabIndex={0} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Cv ok>{co || pp}</Cv></span></TooltipTrigger>
           <TooltipContent>
             <span className="flex flex-col gap-0.5 font-mono">
               {co ? <span>{co}</span> : null}
