@@ -160,16 +160,16 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
   const pct = Math.round(n / Math.max(1, rc.total) * 100), id = 'ch-' + k
   return (
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
-      <span className="flex items-start gap-3">
+      <span className="flex items-center gap-3">
         <IconBox icon={meta.icon} tone={on ? 'info' : 'neutral'} />
-        <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:last-child]:whitespace-normal" />
+        <span className="flex-1 text-body font-medium text-foreground">{meta.name}</span>
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
+      {/* how many of the receivers this channel reaches: bar + count, nothing else */}
       {hasR ? (
-        <span className="flex flex-col gap-1.5 border-t border-divider pt-2.5">
-          <span className="flex items-baseline justify-between text-caption text-fg-secondary"><span>Reaches</span><span><span className="text-body font-medium text-foreground tabular-nums">{fmtN(n)}</span> of {fmtN(rc.total)}</span></span>
-          <Meter pct={pct} tone={pct >= 100 ? 'ok' : undefined} label={meta.name + ' reach'} />
-          <span className={cn('text-caption', pct < 80 ? 'text-warning-text' : 'text-fg-secondary')}>{reachNote(k, rc, c)}</span>
+        <span className="flex items-center gap-3">
+          <span className="flex-1"><Meter pct={pct} tone={pct >= 100 ? 'ok' : undefined} label={meta.name + ' reach'} /></span>
+          <span className="shrink-0 text-caption text-fg-secondary tabular-nums"><span className="text-body font-medium text-foreground">{fmtN(n)}</span> / {fmtN(rc.total)}</span>
         </span>
       ) : null}
       {tpl ? <span className={cn('flex items-center gap-1 text-caption', tplHas ? 'text-success-text' : 'text-fg-secondary')}>{tplHas ? 'The template has text for this' : 'The template has no text for this'}</span> : null}
