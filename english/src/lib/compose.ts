@@ -101,7 +101,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
   const extP = c.receivers.filter(t => isExtPhone(t)).length, extE = c.receivers.filter(t => t.type === 'ext').length - extP
   if (!c.ch.push && !c.ch.desktop && !c.ch.email) e.ch = 'Choose at least one channel.'
   if (extE && !c.ch.email) e.ext = plural(extE, 'external email address', 'external email addresses') + ' can only get Email. Add Email, or remove ' + (extE === 1 ? 'it' : 'them') + '.'
-  if (extP && !c.ch.sms) e.extp = plural(extP, 'external phone number', 'external phone numbers') + ' can only get SMS. Turn on Device notification with SMS fallback, or remove ' + (extP === 1 ? 'it' : 'them') + '.'
+  if (extP && !c.ch.sms) e.extp = plural(extP, 'external phone number', 'external phone numbers') + ' can only get SMS. Turn on Device notifications with SMS fallback, or remove ' + (extP === 1 ? 'it' : 'them') + '.'
   // 2. Message
   if (!c.sender.trim()) e.sender = 'Enter a sender name.'
   else if (c.sender.length > LIM.sender) e.sender = 'Sender name can be up to ' + LIM.sender + ' characters.'
@@ -171,7 +171,7 @@ export function reachNote(k: Channel, rc: Reach, c: Compose) {
   if (k === 'sms') {
     const parts: string[] = []
     if (rc.extP) parts.push(plural(rc.extP, 'external number', 'external numbers'))
-    parts.push(c.ch.push ? (rc.noDev ? 'up to ' + fmtN(rc.smsable) + ' of the ' + plural(rc.noDev, 'employee', 'employees') + ' without the app, as a fallback' : 'employees only if the device notification fails') : 'employees only as a fallback to Device notification')
+    parts.push(c.ch.push ? (rc.noDev ? 'up to ' + fmtN(rc.smsable) + ' of the ' + plural(rc.noDev, 'employee', 'employees') + ' without the app, as a fallback' : 'employees only if the device notification fails') : 'employees only as a fallback to Device notifications')
     return parts.join(', and ').replace(/^./, x => x.toUpperCase())
   }
   const miss = k === 'push' ? rc.noDev : rc.people - rc.desktop, parts: string[] = []

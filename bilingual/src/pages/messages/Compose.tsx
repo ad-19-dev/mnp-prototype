@@ -162,16 +162,16 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
   const pct = Math.round(n / Math.max(1, rc.total) * 100), id = 'ch-' + k
   return (
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
-      <span className="flex items-center gap-3">
+      <span className="flex items-start gap-3">
         <IconBox icon={meta.icon} tone={on ? 'info' : 'neutral'} />
-        <span className="flex-1 text-body font-medium text-foreground">{meta.name}</span>
+        <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
-      {/* how many of the receivers this channel reaches: bar + count, nothing else */}
+      {/* how many of the receivers this channel reaches */}
       {hasR ? (
         <span className="flex items-center gap-3">
           <span className="flex-1"><Meter pct={pct} tone={pct >= 100 ? 'ok' : undefined} label={meta.name + L(' reach', ' 觸及率')} /></span>
-          <span className="shrink-0 text-caption text-fg-secondary tabular-nums"><span className="text-body font-medium text-foreground">{fmtN(n)}</span> / {fmtN(rc.total)}</span>
+          <span className="shrink-0 text-caption text-fg-secondary tabular-nums">{L('Reaches', '可觸及')} <span className="text-body font-medium text-foreground">{fmtN(n)}</span> / {fmtN(rc.total)}</span>
         </span>
       ) : null}
       {tpl ? <span className={cn('text-caption', tplHas ? 'text-success-text' : 'text-fg-secondary')}>{tplHas ? L('Template has text for this', '模板有這個通道的內容') : L('Template has no text for this', '模板沒有這個通道的內容')}</span> : null}

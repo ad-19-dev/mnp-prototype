@@ -248,7 +248,7 @@ function GroupEditor({ m }: { m: GCtl }) {
   const cResults = m.collabResults(), cOpen = !!(ed.cOpen && ed.cq.trim())
   const plist = ed.members.map(x => PMAP[x.pid]).filter(Boolean), n = plist.length
   const covDefs = [
-    { key: 'dev' as const, label: L('Device notification', '裝置推播'), icon: Smartphone, ok: plist.filter(p => p.dev).length, word: L('no device', '沒有裝置') },
+    { key: 'dev' as const, label: L('Device notifications', '裝置推播'), icon: Smartphone, ok: plist.filter(p => p.dev).length, word: L('no device', '沒有裝置') },
     { key: 'desk' as const, label: L('Desktop OS', '桌面通知'), icon: Monitor, ok: plist.filter(p => p.desk).length, word: L('no desktop agent', '沒有桌面程式') },
     { key: 'email' as const, label: 'Email', icon: Mail, ok: plist.filter(p => p.extKind !== 'phone').length, word: L('no email', '沒有 Email') },
     { key: 'sms' as const, label: 'SMS', icon: MessageSquareText, ok: plist.filter(p => p.co || p.pp).length, word: L('no phone', '沒有電話') },
@@ -271,7 +271,7 @@ function GroupEditor({ m }: { m: GCtl }) {
     mcol.display({ id: 'who', header: L('Member', '成員'), meta: { width: 220 }, cell: i => { const { p } = i.row.original; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.extKind ? p.value : p.zh + ' ' + p.en} b={p.title} strong /></span> } }),
     mcol.display({ id: 'emp', header: L('Employee ID', '工號'), meta: { width: 120 }, cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
     mcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
-    mcol.display({ id: 'dev', header: L('Device notification', '裝置推播'), meta: { width: 160 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
+    mcol.display({ id: 'dev', header: L('Device notifications', '裝置推播'), meta: { width: 160 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
     mcol.display({ id: 'desk', header: L('Desktop OS', '桌面通知'), meta: { width: 130 }, cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? L('Installed', '已安裝') : L('Not installed', '未安裝')}</Cv> }),
     mcol.display({ id: 'email', header: 'Email', meta: { width: 110 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
     mcol.display({ id: 'sms', header: L('SMS', 'SMS'), meta: { width: 100 }, cell: i => {

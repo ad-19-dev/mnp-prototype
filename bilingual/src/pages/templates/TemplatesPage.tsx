@@ -268,7 +268,7 @@ function TplEditor({ m }: { m: TCtl }) {
             <FormField id="t-sender" label={L('Sender name', '寄件人名稱')} required count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} error={show('sender')}>
               <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
             </FormField>
-            <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Device notification', '裝置推播')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop OS', '桌面通知')}</Tag></span>}>
+            <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Device notifications', '裝置推播')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop OS', '桌面通知')}</Tag></span>}>
               <FormField id="t-title" label={L('Title', '標題')} count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>
                 <Input id="t-title" disabled={ro} value={ed.title} error={!!show('title')} onChange={ev => m.setEd({ title: ev.target.value })} placeholder={L('e.g. Fire drill at [time] today', '例如：今天 [time] 消防演習')} />
               </FormField>

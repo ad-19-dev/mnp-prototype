@@ -173,7 +173,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     pickChannel(id: Channel) {
       const c = get().c, ch = { ...c.ch }
       ch[id] = !ch[id]
-      // SMS is only a fallback for Device notification
+      // SMS is only a fallback for Device notifications
       if (id === 'push' && !ch.push) ch.sms = false
       if (id === 'sms' && ch.sms) ch.push = true
       const p: Partial<Compose> = { ch }

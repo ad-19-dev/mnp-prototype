@@ -247,7 +247,7 @@ function GroupEditor({ m }: { m: GCtl }) {
   const cResults = m.collabResults(), cOpen = !!(ed.cOpen && ed.cq.trim())
   const plist = ed.members.map(x => PMAP[x.pid]).filter(Boolean), n = plist.length
   const covDefs = [
-    { key: 'dev' as const, label: 'Device notification', icon: Smartphone, ok: plist.filter(p => p.dev).length, word: 'no registered device' },
+    { key: 'dev' as const, label: 'Device notifications', icon: Smartphone, ok: plist.filter(p => p.dev).length, word: 'no registered device' },
     { key: 'desk' as const, label: 'Desktop OS', icon: Monitor, ok: plist.filter(p => p.desk).length, word: 'no desktop agent' },
     { key: 'email' as const, label: 'Email', icon: Mail, ok: plist.filter(p => p.extKind !== 'phone').length, word: 'no email address' },
     { key: 'sms' as const, label: 'SMS', icon: MessageSquareText, ok: plist.filter(p => p.co || p.pp).length, word: 'no phone number' },
@@ -270,7 +270,7 @@ function GroupEditor({ m }: { m: GCtl }) {
     mcol.display({ id: 'who', header: 'Member', meta: { width: 220 }, cell: i => { const { p } = i.row.original; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.extKind ? p.value : p.zh + ' ' + p.en} b={p.title} strong /></span> } }),
     mcol.display({ id: 'emp', header: 'Employee ID', meta: { width: 120 }, cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
     mcol.display({ id: 'org', header: 'Org', meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
-    mcol.display({ id: 'dev', header: 'Device notification', meta: { width: 160 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? 'Registered' : 'No device'}</Cv> }),
+    mcol.display({ id: 'dev', header: 'Device notifications', meta: { width: 160 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? 'Registered' : 'No device'}</Cv> }),
     mcol.display({ id: 'desk', header: 'Desktop OS', meta: { width: 130 }, cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? 'Installed' : 'Not installed'}</Cv> }),
     mcol.display({ id: 'email', header: 'Email', meta: { width: 110 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? 'Available' : 'No email'}</Cv> }),
     mcol.display({ id: 'sms', header: 'SMS', meta: { width: 100 }, cell: i => {
