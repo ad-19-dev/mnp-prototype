@@ -37,7 +37,7 @@ export function StatusTag({ s }: { s: Status }) {
 }
 
 // channel icons with a tooltip each, drawn as icon-only DS Tags so they read like the Status tag next
-// to them (data indicators, not buttons). The Tag's empty text slot is hidden so the icon sits centred.
+// to them (data indicators, not buttons); SMS is amber as the fallback channel. The empty text slot is hidden.
 export function ChIcons({ list }: { list: Channel[] }) {
   return (
     <span className="inline-flex items-center gap-1">
@@ -47,7 +47,7 @@ export function ChIcons({ list }: { list: Channel[] }) {
           <Tooltip key={k}>
             <TooltipTrigger asChild>
               <span tabIndex={0} aria-label={c.name} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
-                <Tag size="sm" color="neutral" icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
+                <Tag size="sm" color={k === 'sms' ? 'amber' : 'neutral'} icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
               </span>
             </TooltipTrigger>
             <TooltipContent>{c.name}</TooltipContent>
