@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@import '@qijenchen/design-system/styles/tokens';
+@source '../node_modules/@qijenchen/design-system/src/**/*.{js,ts,jsx,tsx}';
+@source '../node_modules/@qijenchen/design-system/dist/**/*.js';
+
+/* Email bodies (editor and read-only views): Tailwind resets list and paragraph spacing */
+.mail-html p { margin: 0 0 0.75em; }
+.mail-html p:last-child { margin-bottom: 0; }
+.mail-html ul { list-style: disc; padding-left: 1.4em; margin: 0 0 0.75em; }
+.mail-html ol { list-style: decimal; padding-left: 1.4em; margin: 0 0 0.75em; }
+.mail-html a { color: var(--color-primary); text-decoration: underline; }
+.mail-html b, .mail-html strong { font-weight: 600; }
+
+/* DataTable sizes its row-actions column from the first row's buttons. With no rows that cell is
+   empty and the column shrinks, so every other column jumps wider. Reserve one 24px action button
+   (the DS row-action size) so the columns hold still between empty and filled states. */
+[aria-hidden="true"].invisible.flex-1:empty::before { content: ''; display: block; width: 24px; }
+
+/* No header ⌄ menu in this product. Sorting stays on the header click; the DS menu only repeats it,
+   with fixed Chinese labels and a trailing divider once "hide column" is off (tableOptions.enableHiding = false). */
+[data-col-menu] { display: none !important; }
