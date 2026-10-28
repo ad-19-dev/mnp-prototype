@@ -47,7 +47,7 @@ body { margin: 0; background: var(--gate-bg); color: var(--gate-fg); font-family
 <div id="gate">
   <form autocomplete="off">
     <div class="logo">T</div>
-    <div><h1>MNP Prototype</h1><p>請輸入密碼查看 · Enter the password to view</p></div>
+    <div><h1>${title}</h1><p>請輸入密碼查看 · Enter the password to view</p></div>
     <label>密碼 Password<input id="pw" type="password" autofocus aria-describedby="err"></label>
     <div id="err" class="err" role="alert"></div>
     <button type="submit">進入 Enter</button>
