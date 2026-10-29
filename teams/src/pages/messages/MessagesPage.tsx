@@ -17,12 +17,14 @@ import { DetailSheet, NotSentDialog } from './Detail'
 import { ComposeView } from './Compose'
 import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog, UnreachDialog } from './Modals'
 
-// a team's list opens with what the team is for, and says whose messages these are
-function TeamIntro({ team }: { team: Team }) {
+// The list's title and what it holds. DS: the title repeats the breadcrumb's last item (text-h3 under an
+// md breadcrumb), bold; the description is body text.
+function ListIntro({ team }: { team?: Team }) {
+  const desc = team ? team.desc : L('Everything you’ve sent, personally or for a team.', '你發出的所有訊息，包括以團隊名義發送的。')
   return (
-    <div className="flex flex-col gap-0.5">
-      {team.desc ? <p className="text-body text-foreground">{team.desc}</p> : null}
-      <p className="text-caption text-fg-secondary">{L('Messages sent as ' + team.name, '以「' + team.name + '」名義發送的訊息')}</p>
+    <div className="flex flex-col gap-1">
+      <h1 className="text-h3 font-bold text-foreground">{scopeLabel()}</h1>
+      {desc ? <p className="text-body text-fg-secondary">{desc}</p> : null}
     </div>
   )
 }
@@ -56,7 +58,7 @@ export function MessagesPage() {
             ) : null}
             <Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>
           </>} />
-          <SendList m={m} intro={team ? <TeamIntro team={team} /> : null} />
+          <SendList m={m} intro={<ListIntro team={team} />} />
         </>
       )}
       <DetailSheet m={m} />

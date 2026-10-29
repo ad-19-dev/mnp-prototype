@@ -7,7 +7,7 @@ import {
   Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor,
 } from '@qijenchen/design-system'
-import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Filter, Globe, Hash, Mail, Share2, User, Users, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon, UsersRound } from 'lucide-react'
+import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Filter, Globe, Hash, Mail, Share2, User, Users, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon, UsersRound, Building2, Lock } from 'lucide-react'
 import { ME as ME_UI, PMAP as PMAP_UI, type Channel, type Fmt, type Person, type Status } from '../lib/data'
 import { L } from '../lib/i18n'
 import { inTeam, myTeams, teamName } from '../lib/teams'
@@ -174,15 +174,15 @@ export function ownOpts(items: { teams?: string[]; owner?: string; creator?: str
   const keys = ['personal', 'shared'].concat(myTeams().map(t => t.id))
   return keys.map(k => ({
     k, n: items.filter(x => ownKeys(x).indexOf(k) >= 0).length,
-    view: <span className="inline-flex items-center gap-2">{k === 'shared' ? <Share2 className="size-4 text-fg-secondary" aria-hidden /> : k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <UsersRound className="size-4 text-fg-secondary" aria-hidden />}{k === 'personal' ? L('My personal', '我的個人項目') : k === 'shared' ? L('Shared with me', '分享給我的') : teamName(k)}</span>,
+    view: <span className="inline-flex items-center gap-2">{k === 'shared' ? <Share2 className="size-4 text-fg-secondary" aria-hidden /> : k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <UsersRound className="size-4 text-fg-secondary" aria-hidden />}{k === 'personal' ? L('Only me', '只有我') : k === 'shared' ? L('Shared with me directly', '個別分享給我') : teamName(k)}</span>,
   })).filter(o => o.n > 0)
 }
-// owner column in the templates and groups lists
-export function OwnTag({ x }: { x: { teams?: string[]; owner?: string; creator?: string } }) {
-  const k = ownKeys(x)
-  if (k[0] === 'shared') return <Tag size="sm" color="neutral" icon={Share2} unbounded>{L('Shared with me', '分享給我')}</Tag>
-  if (k[0] === 'personal') return <TeamTag id={null} />
-  return <TeamTags ids={k} />
+// "Shared with" cell for templates and groups: the teams first, otherwise the people or orgs, otherwise only the owner
+export function SharedWith({ teams, label, org, mine }: { teams: string[]; label?: string; org?: boolean; mine: boolean }) {
+  const tm = teams.filter(inTeam)
+  if (tm.length) return <TeamTags ids={tm} />
+  const I = label ? (org ? Building2 : User) : Lock
+  return <span className="flex min-w-0 items-center gap-1.5"><I className="size-3.5 shrink-0 text-fg-secondary" aria-hidden /><Trunc text={label || (mine ? L('Only me', '只有我') : L('Only the owner', '只有擁有者'))} /></span>
 }
 
 // ---------- tables ----------

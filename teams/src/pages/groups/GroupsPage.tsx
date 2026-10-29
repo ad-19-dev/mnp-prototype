@@ -5,7 +5,7 @@ import {
   Input, Pagination, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Textarea,
   Checkbox, Tooltip, TooltipContent, TooltipTrigger, cn,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Trunc, Tip, PageSize, FilterMenu, OwnTag, TeamsField, ownKeys, ownOpts } from '../../components/ui'
+import { NO_HIDE, Trunc, Tip, PageSize, FilterMenu, SharedWith, TeamsField, ownKeys, ownOpts } from '../../components/ui'
 import { canSeeItem, groupRole, inTeam } from '../../lib/teams'
 import { presetFilter, useClearPreset } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -36,6 +36,12 @@ interface Ed {
   fresh: Record<string, boolean>; tried: boolean; dirty: boolean; ri: RiState; showPaste: boolean
 }
 interface GS { view: 'list' | 'edit'; q: string; fT: string[]; cf: Confirm | null; ed: Ed | null }
+
+// the people a group is shared with, besides the person who made it
+function groupPeople(g: Group) {
+  const col = g.collabs ? g.collabs.map(c => c.pid) : ((GSEED[g.id] || ({} as any)).col || []).map((x: [string, string]) => x[0])
+  return (col as string[]).filter(pid => pid !== g.creator)
+}
 
 function makeEd(g: Group | null, dup?: boolean): Ed {
   const base = { input: '', fb: null, picks: {}, cq: '', cOpen: false, cRole: 'Editor' as Role, mq: '', mf: 'all' as const, mpage: 1, fresh: {}, tried: false, dirty: false, ri: { type: 'person' as const, q: '', open: false, exp: null }, showPaste: false }
@@ -204,14 +210,14 @@ function GroupList({ m }: { m: GCtl }) {
     gcol.accessor('count', { header: L('Members', '人數'), meta: { width: 120 }, cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
     gcol.accessor('updated', { header: L('Updated', '更新時間'), meta: { width: 150 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     gcol.accessor('creator', { header: L('Created by', '建立者'), meta: { width: 210 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } }),
-    gcol.display({ id: 'own', header: L('Owner', '歸屬'), meta: { width: 230 }, cell: i => <OwnTag x={i.row.original} /> }),
+    gcol.display({ id: 'own', header: L('Shared with', '分享對象'), meta: { width: 220 }, cell: i => { const g = i.row.original, ppl = groupPeople(g).map(pid => PMAP[pid]?.en).filter(Boolean) as string[]; return <SharedWith teams={g.teams || []} label={ppl.length ? ppl[0] + (ppl.length > 1 ? ' +' + (ppl.length - 1) : '') : ''} mine={g.creator === ME} /> } }),
     gcol.display({ id: 'role', header: L('Your role', '你的角色'), meta: { width: 130 }, cell: i => <RoleTag r={groupRole(i.row.original)} /> }),
   ], [m, app.lang, app.teams])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-60 max-w-sm flex-1"><Input startIcon={Search} type="search" placeholder={L('Search groups', '搜尋群組')} aria-label={L('Search groups', '搜尋群組')} value={s.q} onChange={e => m.set({ q: e.target.value })} /></div>
-        <FilterMenu label={L('Owner', '歸屬')} opts={ownOpts(vis)} sel={s.fT} toggle={k => m.set({ fT: s.fT.indexOf(k) >= 0 ? s.fT.filter(x => x !== k) : s.fT.concat([k]) })} clear={() => m.set({ fT: [] })} />
+        <FilterMenu label={L('Shared with', '分享對象')} opts={ownOpts(vis)} sel={s.fT} toggle={k => m.set({ fT: s.fT.indexOf(k) >= 0 ? s.fT.filter(x => x !== k) : s.fT.concat([k]) })} clear={() => m.set({ fT: [] })} />
       </div>
       <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['name']} columns={cols as any} data={rows} bordered height="100%" autoRowHeight getRowId={g => g.id}
         rowActions={(g: Group) => <GroupMenu m={m} g={g} />}

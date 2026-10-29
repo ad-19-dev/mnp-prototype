@@ -4,7 +4,7 @@ import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty,
   Input, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Tag, Textarea,
 } from '@qijenchen/design-system'
-import { FilterMenu, NO_HIDE, TeamTags, TeamsField, Trunc, ownKeys, ownOpts } from '../../components/ui'
+import { FilterMenu, NO_HIDE, SharedWith, TeamsField, Trunc, ownKeys, ownOpts } from '../../components/ui'
 import { canEditTemplate, canSeeItem, inTeam } from '../../lib/teams'
 import { presetFilter, useClearPreset } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -169,7 +169,7 @@ function TplList({ m }: { m: TCtl }) {
     ) } }),
     tcol.display({ id: 'fmt', header: L('Channels', '通道'), meta: { width: 140 }, cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
-    tcol.display({ id: 'sh', header: L('Who can use', '誰能使用'), meta: { width: 180 }, cell: i => { const tm = (i.row.original.teams || []).filter(inTeam); if (tm.length) return <TeamTags ids={tm} />; const sh = i.row.original.shared || [], I = !sh.length ? Lock : sh[0][0] === 'o' ? Building2 : Users; return <span className="flex min-w-0 items-center gap-1.5"><I className="size-3.5 shrink-0 text-fg-secondary" aria-hidden /><span className="truncate">{shareSummary(sh)}</span></span> } }),
+    tcol.display({ id: 'sh', header: L('Shared with', '分享對象'), meta: { width: 200 }, cell: i => { const t = i.row.original, sh = t.shared || []; return <SharedWith teams={t.teams || []} label={sh.length ? shareSummary(sh) : ''} org={!!sh.length && sh[0][0] === 'o'} mine={t.owner === ME} /> } }),
     tcol.accessor('updated', { header: L('Updated', '更新日期'), meta: { width: 110 } }),
     tcol.accessor('owner', { header: L('Owner', '擁有者'), meta: { width: 180 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } }),
     // same idea as audience groups: owner edits and shares, team members edit, people it's shared with only use it
@@ -179,7 +179,7 @@ function TplList({ m }: { m: TCtl }) {
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-60 max-w-sm flex-1"><Input startIcon={Search} type="search" placeholder={L('Search templates', '搜尋模板')} aria-label={L('Search templates', '搜尋模板')} value={s.q} onChange={e => m.set({ q: e.target.value })} /></div>
-        <FilterMenu label={L('Owner', '歸屬')} opts={ownOpts(vis)} sel={s.fT} toggle={k => m.set({ fT: s.fT.indexOf(k) >= 0 ? s.fT.filter(x => x !== k) : s.fT.concat([k]) })} clear={() => m.set({ fT: [] })} />
+        <FilterMenu label={L('Shared with', '分享對象')} opts={ownOpts(vis)} sel={s.fT} toggle={k => m.set({ fT: s.fT.indexOf(k) >= 0 ? s.fT.filter(x => x !== k) : s.fT.concat([k]) })} clear={() => m.set({ fT: [] })} />
       </div>
       <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['name']} columns={cols as any} data={rows} bordered height="100%" autoRowHeight getRowId={t => t.id}
         rowActions={(t: Template) => <TplMenu m={m} t={t} />}
