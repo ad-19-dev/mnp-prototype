@@ -5,7 +5,7 @@ import {
   Input, Pagination, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Textarea,
   Checkbox, Tooltip, TooltipContent, TooltipTrigger, cn,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Trunc, Tip } from '../../components/ui'
+import { NO_HIDE, Trunc, Tip, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   Check, CircleCheck, Copy, Eye, FileText, Info, Lock, Mail, MessageSquareText, Minus, Monitor, MoreVertical, Pencil, Plus,
@@ -24,7 +24,6 @@ import { RecvInput, type RiItem, type RiState } from '../../components/RecvInput
 type Role = 'Owner' | 'Editor' | 'Viewer'
 const ROLE_COLOR: Record<Role, 'blue' | 'green' | 'neutral'> = { Owner: 'blue', Editor: 'green', Viewer: 'neutral' }
 const RoleTag = ({ r, children }: { r: Role; children?: React.ReactNode }) => <Tag size="sm" color={ROLE_COLOR[r]}>{children || r}</Tag>
-const PER = 12
 
 interface Fb { added: number; by: Record<string, number>; orgs: { code: string; n: number }[]; dup: number; amb: { id: string; tok: string; cands: string[] }[]; miss: { id: string; tok: string; why: string }[]; undo: string[]; undone?: number }
 interface Ed {
@@ -239,6 +238,7 @@ const Cv = ({ ok, plain, children }: { ok: boolean; plain?: boolean; children: R
 }
 
 function GroupEditor({ m }: { m: GCtl }) {
+  const [per, setPer] = React.useState(20)
   const app = useApp(), s = m.s, ed = s.ed!
   const isViewer = ed.role === 'Viewer', canEdit = !isViewer, canManage = ed.role === 'Owner'
   const owners = m.owners(), ownerNames = owners.map(c => PMAP[c.pid].en).join(', ')
@@ -262,8 +262,8 @@ function GroupEditor({ m }: { m: GCtl }) {
   if (ed.mf === 'email') filt = filt.filter(p => p.extKind === 'phone')
   const mq = ed.mq.trim().toLowerCase()
   if (mq) filt = filt.filter(p => [p.zh, p.en, p.nt, p.emp, p.org].join(' ').toLowerCase().indexOf(mq) >= 0)
-  const pagesN = Math.max(1, Math.ceil(filt.length / PER)), page = Math.min(ed.mpage, pagesN), st = (page - 1) * PER
-  const mrows: MRow[] = filt.slice(st, st + PER).map(p => ({ p }))
+  const pagesN = Math.max(1, Math.ceil(filt.length / per)), page = Math.min(ed.mpage, pagesN), st = (page - 1) * per
+  const mrows: MRow[] = filt.slice(st, st + per).map(p => ({ p }))
   const fb = ed.fb, inputN = splitTokens(ed.input).length
   const has: Record<string, boolean> = {}
   ed.members.forEach(x => { has[x.pid] = true })
@@ -411,8 +411,11 @@ function GroupEditor({ m }: { m: GCtl }) {
               emptyState={<Empty icon={Users} title={n ? 'No members match' : 'No members yet'} description={n ? 'Try another search, or clear the coverage filter.' : (canEdit ? 'Search above to add people, or pick an org or group to add everyone in it.' : 'This group has no members.')} />} />
             {filt.length ? (
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-body text-fg-secondary">{(st + 1) + '–' + Math.min(filt.length, st + PER) + ' of ' + plural(filt.length, 'member') + (filt.length !== n ? ' (filtered from ' + fmtN(n) + ')' : '')}</span>
-                <Pagination total={filt.length} pageSize={PER} page={page} onPageChange={p => m.setEd({ mpage: p }, true)} showTotal={false} prevAriaLabel="Previous page" nextAriaLabel="Next page" />
+                <span className="text-body text-fg-secondary">{(st + 1) + '–' + Math.min(filt.length, st + per) + ' of ' + plural(filt.length, 'member') + (filt.length !== n ? ' (filtered from ' + fmtN(n) + ')' : '')}</span>
+                <div className="flex items-center gap-3">
+                  <Pagination total={filt.length} pageSize={per} page={page} onPageChange={p => m.setEd({ mpage: p }, true)} showTotal={false} prevAriaLabel="Previous page" nextAriaLabel="Next page" />
+                  <PageSize value={per} onChange={n => { setPer(n); m.setEd({ mpage: 1 }, true) }} />
+                </div>
               </div>
             ) : null}
           </div>

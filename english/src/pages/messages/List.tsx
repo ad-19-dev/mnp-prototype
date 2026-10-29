@@ -4,7 +4,7 @@ import {
   Badge, Button, DataTable, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input, Pagination, ProgressBar, Tag,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Trunc } from '../../components/ui'
+import { NO_HIDE, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
@@ -63,8 +63,9 @@ function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }: {
 }
 
 export function SendList({ m }: { m: SendCtl }) {
+  const [per, setPer] = React.useState(20)
   const s = m.s, app = useApp(), rows = m.filtered()
-  const per = 10, pagesN = Math.max(1, Math.ceil(rows.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
+  const pagesN = Math.max(1, Math.ceil(rows.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
   const pageRows = rows.slice(st, st + per)
   const chips = s.fS.map(k => ({ label: 'Status: ' + STATUS[k].label, remove: () => m.toggleIn('fS', k) }))
     .concat(s.fC.map(k => ({ label: 'Channel: ' + CHN[k].name, remove: () => m.toggleIn('fC', k) })))
@@ -139,7 +140,10 @@ export function SendList({ m }: { m: SendCtl }) {
       {rows.length ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-body text-fg-secondary">Showing {st + 1}–{Math.min(rows.length, st + per)} of {plural(rows.length, 'message')}</span>
-          <Pagination total={rows.length} pageSize={per} page={page} onPageChange={p => m.set({ page: p })} showTotal={false} prevAriaLabel="Previous page" nextAriaLabel="Next page" />
+          <div className="flex items-center gap-3">
+            <Pagination total={rows.length} pageSize={per} page={page} onPageChange={p => m.set({ page: p })} showTotal={false} prevAriaLabel="Previous page" nextAriaLabel="Next page" />
+            <PageSize value={per} onChange={n => { setPer(n); m.set({ page: 1 }) }} />
+          </div>
         </div>
       ) : null}
     </div>

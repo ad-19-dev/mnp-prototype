@@ -23,14 +23,14 @@ const LIST_NOTES: Note[] = [
   { n: 8, title: '已送達', body: '「已送達 / 總人數」，以人計。傳送中加進度條。' },
   { n: 9, title: 'n 人未送達', body: '送完且有人沒收到時出現，黃色連結，點了打開未成功名單。' },
   { n: 10, title: '列選單', body: '查看、複製成新訊息、下載未送達名單；自己的排程訊息另有編輯與取消。' },
-  { n: 11, title: '筆數與更新時間', body: '分頁列固定在底部；「更新於」標示傳送中的數字是哪個時間點的結果。' },
+  { n: 11, title: '分頁與更新時間', body: '分頁列固定在底部，右側選每頁 10 / 20 / 50 筆（預設 20，切換後回到第 1 頁）；「更新於」標示傳送中的數字是哪個時間點的結果。' },
 ]
 
 export function ListTab() {
   const half: Note[] = LIST_NOTES
   return (
     <>
-      <Section eyebrow="Screen 1" title="訊息列表" lead="表格填滿視窗高度，資料多時只有表格內捲動，表頭與分頁列固定。每頁 10 筆，預設依建立時間新到舊。">
+      <Section eyebrow="Screen 1" title="訊息列表" lead="表格填滿視窗高度，資料多時只有表格內捲動，表頭與分頁列固定。預設每頁 20 筆，可切換 10 / 20 / 50 筆；預設依建立時間新到舊。">
         <Frame label="A. 預設" sub="六列各代表一種要處理的情況：傳送中、已排程、部分未送達、已送出、別人的訊息、傳送失敗" width={1180}>
           <ListScreen rows={LIST_ROWS} pins />
         </Frame>

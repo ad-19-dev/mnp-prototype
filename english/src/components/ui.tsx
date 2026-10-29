@@ -3,7 +3,7 @@
 import * as React from 'react'
 import {
   Alert, Avatar, Button, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-  Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
+  Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor,
 } from '@qijenchen/design-system'
 import {
@@ -98,6 +98,19 @@ export function IconBox({ icon: I, tone }: { icon: LucideIcon; tone?: 'warn' | '
 
 // DataTable: columns can't be hidden in this product (see globals.css for the header menu)
 export const NO_HIDE = { enableHiding: false }
+
+// ---------- tables ----------
+// Rows per page next to the DS Pagination. Its own size menu labels options in Chinese only ("N 筆/頁"),
+// so the menu is a DS Select here, worded in the current language.
+export const PAGE_SIZES = [10, 20, 50]
+export function PageSize({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <div className="w-36">
+      <Select size="sm" aria-label={'Rows per page'} value={String(value)} onChange={v => onChange(Number(v))}
+        options={PAGE_SIZES.map(n => ({ value: String(n), label: n + ' per page' }))} />
+    </div>
+  )
+}
 
 // ---------- hover text ----------
 // Hover text always goes through the DS Tooltip, never the browser's own `title` box.

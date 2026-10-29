@@ -4,7 +4,7 @@ import {
   Badge, Button, DataTable, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input, Pagination, ProgressBar,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Trunc } from '../../components/ui'
+import { NO_HIDE, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
@@ -64,8 +64,9 @@ function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }: {
 }
 
 export function SendList({ m }: { m: SendCtl }) {
+  const [per, setPer] = React.useState(20)
   const s = m.s, app = useApp(), rows = m.filtered()
-  const per = 10, pagesN = Math.max(1, Math.ceil(rows.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
+  const pagesN = Math.max(1, Math.ceil(rows.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
   const pageRows = rows.slice(st, st + per)
   const clearAll = () => m.set({ fS: [], fC: [], q: '', page: 1 })
   const stOpts = (['scheduled', 'progress', 'sent', 'error'] as Status[]).map(k => ({ k, n: app.rows.filter(r => r.status === k).length, view: <StatusTag s={k} /> }))
@@ -130,7 +131,10 @@ export function SendList({ m }: { m: SendCtl }) {
       {rows.length ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-body text-fg-secondary">{L((st + 1) + '–' + Math.min(rows.length, st + per) + ' of ' + rows.length, '第 ' + (st + 1) + '–' + Math.min(rows.length, st + per) + ' 則，共 ' + rows.length + ' 則')}</span>
-          <Pagination total={rows.length} pageSize={per} page={page} onPageChange={p => m.set({ page: p })} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+          <div className="flex items-center gap-3">
+            <Pagination total={rows.length} pageSize={per} page={page} onPageChange={p => m.set({ page: p })} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+            <PageSize value={per} onChange={n => { setPer(n); m.set({ page: 1 }) }} />
+          </div>
         </div>
       ) : null}
     </div>

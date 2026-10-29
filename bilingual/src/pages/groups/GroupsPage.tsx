@@ -5,7 +5,7 @@ import {
   Input, Pagination, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Textarea,
   Checkbox, Tooltip, TooltipContent, TooltipTrigger, cn,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Trunc, Tip } from '../../components/ui'
+import { NO_HIDE, Trunc, Tip, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   Check, CircleCheck, Copy, Eye, FileText, Info, Lock, Mail, MessageSquareText, Minus, Monitor, MoreVertical, Pencil, Plus,
@@ -26,7 +26,6 @@ type Role = 'Owner' | 'Editor' | 'Viewer'
 const ROLE_COLOR: Record<Role, 'blue' | 'green' | 'neutral'> = { Owner: 'blue', Editor: 'green', Viewer: 'neutral' }
 const roleName = (r: Role) => ({ Owner: L('Owner', '擁有者'), Editor: L('Editor', '編輯者'), Viewer: L('Viewer', '檢視者') })[r]
 const RoleTag = ({ r, children }: { r: Role; children?: React.ReactNode }) => <Tag size="sm" color={ROLE_COLOR[r]}>{children || roleName(r)}</Tag>
-const PER = 12
 
 interface Fb { added: number; by: Record<string, number>; orgs: { code: string; n: number }[]; dup: number; amb: { id: string; tok: string; cands: string[] }[]; miss: { id: string; tok: string; why: string }[]; undo: string[]; undone?: number }
 interface Ed {
@@ -240,6 +239,7 @@ const Cv = ({ ok, plain, children }: { ok: boolean; plain?: boolean; children: R
 }
 
 function GroupEditor({ m }: { m: GCtl }) {
+  const [per, setPer] = React.useState(20)
   const app = useApp(), s = m.s, ed = s.ed!
   const isViewer = ed.role === 'Viewer', canEdit = !isViewer, canManage = ed.role === 'Owner'
   const owners = m.owners(), ownerNames = owners.map(c => PMAP[c.pid].en).join(', ')
@@ -263,8 +263,8 @@ function GroupEditor({ m }: { m: GCtl }) {
   if (ed.mf === 'email') filt = filt.filter(p => p.extKind === 'phone')
   const mq = ed.mq.trim().toLowerCase()
   if (mq) filt = filt.filter(p => [p.zh, p.en, p.nt, p.emp, p.org].join(' ').toLowerCase().indexOf(mq) >= 0)
-  const pagesN = Math.max(1, Math.ceil(filt.length / PER)), page = Math.min(ed.mpage, pagesN), st = (page - 1) * PER
-  const mrows: MRow[] = filt.slice(st, st + PER).map(p => ({ p }))
+  const pagesN = Math.max(1, Math.ceil(filt.length / per)), page = Math.min(ed.mpage, pagesN), st = (page - 1) * per
+  const mrows: MRow[] = filt.slice(st, st + per).map(p => ({ p }))
   const fb = ed.fb, inputN = splitTokens(ed.input).length
   const has: Record<string, boolean> = {}
   ed.members.forEach(x => { has[x.pid] = true })
@@ -412,8 +412,11 @@ function GroupEditor({ m }: { m: GCtl }) {
               emptyState={<Empty icon={Users} title={n ? L('No matching members', '找不到符合的成員') : L('No members yet', '還沒有成員')} description={n ? L('Try another search or clear the filter.', '換個關鍵字，或清除篩選。') : (canEdit ? L('Add people above.', '在上方加入成員。') : L('This group is empty.', '這個群組沒有成員。'))} />} />
             {filt.length ? (
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-body text-fg-secondary">{L((st + 1) + '–' + Math.min(filt.length, st + PER) + ' of ' + filt.length, '第 ' + (st + 1) + '–' + Math.min(filt.length, st + PER) + ' 人，共 ' + filt.length + ' 人')}</span>
-                <Pagination total={filt.length} pageSize={PER} page={page} onPageChange={p => m.setEd({ mpage: p }, true)} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+                <span className="text-body text-fg-secondary">{L((st + 1) + '–' + Math.min(filt.length, st + per) + ' of ' + filt.length, '第 ' + (st + 1) + '–' + Math.min(filt.length, st + per) + ' 人，共 ' + filt.length + ' 人')}</span>
+                <div className="flex items-center gap-3">
+                  <Pagination total={filt.length} pageSize={per} page={page} onPageChange={p => m.setEd({ mpage: p }, true)} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+                  <PageSize value={per} onChange={n => { setPer(n); m.setEd({ mpage: 1 }, true) }} />
+                </div>
               </div>
             ) : null}
           </div>

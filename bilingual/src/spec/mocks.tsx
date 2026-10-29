@@ -10,7 +10,7 @@ import {
   AlertTriangle, Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, Inbox, MoreVertical, Pencil, Plus, RotateCw, Search, Send,
 } from 'lucide-react'
 import { PEOPLE, PMAP, TEMPLATES, fmtN, rowChs, type Row } from '../lib/data'
-import { Banner, CHN, ChIcons, NO_HIDE, PAvatar, StatusTag, Trunc, Two } from '../components/ui'
+import { Banner, CHN, ChIcons, NO_HIDE, PAvatar, PageSize, StatusTag, Trunc, Two } from '../components/ui'
 import { L } from '../lib/i18n'
 import { Pin } from './parts'
 import { OTHERS, type Miss, type Scenario, type Via } from './specData'
@@ -110,7 +110,10 @@ export function ListScreen({ rows, mode = 'data', pins, onTitle, onNotSent, heig
                   {L('1–' + shown.length + ' of ' + shown.length, '第 1–' + shown.length + ' 則，共 ' + shown.length + ' 則')}
                   <span className="text-fg-muted">·</span>{L('Updated 10:07', '更新於 10:07')}<PinIf on={pins} n={11} />
                 </span>
-                <Pagination total={shown.length} pageSize={10} page={1} onPageChange={() => {}} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+                <div className="flex items-center gap-3">
+                  <Pagination total={shown.length} pageSize={20} page={1} onPageChange={() => {}} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+                  <PageSize value={20} onChange={() => {}} />
+                </div>
               </div>
             ) : null}
           </>
