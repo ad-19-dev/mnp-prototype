@@ -8,7 +8,7 @@ import {
   SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem,
 } from '@qijenchen/design-system'
-import { Bell, CircleHelp, Inbox, LayoutTemplate, Plus, Radio, Search, Send, Users, UsersRound } from 'lucide-react'
+import { Bell, CircleHelp, LayoutTemplate, Plus, Radio, Search, Send, Users, UsersRound } from 'lucide-react'
 import { go, setApp, setLang, useApp, type Page } from '../lib/store'
 import { myTeams } from '../lib/teams'
 import { NewTeamDialog } from './TeamPanels'
@@ -104,7 +104,7 @@ function MnpSidebar({ onNav, onScope }: { onNav: (p: Page) => void; onScope: (sc
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton id="msg:mine" startIcon={Inbox} tooltip={L('My messages', '我的訊息')} onClick={() => onScope('mine')}>{L('My messages', '我的訊息')}</SidebarMenuButton>
+                <SidebarMenuButton id="msg:mine" startIcon={Send} tooltip={L('My messages', '我的訊息')} onClick={() => onScope('mine')}>{L('My messages', '我的訊息')}</SidebarMenuButton>
               </SidebarMenuItem>
               {teams.map(t => (
                 <SidebarMenuItem key={t.id}>

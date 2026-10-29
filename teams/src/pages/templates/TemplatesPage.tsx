@@ -172,6 +172,8 @@ function TplList({ m }: { m: TCtl }) {
     tcol.display({ id: 'sh', header: L('Who can use', '誰能使用'), meta: { width: 180 }, cell: i => { const tm = (i.row.original.teams || []).filter(inTeam); if (tm.length) return <TeamTags ids={tm} />; const sh = i.row.original.shared || [], I = !sh.length ? Lock : sh[0][0] === 'o' ? Building2 : Users; return <span className="flex min-w-0 items-center gap-1.5"><I className="size-3.5 shrink-0 text-fg-secondary" aria-hidden /><span className="truncate">{shareSummary(sh)}</span></span> } }),
     tcol.accessor('updated', { header: L('Updated', '更新日期'), meta: { width: 110 } }),
     tcol.accessor('owner', { header: L('Owner', '擁有者'), meta: { width: 180 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } }),
+    // same idea as audience groups: owner edits and shares, team members edit, people it's shared with only use it
+    tcol.display({ id: 'role', header: L('Your role', '你的角色'), meta: { width: 130 }, cell: i => { const t = i.row.original, r = t.owner === ME ? 'owner' : canEditTemplate(t) ? 'editor' : 'user'; return <Tag size="sm" color={r === 'owner' ? 'blue' : r === 'editor' ? 'green' : 'neutral'}>{r === 'owner' ? L('Owner', '擁有者') : r === 'editor' ? L('Editor', '編輯者') : L('Can use', '可使用')}</Tag> } }),
   ], [m, app.lang, app.teams])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">

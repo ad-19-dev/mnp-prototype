@@ -7,6 +7,7 @@ import {
 import { NO_HIDE, Tip } from '../../components/ui'
 import { canSeeItem, myTeams, teamById, teamName } from '../../lib/teams'
 import { scopeLabel } from './ctl'
+import { getApp } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
@@ -181,10 +182,12 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
   )
 }
 
-// Who the message belongs to. A team's members all see it in their list; a personal message only you see.
+// Who the message belongs to, chosen only when writing from My messages. A team's members all see it;
+// a personal message only you see.
 function TeamPick({ m }: { m: SendCtl }) {
   const c = m.s.c, teams = myTeams(), t = teamById(c.team)
-  if (!teams.length) return null
+  // started from a team's list: the team is already chosen (the breadcrumb and the review step show it)
+  if (!teams.length || getApp().msgScope !== 'mine') return null
   const hint = t ? L('All ' + t.members.length + ' members of ' + t.name + ' can see this message and its results.', '「' + t.name + '」的 ' + t.members.length + ' 位成員都能看到這則訊息和送達結果。') : L('Only you can see this message and its results.', '只有你看得到這則訊息和送達結果。')
   return (
     <Section title={L('Send for', '發送單位')} sub={hint}>

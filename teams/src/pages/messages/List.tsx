@@ -40,7 +40,7 @@ function RowMenu({ m, r }: { m: SendCtl; r: Row }) {
 }
 
 
-export function SendList({ m }: { m: SendCtl }) {
+export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) {
   const [per, setPer] = React.useState(20)
   const s = m.s, app = useApp(), rows = m.filtered(), vis = m.visible()
   const pagesN = Math.max(1, Math.ceil(rows.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
@@ -86,10 +86,11 @@ export function SendList({ m }: { m: SendCtl }) {
     } }),
     col.accessor('sched', { header: L('Scheduled', '排程時間'), meta: { width: 130 }, cell: i => { const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     col.accessor('creator', { header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } }),
-  ], [m, app.lang, app.teams])
+  ], [m, app.lang, app.teams, app.msgScope])
 
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
+      {intro}
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-60 max-w-sm flex-1">
           <Input startIcon={Search} type="search" placeholder={L('Search messages', '搜尋訊息')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
