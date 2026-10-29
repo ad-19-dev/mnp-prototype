@@ -87,7 +87,6 @@ export function ListScreen({ rows, mode = 'data', pins, onTitle, onNotSent, heig
               <Button variant="tertiary" startIcon={Filter} endIcon={ChevronDown} pressed={filtering} badge={filtering ? <Badge count={2} variant="low" /> : undefined}>{L('Status', '狀態')}</Button>
               <Button variant="tertiary" startIcon={Filter} endIcon={ChevronDown}>{L('Channel', '通道')}</Button>
               <PinIf on={pins} n={3} />
-              <div className="ml-auto"><Button variant="tertiary" startIcon={Download}>{L('Export', '匯出')}</Button></div>
             </div>
             {mode === 'loading' ? (
               <div className="flex flex-col gap-0 overflow-hidden rounded-md border border-divider">

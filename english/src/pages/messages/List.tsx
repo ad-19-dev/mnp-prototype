@@ -115,9 +115,6 @@ export function SendList({ m }: { m: SendCtl }) {
         </div>
         <FilterMenu label="Status" opts={stOpts} sel={s.fS} toggle={k => m.toggleIn('fS', k)} clear={() => m.set({ fS: [], page: 1 })} />
         <FilterMenu label="Send channel" opts={chOpts} sel={s.fC} toggle={k => m.toggleIn('fC', k)} clear={() => m.set({ fC: [], page: 1 })} />
-        <div className="ml-auto">
-          <Button variant="tertiary" startIcon={Download} onClick={() => flash('Exporting ' + plural(rows.length, 'message') + ' to MNP_messages.xlsx.')}>Download</Button>
-        </div>
       </div>
       {chips.length ? (
         <div className="flex flex-wrap items-center gap-2">

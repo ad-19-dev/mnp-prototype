@@ -113,9 +113,6 @@ export function SendList({ m }: { m: SendCtl }) {
         </div>
         <FilterMenu label={L('Status', '狀態')} opts={stOpts} sel={s.fS} toggle={k => m.toggleIn('fS', k)} clear={() => m.set({ fS: [], page: 1 })} />
         <FilterMenu label={L('Channel', '通道')} opts={chOpts} sel={s.fC} toggle={k => m.toggleIn('fC', k)} clear={() => m.set({ fC: [], page: 1 })} />
-        <div className="ml-auto">
-          <Button variant="tertiary" startIcon={Download} onClick={() => flash(L('Exporting ', '匯出 ') + P(rows.length, 'message', '則訊息'), 'ok', 'MNP_messages.xlsx')}>{L('Export', '匯出')}</Button>
-        </div>
       </div>
       <DataTable tableOptions={NO_HIDE}
         columns={columns as any}
