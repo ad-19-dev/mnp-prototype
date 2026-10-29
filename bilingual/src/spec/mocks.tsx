@@ -144,7 +144,7 @@ export { OTHERS }
 
 // ---------- details ----------
 const VIA: Record<Via, { text: [string, string]; color: 'neutral' | 'amber' | 'red' }> = {
-  push: { text: ['Device notifications', 'Device notifications'], color: 'neutral' },
+  push: { text: ['Device Notifications', 'Device Notifications'], color: 'neutral' },
   desktop: { text: ['Desktop OS', '桌面通知'], color: 'neutral' },
   email: { text: ['Email', 'Email'], color: 'neutral' },
   sms: { text: ['Delivered via SMS', '經 SMS 送達'], color: 'amber' },

@@ -14,7 +14,7 @@ import { L } from '../lib/i18n'
 const CH_ICON: Record<Channel, LucideIcon> = { push: Smartphone, desktop: Monitor, email: Mail, sms: MessageSquareText }
 export function chn(k: Channel) {
   const names: Record<Channel, [string, string, string, string, string, string]> = {
-    push: ['Device notifications', '裝置推播', 'Device', '推播', 'Push to the app on company phones.', '推播到公司手機的 App。'],
+    push: ['Device Notifications', 'Device Notifications', 'Device', 'Device', 'Push to the app on company phones.', '推播到公司手機的 App。'],
     desktop: ['Desktop OS', '桌面通知', 'Desktop', '桌面', 'Pop-up on company Windows PCs.', '在公司 Windows 電腦跳出通知。'],
     email: ['Email', 'Email', 'Email', 'Email', 'Company mailbox, with formatting and files.', '寄到公司信箱，可加格式和附件。'],
     sms: ['SMS fallback', 'SMS 備援', 'SMS', 'SMS', '', ''],
@@ -58,7 +58,7 @@ export function ChIcons({ list }: { list: Channel[] }) {
   )
 }
 // A template's formats, shown with the same icons as the Send channel column:
-// notification text fills Device notifications and Desktop OS, then Email and SMS
+// notification text fills Device Notifications and Desktop OS, then Email and SMS
 export function FmtChips({ list }: { list: Fmt[] }) {
   const chs: Channel[] = []
   if (list.indexOf('notif') >= 0) chs.push('push', 'desktop')

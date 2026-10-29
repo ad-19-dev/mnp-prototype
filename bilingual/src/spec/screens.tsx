@@ -65,9 +65,9 @@ const DETAIL_NOTES: Note[] = [
   { n: 1, title: '標頭', body: '狀態標籤與標題。從列表點標題打開，關閉後回到原本的列表位置。' },
   { n: 2, title: '送達結果', body: '大數字「已送達 / 總人數」＋進度條；有人沒收到時，右側黃色「n 人未送達」打開名單。已排程改為說明何時傳送。' },
   { n: 3, title: '各通道結果', body: '每個通道一列：應送、已送達、未送達。勾了多個通道時，各通道人數加總會大於總人數。' },
-  { n: 4, title: 'SMS 備援', body: '縮排在裝置推播下方，應送人數只算推播沒送達的人。經 SMS 收到的人算已送達，表格下方一行說明。' },
+  { n: 4, title: 'SMS 備援', body: '縮排在 Device Notifications 下方，應送人數只算推播沒送達的人。經 SMS 收到的人算已送達，表格下方一行說明。' },
   { n: 5, title: '未送達原因', body: '依原因分組計數，讓寄件人判斷要不要補發、要不要找 IT。' },
-  { n: 6, title: '收件人結果', body: '逐人的送達方式：Device notifications、「經 SMS 送達」（黃）、「未送達」（紅）＋原因。完整清單另開。' },
+  { n: 6, title: '收件人結果', body: '逐人的送達方式：Device Notifications、「經 SMS 送達」（黃）、「未送達」（紅）＋原因。完整清單另開。' },
   { n: 7, title: '時間軸', body: '建立、核准（需要時）、開始傳送、完成或失敗的時間。' },
   { n: 8, title: '操作', body: '下載未送達名單、複製成新訊息；自己的排程訊息加取消與編輯；失敗時重試放在錯誤提示上。' },
 ]
@@ -129,7 +129,7 @@ export function FailedTab() {
           ['權限', '別人建立的訊息能否下載待確認'],
         ]} />
         <SpecTable head={['姓名', 'NT 帳號', '工號', '組織', '沒送到的通道', '原因', 'SMS 備援結果']} rows={MISS_FEW.map(x => [
-          x.p.zh + ' ' + x.p.en, x.p.nt, x.p.emp, x.p.org, x.chans.map(c => c === 'sms' ? 'SMS' : 'Device notifications').join('、'), x.why[1], x.sms[1],
+          x.p.zh + ' ' + x.p.en, x.p.nt, x.p.emp, x.p.org, x.chans.map(c => c === 'sms' ? 'SMS' : 'Device Notifications').join('、'), x.why[1], x.sms[1],
         ])} />
       </Section>
     </>

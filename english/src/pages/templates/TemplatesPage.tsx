@@ -267,7 +267,7 @@ function TplEditor({ m }: { m: TCtl }) {
             <FormField id="t-sender" label="Sender name" required count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} error={show('sender')}>
               <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder="e.g. IT Service Desk" />
             </FormField>
-            <Block icon={MessageSquareText} title="Notification text" right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>Device notifications</Tag><Tag size="sm" icon={Monitor}>Desktop OS</Tag></span>}>
+            <Block icon={MessageSquareText} title="Notification text" right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>Device Notifications</Tag><Tag size="sm" icon={Monitor}>Desktop OS</Tag></span>}>
               <FormField id="t-title" label="Title" count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>
                 <Input id="t-title" disabled={ro} value={ed.title} error={!!show('title')} onChange={ev => m.setEd({ title: ev.target.value })} placeholder="e.g. Fire drill at [time] today" />
               </FormField>

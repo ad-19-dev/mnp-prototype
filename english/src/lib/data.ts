@@ -254,7 +254,7 @@ export const SAMPLE_SEND = 'gywu, cmchen, 112306, ytchang, celee, sywangd, 11095
 export const SAMPLE_GROUP = 'ytchang, 115630, Kevin Lin\n0920-775-641; 66904\nPLT/UX\npartner@example.com, a19999'
 
 // ---------- templates ----------
-// Templates store message text by format, not by channel: notification text (Device notifications and Desktop OS),
+// Templates store message text by format, not by channel: notification text (Device Notifications and Desktop OS),
 // SMS text, and an optional separate email. They don't store receivers or attachments.
 export const TEMPLATES: Template[] = [
   { id: 't1', name: 'Emergency drill notice', sender: 'F18 Facility', title: 'Fire drill at [time] today', content: 'A fire evacuation drill starts at [time] in [building]. Follow your area’s evacuation route and gather at [assembly point]. Do not use elevators.', sms: 'Fire drill [time] today at [building]. Gather at [assembly point].', email: { mode: 'same' }, shared: [['o', 'F18/MFG3'], ['o', 'F15/ESH']], updated: '2026/09/12', owner: 'p12' },
@@ -315,7 +315,7 @@ function buildRows(): Row[] {
 }
 export const ROWS0 = buildRows()
 
-// channels of a sent message, with SMS fallback listed after Device notifications
+// channels of a sent message, with SMS fallback listed after Device Notifications
 export function rowChs(r: Row): Channel[] { return CH_ORDER.filter(k => k === 'sms' ? !!r.sms : r.channels.indexOf(k) >= 0) }
 
 export function failList(r: Row): Fail[] {

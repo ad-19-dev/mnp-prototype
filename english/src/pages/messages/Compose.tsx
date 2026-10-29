@@ -294,13 +294,13 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
             : <Button variant="secondary" startIcon={LayoutTemplate} onClick={() => m.set({ tp: { q: '' } })}>Choose template</Button>}
         </span>
       </div>
-      <Section title="Message" sub={'Write each format once. Device notifications and Desktop OS share the notification text' + (c.ch.email ? ', and Email can reuse it or have its own version' : '') + '.'}>
+      <Section title="Message" sub={'Write each format once. Device Notifications and Desktop OS share the notification text' + (c.ch.email ? ', and Email can reuse it or have its own version' : '') + '.'}>
         <div className="flex flex-col gap-[var(--layout-space-loose)]">
           <FormField id="f-sender" label="Sender name" required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint="Shown as who the message is from, on every channel." error={eSender}>
             <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder="e.g. IT Service Desk" />
           </FormField>
           {hasN ? (
-            <FormatBlock icon={MessageSquareText} title="Notification text" uses={<>{c.ch.push ? <Tag size="sm" icon={Smartphone}>Device notifications</Tag> : null}{c.ch.desktop ? <Tag size="sm" icon={Monitor}>Desktop OS</Tag> : null}</>}>
+            <FormatBlock icon={MessageSquareText} title="Notification text" uses={<>{c.ch.push ? <Tag size="sm" icon={Smartphone}>Device Notifications</Tag> : null}{c.ch.desktop ? <Tag size="sm" icon={Monitor}>Desktop OS</Tag> : null}</>}>
               {tpl && !tplHasNotif(tpl) ? <Banner tone="neutral">This template has no notification text. Write a short version here.</Banner> : null}
               <FormField id="f-title" label="Title" required count={c.title.length + ' / ' + LIM.title} over={c.title.length > LIM.title} error={eTitle}>
                 <Input id="f-title" value={c.title} error={!!eTitle} onChange={ev => m.setC({ title: ev.target.value })} placeholder="One line receivers can act on" />
@@ -386,7 +386,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
   const toMsg = () => m.goStep(2), notif = c.title.trim() + (c.content.trim() ? ' — ' + c.content.trim() : '')
   const rows: React.ReactNode[] = [<RvRow key="r" icon={Users} k="Receivers" v={plural(rc.total, 'receiver') + (rc.ext ? ', including ' + plural(rc.ext, 'external receiver', 'external receivers') : '')} edit={() => m.goStep(1)} />]
-  if (c.ch.push) rows.push(<RvRow key="p" icon={Smartphone} k="Device notifications" v={'Reaches ' + fmtN(rc.push) + ' of ' + fmtN(rc.total)} q={notif} edit={toMsg} />)
+  if (c.ch.push) rows.push(<RvRow key="p" icon={Smartphone} k="Device Notifications" v={'Reaches ' + fmtN(rc.push) + ' of ' + fmtN(rc.total)} q={notif} edit={toMsg} />)
   if (c.ch.desktop) { const cut = vwidth(c.content) > DESK.text || vwidth(c.title) > DESK.title; rows.push(<RvRow key="d" icon={Monitor} warn={cut} k="Desktop OS" v={'Reaches ' + fmtN(rc.desktop) + ' of ' + fmtN(rc.total) + (cut ? ' · the text is cut short on desktop' : '')} q={notif} edit={toMsg} />) }
   if (c.ch.email) rows.push(<RvRow key="e" icon={Mail} k="Email" v={'Reaches ' + (rc.email === rc.total ? 'all ' + fmtN(rc.email) : fmtN(rc.email) + ' of ' + fmtN(rc.total)) + (mode === 'own' ? ' · Separate email' + (c.atts.length ? ' with ' + plural(c.atts.length, 'attachment') : '') : ' · Same as the notification text')} q={mode === 'own' ? c.subject : ''} edit={toMsg} />)
   if (c.ch.sms) rows.push(<RvRow key="s" icon={MessageSquareText} k="SMS fallback" v={[rc.extP ? plural(rc.extP, 'external number', 'external numbers') : '', c.ch.push && rc.smsable ? 'up to ' + fmtN(rc.smsable) + ' employees the device notification misses' : ''].filter(Boolean).join(' and ').replace(/^./, x => x.toUpperCase()) || 'No one gets the SMS'} q={c.smsText} edit={toMsg} />)

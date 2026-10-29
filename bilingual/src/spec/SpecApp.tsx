@@ -141,8 +141,8 @@ function EdgeTab() {
   return (
     <Section eyebrow="Edge cases" title="邊界情境" lead="標了 PRD 的三條來自需求文件，其餘是畫畫面時一定會碰到、PRD 還沒寫的情況。最右欄是畫面上的樣子。">
       <SpecTable head={['情境', '規則', '畫面']} rows={[
-        [<span className="flex flex-col items-start gap-1">{prd}裝置推播還在送，Email 已送完</span>, '所有通道完成前維持傳送中。注意：以「任一通道」計算時，Email 送完那一刻已送達就是 292 / 292，進度條會是滿的。',
-          <span className="flex w-80 flex-col gap-1.5"><StatusTag s="progress" />{line('Email', '292 / 292 完成')}{line('Device notifications', '241 / 292 傳送中')}</span>],
+        [<span className="flex flex-col items-start gap-1">{prd}Device Notifications 還在送，Email 已送完</span>, '所有通道完成前維持傳送中。注意：以「任一通道」計算時，Email 送完那一刻已送達就是 292 / 292，進度條會是滿的。',
+          <span className="flex w-80 flex-col gap-1.5"><StatusTag s="progress" />{line('Email', '292 / 292 完成')}{line('Device Notifications', '241 / 292 傳送中')}</span>],
         [<span className="flex flex-col items-start gap-1">{prd}推播失敗、SMS 備援成功</span>, '這個人算已送達', <Tag size="sm" color="amber" unbounded>經 SMS 送達</Tag>],
         [<span className="flex flex-col items-start gap-1">{prd}可以看到哪些訊息</span>, '自己建立的＋同部門／同發送單位的；別人的只能看', <span className="text-body text-fg-secondary">列選單只有查看、複製、下載名單</span>],
         ['推播與 SMS 備援都失敗', '算未送達，兩個原因都列出', <span className="flex flex-col gap-1"><Tag size="sm" color="red" unbounded>未送達</Tag><span className="text-caption text-fg-secondary">沒有註冊裝置，SMS 號碼也已停用</span></span>],

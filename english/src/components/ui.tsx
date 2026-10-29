@@ -13,7 +13,7 @@ import type { Channel, Fmt, Person, Status } from '../lib/data'
 
 // ---------- channels, formats and statuses ----------
 export const CHN: Record<Channel, { name: string; short: string; icon: LucideIcon; desc: string }> = {
-  push: { name: 'Device notifications', short: 'Device', icon: Smartphone, desc: 'Push to the app on company phones.' },
+  push: { name: 'Device Notifications', short: 'Device', icon: Smartphone, desc: 'Push to the app on company phones.' },
   desktop: { name: 'Desktop OS', short: 'Desktop', icon: Monitor, desc: 'Pop-up on company Windows PCs.' },
   email: { name: 'Email', short: 'Email', icon: Mail, desc: 'Company mailbox, with formatting and files.' },
   sms: { name: 'SMS fallback', short: 'SMS', icon: MessageSquareText, desc: '' },
@@ -37,7 +37,7 @@ export function StatusTag({ s }: { s: Status }) {
   return <Tag size="sm" color={st.color as any} icon={st.icon}>{st.label}</Tag>
 }
 // A template's formats, shown with the same icons as the Send channel column:
-// notification text fills Device notifications and Desktop OS, then Email and SMS
+// notification text fills Device Notifications and Desktop OS, then Email and SMS
 export function FmtChips({ list }: { list: Fmt[] }) {
   const chs: Channel[] = []
   if (list.indexOf('notif') >= 0) chs.push('push', 'desktop')
