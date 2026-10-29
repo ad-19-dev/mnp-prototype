@@ -43,7 +43,15 @@ function listColumns(pins: boolean, onTitle?: (r: Row) => void, onNotSent?: (r: 
   return [
     col.accessor('sender', { id: 'sender', header: hdr(L('Sender', '寄件人'), 4, pins), meta: { width: 160 }, cell: i => <span className="truncate font-medium">{i.getValue()}</span> }),
     col.accessor(r => tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <span className="truncate">{i.getValue()}</span> : <span className="text-fg-muted">—</span> }),
-    col.accessor('title', { header: hdr(L('Title', '標題'), 5, pins), meta: { width: 230 }, cell: i => <button type="button" className="min-w-0 truncate text-left font-medium text-primary hover:text-primary-hover hover:underline" onClick={() => onTitle?.(i.row.original)}>{i.getValue()}</button> }),
+    col.accessor('title', { header: hdr(L('Message', '標題與內容'), 5, pins), meta: { width: 400 }, cell: i => {
+      const r = i.row.original, text = r.content.replace(/\s+/g, ' ')
+      return (
+        <span className="flex min-w-0 flex-col">
+          <button type="button" className="min-w-0 truncate text-left font-medium text-primary hover:text-primary-hover hover:underline" onClick={() => onTitle?.(r)}>{r.title}</button>
+          <span className="truncate text-caption text-fg-secondary">{text}</span>
+        </span>
+      )
+    } }),
     col.display({ id: 'ch', header: hdr(L('Channels', '通道'), 6, pins), meta: { width: 120 }, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
     col.accessor('status', { header: hdr(L('Status', '狀態'), 7, pins), meta: { width: 140 }, cell: i => <StatusTag s={i.getValue()} /> }),
     col.display({ id: 'recv', header: hdr(L('Delivered', '已送達'), 8, pins), meta: { width: 160 }, cell: i => <DeliveredCell r={i.row.original} onNotSent={onNotSent} pin={pins && i.row.original.id === 'm012'} /> }),
