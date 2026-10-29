@@ -6,6 +6,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { canSeeItem, myTeams, teamById, teamName } from '../../lib/teams'
+import { scopeLabel } from './ctl'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
@@ -38,7 +39,7 @@ export function ComposeView({ m }: { m: SendCtl }) {
   return (
     <div data-compose className="flex min-h-full flex-col">
       <PageHeader
-        crumbs={[{ label: L('Messages', '訊息'), onClick: () => m.goList() }, { label: title(c.mode) }]}
+        crumbs={[{ label: L('Messages', '訊息'), onClick: () => m.goList() }, { label: scopeLabel(), onClick: () => m.goList() }, { label: title(c.mode) }]}
         actions={c.result ? null : (
           <>
             {ap.mgr ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs supervisor approval', '需主管核准')}</Tag> : null}

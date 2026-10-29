@@ -4,18 +4,20 @@ import * as React from 'react'
 import { createPortal } from 'react-dom'
 import {
   AccountMenu, AppShell, Avatar, Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
-  Button, ChromeHeader, Input, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu,
+  Button, ChromeHeader, Input, Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel,
+  SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem,
 } from '@qijenchen/design-system'
-import { Bell, CircleHelp, LayoutTemplate, Radio, Search, Send, Users, UsersRound } from 'lucide-react'
-import { go, setLang, useApp, type Page } from '../lib/store'
+import { Bell, CircleHelp, Inbox, LayoutTemplate, Plus, Radio, Search, Send, Users, UsersRound } from 'lucide-react'
+import { go, setApp, setLang, useApp, type Page } from '../lib/store'
+import { myTeams } from '../lib/teams'
+import { NewTeamDialog } from './TeamPanels'
 import { L } from '../lib/i18n'
 
+// Messages is a group: your own messages, then one list per team you're in. Groups and templates follow.
 const NAV = (): { id: Page; label: string; icon: typeof Send }[] => [
-  { id: 'send', label: L('Messages', '訊息'), icon: Send },
   { id: 'groups', label: L('Audience groups', '收件群組'), icon: Users },
   { id: 'templates', label: L('Templates', '模板'), icon: LayoutTemplate },
-  { id: 'teams', label: L('Teams', '團隊'), icon: UsersRound },
 ]
 
 // Pages render their header into the AppShell header slot through this context
@@ -80,7 +82,10 @@ function GlobalHeader() {
   )
 }
 
-function MnpSidebar({ onNav }: { onNav: (p: Page) => void }) {
+function MnpSidebar({ onNav, onScope }: { onNav: (p: Page) => void; onScope: (scope: string) => void }) {
+  const [creating, setCreating] = React.useState(false)
+  useApp()
+  const teams = myTeams()
   return (
     <Sidebar collapsible="icon" viewportInsetTop="var(--chrome-header-height)">
       <SidebarHeader>
@@ -94,6 +99,22 @@ function MnpSidebar({ onNav }: { onNav: (p: Page) => void }) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>{L('Messages', '訊息')}</SidebarGroupLabel>
+          <SidebarGroupAction icon={Plus} aria-label={L('New team', '建立團隊')} onClick={() => setCreating(true)} />
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton id="msg:mine" startIcon={Inbox} tooltip={L('My messages', '我的訊息')} onClick={() => onScope('mine')}>{L('My messages', '我的訊息')}</SidebarMenuButton>
+              </SidebarMenuItem>
+              {teams.map(t => (
+                <SidebarMenuItem key={t.id}>
+                  <SidebarMenuButton id={'msg:' + t.id} startIcon={UsersRound} tooltip={t.name} onClick={() => onScope(t.id)}>{t.name}</SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV().map(n => (
@@ -105,12 +126,13 @@ function MnpSidebar({ onNav }: { onNav: (p: Page) => void }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <NewTeamDialog open={creating} onClose={() => setCreating(false)} />
     </Sidebar>
   )
 }
 
 export function Shell({ children }: { children: React.ReactNode }) {
-  const { page } = useApp()
+  const { page, msgScope } = useApp()
   const [slot, setSlot] = React.useState<HTMLElement | null>(null)
   const home = React.useRef<HomeFn | null>(null)
   const onNav = (p: Page) => {
@@ -118,14 +140,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
     home.current = null
     go(p)
   }
+  // a message list: switching lists on the Messages page first returns it to the list (asking about unsent work)
+  const onScope = (scope: string) => {
+    if (page === 'send') { home.current?.(); setApp({ msgScope: scope }); return }
+    home.current = null
+    setApp({ msgScope: scope }); go('send')
+  }
   return (
-    <SidebarProvider activeId={page} onActiveChange={() => {}}>
+    <SidebarProvider activeId={page === 'send' ? 'msg:' + msgScope : page} onActiveChange={() => {}}>
       <HomeRegistry.Provider value={home}>
         <HeaderSlot.Provider value={slot}>
           <AppShell
             layout="primary-header"
             globalHeader={<GlobalHeader />}
-            sidebar={<MnpSidebar onNav={onNav} />}
+            sidebar={<MnpSidebar onNav={onNav} onScope={onScope} />}
             header={<ChromeHeader className="bg-surface"><div ref={setSlot} className="contents" /></ChromeHeader>}
           >
             {children}

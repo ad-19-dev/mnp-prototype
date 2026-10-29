@@ -5,9 +5,9 @@ import {
   Pagination, ProgressBar,
 } from '@qijenchen/design-system'
 import { FilterMenu, NO_HIDE, Trunc, PageSize } from '../../components/ui'
-import { canManageRow, teamName } from '../../lib/teams'
+import { canManageRow, leftTeamRow, teamName } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, User, Users } from 'lucide-react'
+import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Users } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { CHN, ChIcons, PAvatar, StatusTag, Two } from '../../components/ui'
@@ -45,21 +45,19 @@ export function SendList({ m }: { m: SendCtl }) {
   const s = m.s, app = useApp(), rows = m.filtered(), vis = m.visible()
   const pagesN = Math.max(1, Math.ceil(rows.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
   const pageRows = rows.slice(st, st + per)
-  const clearAll = () => m.set({ fS: [], fC: [], fT: [], q: '', page: 1 })
+  const clearAll = () => m.set({ fS: [], fC: [], q: '', page: 1 })
   const stOpts = (['scheduled', 'progress', 'sent', 'error'] as Status[]).map(k => ({ k, n: vis.filter(r => r.status === k).length, view: <StatusTag s={k} /> }))
   const chOpts = (['push', 'sms', 'desktop', 'email'] as Channel[]).map(k => {
     const I = CHN[k].icon
     return { k, n: vis.filter(r => rowChs(r).indexOf(k) >= 0).length, view: <span className="inline-flex items-center gap-2"><I className="size-4 text-fg-secondary" aria-hidden />{CHN[k].name}</span> }
   })
 
-  const teamKeys = ['personal'].concat(Array.from(new Set(vis.map(r => r.team).filter(Boolean) as string[])))
-  const tmOpts = teamKeys.map(k => ({ k, n: vis.filter(r => (r.team || 'personal') === k).length, view: <span className="inline-flex items-center gap-2">{k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <Users className="size-4 text-fg-secondary" aria-hidden />}{teamName(k === 'personal' ? null : k)}</span> }))
 
   const columns = React.useMemo(() => [
-    col.accessor('sender', { id: 'sender', header: L('Sender · Team', '寄件人・團隊'), meta: { width: 180 }, cell: i => (
+    col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => (
       <span className="flex min-w-0 flex-col">
         <Trunc text={i.getValue()} className="font-medium" />
-        <span className="flex min-w-0 items-center gap-1 text-caption text-fg-secondary">{i.row.original.team ? <Users className="size-3 shrink-0" aria-hidden /> : <User className="size-3 shrink-0" aria-hidden />}<Trunc text={teamName(i.row.original.team)} /></span>
+        {app.msgScope === 'mine' && i.row.original.team ? <span className="flex min-w-0 items-center gap-1 text-caption text-fg-secondary"><Users className="size-3 shrink-0" aria-hidden /><Trunc text={L('Sent for ' + teamName(i.row.original.team), '以「' + teamName(i.row.original.team) + '」送出')} /></span> : null}
       </span>
     ) }),
     col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
@@ -98,7 +96,6 @@ export function SendList({ m }: { m: SendCtl }) {
         </div>
         <FilterMenu label={L('Status', '狀態')} opts={stOpts} sel={s.fS} toggle={k => m.toggleIn('fS', k)} clear={() => m.set({ fS: [], page: 1 })} />
         <FilterMenu label={L('Channel', '通道')} opts={chOpts} sel={s.fC} toggle={k => m.toggleIn('fC', k)} clear={() => m.set({ fC: [], page: 1 })} />
-        <FilterMenu label={L('Team', '團隊')} opts={tmOpts} sel={s.fT} toggle={k => m.toggleIn('fT', k)} clear={() => m.set({ fT: [], page: 1 })} />
       </div>
       <DataTable tableOptions={NO_HIDE}
         columns={columns as any}

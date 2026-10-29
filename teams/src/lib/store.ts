@@ -5,7 +5,7 @@ import { toast } from '@qijenchen/design-system'
 import { GROUPS, ROWS0, TEAMS, TEMPLATES, type Group, type Row, type Team, type Template } from './data'
 import type { Lang } from './i18n'
 
-export type Page = 'send' | 'groups' | 'templates' | 'teams'
+export type Page = 'send' | 'groups' | 'templates'
 export interface AppState {
   page: Page
   lang: Lang
@@ -17,6 +17,8 @@ export interface AppState {
   useTemplateId: string | null
   // set by Teams › a team's messages / templates / groups; the list opens filtered to that team
   presetTeam: string | null
+  // which message list is open: 'mine' or a team id
+  msgScope: string
 }
 
 function initialLang(): Lang {
@@ -25,7 +27,7 @@ function initialLang(): Lang {
 }
 
 let state: AppState = {
-  page: (['send', 'groups', 'templates', 'teams'].indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'send') as Page,
+  page: (['send', 'groups', 'templates'].indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'send') as Page,
   lang: initialLang(),
   rows: ROWS0,
   groups: GROUPS.map(g => ({ ...g })),
@@ -33,6 +35,7 @@ let state: AppState = {
   teams: TEAMS.map(t => ({ ...t, members: t.members.map(x => ({ ...x })) })),
   useTemplateId: null,
   presetTeam: null,
+  msgScope: 'mine',
 }
 document.documentElement.lang = state.lang === 'zh' ? 'zh-Hant' : 'en'
 const subs = new Set<() => void>()
@@ -66,8 +69,8 @@ export function flash(title: string, kind: 'ok' | 'err' = 'ok', description?: st
   toast({ variant: kind === 'err' ? 'error' : 'success', title, description })
 }
 
-// follow #send / #groups / #templates / #teams when the address changes
+// follow #send / #groups / #templates when the address changes
 window.addEventListener('hashchange', () => {
   const h = location.hash.slice(1) as Page
-  if (['send', 'groups', 'templates', 'teams'].indexOf(h) >= 0 && h !== state.page) setApp({ page: h })
+  if (['send', 'groups', 'templates'].indexOf(h) >= 0 && h !== state.page) setApp({ page: h })
 })

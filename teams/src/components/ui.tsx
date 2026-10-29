@@ -2,7 +2,7 @@
 // so the look and behaviour come from @qijenchen/design-system.
 import * as React from 'react'
 import {
-  Alert, Avatar, Badge, Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
+  Alert, Avatar, Badge, Button, Checkbox, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
   Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor,
@@ -10,8 +10,7 @@ import {
 import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Filter, Globe, Hash, Mail, Share2, User, Users, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
 import { ME as ME_UI, PMAP as PMAP_UI, type Channel, type Fmt, type Person, type Status } from '../lib/data'
 import { L } from '../lib/i18n'
-import { myTeams, teamById, teamName } from '../lib/teams'
-import { go } from '../lib/store'
+import { inTeam, myTeams, teamName } from '../lib/teams'
 
 // ---------- channels and statuses ----------
 const CH_ICON: Record<Channel, LucideIcon> = { push: Smartphone, desktop: Monitor, email: Mail, sms: MessageSquareText }
@@ -95,9 +94,20 @@ export function IconBox({ icon: I, tone }: { icon: LucideIcon; tone?: 'warn' | '
 export const NO_HIDE = { enableHiding: false }
 
 // ---------- teams ----------
-// Which team an item belongs to; a person's own items read "Personal"
+// The team a message belongs to; a person's own messages read "Personal"
 export function TeamTag({ id }: { id?: string | null }) {
   return <Tag size="sm" color="neutral" icon={id ? Users : User} unbounded>{teamName(id)}</Tag>
+}
+// The teams a template or group is shared with: the first one, then "+N" with the rest on hover
+export function TeamTags({ ids }: { ids: string[] }) {
+  if (!ids.length) return null
+  const first = <TeamTag id={ids[0]} />
+  if (ids.length === 1) return first
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1">{first}
+      <Tip text={ids.slice(1).map(teamName).join('、')}><span tabIndex={0} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="neutral">+{ids.length - 1}</Tag></span></Tip>
+    </span>
+  )
 }
 
 // A filter button that opens a checklist; used for status, channel and team filters
@@ -126,55 +136,53 @@ export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }
   )
 }
 
-// Who owns a template or group. Moving it to a team lets every member of that team use and edit it.
-export function OwnerField({ id, value, onChange, disabled, what }: { id: string; value: string | null; onChange: (team: string | null) => void; disabled?: boolean; what: 'template' | 'group' }) {
-  const teams = myTeams(), t = teamById(value)
-  const opts = [{ value: 'personal', label: L('Personal', '個人') }].concat(teams.map(x => ({ value: x.id, label: x.name })))
-  if (t && !teams.some(x => x.id === t.id)) opts.push({ value: t.id, label: t.name })
+// Share a template or group with teams. Every member of a checked team can use and edit it.
+// Teams you aren't in stay as they are; you can only add or remove your own.
+export function TeamsField({ value, onChange, disabled, what }: { value: string[]; onChange: (ids: string[]) => void; disabled?: boolean; what: 'template' | 'group' }) {
+  const teams = myTeams(), others = value.filter(id => !teams.some(t => t.id === id))
   const thing = what === 'template' ? L('template', '模板') : L('group', '群組')
-  const hint = t ? L('Everyone in ' + t.name + ' can use and edit this ' + thing + '.', '「' + t.name + '」的成員都能使用和編輯這個' + thing + '。') : L('Only you, and people you share it with, can use it.', '只有你和你分享的人能使用。')
-  return (
-    <FormField id={id} label={L('Owner', '歸屬')} hint={hint}>
-      <div className="w-80 max-w-full">
-        <Select id={id} aria-label={L('Owner', '歸屬')} disabled={disabled} value={value || 'personal'} onChange={v => onChange(v === 'personal' ? null : v)} options={opts} />
-      </div>
-    </FormField>
-  )
-}
-// In place of per-person sharing: a team-owned item is open to the whole team
-export function TeamAccess({ id }: { id: string }) {
-  const t = teamById(id)
-  if (!t) return null
-  const shown = t.members.slice(0, 5)
+  const toggle = (id: string) => onChange(value.indexOf(id) >= 0 ? value.filter(x => x !== id) : value.concat([id]))
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-body font-medium">{L('Who has access', '誰能使用')}</span>
-      <div className="flex flex-wrap items-center gap-3 rounded-md border border-divider px-3 py-2">
-        <IconBox icon={Users} tone="info" />
-        <span className="flex min-w-0 flex-1 flex-col"><span className="text-body font-medium">{t.name}</span><span className="text-caption text-fg-secondary">{L(t.members.length + ' members can use and edit it', t.members.length + ' 位成員都能使用和編輯')}</span></span>
-        <span className="flex -space-x-1.5">{shown.map(x => { const p = PMAP_UI[x.pid]; return p ? <span key={x.pid} className="rounded-full ring-2 ring-surface"><PAvatar p={p} /></span> : null })}</span>
-        <Button variant="link" size="sm" onClick={() => go('teams')}>{L('Manage members', '管理成員')}</Button>
-      </div>
+      <span className="text-body font-medium">{L('Share with teams', '共享給團隊')}</span>
+      {teams.length ? (
+        <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+          {teams.map(t => (
+            <label key={t.id} className={cn('flex min-h-11 items-center gap-3 px-3 py-2', !disabled && 'cursor-pointer')}>
+              <Checkbox checked={value.indexOf(t.id) >= 0} disabled={disabled} onCheckedChange={() => toggle(t.id)} aria-label={t.name} />
+              <Users className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+              <span className="flex-1 text-body">{t.name}</span>
+              <span className="text-caption text-fg-secondary tabular-nums">{L(t.members.length + ' members', t.members.length + ' 人')}</span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+      {others.length ? <span className="flex flex-wrap items-center gap-1.5 text-caption text-fg-secondary">{L('Also shared with', '也共享給')}{others.map(id => <TeamTag key={id} id={id} />)}</span> : null}
+      <span className="text-caption text-fg-secondary">{value.length ? L('Members of these teams can use and edit this ' + thing + '.', '這些團隊的成員都能使用和編輯這個' + thing + '。') : L('Not shared with a team.', '沒有共享給團隊。')}</span>
     </div>
   )
 }
 
-// filter key for who owns a template or group: a team id, "personal" (yours), or "shared" (someone else's, shared with you)
-export function ownKey(x: { team?: string | null; owner?: string; creator?: string }) {
-  return x.team || ((x.owner || x.creator) === ME_UI ? 'personal' : 'shared')
+// filter keys for templates and groups: each team it's shared with, plus "personal" (yours, not shared with a team)
+// or "shared" (someone else's, shared with you directly)
+export function ownKeys(x: { teams?: string[]; owner?: string; creator?: string }) {
+  const t = (x.teams || []).filter(inTeam)
+  if (t.length) return t
+  return [(x.owner || x.creator) === ME_UI ? 'personal' : 'shared']
 }
-export function ownOpts(items: { team?: string | null; owner?: string; creator?: string }[]) {
-  const keys = ['personal', 'shared'].concat(Array.from(new Set(items.map(x => x.team).filter(Boolean) as string[])))
+export function ownOpts(items: { teams?: string[]; owner?: string; creator?: string }[]) {
+  const keys = ['personal', 'shared'].concat(myTeams().map(t => t.id))
   return keys.map(k => ({
-    k, n: items.filter(x => ownKey(x) === k).length,
+    k, n: items.filter(x => ownKeys(x).indexOf(k) >= 0).length,
     view: <span className="inline-flex items-center gap-2">{k === 'shared' ? <Share2 className="size-4 text-fg-secondary" aria-hidden /> : k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <Users className="size-4 text-fg-secondary" aria-hidden />}{k === 'personal' ? L('My personal', '我的個人項目') : k === 'shared' ? L('Shared with me', '分享給我的') : teamName(k)}</span>,
   })).filter(o => o.n > 0)
 }
-// owner of a row in the templates or groups list
-export function OwnTag({ x }: { x: { team?: string | null; owner?: string; creator?: string } }) {
-  const k = ownKey(x)
-  if (k === 'shared') return <Tag size="sm" color="neutral" icon={Share2} unbounded>{L('Shared with me', '分享給我')}</Tag>
-  return <TeamTag id={x.team} />
+// owner column in the templates and groups lists
+export function OwnTag({ x }: { x: { teams?: string[]; owner?: string; creator?: string } }) {
+  const k = ownKeys(x)
+  if (k[0] === 'shared') return <Tag size="sm" color="neutral" icon={Share2} unbounded>{L('Shared with me', '分享給我')}</Tag>
+  if (k[0] === 'personal') return <TeamTag id={null} />
+  return <TeamTags ids={k} />
 }
 
 // ---------- tables ----------

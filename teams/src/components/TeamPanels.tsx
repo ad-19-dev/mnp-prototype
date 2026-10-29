@@ -1,0 +1,153 @@
+// Creating a team and managing its members. Teams are open like chat groups: any member can add or
+// remove people, and anyone can leave; there are no admins.
+import * as React from 'react'
+import {
+  Button, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Popover,
+  PopoverAnchor, PopoverContent, Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, Textarea,
+} from '@qijenchen/design-system'
+import { LogOut, UserPlus, X } from 'lucide-react'
+import { ME, PEOPLE, PMAP, fmtN, type Team } from '../lib/data'
+import { flash, getApp, go, setApp } from '../lib/store'
+import { L, P } from '../lib/i18n'
+import { ConfirmDialog, FormField, PAvatar, Two, type Confirm } from './ui'
+
+// search the directory and add people; Enter adds the top match
+function MemberPicker({ exclude, onAdd }: { exclude: string[]; onAdd: (pid: string) => void }) {
+  const [q, setQ] = React.useState(''), [open, setOpen] = React.useState(false), anchor = React.useRef<HTMLDivElement>(null)
+  const ql = q.trim().toLowerCase()
+  const cands = ql ? PEOPLE.filter(p => exclude.indexOf(p.id) < 0 && [p.zh, p.en, p.nt, p.emp, p.org].join(' ').toLowerCase().indexOf(ql) >= 0).slice(0, 6) : []
+  const add = (pid: string) => { onAdd(pid); setQ(''); setOpen(false) }
+  return (
+    <Popover open={open && !!ql} onOpenChange={x => { if (!x) setOpen(false) }}>
+      <PopoverAnchor asChild>
+        <div ref={anchor}>
+          <Input startIcon={UserPlus} autoComplete="off" placeholder={L('Add people by name, NT account or employee ID', '用姓名、NT 帳號或工號加入成員')} aria-label={L('Add members', '加入成員')} value={q}
+            onChange={e => { setQ(e.target.value); setOpen(true) }}
+            onKeyDown={e => { if (e.key === 'Escape') setOpen(false); if (e.key === 'Enter' && cands[0]) { e.preventDefault(); add(cands[0].id) } }} />
+        </div>
+      </PopoverAnchor>
+      <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => { if (anchor.current?.contains(e.target as Node)) e.preventDefault() }}>
+        {cands.length ? cands.map(p => (
+          <button key={p.id} type="button" onClick={() => add(p.id)} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-neutral-hover">
+            <PAvatar p={p} size={28} /><Two a={p.zh + ' ' + p.en} b={p.title + ' · ' + p.org} strong className="flex-1" />
+          </button>
+        )) : <div className="px-3 py-3 text-body text-fg-secondary">{L('No match for “' + q.trim() + '”.', '找不到「' + q.trim() + '」。')}</div>}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function MemberList({ pids, onRemove }: { pids: string[]; onRemove: (pid: string) => void }) {
+  return (
+    <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+      {pids.map(pid => {
+        const p = PMAP[pid]
+        if (!p) return null
+        return (
+          <div key={pid} className="flex min-h-12 items-center gap-3 px-3 py-2">
+            <PAvatar p={p} size={28} />
+            <Two a={p.zh + ' ' + p.en + (pid === ME ? L(' (you)', '（你）') : '')} b={p.title + ' · ' + p.org} strong className="flex-1" />
+            {pid !== ME ? <Button variant="text" size="sm" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + p.en} onClick={() => onRemove(pid)} /> : <span className="w-7 shrink-0" aria-hidden />}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// New team: a name and the first members; you're in it from the start
+export function NewTeamDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [name, setName] = React.useState(''), [desc, setDesc] = React.useState(''), [pids, setPids] = React.useState<string[]>([ME]), [tried, setTried] = React.useState(false)
+  React.useEffect(() => { if (open) { setName(''); setDesc(''); setPids([ME]); setTried(false) } }, [open])
+  const nm = name.trim(), dup = getApp().teams.some(t => t.name.toLowerCase() === nm.toLowerCase())
+  const err = tried && !nm ? L('Enter a name.', '請輸入名稱。') : name.length > 50 ? L('Use 50 characters or fewer.', '最多 50 個字。') : tried && dup ? L('Another team already uses this name.', '已有團隊使用這個名稱。') : ''
+  const create = () => {
+    if (!nm || name.length > 50 || dup) { setTried(true); return }
+    const id = 'tn' + Date.now().toString(36)
+    const t: Team = { id, name: nm, desc: desc.trim(), created: new Date().toISOString().slice(0, 10).replace(/-/g, '/'), members: pids.map(pid => ({ pid })) }
+    setApp(a => ({ teams: a.teams.concat([t]), msgScope: id }))
+    go('send'); onClose()
+    flash(L('Team created', '已建立團隊'), 'ok', nm + ' · ' + P(pids.length, 'member', '人'))
+  }
+  return (
+    <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
+      {open ? (
+        <DialogContent maxWidth={560} height="hug">
+          <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{L('New team', '建立團隊')}</DialogTitle><DialogDescription className="text-body text-fg-secondary">{L('Members see each other’s messages, and can add or remove people.', '成員看得到彼此的訊息，也都能加入或移除成員。')}</DialogDescription></div></DialogHeader>
+          <DialogBody>
+            <div className="flex flex-col gap-[var(--layout-space-loose)]">
+              <FormField id="nt-name" label={L('Name', '名稱')} required count={name.length + ' / 50'} over={name.length > 50} error={err}>
+                <Input id="nt-name" autoFocus value={name} error={!!err} onChange={e => setName(e.target.value)} placeholder={L('e.g. Fab 18 Communications', '例如：Fab 18 Communications')} />
+              </FormField>
+              <FormField id="nt-desc" label={L('Description', '說明')} count={desc.length + ' / 200'} over={desc.length > 200}>
+                <Textarea id="nt-desc" rows={2} value={desc} onChange={e => setDesc(e.target.value)} placeholder={L('What this team sends', '這個團隊負責發送什麼')} />
+              </FormField>
+              <div className="flex flex-col gap-2">
+                <span className="text-body font-medium">{L('Members', '成員')} <span className="font-normal text-fg-secondary">· {fmtN(pids.length)}</span></span>
+                <MemberPicker exclude={pids} onAdd={pid => setPids(pids.concat([pid]))} />
+                <MemberList pids={pids} onRemove={pid => setPids(pids.filter(x => x !== pid))} />
+              </div>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="tertiary" onClick={onClose}>{L('Cancel', '取消')}</Button>
+            <Button variant="primary" onClick={create}>{L('Create team', '建立團隊')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      ) : null}
+    </Dialog>
+  )
+}
+
+// Members of the team whose messages are open: add, remove (changes apply right away), or leave
+export function TeamMembersSheet({ team, open, onClose }: { team: Team | undefined; open: boolean; onClose: () => void }) {
+  const [cf, setCf] = React.useState<Confirm | null>(null)
+  if (!team) return null
+  const pids = team.members.map(x => x.pid)
+  const setMembers = (next: string[]) => setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, members: next.map(pid => ({ pid })) } : t) }))
+  const add = (pid: string) => { setMembers(pids.concat([pid])); flash(L('Added ', '已加入 ') + (PMAP[pid]?.en || ''), 'ok', team.name) }
+  const askRemove = (pid: string) => {
+    const p = PMAP[pid]
+    setCf({ title: L('Remove ' + p.en + '?', '要移除 ' + p.en + ' 嗎？'), text: L(p.en + ' will no longer see ' + team.name + '’s messages, templates and groups. Anyone in the team can add them back.', p.en + ' 會看不到「' + team.name + '」的訊息、模板和群組。團隊裡的任何人都能再把他加回來。'), icon: X, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Remove', '移除'), danger: true,
+      run: () => { setMembers(pids.filter(x => x !== pid)); setCf(null) } })
+  }
+  const askLeave = () => {
+    const mine = getApp().rows.filter(r => r.team === team.id && r.creator === ME).length, last = pids.length === 1
+    setCf({
+      title: L('Leave ' + team.name + '?', '要離開「' + team.name + '」嗎？'),
+      text: last ? L('You’re the last member, so the team will close.', '你是最後一位成員，離開後團隊會解散。') : L('You’ll no longer see this team’s messages, templates and groups. Anyone in the team can add you back.', '離開後你會看不到這個團隊的訊息、模板和群組，團隊裡的任何人都能再把你加回來。'),
+      rows: [{ k: L('You keep', '你仍保有'), v: mine ? L(P(mine, 'message', '') + ' you sent for the team, under My messages, to view and duplicate', '你以團隊名義送出的 ' + mine + ' 則訊息，仍在「我的訊息」裡（只能查看和複製）') : L('Nothing; you haven’t sent for this team', '沒有，你沒有以這個團隊發過訊息') },
+             { k: L('The team keeps', '團隊保留'), v: last ? L('Nothing; the team closes', '團隊解散，不再保留') : L('Its messages, including yours', '團隊的訊息，包括你送出的') }],
+      icon: LogOut, tone: 'warn', cancel: L('Stay', '留下'), ok: L('Leave team', '離開團隊'), danger: true,
+      run: () => {
+        setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t).filter(t => t.members.length > 0), msgScope: 'mine' }))
+        setCf(null); onClose()
+        flash(L('You left ' + team.name, '已離開「' + team.name + '」'))
+      },
+    })
+  }
+  return (
+    <>
+      <Sheet open={open} onOpenChange={o => { if (!o) onClose() }}>
+        {open ? (
+          <SheetContent side="right" className="w-full sm:max-w-[480px]">
+            <SheetHeader><div className="flex flex-col gap-0.5"><SheetTitle className="text-body-lg">{team.name}</SheetTitle><SheetDescription className="text-body text-fg-secondary">{team.desc || L('Team members', '團隊成員')}</SheetDescription></div></SheetHeader>
+            <SheetBody>
+              <div className="flex flex-col gap-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
+                <span className="text-body font-semibold">{L('Members', '成員')} <span className="font-normal text-fg-secondary">· {fmtN(pids.length)}</span></span>
+                <p className="text-caption text-fg-secondary">{L('Everyone in the team can add or remove members, and see and change the team’s messages.', '團隊裡的每個人都能加入、移除成員，也能查看和修改團隊的訊息。')}</p>
+                <MemberPicker exclude={pids} onAdd={add} />
+                <MemberList pids={pids} onRemove={askRemove} />
+              </div>
+            </SheetBody>
+            <SheetFooter>
+              <Button variant="text" danger startIcon={LogOut} onClick={askLeave}>{L('Leave team', '離開團隊')}</Button>
+              <Button variant="primary" className="ml-auto" onClick={onClose}>{L('Done', '完成')}</Button>
+            </SheetFooter>
+          </SheetContent>
+        ) : null}
+      </Sheet>
+      <ConfirmDialog cf={cf} onClose={() => setCf(null)} />
+    </>
+  )
+}

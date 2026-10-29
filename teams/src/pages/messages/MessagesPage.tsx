@@ -1,9 +1,11 @@
 // Messages page: the list of sent and scheduled messages, and the send flow
 import * as React from 'react'
 import { Button } from '@qijenchen/design-system'
-import { Plus } from 'lucide-react'
+import { Plus, UsersRound } from 'lucide-react'
 import { useLogic } from '../../lib/logic'
-import { presetFilter, useClearPreset } from '../../lib/teams'
+import { inTeam, presetFilter, teamById, useClearPreset } from '../../lib/teams'
+import { scopeLabel } from './ctl'
+import { TeamMembersSheet } from '../../components/TeamPanels'
 import { getApp, setApp, useApp } from '../../lib/store'
 import { ConfirmDialog } from '../../components/ui'
 import { PageHeader, useNavHome } from '../../components/shell'
@@ -18,6 +20,10 @@ export function MessagesPage() {
   const app = useApp()
   const [s, m] = useLogic(() => ({ ...initSend(), fT: presetFilter() }), makeSendCtl)
   useClearPreset()
+  const [members, setMembers] = React.useState(false)
+  const team = app.msgScope !== 'mine' ? teamById(app.msgScope) : undefined
+  // the open list may vanish (you left the team): fall back to My messages
+  React.useEffect(() => { if (app.msgScope !== 'mine' && !inTeam(app.msgScope)) setApp({ msgScope: 'mine' }) }, [app.msgScope, app.teams])
   useNavHome(() => m.goList())
   // Templates › Use template lands here with a template to apply
   React.useEffect(() => {
@@ -33,11 +39,17 @@ export function MessagesPage() {
     <>
       {s.view === 'compose' ? <ComposeView m={m} /> : (
         <>
-          <PageHeader crumbs={[{ label: L('Messages', '訊息') }]} actions={<Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>} />
+          <PageHeader crumbs={[{ label: L('Messages', '訊息') }, { label: scopeLabel() }]} actions={<>
+            {team ? (
+              <Button variant="tertiary" startIcon={UsersRound} onClick={() => setMembers(true)}>{L('Members · ' + team.members.length, '成員・' + team.members.length)}</Button>
+            ) : null}
+            <Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>
+          </>} />
           <SendList m={m} />
         </>
       )}
       <DetailSheet m={m} />
+      <TeamMembersSheet team={team} open={members && !!team} onClose={() => setMembers(false)} />
       <NotSentDialog m={m} />
       <ImportDialog m={m} />
       <NumbersDialog m={m} />

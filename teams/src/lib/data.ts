@@ -24,13 +24,13 @@ export interface Org { code: string; name: string; count: number }
 export interface Group {
   id: string; name: string; desc: string; count: number; updated: string; creator: string
   role: 'Owner' | 'Editor' | 'Viewer'; members?: { pid: string }[]; collabs?: { pid: string; role: string }[]; fresh?: number
-  team?: string | null
+  teams?: string[]
 }
 export interface EmailBody { mode: 'same' | 'own'; subject?: string; html?: string; atts?: { name: string; size: number }[] }
 export interface Template {
   id: string; name: string; sender: string; title: string; content: string; sms: string
   email: EmailBody; shared: [string, string][]; updated: string; owner: string; fresh?: number
-  team?: string | null
+  teams?: string[]
 }
 export type Status = 'scheduled' | 'progress' | 'sent' | 'error'
 export interface Row {
@@ -319,28 +319,30 @@ function buildRows(): Row[] {
 export const ROWS0 = buildRows()
 
 // ---------- teams ----------
-// A team is a set of people who send as one unit. Messages, templates and audience groups belong either to
-// one person ("personal") or to a team; everything a team owns is visible to all of its members.
-export type TeamRole = 'admin' | 'member'
-export interface Team { id: string; name: string; desc: string; created: string; members: { pid: string; role: TeamRole }[] }
-const TM = (pids: string): Team['members'] => pids.split(' ').map((x, i) => ({ pid: x.replace('*', ''), role: x.endsWith('*') || i === 0 ? 'admin' : 'member' }))
+// A team is a set of people who send as one unit, open like a chat group: any member can add or remove
+// members, and anyone can leave. A message belongs to one person or one team; a template or audience group
+// belongs to one person and can be shared with any number of teams.
+export interface Team { id: string; name: string; desc: string; created: string; members: { pid: string }[] }
+const TM = (pids: string): Team['members'] => pids.split(' ').map(pid => ({ pid }))
 export const TEAMS: Team[] = [
-  { id: 'tm1', name: 'Platform Ops', desc: 'tWorkspace operations: maintenance windows, incidents and release notes.', created: '2026/03/02', members: TM('p01 p22* p02 p10 p08 p17') },
+  { id: 'tm1', name: 'Platform Ops', desc: 'tWorkspace operations: maintenance windows, incidents and release notes.', created: '2026/03/02', members: TM('p01 p22 p02 p10 p08 p17') },
   { id: 'tm2', name: 'Fab 18 Communications', desc: 'Facility and shift notices for Fab 18.', created: '2026/05/18', members: TM('p12 p20 p24 p04 p16 p01') },
   { id: 'tm3', name: 'ESH Emergency', desc: 'Emergency alerts and drills.', created: '2026/04/09', members: TM('p19 p13 p07 p01') },
   { id: 'tm4', name: 'UX Team', desc: 'Research recruiting and design system updates.', created: '2026/06/30', members: TM('p09 p01 p05 p18') },
   { id: 'tm5', name: 'IT Service Desk', desc: 'IT notices for employees.', created: '2026/02/11', members: TM('p14 p11 p21') },
 ]
-// who owns what in the sample data; anything not listed is personal
+// who owns what in the sample data; messages not listed are personal, templates and groups not listed aren't shared with a team
 const ROW_TEAM: Record<string, string> = {
   m017: 'tm1', m005: 'tm1', m016: 'tm2', m015: 'tm2', m018: 'tm2', m004: 'tm2', m010: 'tm2',
   m019: 'tm3', m012: 'tm3', m009: 'tm3', m001: 'tm3', m008: 'tm4', m003: 'tm4', m014: 'tm5', m002: 'tm5', m006: 'tm5',
 }
 ROWS0.forEach(r => { r.team = ROW_TEAM[r.id] || null })
-const TPL_TEAM: Record<string, string> = { t1: 'tm2', t3: 'tm2', t2: 'tm3', t4: 'tm1', t8: 'tm1', t9: 'tm1' }
-TEMPLATES.forEach(t => { t.team = TPL_TEAM[t.id] || null })
-const GROUP_TEAM: Record<string, string> = { g1: 'tm2', g2: 'tm1', g3: 'tm1', g4: 'tm3', g6: 'tm4' }
-GROUPS.forEach(g => { g.team = GROUP_TEAM[g.id] || null })
+// the typhoon template and the ERT group are shared with two teams
+const TPL_TEAMS: Record<string, string[]> = { t1: ['tm2'], t3: ['tm2'], t2: ['tm3', 'tm2'], t4: ['tm1'], t8: ['tm1'], t9: ['tm1'] }
+TEMPLATES.forEach(t => { t.teams = TPL_TEAMS[t.id] || [] })
+const GROUP_TEAMS: Record<string, string[]> = { g1: ['tm2'], g2: ['tm1'], g3: ['tm1'], g4: ['tm3', 'tm2'], g6: ['tm4'] }
+GROUPS.forEach(g => { g.teams = GROUP_TEAMS[g.id] || [] })
+
 
 // channels of a sent message, with SMS fallback listed after Device Notifications
 export function rowChs(r: Row): Channel[] { return CH_ORDER.filter(k => k === 'sms' ? !!r.sms : r.channels.indexOf(k) >= 0) }

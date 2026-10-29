@@ -5,7 +5,7 @@ import {
   Input, Pagination, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Textarea,
   Checkbox, Tooltip, TooltipContent, TooltipTrigger, cn,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Trunc, Tip, PageSize, FilterMenu, OwnerField, OwnTag, TeamAccess, ownKey, ownOpts } from '../../components/ui'
+import { NO_HIDE, Trunc, Tip, PageSize, FilterMenu, OwnTag, TeamsField, ownKeys, ownOpts } from '../../components/ui'
 import { canSeeItem, groupRole, inTeam } from '../../lib/teams'
 import { presetFilter, useClearPreset } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -32,7 +32,7 @@ const RoleTag = ({ r, children }: { r: Role; children?: React.ReactNode }) => <T
 interface Fb { added: number; by: Record<string, number>; orgs: { code: string; n: number }[]; dup: number; amb: { id: string; tok: string; cands: string[] }[]; miss: { id: string; tok: string; why: string }[]; undo: string[]; undone?: number }
 interface Ed {
   id: string | null; isNew: boolean; role: Role; name: string; desc: string; collabs: { pid: string; role: Role }[]; members: { pid: string }[]
-  updated: string; creator: string; team: string | null; input: string; fb: Fb | null; picks: Record<string, Record<string, boolean>>
+  updated: string; creator: string; teams: string[]; input: string; fb: Fb | null; picks: Record<string, Record<string, boolean>>
   cq: string; cOpen: boolean; cRole: Role; mq: string; mf: 'all' | 'dev' | 'desk' | 'email' | 'sms'; mpage: number
   fresh: Record<string, boolean>; tried: boolean; dirty: boolean; ri: RiState; showPaste: boolean
 }
@@ -40,12 +40,12 @@ interface GS { view: 'list' | 'edit'; q: string; fT: string[]; cf: Confirm | nul
 
 function makeEd(g: Group | null, dup?: boolean): Ed {
   const base = { input: '', fb: null, picks: {}, cq: '', cOpen: false, cRole: 'Editor' as Role, mq: '', mf: 'all' as const, mpage: 1, fresh: {}, tried: false, dirty: false, ri: { type: 'person' as const, q: '', open: false, exp: null }, showPaste: false }
-  if (!g) return { ...base, id: null, isNew: true, role: 'Owner', name: '', desc: '', collabs: [{ pid: ME, role: 'Owner' }], members: [], updated: '', creator: ME, team: null }
+  if (!g) return { ...base, id: null, isNew: true, role: 'Owner', name: '', desc: '', collabs: [{ pid: ME, role: 'Owner' }], members: [], updated: '', creator: ME, teams: [] }
   const seed = GSEED[g.id] || ({} as any)
   const members = membersFor(g).map(m => ({ pid: m.pid }))
   const collabs = g.collabs ? g.collabs.map(x => ({ pid: x.pid, role: x.role as Role })) : ((seed.col || [[g.creator, 'Owner']]) as [string, Role][]).map(x => ({ pid: x[0], role: x[1] }))
-  if (dup) return { ...base, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + g.name).slice(0, 50), desc: g.desc, collabs: [{ pid: ME, role: 'Owner' }], members, updated: '', creator: ME, team: g.team && inTeam(g.team) ? g.team : null, dirty: true }
-  return { ...base, id: g.id, isNew: false, role: groupRole(g), name: g.name, desc: g.desc, collabs, members, updated: g.updated, creator: g.creator, team: g.team || null }
+  if (dup) return { ...base, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + g.name).slice(0, 50), desc: g.desc, collabs: [{ pid: ME, role: 'Owner' }], members, updated: '', creator: ME, teams: (g.teams || []).filter(inTeam), dirty: true }
+  return { ...base, id: g.id, isNew: false, role: groupRole(g), name: g.name, desc: g.desc, collabs, members, updated: g.updated, creator: g.creator, teams: (g.teams || []).slice() }
 }
 
 let seq = 0
@@ -57,7 +57,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
     listRows() {
       const s = get(), q = s.q.trim().toLowerCase()
       return getApp().groups.filter(canSeeItem).filter(g => {
-        if (s.fT.length && s.fT.indexOf(ownKey(g)) < 0) return false
+        if (s.fT.length && !ownKeys(g).some(k => s.fT.indexOf(k) >= 0)) return false
         if (!q) return true
         const cr = PMAP[g.creator] || ({} as any)
         return [g.name, g.desc, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
@@ -166,7 +166,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
       if (!name || name.length > 50 || ed.desc.length > 200 || dupName) { m.setEd({ tried: true }, true); flash(L('Check the group name', '請檢查群組名稱'), 'err'); scrollTop(); return }
       if (!ed.members.length) { m.setEd({ tried: true }, true); flash(L('Add at least one member', '請加入至少一位成員'), 'err'); return }
       const mine = ed.collabs.find(c => c.pid === ME)
-      const patch = { team: ed.team, name, desc: ed.desc.trim(), count: ed.members.length, updated: fmtDT(new Date()), members: ed.members.map(x => ({ pid: x.pid })), collabs: ed.collabs.map(c => ({ pid: c.pid, role: c.role })), role: mine ? mine.role : ed.role, fresh: Date.now() }
+      const patch = { teams: ed.teams, name, desc: ed.desc.trim(), count: ed.members.length, updated: fmtDT(new Date()), members: ed.members.map(x => ({ pid: x.pid })), collabs: ed.collabs.map(c => ({ pid: c.pid, role: c.role })), role: mine ? mine.role : ed.role, fresh: Date.now() }
       if (ed.id) setApp(a => ({ groups: a.groups.map(g => g.id === ed.id ? { ...g, ...patch } : g) }))
       else setApp(a => ({ groups: [{ id: 'gn' + (++seq), creator: ME, ...patch } as Group].concat(a.groups) }))
       set({ view: 'list', ed: null, fT: [] })
@@ -306,13 +306,12 @@ function GroupEditor({ m }: { m: GCtl }) {
             <FormField id="g-desc" label={L('Description', '說明')} count={ed.desc.length + ' / 200'} over={ed.desc.length > 200} hint={L('Helps others pick the right group.', '幫助別人選對群組。')}>
               <Textarea id="g-desc" rows={2} disabled={isViewer} value={ed.desc} onChange={e => m.setEd({ desc: e.target.value })} placeholder={L('What this group is for', '這個群組的用途')} />
             </FormField>
-            <OwnerField id="g-owner" what="group" value={ed.team} disabled={!canManage} onChange={team => m.setEd({ team })} />
           </div>
         </Section>
 
-        {ed.team ? <Section title={L('Who has access', '權限')}><TeamAccess id={ed.team} /></Section> : (
         <Section title={L('Who has access', '權限')} sub={L('Everyone listed can use this group.', '名單上的人都能使用這個群組。')}>
           <div className="flex flex-col gap-[var(--layout-space-tight)]">
+            <TeamsField what="group" value={ed.teams} disabled={!canEdit} onChange={teams => m.setEd({ teams })} />
             {!canManage ? <Banner tone="neutral">{L('Only owners can change access. Owner: ' + ownerNames + '.', '只有擁有者能調整權限。擁有者：' + ownerNames + '。')}</Banner> : null}
             {canManage ? (
               <div className="flex flex-wrap items-start gap-2">
@@ -352,7 +351,6 @@ function GroupEditor({ m }: { m: GCtl }) {
             </div>
           </div>
         </Section>
-        )}
 
         <Section title={L('Members', '成員')} sub={n ? P(n, 'member', '人') : undefined}>
           <div className="flex flex-col gap-[var(--layout-space-tight)]">

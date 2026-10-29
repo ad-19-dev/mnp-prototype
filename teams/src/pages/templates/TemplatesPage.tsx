@@ -4,8 +4,8 @@ import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty,
   Input, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Tag, Textarea,
 } from '@qijenchen/design-system'
-import { FilterMenu, NO_HIDE, OwnerField, TeamAccess, TeamTag, Trunc, ownOpts, ownKey } from '../../components/ui'
-import { canEditTemplate, canSeeItem, inTeam, isAdmin, teamName } from '../../lib/teams'
+import { FilterMenu, NO_HIDE, TeamTags, TeamsField, Trunc, ownKeys, ownOpts } from '../../components/ui'
+import { canEditTemplate, canSeeItem, inTeam } from '../../lib/teams'
 import { presetFilter, useClearPreset } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
@@ -26,17 +26,17 @@ import { L, P } from '../../lib/i18n'
 interface TEd {
   id: string | null; isNew: boolean; role: 'Owner' | 'Viewer'; name: string; sender: string; title: string; content: string; sms: string
   emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
-  shared: [string, string][]; owner: string; team: string | null; updated: string; sq: string; sOpen: boolean; tried: boolean; dirty: boolean
+  shared: [string, string][]; owner: string; teams: string[]; updated: string; sq: string; sOpen: boolean; tried: boolean; dirty: boolean
 }
 interface TS { view: 'list' | 'edit'; q: string; fT: string[]; cf: Confirm | null; ed: TEd | null }
 
 function makeTplEd(t: Template | null, dup?: boolean): TEd {
   const base = { sq: '', sOpen: false, tried: false, dirty: false, htmlKey: Date.now() % 100000 }
-  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', emailMode: 'same', subject: '', html: '', bodyText: '', shared: [], owner: ME, team: null, updated: '' }
+  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', emailMode: 'same', subject: '', html: '', bodyText: '', shared: [], owner: ME, teams: [], updated: '' }
   const own = tplHasEmail(t), h = own ? t.email.html || '' : ''
   const body = { sender: t.sender || '', title: t.title || '', content: t.content || '', sms: t.sms || '', emailMode: (own ? 'own' : 'same') as 'own' | 'same', subject: own ? t.email.subject || '' : '', html: h, bodyText: htmlToText(h) }
-  if (dup) return { ...base, ...body, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + t.name).slice(0, LIM.name), shared: [], owner: ME, team: t.team && inTeam(t.team) ? t.team : null, updated: '', dirty: true }
-  return { ...base, ...body, id: t.id, isNew: false, role: canEditTemplate(t) ? 'Owner' : 'Viewer', name: t.name, shared: (t.shared || []).map(x => x.slice() as [string, string]), owner: t.owner, team: t.team || null, updated: t.updated }
+  if (dup) return { ...base, ...body, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + t.name).slice(0, LIM.name), shared: [], owner: ME, teams: (t.teams || []).filter(inTeam), updated: '', dirty: true }
+  return { ...base, ...body, id: t.id, isNew: false, role: canEditTemplate(t) ? 'Owner' : 'Viewer', name: t.name, shared: (t.shared || []).map(x => x.slice() as [string, string]), owner: t.owner, teams: (t.teams || []).slice(), updated: t.updated }
 }
 function shareVM(sh: [string, string]) {
   if (sh[0] === 'o') { const o = ORGS.find(x => x.code === sh[1]) || { code: sh[1], name: '', count: 0 }; return { key: 'o:' + sh[1], isOrg: true, label: o.code, short: o.code, sub: o.name + ' · ' + P(o.count, 'member', '人'), p: null } }
@@ -58,7 +58,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
     listRows() {
       const s = get(), q = s.q.trim().toLowerCase()
       return getApp().templates.filter(canSeeItem).filter(t => {
-        if (s.fT.length && s.fT.indexOf(ownKey(t)) < 0) return false
+        if (s.fT.length && !ownKeys(t).some(k => s.fT.indexOf(k) >= 0)) return false
         if (!q) return true
         const ow = PMAP[t.owner] || ({} as any)
         return [t.name, t.title, t.content, t.sms, t.email && t.email.subject, t.sender, ow.en, ow.zh].join(' ').toLowerCase().indexOf(q) >= 0
@@ -109,7 +109,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
     saveTpl() {
       const ed = get().ed!, e = m.errs()
       if (Object.keys(e).length) { m.setEd({ tried: true }, true); flash(L('Fix the highlighted fields', '請修正標示的欄位'), 'err'); return }
-      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updated: fmtDT(new Date()).slice(0, 10), fresh: Date.now() }
+      const patch: Partial<Template> = { teams: ed.teams, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updated: fmtDT(new Date()).slice(0, 10), fresh: Date.now() }
       if (ed.id) setApp(a => ({ templates: a.templates.map(t => t.id === ed.id ? { ...t, ...patch } : t) }))
       else setApp(a => ({ templates: [{ id: 'tt' + (++seq), owner: ME, ...patch } as Template].concat(a.templates) }))
       set({ view: 'list', ed: null, fT: [], q: '' })
@@ -169,7 +169,7 @@ function TplList({ m }: { m: TCtl }) {
     ) } }),
     tcol.display({ id: 'fmt', header: L('Channels', '通道'), meta: { width: 140 }, cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
-    tcol.display({ id: 'sh', header: L('Who can use', '誰能使用'), meta: { width: 180 }, cell: i => { if (i.row.original.team) return <TeamTag id={i.row.original.team} />; const sh = i.row.original.shared || [], I = !sh.length ? Lock : sh[0][0] === 'o' ? Building2 : Users; return <span className="flex min-w-0 items-center gap-1.5"><I className="size-3.5 shrink-0 text-fg-secondary" aria-hidden /><span className="truncate">{shareSummary(sh)}</span></span> } }),
+    tcol.display({ id: 'sh', header: L('Who can use', '誰能使用'), meta: { width: 180 }, cell: i => { const tm = (i.row.original.teams || []).filter(inTeam); if (tm.length) return <TeamTags ids={tm} />; const sh = i.row.original.shared || [], I = !sh.length ? Lock : sh[0][0] === 'o' ? Building2 : Users; return <span className="flex min-w-0 items-center gap-1.5"><I className="size-3.5 shrink-0 text-fg-secondary" aria-hidden /><span className="truncate">{shareSummary(sh)}</span></span> } }),
     tcol.accessor('updated', { header: L('Updated', '更新日期'), meta: { width: 110 } }),
     tcol.accessor('owner', { header: L('Owner', '擁有者'), meta: { width: 180 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } }),
   ], [m, app.lang, app.teams])
@@ -256,8 +256,8 @@ function TplEditor({ m }: { m: TCtl }) {
             <FormField id="t-name" label={L('Name', '名稱')} required count={ed.name.length + ' / ' + LIM.name} over={ed.name.length > LIM.name} error={show('name')}>
               <Input id="t-name" disabled={ro} value={ed.name} error={!!show('name')} onChange={ev => m.setEd({ name: ev.target.value })} placeholder={L('e.g. Chiller maintenance notice', '例如：冰水機維修通知')} />
             </FormField>
-            <OwnerField id="t-owner" what="template" value={ed.team} disabled={ro || !(ed.isNew || ed.owner === ME || isAdmin(ed.team))} onChange={team => m.setEd({ team })} />
-            {ed.team ? <TeamAccess id={ed.team} /> : <ShareField m={m} ro={ro} />}
+            <TeamsField what="template" value={ed.teams} disabled={ro} onChange={teams => m.setEd({ teams })} />
+            <ShareField m={m} ro={ro} />
           </div>
         </Section>
         <Section title={L('Content', '內容')} sub={L('Fill in the channels you need. Only the text is saved.', '填寫需要的通道就好，模板只存文字。')}>

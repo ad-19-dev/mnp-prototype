@@ -38,6 +38,9 @@ export const initSend = (): SendState => ({
   imp: null, num: null, sg: null, stpl: null, tp: null, unr: false, gp: null,
 })
 
+// the name of the open message list, for headers and breadcrumbs
+export const scopeLabel = () => { const sc = getApp().msgScope; return sc === 'mine' ? L('My messages', '我的訊息') : teamName(sc) }
+
 let seq = 0
 export type SendCtl = ReturnType<typeof makeSendCtl>
 
@@ -57,14 +60,13 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     tplName(id?: string | null) { const t = m.tplById(id); return t ? t.name : '' },
 
     // ---------- list ----------
-    // messages you created, plus everything the teams you're in have sent
-    visible() { return app().rows.filter(canSeeRow) },
+    // the open list: My messages (everything you sent, personal or for a team) or everything one team sent
+    visible() { const scope = app().msgScope; return app().rows.filter(r => canSeeRow(r) && (scope === 'mine' ? r.creator === ME : r.team === scope)) },
     filtered() {
       const s = get(), q = s.q.trim().toLowerCase()
       return m.visible().filter(r => {
         if (s.fS.length && s.fS.indexOf(r.status) < 0) return false
         if (s.fC.length && !rowChs(r).some(k => s.fC.indexOf(k) >= 0)) return false
-        if (s.fT.length && s.fT.indexOf(r.team || 'personal') < 0) return false
         if (!q) return true
         const cr = PMAP[r.creator] || ({} as any)
         return [r.sender, teamName(r.team), m.tplName(r.tpl), r.title, r.content, r.email && r.email.subject, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
@@ -132,6 +134,11 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
         c.maxStep = 3
         if (mode === 'edit') { c.editId = r.id; const d = parseDT(r.sched); if (d) { c.sendMode = 'schedule'; c.schedAt = toIso(d) } }
       }
+      if (!r) {
+        // a new message starts in the list you're looking at
+        const scope = app().msgScope
+        c.team = scope !== 'mine' && inTeam(scope) ? scope : null
+      }
       if (recv) c.receivers = recv
       set({ view: 'compose', c, det: null, ns: null, cf: null, tp: null, unr: false, rf: '' })
       scrollTop()
@@ -164,7 +171,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     // groups shown first in pickers: yours first, then the most recently updated
     groupSuggest() {
       const rank = (g: { role: string }) => (g.role === 'Owner' ? 0 : g.role === 'Editor' ? 1 : 2)
-      const c = get().c, mineFirst = (g: Group) => (c.team && g.team === c.team ? 0 : 1)
+      const c = get().c, mineFirst = (g: Group) => (c.team && (g.teams || []).indexOf(c.team) >= 0 ? 0 : 1)
       return app().groups.filter(canSeeItem).sort((a, b) => mineFirst(a) - mineFirst(b) || rank(a) - rank(b) || b.updated.localeCompare(a.updated)).slice(0, 5)
     },
     openGroups() { set({ gp: { q: '', tab: 'all', sel: {} } }) },
@@ -256,7 +263,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const c = get().c, own = tplHasEmail(t)
       const sub = own ? t.email.subject || '' : (t.title || ''), body = own ? t.email.html || '' : textToHtml(t.content)
       // a team's template suggests sending as that team, if you haven't picked one
-      const team = c.team || (t.team && inTeam(t.team) ? t.team : null)
+      const team = c.team || (t.teams || []).find(inTeam) || null
       m.setC({ tplId: t.id, team, sender: t.sender || c.sender, title: t.title || '', content: t.content || '', smsText: t.sms || '', emailMode: own ? 'own' : 'same', ...seedEmail(c, sub, body) })
       set({ tp: null, cf: null })
       if (!quiet) flash(L('Template applied', '已套用模板'), 'ok', L('Fill in the [brackets] before sending.', '送出前記得替換 [方括號] 的內容。'))
@@ -304,6 +311,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.mode === 'edit' && c.editId) { id = c.editId; setApp(s => ({ rows: s.rows.map(r => r.id === id ? { ...r, ...base } as Row : r) })) }
       else { id = 'n' + (++seq); setApp(s => ({ rows: [{ id, creator: ME, created: fmtDT(now), ...base } as Row].concat(s.rows) })) }
       set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', fS: [], fC: [] })
+      setApp({ msgScope: c.team || 'mine' })
       scrollTop()
       if (schedD) { flash(L('Scheduled for ', '已排程：') + niceDT(schedD)); return }
       flash(L('Sending to ', '傳送給 ') + P(rc.total, 'receiver', '位收件人'), 'ok', chText(rowChs(base as Row)))
@@ -332,7 +340,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const s = get(), st = s.stpl!, name = st.name.trim(), c = s.c, templates = app().templates
       if (!name || name.length > LIM.name || templates.some(t => t.name.toLowerCase() === name.toLowerCase())) { set({ stpl: { ...st, tried: true } }); return }
       const hasN = hasNotif(c), em = m.emailOut()
-      const t: Template = { id: 'tn' + (++seq), team: c.team, name, sender: c.sender.trim(), title: hasN ? c.title.trim() : '', content: hasN ? c.content.trim() : '', sms: smsOn(c) ? c.smsText.trim() : '', email: em && em.mode === 'own' ? { mode: 'own', subject: em.subject, html: em.html } : { mode: 'same' }, shared: [], updated: fmtDT(new Date()).slice(0, 10), owner: ME, fresh: Date.now() }
+      const t: Template = { id: 'tn' + (++seq), teams: c.team ? [c.team] : [], name, sender: c.sender.trim(), title: hasN ? c.title.trim() : '', content: hasN ? c.content.trim() : '', sms: smsOn(c) ? c.smsText.trim() : '', email: em && em.mode === 'own' ? { mode: 'own', subject: em.subject, html: em.html } : { mode: 'same' }, shared: [], updated: fmtDT(new Date()).slice(0, 10), owner: ME, fresh: Date.now() }
       setApp({ templates: [t].concat(templates) })
       set({ stpl: null })
       m.setC({ tplId: t.id }, true)
@@ -342,7 +350,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const s = get(), sg = s.sg!, name = sg.name.trim(), groups = app().groups
       if (!name || name.length > 50 || sg.desc.length > 200 || groups.some(g => g.name.toLowerCase() === name.toLowerCase())) { set({ sg: { ...sg, tried: true } }); return }
       const members = flatten(s.c.receivers, groups)
-      const g = { id: 'gs' + (++seq), team: s.c.team, name, desc: sg.desc.trim(), count: members.length, updated: fmtDT(new Date()), creator: ME, role: 'Owner' as const, members, collabs: [{ pid: ME, role: 'Owner' }], fresh: Date.now() }
+      const g = { id: 'gs' + (++seq), teams: s.c.team ? [s.c.team] : [], name, desc: sg.desc.trim(), count: members.length, updated: fmtDT(new Date()), creator: ME, role: 'Owner' as const, members, collabs: [{ pid: ME, role: 'Owner' }], fresh: Date.now() }
       setApp({ groups: [g as Group].concat(groups) })
       set({ sg: null })
       flash(L('Group saved', '已存成群組'), 'ok', name + ' · ' + P(g.count, 'member', '人'))
