@@ -8,7 +8,7 @@ import {
   SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem,
 } from '@qijenchen/design-system'
-import { Bell, CircleHelp, LayoutTemplate, Plus, Radio, Search, Send, Users, UsersRound } from 'lucide-react'
+import { Bell, CircleHelp, LayoutTemplate, Plus, Radio, Search, Send, Users, UsersRound, BookUser } from 'lucide-react'
 import { go, setApp, setLang, useApp, type Page } from '../lib/store'
 import { myTeams } from '../lib/teams'
 import { NewTeamDialog } from './TeamPanels'
@@ -16,7 +16,7 @@ import { L } from '../lib/i18n'
 
 // Messages is a group: your own messages, then one list per team you're in. Groups and templates follow.
 const NAV = (): { id: Page; label: string; icon: typeof Send }[] => [
-  { id: 'groups', label: L('Audience groups', '收件群組'), icon: Users },
+  { id: 'groups', label: L('Audience groups', '收件群組'), icon: BookUser },
   { id: 'templates', label: L('Templates', '模板'), icon: LayoutTemplate },
 ]
 

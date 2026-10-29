@@ -7,7 +7,7 @@ import {
 import { FilterMenu, NO_HIDE, Trunc, PageSize } from '../../components/ui'
 import { canManageRow, leftTeamRow, teamName } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Users } from 'lucide-react'
+import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Users, UsersRound } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { CHN, ChIcons, PAvatar, StatusTag, Two } from '../../components/ui'
@@ -57,7 +57,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
     col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => (
       <span className="flex min-w-0 flex-col">
         <Trunc text={i.getValue()} className="font-medium" />
-        {app.msgScope === 'mine' && i.row.original.team ? <span className="flex min-w-0 items-center gap-1 text-caption text-fg-secondary"><Users className="size-3 shrink-0" aria-hidden /><Trunc text={L('Sent for ' + teamName(i.row.original.team), '以「' + teamName(i.row.original.team) + '」送出')} /></span> : null}
+        {app.msgScope === 'mine' && i.row.original.team ? <span className="flex min-w-0 items-center gap-1 text-caption text-fg-secondary"><UsersRound className="size-3 shrink-0" aria-hidden /><Trunc text={L('Sent for ' + teamName(i.row.original.team), '以「' + teamName(i.row.original.team) + '」送出')} /></span> : null}
       </span>
     ) }),
     col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),

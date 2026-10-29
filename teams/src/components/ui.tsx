@@ -7,7 +7,7 @@ import {
   Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor,
 } from '@qijenchen/design-system'
-import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Filter, Globe, Hash, Mail, Share2, User, Users, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
+import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Filter, Globe, Hash, Mail, Share2, User, Users, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon, UsersRound } from 'lucide-react'
 import { ME as ME_UI, PMAP as PMAP_UI, type Channel, type Fmt, type Person, type Status } from '../lib/data'
 import { L } from '../lib/i18n'
 import { inTeam, myTeams, teamName } from '../lib/teams'
@@ -96,7 +96,7 @@ export const NO_HIDE = { enableHiding: false }
 // ---------- teams ----------
 // The team a message belongs to; a person's own messages read "Personal"
 export function TeamTag({ id }: { id?: string | null }) {
-  return <Tag size="sm" color="neutral" icon={id ? Users : User} unbounded>{teamName(id)}</Tag>
+  return <Tag size="sm" color="neutral" icon={id ? UsersRound : User} unbounded>{teamName(id)}</Tag>
 }
 // The teams a template or group is shared with: the first one, then "+N" with the rest on hover
 export function TeamTags({ ids }: { ids: string[] }) {
@@ -150,7 +150,7 @@ export function TeamsField({ value, onChange, disabled, what }: { value: string[
           {teams.map(t => (
             <label key={t.id} className={cn('flex min-h-11 items-center gap-3 px-3 py-2', !disabled && 'cursor-pointer')}>
               <Checkbox checked={value.indexOf(t.id) >= 0} disabled={disabled} onCheckedChange={() => toggle(t.id)} aria-label={t.name} />
-              <Users className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+              <UsersRound className="size-4 shrink-0 text-fg-secondary" aria-hidden />
               <span className="flex-1 text-body">{t.name}</span>
               <span className="text-caption text-fg-secondary tabular-nums">{L(t.members.length + ' members', t.members.length + ' 人')}</span>
             </label>
@@ -174,7 +174,7 @@ export function ownOpts(items: { teams?: string[]; owner?: string; creator?: str
   const keys = ['personal', 'shared'].concat(myTeams().map(t => t.id))
   return keys.map(k => ({
     k, n: items.filter(x => ownKeys(x).indexOf(k) >= 0).length,
-    view: <span className="inline-flex items-center gap-2">{k === 'shared' ? <Share2 className="size-4 text-fg-secondary" aria-hidden /> : k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <Users className="size-4 text-fg-secondary" aria-hidden />}{k === 'personal' ? L('My personal', '我的個人項目') : k === 'shared' ? L('Shared with me', '分享給我的') : teamName(k)}</span>,
+    view: <span className="inline-flex items-center gap-2">{k === 'shared' ? <Share2 className="size-4 text-fg-secondary" aria-hidden /> : k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <UsersRound className="size-4 text-fg-secondary" aria-hidden />}{k === 'personal' ? L('My personal', '我的個人項目') : k === 'shared' ? L('Shared with me', '分享給我的') : teamName(k)}</span>,
   })).filter(o => o.n > 0)
 }
 // owner column in the templates and groups lists

@@ -6,7 +6,7 @@ import { useLogic } from '../../lib/logic'
 import { inTeam, presetFilter, teamById, useClearPreset } from '../../lib/teams'
 import { scopeLabel } from './ctl'
 import { TeamMembersSheet } from '../../components/TeamPanels'
-import { PMAP, type Team } from '../../lib/data'
+import type { Team } from '../../lib/data'
 import { getApp, setApp, useApp } from '../../lib/store'
 import { ConfirmDialog } from '../../components/ui'
 import { PageHeader, useNavHome } from '../../components/shell'
@@ -17,13 +17,12 @@ import { DetailSheet, NotSentDialog } from './Detail'
 import { ComposeView } from './Compose'
 import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog, UnreachDialog } from './Modals'
 
-// a team's list opens with what the team is for and who's in it
+// a team's list opens with what the team is for, and says whose messages these are
 function TeamIntro({ team }: { team: Team }) {
-  const names = team.members.map(x => PMAP[x.pid]?.en).filter(Boolean)
   return (
     <div className="flex flex-col gap-0.5">
       {team.desc ? <p className="text-body text-foreground">{team.desc}</p> : null}
-      <p className="text-caption text-fg-secondary">{L(names.length + ' members: ' + names.slice(0, 4).join(', ') + (names.length > 4 ? ' and ' + (names.length - 4) + ' more' : '') + '. Everyone here sees and can change this team’s messages.', names.length + ' 位成員：' + names.slice(0, 4).join('、') + (names.length > 4 ? ' 等' : '') + '。成員都看得到、也能修改這個團隊的訊息。')}</p>
+      <p className="text-caption text-fg-secondary">{L('Messages sent as ' + team.name, '以「' + team.name + '」名義發送的訊息')}</p>
     </div>
   )
 }

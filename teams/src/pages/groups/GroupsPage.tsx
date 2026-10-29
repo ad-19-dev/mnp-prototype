@@ -11,8 +11,7 @@ import { presetFilter, useClearPreset } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   Check, CircleCheck, Copy, Eye, FileText, Info, Lock, Mail, MessageSquareText, Minus, Monitor, MoreVertical, Pencil, Plus,
-  Search, Smartphone, Trash2, Undo2, UserPlus, Users, Wand2, X, CircleAlert,
-} from 'lucide-react'
+  Search, Smartphone, Trash2, Undo2, UserPlus, Users, Wand2, X, CircleAlert, BookUser } from 'lucide-react'
 import {
   GSEED, ME, ORGS, PEOPLE, PMAP, SAMPLE_GROUP, extPerson, fmtDT, fmtN, maskPhone, membersFor, orgMembers, parseList, plural,
   splitTokens, type Group, type Person,
@@ -216,7 +215,7 @@ function GroupList({ m }: { m: GCtl }) {
       </div>
       <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['name']} columns={cols as any} data={rows} bordered height="100%" autoRowHeight getRowId={g => g.id}
         rowActions={(g: Group) => <GroupMenu m={m} g={g} />}
-        emptyState={<Empty icon={Users} title={L('No matching groups', '找不到符合的群組')} description={L('Try another search.', '換個關鍵字試試。')} action={<Button onClick={() => m.set({ q: '', fT: [] })}>{L('Show all', '顯示全部')}</Button>} />} />
+        emptyState={<Empty icon={BookUser} title={L('No matching groups', '找不到符合的群組')} description={L('Try another search.', '換個關鍵字試試。')} action={<Button onClick={() => m.set({ q: '', fT: [] })}>{L('Show all', '顯示全部')}</Button>} />} />
       <span className="text-body text-fg-secondary">{rows.length === nAll ? P(nAll, 'group', '個群組') : L(rows.length + ' of ' + nAll, rows.length + ' / ' + nAll + ' 個群組')}</span>
     </div>
   )

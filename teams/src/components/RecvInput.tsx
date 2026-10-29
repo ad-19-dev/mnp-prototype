@@ -2,7 +2,7 @@
 // Shared by the send flow (receivers) and the Audience Group editor (members).
 import * as React from 'react'
 import { Button, Input, Popover, PopoverAnchor, PopoverContent, Select, cn } from '@qijenchen/design-system'
-import { Building2, ChevronDown, ChevronRight, CircleAlert, Globe, Mail, Phone, Plus, Search, Smartphone, Users } from 'lucide-react'
+import { Building2, ChevronDown, ChevronRight, CircleAlert, Globe, Mail, Phone, Plus, Search, Smartphone, Users, BookUser } from 'lucide-react'
 import {
   DOMAIN, EMAIL_RE, ORGS, PEOPLE, PMAP, fmtExtPhone, membersFor, phoneDigits, plural, type Group, type Person,
 } from '../lib/data'
@@ -39,7 +39,7 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
   } else if (ri.type === 'org') {
     out.opts = ORGS.filter(x => !q || x.code.toLowerCase().indexOf(low) >= 0 || x.name.toLowerCase().indexOf(low) >= 0).map(x => ({ item: { kind: 'org', id: x.code }, icon: Building2, name: x.code, sub: x.name, meta: P(x.count, 'member', '人') }))
   } else if (ri.type === 'group') {
-    out.opts = groups.filter(g => g.id !== excludeGroup && (!q || (g.name + ' ' + g.desc).toLowerCase().indexOf(low) >= 0)).map(g => ({ item: { kind: 'group', id: g.id }, icon: Users, name: g.name, sub: g.desc, meta: P(g.count, 'member', '人'), group: g }))
+    out.opts = groups.filter(g => g.id !== excludeGroup && (!q || (g.name + ' ' + g.desc).toLowerCase().indexOf(low) >= 0)).map(g => ({ item: { kind: 'group', id: g.id }, icon: BookUser, name: g.name, sub: g.desc, meta: P(g.count, 'member', '人'), group: g }))
   } else if (ri.type === 'mvpn') {
     const d = q.replace(/\D/g, '')
     if (!q) out.tip = ''

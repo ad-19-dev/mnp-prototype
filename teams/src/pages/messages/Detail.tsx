@@ -7,7 +7,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CircleAlert, Copy, Globe, Pencil, Phone, RotateCw, Users } from 'lucide-react'
+import { Building2, CircleAlert, Copy, Globe, Pencil, Phone, RotateCw, Users, BookUser } from 'lucide-react'
 import {
   ORGS, PEOPLE, PMAP, addMin, audToTags, failList, fmtDT, fmtN, fmtSize, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Fail, type Group, type Row, type Tag as RTag,
@@ -26,7 +26,7 @@ export function RecvTag({ t, groups }: { t: RTag; groups: Group[] }) {
   }
   if (t.type === 'group') {
     const g = groups.find(x => x.id === t.id) || { name: t.id, count: 0 }
-    return <Tip text={L('Audience group · ', '收件群組 · ') + P(g.count, 'member', '人')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={Users}>{g.name} · {fmtN(g.count)}</Tag></span></Tip>
+    return <Tip text={L('Audience group · ', '收件群組 · ') + P(g.count, 'member', '人')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={BookUser}>{g.name} · {fmtN(g.count)}</Tag></span></Tip>
   }
   if (t.type === 'org') {
     const o = ORGS.find(x => x.code === t.id) || { code: t.id, name: '', count: 0 }

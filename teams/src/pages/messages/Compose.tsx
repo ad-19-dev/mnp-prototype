@@ -11,8 +11,7 @@ import { getApp } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
-  MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap,
-} from 'lucide-react'
+  MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
@@ -121,7 +120,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   const cols = React.useMemo(() => [
     rcol.display({ id: 'who', header: L('Receiver', '收件人'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
-      const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Globe
+      const Icon = t.type === 'group' ? BookUser : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Globe
       return (
         <span className="flex min-w-0 items-center gap-2">
           {p ? <PAvatar p={p} /> : <IconBox icon={Icon} tone={t.type === 'ext' && x.warn ? 'warn' : 'neutral'} />}
@@ -395,7 +394,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
   const toMsg = () => m.goStep(2), notif = c.title.trim() + (c.content.trim() ? ' — ' + c.content.trim() : '')
   const reaches = (n: number) => L('Reaches ' + fmtN(n) + ' of ' + fmtN(rc.total), '可觸及 ' + fmtN(n) + ' / ' + fmtN(rc.total) + ' 人')
-  const rows: React.ReactNode[] = [<RvRow key="t" icon={Users} k={L('Send for', '發送單位')} v={c.team ? teamName(c.team) + L(' · its members can see this message', '・成員都看得到這則訊息') : L('Personal · only you can see this message', '個人・只有你看得到這則訊息')} edit={() => m.goStep(1)} />, <RvRow key="r" icon={Users} k={L('Receivers', '收件人')} v={P(rc.total, 'receiver', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} edit={() => m.goStep(1)} />]
+  const rows: React.ReactNode[] = [<RvRow key="t" icon={UsersRound} k={L('Send for', '發送單位')} v={c.team ? teamName(c.team) + L(' · its members can see this message', '・成員都看得到這則訊息') : L('Personal · only you can see this message', '個人・只有你看得到這則訊息')} edit={() => m.goStep(1)} />, <RvRow key="r" icon={Users} k={L('Receivers', '收件人')} v={P(rc.total, 'receiver', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} edit={() => m.goStep(1)} />]
   if (c.ch.push) rows.push(<RvRow key="p" icon={Smartphone} k={CHN.push.name} v={reaches(rc.push)} q={notif} edit={toMsg} />)
   if (c.ch.desktop) { const cut = vwidth(c.content) > DESK.text || vwidth(c.title) > DESK.title; rows.push(<RvRow key="d" icon={Monitor} warn={cut} k={CHN.desktop.name} v={reaches(rc.desktop) + (cut ? L(' · text gets cut short', ' · 內容會被截斷') : '')} q={notif} edit={toMsg} />) }
   if (c.ch.email) rows.push(<RvRow key="e" icon={Mail} k="Email" v={reaches(rc.email) + (mode === 'own' ? L(' · Separate email', ' · 另寫 Email') + (c.atts.length ? L(', ' + P(c.atts.length, 'file', ''), '，' + c.atts.length + ' 個附件') : '') : L(' · Same as notification', ' · 同通知內容'))} q={mode === 'own' ? c.subject : ''} edit={toMsg} />)
