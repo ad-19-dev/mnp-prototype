@@ -131,11 +131,10 @@ export function TeamMembersSheet({ team, open, onClose }: { team: Team | undefin
       <Sheet open={open} onOpenChange={o => { if (!o) onClose() }}>
         {open ? (
           <SheetContent side="right" className="w-full sm:max-w-[480px]">
-            <SheetHeader><div className="flex flex-col gap-0.5"><SheetTitle className="text-body-lg">{team.name}</SheetTitle><SheetDescription className="text-body text-fg-secondary">{team.desc || L('Team members', '團隊成員')}</SheetDescription></div></SheetHeader>
+            <SheetHeader><div className="flex flex-col gap-0.5"><SheetTitle className="text-body-lg">{L('Members of ' + team.name, team.name + ' 的成員')}</SheetTitle><SheetDescription className="text-body text-fg-secondary">{L('Anyone in the team can add or remove members.', '團隊裡的每個人都能加入或移除成員。')}</SheetDescription></div></SheetHeader>
             <SheetBody>
               <div className="flex flex-col gap-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
-                <span className="text-body font-semibold">{L('Members', '成員')} <span className="font-normal text-fg-secondary">· {fmtN(pids.length)}</span></span>
-                <p className="text-caption text-fg-secondary">{L('Everyone in the team can add or remove members, and see and change the team’s messages.', '團隊裡的每個人都能加入、移除成員，也能查看和修改團隊的訊息。')}</p>
+                <span className="text-body text-fg-secondary">{P(pids.length, 'member', '位成員')}</span>
                 <MemberPicker exclude={pids} onAdd={add} />
                 <MemberList pids={pids} onRemove={askRemove} />
               </div>
@@ -149,5 +148,42 @@ export function TeamMembersSheet({ team, open, onClose }: { team: Team | undefin
       </Sheet>
       <ConfirmDialog cf={cf} onClose={() => setCf(null)} />
     </>
+  )
+}
+
+// Name and description; anyone in the team can change them
+export function EditTeamDialog({ team, open, onClose }: { team: Team | undefined; open: boolean; onClose: () => void }) {
+  const [name, setName] = React.useState(''), [desc, setDesc] = React.useState(''), [tried, setTried] = React.useState(false)
+  React.useEffect(() => { if (open && team) { setName(team.name); setDesc(team.desc); setTried(false) } }, [open, team])
+  if (!team) return null
+  const nm = name.trim(), dup = getApp().teams.some(t => t.id !== team.id && t.name.toLowerCase() === nm.toLowerCase())
+  const err = tried && !nm ? L('Enter a name.', '請輸入名稱。') : name.length > 50 ? L('Use 50 characters or fewer.', '最多 50 個字。') : tried && dup ? L('Another team already uses this name.', '已有團隊使用這個名稱。') : ''
+  const save = () => {
+    if (!nm || name.length > 50 || desc.length > 200 || dup) { setTried(true); return }
+    setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, name: nm, desc: desc.trim() } : t) }))
+    onClose(); flash(L('Team updated', '已更新團隊'), 'ok', nm)
+  }
+  return (
+    <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
+      {open ? (
+        <DialogContent maxWidth={520} height="hug">
+          <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{L('Edit team', '編輯團隊')}</DialogTitle><DialogDescription className="text-body text-fg-secondary">{L('Everyone in the team sees the change.', '團隊成員都會看到變更。')}</DialogDescription></div></DialogHeader>
+          <DialogBody>
+            <div className="flex flex-col gap-[var(--layout-space-loose)]">
+              <FormField id="et-name" label={L('Name', '名稱')} required count={name.length + ' / 50'} over={name.length > 50} error={err}>
+                <Input id="et-name" autoFocus value={name} error={!!err} onChange={e => setName(e.target.value)} />
+              </FormField>
+              <FormField id="et-desc" label={L('Description', '說明')} count={desc.length + ' / 200'} over={desc.length > 200} hint={L('Shown at the top of the team’s messages.', '顯示在團隊訊息列表的上方。')}>
+                <Textarea id="et-desc" rows={3} value={desc} onChange={e => setDesc(e.target.value)} placeholder={L('What this team sends', '這個團隊負責發送什麼')} />
+              </FormField>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="tertiary" onClick={onClose}>{L('Cancel', '取消')}</Button>
+            <Button variant="primary" onClick={save}>{L('Save', '儲存')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      ) : null}
+    </Dialog>
   )
 }
