@@ -174,15 +174,8 @@ export function ownOpts(items: { teams?: string[]; owner?: string; creator?: str
   const keys = ['personal', 'shared'].concat(myTeams().map(t => t.id))
   return keys.map(k => ({
     k, n: items.filter(x => ownKeys(x).indexOf(k) >= 0).length,
-    view: <span className="inline-flex items-center gap-2">{k === 'shared' ? <Share2 className="size-4 text-fg-secondary" aria-hidden /> : k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <UsersRound className="size-4 text-fg-secondary" aria-hidden />}{k === 'personal' ? L('Only me', '只有我') : k === 'shared' ? L('Shared with me directly', '個別分享給我') : teamName(k)}</span>,
+    view: <span className="inline-flex items-center gap-2">{k === 'shared' ? <Share2 className="size-4 text-fg-secondary" aria-hidden /> : k === 'personal' ? <User className="size-4 text-fg-secondary" aria-hidden /> : <UsersRound className="size-4 text-fg-secondary" aria-hidden />}{k === 'personal' ? L('Mine, not in a team', '我的（未共享給團隊）') : k === 'shared' ? L('Shared with me directly', '個別分享給我') : teamName(k)}</span>,
   })).filter(o => o.n > 0)
-}
-// "Shared with" cell for templates and groups: the teams first, otherwise the people or orgs, otherwise only the owner
-export function SharedWith({ teams, label, org, mine }: { teams: string[]; label?: string; org?: boolean; mine: boolean }) {
-  const tm = teams.filter(inTeam)
-  if (tm.length) return <TeamTags ids={tm} />
-  const I = label ? (org ? Building2 : User) : Lock
-  return <span className="flex min-w-0 items-center gap-1.5"><I className="size-3.5 shrink-0 text-fg-secondary" aria-hidden /><Trunc text={label || (mine ? L('Only me', '只有我') : L('Only the owner', '只有擁有者'))} /></span>
 }
 
 // ---------- tables ----------

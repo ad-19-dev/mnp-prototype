@@ -1,11 +1,11 @@
 // Messages page: the list of sent and scheduled messages, and the send flow
 import * as React from 'react'
 import { Button } from '@qijenchen/design-system'
-import { Plus, Settings, UsersRound } from 'lucide-react'
+import { Plus, Settings } from 'lucide-react'
 import { useLogic } from '../../lib/logic'
 import { inTeam, presetFilter, teamById, useClearPreset } from '../../lib/teams'
 import { scopeLabel } from './ctl'
-import { EditTeamDialog, TeamMembersSheet } from '../../components/TeamPanels'
+import { TeamDialog } from '../../components/TeamPanels'
 import type { Team } from '../../lib/data'
 import { getApp, setApp, useApp } from '../../lib/store'
 import { ConfirmDialog } from '../../components/ui'
@@ -20,7 +20,7 @@ import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerD
 // The list's title and what it holds. DS: the title repeats the breadcrumb's last item (text-h3 under an
 // md breadcrumb), bold; the description is body text.
 function ListIntro({ team }: { team?: Team }) {
-  const desc = team ? team.desc : L('Everything you’ve sent, personally or for a team.', '你發出的所有訊息，包括以團隊名義發送的。')
+  const desc = team ? team.desc : ''
   return (
     <div className="flex flex-col gap-1">
       <h1 className="text-h3 font-bold text-foreground">{scopeLabel()}</h1>
@@ -33,7 +33,7 @@ export function MessagesPage() {
   const app = useApp()
   const [s, m] = useLogic(() => ({ ...initSend(), fT: presetFilter() }), makeSendCtl)
   useClearPreset()
-  const [members, setMembers] = React.useState(false), [editing, setEditing] = React.useState(false)
+  const [editing, setEditing] = React.useState(false)
   const team = app.msgScope !== 'mine' ? teamById(app.msgScope) : undefined
   // the open list may vanish (you left the team): fall back to My messages
   React.useEffect(() => { if (app.msgScope !== 'mine' && !inTeam(app.msgScope)) setApp({ msgScope: 'mine' }) }, [app.msgScope, app.teams])
@@ -53,18 +53,14 @@ export function MessagesPage() {
       {s.view === 'compose' ? <ComposeView m={m} /> : (
         <>
           <PageHeader crumbs={[{ label: L('Messages', '訊息') }, { label: scopeLabel() }]} actions={<>
-            {team ? (<>
-              <Button variant="tertiary" startIcon={UsersRound} onClick={() => setMembers(true)}>{L('Members · ' + team.members.length, '成員・' + team.members.length)}</Button>
-              <Button variant="tertiary" iconOnly startIcon={Settings} aria-label={L('Edit team', '編輯團隊')} onClick={() => setEditing(true)} />
-            </>) : null}
+            {team ? <Button variant="tertiary" startIcon={Settings} onClick={() => setEditing(true)}>{L('Team settings', '團隊設定')}</Button> : null}
             <Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>
           </>} />
           <SendList m={m} intro={<ListIntro team={team} />} />
         </>
       )}
       <DetailSheet m={m} />
-      <TeamMembersSheet team={team} open={members && !!team} onClose={() => setMembers(false)} />
-      <EditTeamDialog team={team} open={editing && !!team} onClose={() => setEditing(false)} />
+      <TeamDialog team={team} open={editing && !!team} onClose={() => setEditing(false)} />
       <NotSentDialog m={m} />
       <ImportDialog m={m} />
       <NumbersDialog m={m} />

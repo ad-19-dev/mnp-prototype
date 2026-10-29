@@ -11,7 +11,7 @@ import {
 import { Bell, CircleHelp, LayoutTemplate, Plus, Radio, Search, Send, Users, UsersRound, BookUser } from 'lucide-react'
 import { go, setApp, setLang, useApp, type Page } from '../lib/store'
 import { myTeams } from '../lib/teams'
-import { NewTeamDialog } from './TeamPanels'
+import { TeamDialog } from './TeamPanels'
 import { L } from '../lib/i18n'
 
 // Messages is a group: your own messages, then one list per team you're in. Groups and templates follow.
@@ -126,7 +126,7 @@ function MnpSidebar({ onNav, onScope }: { onNav: (p: Page) => void; onScope: (sc
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <NewTeamDialog open={creating} onClose={() => setCreating(false)} />
+      <TeamDialog open={creating} onClose={() => setCreating(false)} />
     </Sidebar>
   )
 }
