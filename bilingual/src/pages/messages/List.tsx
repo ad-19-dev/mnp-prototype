@@ -4,7 +4,7 @@ import {
   Badge, Button, DataTable, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input, Pagination, ProgressBar,
 } from '@qijenchen/design-system'
-import { NO_HIDE } from '../../components/ui'
+import { NO_HIDE, Trunc } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
@@ -75,15 +75,15 @@ export function SendList({ m }: { m: SendCtl }) {
   })
 
   const columns = React.useMemo(() => [
-    col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 150 }, cell: i => <span className="truncate font-medium" title={i.getValue()}>{i.getValue()}</span> }),
-    col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <span className="truncate" title={i.getValue()}>{i.getValue()}</span> : <span className="text-fg-muted">—</span> }),
+    col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 150 }, cell: i => <Trunc text={i.getValue()} className="font-medium" /> }),
+    col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     col.accessor('title', { header: L('Message', '標題與內容'), meta: { width: 400 }, cell: i => {
       // title (opens the details) over the first line of the text: one wide column instead of two narrow ones
       const r = i.row.original, text = r.content.replace(/\s+/g, ' ')
       return (
         <span className="flex min-w-0 flex-col">
-          <button type="button" className="min-w-0 truncate text-left font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" title={r.title} onClick={() => m.set({ det: r.id })}>{r.title}</button>
-          <span className="truncate text-caption text-fg-secondary" title={text}>{text}</span>
+          <Trunc text={r.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: r.id })} />
+          <Trunc text={text} className="text-caption text-fg-secondary" />
         </span>
       )
     } }),

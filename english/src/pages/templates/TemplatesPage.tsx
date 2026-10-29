@@ -4,7 +4,7 @@ import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty,
   Input, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Tag, Textarea,
 } from '@qijenchen/design-system'
-import { NO_HIDE } from '../../components/ui'
+import { NO_HIDE, Trunc } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   Building2, Check, CircleAlert, Copy, Eye, LayoutTemplate, Lock, Mail, MessageSquareText, Monitor, MoreVertical, Pencil, Plus,
@@ -160,12 +160,12 @@ function TplList({ m }: { m: TCtl }) {
   const cols = React.useMemo(() => [
     tcol.accessor('name', { header: 'Template name', meta: { width: 280 }, cell: i => { const t = i.row.original, first = t.title || (t.email && t.email.subject) || ''; return (
       <span className="flex min-w-0 flex-col">
-        <button type="button" className="min-w-0 truncate text-left font-medium text-primary hover:text-primary-hover hover:underline" title={t.name} onClick={() => m.openEd(t)}>{t.name}</button>
-        <span className="truncate text-caption text-fg-secondary" title={first}>{first}</span>
+        <Trunc text={t.name} className="font-medium text-primary hover:text-primary-hover hover:underline" onClick={() => m.openEd(t)} />
+        <Trunc text={first} className="text-caption text-fg-secondary" />
       </span>
     ) } }),
     tcol.display({ id: 'fmt', header: 'Formats', meta: { width: 140 }, cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
-    tcol.display({ id: 'text', header: 'Text', meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <span className="truncate text-fg-secondary" title={text}>{text}</span> } }),
+    tcol.display({ id: 'text', header: 'Text', meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
     tcol.display({ id: 'sh', header: 'Shared with', meta: { width: 160 }, cell: i => { const sh = i.row.original.shared || [], I = !sh.length ? Lock : sh[0][0] === 'o' ? Building2 : Users; return <span className="flex min-w-0 items-center gap-1.5"><I className="size-3.5 shrink-0 text-fg-secondary" aria-hidden /><span className="truncate">{shareSummary(sh)}</span></span> } }),
     tcol.accessor('updated', { header: 'Updated', meta: { width: 110 } }),
     tcol.accessor('owner', { header: 'Owner', meta: { width: 180 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? ' (you)' : '')} b={p.zh} /></span> } }),

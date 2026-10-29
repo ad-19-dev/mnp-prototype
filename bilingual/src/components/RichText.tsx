@@ -73,7 +73,7 @@ export function RichText({ id, seedKey, html, onInput, error, placeholder, label
   const unlink = () => { if (restore()) document.execCommand('unlink', false); setLink(null); commit() }
   const hold = (e: React.MouseEvent) => e.preventDefault()
   const tb = (c: string, label: string, Icon: typeof Bold, on?: boolean) => (
-    <Button variant="text" size="sm" iconOnly startIcon={Icon} aria-label={label} title={label} pressed={!!on} onMouseDown={hold} onClick={() => cmd(c)} />
+    <Button variant="text" size="sm" iconOnly startIcon={Icon} aria-label={label} pressed={!!on} onMouseDown={hold} onClick={() => cmd(c)} />
   )
   return (
     <div className={cn('w-full overflow-hidden rounded-md border bg-surface focus-within:border-primary', error ? 'border-error' : 'border-border hover:border-border-hover')} data-err={error ? '' : undefined}>
@@ -84,7 +84,7 @@ export function RichText({ id, seedKey, html, onInput, error, placeholder, label
         <ButtonDivider />
         <Popover open={!!link} onOpenChange={o => { if (!o) setLink(null) }}>
           <PopoverAnchor asChild>
-            <span><Button variant="text" size="sm" iconOnly startIcon={Link2} aria-label={L('Link', '連結')} title={L('Link', '連結')} pressed={!!fmt.link} onMouseDown={hold} onClick={openLink} /></span>
+            <span><Button variant="text" size="sm" iconOnly startIcon={Link2} aria-label={L('Link', '連結')} pressed={!!fmt.link} onMouseDown={hold} onClick={openLink} /></span>
           </PopoverAnchor>
           <PopoverContent align="start" className="w-96 p-3">
             <div className="flex flex-col gap-2">

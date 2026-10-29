@@ -5,7 +5,7 @@ import {
   Input, Pagination, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Textarea,
   Checkbox, Tooltip, TooltipContent, TooltipTrigger, cn,
 } from '@qijenchen/design-system'
-import { NO_HIDE } from '../../components/ui'
+import { NO_HIDE, Trunc, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   Check, CircleCheck, Copy, Eye, FileText, Info, Lock, Mail, MessageSquareText, Minus, Monitor, MoreVertical, Pencil, Plus,
@@ -196,8 +196,8 @@ function GroupList({ m }: { m: GCtl }) {
   const cols = React.useMemo(() => [
     gcol.accessor('name', { header: 'Group name', meta: { width: 420 }, cell: i => (
       <span className="flex min-w-0 flex-col">
-        <button type="button" className="min-w-0 truncate text-left font-medium text-primary hover:text-primary-hover hover:underline" title={i.getValue()} onClick={() => m.openEd(i.row.original)}>{i.getValue()}</button>
-        <span className="truncate text-caption text-fg-secondary" title={i.row.original.desc}>{i.row.original.desc || 'No description'}</span>
+        <Trunc text={i.getValue()} className="font-medium text-primary hover:text-primary-hover hover:underline" onClick={() => m.openEd(i.row.original)} />
+        <Trunc text={i.row.original.desc || 'No description'} className="text-caption text-fg-secondary" />
       </span>
     ) }),
     gcol.accessor('count', { header: 'Members', meta: { width: 120 }, cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
@@ -229,11 +229,14 @@ type MRow = { p: Person }
 const mcol = createColumnHelper<MRow>()
 // channel status in the member table: a check when the person can get it, a dash when not;
 // the words stay for screen readers and as a hover hint
-const Cv = ({ ok, children }: { ok: boolean; children: React.ReactNode }) => (
-  <span className={cn('inline-flex items-center text-body', ok ? 'text-success-text' : 'text-fg-muted')} title={typeof children === 'string' ? children : undefined}>
-    {ok ? <Check className="size-4" aria-hidden /> : <span aria-hidden>–</span>}<span className="sr-only">{children}</span>
-  </span>
-)
+const Cv = ({ ok, plain, children }: { ok: boolean; plain?: boolean; children: React.ReactNode }) => {
+  const el = (
+    <span className={cn('inline-flex items-center text-body', ok ? 'text-success-text' : 'text-fg-muted')}>
+      {ok ? <Check className="size-4" aria-hidden /> : <span aria-hidden>–</span>}<span className="sr-only">{children}</span>
+    </span>
+  )
+  return plain ? el : <Tip text={children}>{el}</Tip>
+}
 
 function GroupEditor({ m }: { m: GCtl }) {
   const app = useApp(), s = m.s, ed = s.ed!
@@ -279,7 +282,7 @@ function GroupEditor({ m }: { m: GCtl }) {
       // which number gets the SMS shows on hover
       return (
         <Tooltip>
-          <TooltipTrigger asChild><span tabIndex={0} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Cv ok>{co || pp}</Cv></span></TooltipTrigger>
+          <TooltipTrigger asChild><span tabIndex={0} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Cv ok plain>{co || pp}</Cv></span></TooltipTrigger>
           <TooltipContent>
             <span className="flex flex-col gap-0.5 font-mono">
               {co ? <span>{co}</span> : null}

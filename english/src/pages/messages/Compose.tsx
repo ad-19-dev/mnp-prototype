@@ -4,7 +4,7 @@ import {
   Button, Checkbox, DataTable, DatePicker, Empty, FileItem, FileUpload, Input, RadioGroup, RadioGroupItem, SegmentedControl,
   SegmentedControlItem, StepDescription, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
-import { NO_HIDE } from '../../components/ui'
+import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, Info, LayoutTemplate, Mail,
@@ -131,7 +131,7 @@ function RecvTable({ m }: { m: SendCtl }) {
       <span className="flex flex-wrap items-center gap-1.5">
         {i.row.original.can.map(x => {
           const I = CHN[x.k].icon
-          return <span key={x.k} title={CHN[x.k].name + (x.of > 1 ? ': ' + x.n + ' of ' + x.of : x.n ? '' : ': not available')} className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-caption tabular-nums', x.n ? 'bg-neutral-2 text-foreground' : 'bg-transparent text-fg-disabled line-through')}><I className="size-3.5" aria-hidden />{x.of > 1 ? fmtN(x.n) : null}</span>
+          return <Tip key={x.k} text={CHN[x.k].name + (x.of > 1 ? ': ' + x.n + ' of ' + x.of : x.n ? '' : ': not available')}><span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-caption tabular-nums', x.n ? 'bg-neutral-2 text-foreground' : 'bg-transparent text-fg-disabled line-through')}><I className="size-3.5" aria-hidden />{x.of > 1 ? fmtN(x.n) : null}</span></Tip>
         })}
       </span>
     ) }),

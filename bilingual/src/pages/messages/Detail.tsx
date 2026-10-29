@@ -5,7 +5,7 @@ import {
   DialogHeader, DialogTitle, FileItem, ProgressBar, Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader,
   SheetTitle, StepDescription, StepItem, StepLabel, Steps, Tag,
 } from '@qijenchen/design-system'
-import { NO_HIDE } from '../../components/ui'
+import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Building2, CircleAlert, Copy, Download, Globe, Pencil, Phone, RotateCw, Users } from 'lucide-react'
 import {
@@ -21,18 +21,18 @@ import { L, P, tx } from '../../lib/i18n'
 export function RecvTag({ t, groups }: { t: RTag; groups: Group[] }) {
   if (t.type === 'person') {
     const p = PMAP[t.id!]
-    return <Tag size="md" avatar={p ? <PAvatar p={p} size={16} /> : undefined} title={p ? p.nt + ' · ' + p.emp + ' · ' + p.org : ''}>{p ? p.zh + ' ' + p.en : t.id}</Tag>
+    return <Tip text={p ? p.nt + ' · ' + p.emp + ' · ' + p.org : ''}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" avatar={p ? <PAvatar p={p} size={16} /> : undefined}>{p ? p.zh + ' ' + p.en : t.id}</Tag></span></Tip>
   }
   if (t.type === 'group') {
     const g = groups.find(x => x.id === t.id) || { name: t.id, count: 0 }
-    return <Tag size="md" icon={Users} title={L('Audience group · ', '收件群組 · ') + P(g.count, 'member', '人')}>{g.name} · {fmtN(g.count)}</Tag>
+    return <Tip text={L('Audience group · ', '收件群組 · ') + P(g.count, 'member', '人')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={Users}>{g.name} · {fmtN(g.count)}</Tag></span></Tip>
   }
   if (t.type === 'org') {
     const o = ORGS.find(x => x.code === t.id) || { code: t.id, name: '', count: 0 }
-    return <Tag size="md" icon={Building2} title={o.name + ' · ' + P(o.count, 'member', '人')}>{o.code} · {fmtN(o.count)}</Tag>
+    return <Tip text={o.name + ' · ' + P(o.count, 'member', '人')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={Building2}>{o.code} · {fmtN(o.count)}</Tag></span></Tip>
   }
   const ph = isExtPhone(t)
-  return <Tag size="md" color="amber" icon={ph ? Phone : Globe} title={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')}>{t.email} · {L('External', '外部')}</Tag>
+  return <Tip text={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" color="amber" icon={ph ? Phone : Globe}>{t.email} · {L('External', '外部')}</Tag></span></Tip>
 }
 
 function statText(x: { k: string; ok: number; of: number }) {

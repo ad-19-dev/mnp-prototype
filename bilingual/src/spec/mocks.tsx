@@ -10,7 +10,7 @@ import {
   AlertTriangle, Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, Inbox, MoreVertical, Pencil, Plus, RotateCw, Search, Send,
 } from 'lucide-react'
 import { PEOPLE, PMAP, TEMPLATES, fmtN, rowChs, type Row } from '../lib/data'
-import { Banner, CHN, ChIcons, NO_HIDE, PAvatar, StatusTag, Two } from '../components/ui'
+import { Banner, CHN, ChIcons, NO_HIDE, PAvatar, StatusTag, Trunc, Two } from '../components/ui'
 import { L } from '../lib/i18n'
 import { Pin } from './parts'
 import { OTHERS, type Miss, type Scenario, type Via } from './specData'
@@ -41,14 +41,14 @@ const col = createColumnHelper<Row>()
 function listColumns(pins: boolean, onTitle?: (r: Row) => void, onNotSent?: (r: Row) => void) {
   // the first row with people not reached carries pin 9
   return [
-    col.accessor('sender', { id: 'sender', header: hdr(L('Sender', '寄件人'), 4, pins), meta: { width: 160 }, cell: i => <span className="truncate font-medium">{i.getValue()}</span> }),
-    col.accessor(r => tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <span className="truncate">{i.getValue()}</span> : <span className="text-fg-muted">—</span> }),
+    col.accessor('sender', { id: 'sender', header: hdr(L('Sender', '寄件人'), 4, pins), meta: { width: 160 }, cell: i => <Trunc text={i.getValue()} className="font-medium" /> }),
+    col.accessor(r => tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     col.accessor('title', { header: hdr(L('Message', '標題與內容'), 5, pins), meta: { width: 400 }, cell: i => {
       const r = i.row.original, text = r.content.replace(/\s+/g, ' ')
       return (
         <span className="flex min-w-0 flex-col">
-          <button type="button" className="min-w-0 truncate text-left font-medium text-primary hover:text-primary-hover hover:underline" onClick={() => onTitle?.(r)}>{r.title}</button>
-          <span className="truncate text-caption text-fg-secondary">{text}</span>
+          <Trunc text={r.title} className="font-medium text-primary hover:text-primary-hover hover:underline" onClick={() => onTitle?.(r)} />
+          <Trunc text={text} className="text-caption text-fg-secondary" />
         </span>
       )
     } }),

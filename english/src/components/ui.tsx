@@ -3,7 +3,7 @@
 import * as React from 'react'
 import {
   Alert, Avatar, Button, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-  Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Tag, Tooltip, TooltipContent, TooltipTrigger, cn,
+  Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor,
 } from '@qijenchen/design-system'
 import {
@@ -98,6 +98,33 @@ export function IconBox({ icon: I, tone }: { icon: LucideIcon; tone?: 'warn' | '
 
 // DataTable: columns can't be hidden in this product (see globals.css for the header menu)
 export const NO_HIDE = { enableHiding: false }
+
+// ---------- hover text ----------
+// Hover text always goes through the DS Tooltip, never the browser's own `title` box.
+// Trunc: one line that ends in "…" when it doesn't fit; the full text shows only while it is cut off
+// (DS truncated-text pattern: the Tooltip is always there, `open` is held closed when nothing is cut).
+export function Trunc({ text, className, onClick }: { text: string; className?: string; onClick?: () => void }) {
+  const { ref, isTruncated } = useTruncated<HTMLElement>({ deps: [text] })
+  const cls = cn('min-w-0 truncate', className)
+  const el = onClick
+    ? <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={cn(cls, 'text-left')} onClick={onClick}>{text}</button>
+    : <span ref={ref as React.Ref<HTMLSpanElement>} className={cls} tabIndex={isTruncated ? 0 : undefined}>{text}</span>
+  return (
+    <Tooltip open={isTruncated ? undefined : false}>
+      <TooltipTrigger asChild>{el}</TooltipTrigger>
+      <TooltipContent className="max-w-[360px] whitespace-normal break-words">{text}</TooltipContent>
+    </Tooltip>
+  )
+}
+// Tip: a short hint on something that isn't truncated text (a tag, a status mark)
+export function Tip({ text, children }: { text: React.ReactNode; children: React.ReactElement }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{text}</TooltipContent>
+    </Tooltip>
+  )
+}
 
 // ---------- layout ----------
 export function Section({ title, sub, actions, children, className }: { title?: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode; children?: React.ReactNode; className?: string }) {
