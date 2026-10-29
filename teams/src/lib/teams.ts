@@ -14,7 +14,8 @@ import { L } from './i18n'
 export const teamById = (id?: string | null): Team | undefined => (id ? getApp().teams.find(t => t.id === id) : undefined)
 export const myTeams = () => getApp().teams.filter(t => t.members.some(x => x.pid === ME))
 export const inTeam = (id?: string | null) => !!teamById(id)?.members.some(x => x.pid === ME)
-export const teamName = (id?: string | null) => (id ? teamById(id)?.name || L('Former team', '已解散的團隊') : L('Personal', '個人'))
+export const teamClosed = (id?: string | null) => !!id && !teamById(id)
+export const teamName = (id?: string | null) => (id ? teamById(id)?.name || getApp().closedTeams[id] || L('Former team', '已解散的團隊') : L('Personal', '個人'))
 
 export const canSeeRow = (r: Row) => r.creator === ME || (!!r.team && inTeam(r.team))
 export const canManageRow = (r: Row) => (r.team ? inTeam(r.team) : r.creator === ME)

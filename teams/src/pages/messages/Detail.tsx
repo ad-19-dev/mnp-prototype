@@ -14,7 +14,7 @@ import {
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { Banner, CHN, IconBox, PAvatar, StatusTag, TeamTag, Two } from '../../components/ui'
-import { canManageRow, leftTeamRow, teamName } from '../../lib/teams'
+import { canManageRow, leftTeamRow, teamClosed, teamName } from '../../lib/teams'
 import { MailHtml } from '../../components/RichText'
 import type { SendCtl } from './ctl'
 import { L, P, tx } from '../../lib/i18n'
@@ -82,7 +82,7 @@ function DetailBody({ m, r, groups, close }: { m: SendCtl; r: Row; groups: Group
       </SheetHeader>
       <SheetBody>
         <div className="flex flex-col gap-[var(--layout-space-loose)] pb-[var(--layout-space-loose)]">
-          {leftTeamRow(r) ? <Banner tone="neutral">{L('You left ' + teamName(r.team) + '. You can still view and duplicate the messages you sent for it.', '你已離開「' + teamName(r.team) + '」，仍可查看和複製你當時以團隊名義送出的訊息。')}</Banner> : null}
+          {leftTeamRow(r) ? <Banner tone="neutral">{teamClosed(r.team) ? L(teamName(r.team) + ' was closed. You can still view and duplicate the messages you sent for it.', '「' + teamName(r.team) + '」已解散，你仍可查看和複製你當時以團隊名義送出的訊息。') : L('You left ' + teamName(r.team) + '. You can still view and duplicate the messages you sent for it.', '你已離開「' + teamName(r.team) + '」，仍可查看和複製你當時以團隊名義送出的訊息。')}</Banner> : null}
           <DescriptionList orientation="horizontal" divided>
             <DescriptionItem label={L('Sender', '寄件人')}>{r.sender}</DescriptionItem>
             <DescriptionItem label={L('Team', '團隊')}><TeamTag id={r.team} /></DescriptionItem>

@@ -89,7 +89,7 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
              { k: L('The team keeps', '團隊保留'), v: last ? L('Nothing; the team closes', '團隊解散，不再保留') : L('Its messages, including yours', '團隊的訊息，包括你送出的') }],
       icon: LogOut, tone: 'warn', cancel: L('Stay', '留下'), ok: L('Leave team', '離開團隊'), danger: true,
       run: () => {
-        setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t).filter(t => t.members.length > 0), msgScope: 'mine' }))
+        setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t).filter(t => t.members.length > 0), closedTeams: last ? { ...a.closedTeams, [team.id]: team.name } : a.closedTeams, msgScope: 'mine' }))
         setCf(null); onClose()
         flash(L('You left ' + team.name, '已離開「' + team.name + '」'))
       },

@@ -2,7 +2,7 @@
 // A tiny external store: every page reads it with useApp() and writes with setApp().
 import { useSyncExternalStore } from 'react'
 import { toast } from '@qijenchen/design-system'
-import { GROUPS, ROWS0, TEAMS, TEMPLATES, type Group, type Row, type Team, type Template } from './data'
+import { CLOSED_TEAMS, GROUPS, ROWS0, TEAMS, TEMPLATES, type Group, type Row, type Team, type Template } from './data'
 import type { Lang } from './i18n'
 
 export type Page = 'send' | 'groups' | 'templates'
@@ -13,6 +13,7 @@ export interface AppState {
   groups: Group[]
   templates: Template[]
   teams: Team[]
+  closedTeams: Record<string, string>
   // set by Templates › Use template; Messages picks it up and opens the send flow
   useTemplateId: string | null
   // set by Teams › a team's messages / templates / groups; the list opens filtered to that team
@@ -32,6 +33,7 @@ let state: AppState = {
   rows: ROWS0,
   groups: GROUPS.map(g => ({ ...g })),
   templates: TEMPLATES.map(t => ({ ...t })),
+  closedTeams: { ...CLOSED_TEAMS },
   teams: TEAMS.map(t => ({ ...t, members: t.members.map(x => ({ ...x })) })),
   useTemplateId: null,
   presetTeam: null,
