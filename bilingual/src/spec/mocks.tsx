@@ -7,7 +7,7 @@ import {
 } from '@qijenchen/design-system'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
-  AlertTriangle, Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, Inbox, MoreVertical, Pencil, Plus, RotateCw, Search, Send,
+  AlertTriangle, Ban, ChevronDown, CircleAlert, Copy, Eye, Filter, Inbox, MoreVertical, Pencil, Plus, RotateCw, Search, Send,
 } from 'lucide-react'
 import { PEOPLE, PMAP, TEMPLATES, fmtN, rowChs, type Row } from '../lib/data'
 import { Banner, CHN, ChIcons, NO_HIDE, PAvatar, PageSize, StatusTag, Trunc, Two } from '../components/ui'
@@ -128,7 +128,6 @@ export function RowMenuStatic({ own, status }: { own: boolean; status: Row['stat
   const items: { icon: typeof Eye; text: string; danger?: boolean; sep?: boolean }[] = [{ icon: Eye, text: L('View details', '查看詳情') }]
   if (own && status === 'scheduled') items.push({ icon: Pencil, text: L('Edit', '編輯') })
   items.push({ icon: Copy, text: L('Duplicate as new message', '複製成新訊息') })
-  if (status === 'sent' || status === 'error') items.push({ icon: Download, text: L('Download not-sent list', '下載未送達名單') })
   if (own && status === 'error') items.push({ icon: RotateCw, text: L('Retry', '重試') })
   if (own && status === 'scheduled') items.push({ icon: Ban, text: L('Cancel schedule', '取消排程'), danger: true, sep: true })
   return (
@@ -265,13 +264,11 @@ export function DetailView({ s, pins, onNotSent, onRetry }: { s: Scenario; pins?
 }
 
 export function DetailActions({ s, pins, onClose }: { s: Scenario; pins?: boolean; onClose?: () => void }) {
-  const fails = s.status === 'sent' || s.status === 'error' ? s.total - s.ok : 0
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
       <PinIf on={pins} n={8} />
       {s.mine && s.status === 'scheduled' ? <Button variant="text" danger startIcon={Ban}>{L('Cancel schedule', '取消排程')}</Button> : null}
       {s.mine && s.status === 'scheduled' ? <Button variant="tertiary" startIcon={Pencil}>{L('Edit', '編輯')}</Button> : null}
-      {fails ? <Button variant="tertiary" startIcon={Download}>{L('Download not-sent list', '下載未送達名單')}</Button> : null}
       <Button variant="tertiary" startIcon={Copy}>{L('Duplicate', '複製成新訊息')}</Button>
       <Button variant="primary" onClick={onClose}>{L('Close', '關閉')}</Button>
     </div>
@@ -304,7 +301,6 @@ export function NotSentView({ list, total, title, pins, onResend, many }: { list
   list.forEach(x => { const r = reasons.find(y => y.k === x.why[0]); if (r) r.n++; else reasons.push({ k: x.why[0], n: 1, t: x.why }) })
   const ql = q.trim().toLowerCase()
   const rows = list.filter(x => (why === 'all' || x.why[0] === why) && (!ql || (x.p.zh + x.p.en + x.p.nt + x.p.emp).toLowerCase().indexOf(ql) >= 0))
-  const cap = 100, shown = rows.slice(0, cap)
   const cols = React.useMemo(() => missCols(), [])
   return (
     <div className="flex flex-col">
@@ -325,14 +321,12 @@ export function NotSentView({ list, total, title, pins, onResend, many }: { list
           ) : null}
         </div>
         <span className="flex items-start gap-2"><PinIf on={pins} n={3} /><span className="min-w-0 flex-1">
-          <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={cols as any} data={shown} bordered height={many ? '320px' : 'auto'} autoRowHeight getRowId={(_, i) => String(i)}
+          <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={cols as any} data={rows} bordered height={many ? '360px' : 'auto'} autoRowHeight getRowId={(_, i) => String(i)}
             emptyState={<Empty icon={Search} description={L('No one matches.', '沒有符合的人。')} />} />
         </span></span>
-        {rows.length > cap ? <p className="flex items-center gap-2 text-body text-fg-secondary">{L('Showing ' + cap + ' of ' + fmtN(rows.length) + '. Download for the full list.', '顯示 ' + cap + ' / ' + fmtN(rows.length) + ' 人，完整名單請下載。')}<PinIf on={pins} n={4} /></p> : null}
       </div>
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-divider p-4">
-        <PinIf on={pins} n={5} />
-        <Button variant="tertiary" startIcon={Download}>{L('Download list', '下載名單')}</Button>
+        <PinIf on={pins} n={4} />
         <Button variant="primary" startIcon={Send} onClick={onResend}>{L('New message to these people', '用這份名單發新訊息')}</Button>
       </div>
     </div>

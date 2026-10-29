@@ -73,7 +73,7 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
     ['status', '狀態呈現', '四種狀態在列表上的標籤與「已送達」欄，所有畫面共用'],
     ['list', '訊息列表', '預設、篩選中、篩選無結果、還沒有訊息、載入中、載入失敗，加上列選單'],
     ['detail', '單筆詳情', '右側面板，五種狀態各一版，含各通道結果與「經 SMS 送達」'],
-    ['failed', '未成功名單', '對話框：少量與大量兩版，下載檔案規格'],
+    ['failed', '未成功名單', '對話框：少量與大量兩版，以及補發入口'],
     ['flow', '互動流程', '從列表點「n 人未送達」到用名單發新訊息，可以實際點'],
     ['edge', '邊界情境', 'PRD 的三條加上八個畫面上會碰到的情況'],
   ]
@@ -144,7 +144,7 @@ function EdgeTab() {
         [<span className="flex flex-col items-start gap-1">{prd}Device Notifications 還在送，Email 已送完</span>, '所有通道完成前維持傳送中。注意：以「任一通道」計算時，Email 送完那一刻已送達就是 292 / 292，進度條會是滿的。',
           <span className="flex w-80 flex-col gap-1.5"><StatusTag s="progress" />{line('Email', '292 / 292 完成')}{line('Device Notifications', '241 / 292 傳送中')}</span>],
         [<span className="flex flex-col items-start gap-1">{prd}推播失敗、SMS 備援成功</span>, '這個人算已送達', <Tag size="sm" color="amber" unbounded>經 SMS 送達</Tag>],
-        [<span className="flex flex-col items-start gap-1">{prd}可以看到哪些訊息</span>, '自己建立的＋同部門／同發送單位的；別人的只能看', <span className="text-body text-fg-secondary">列選單只有查看、複製、下載名單</span>],
+        [<span className="flex flex-col items-start gap-1">{prd}可以看到哪些訊息</span>, '自己建立的＋同部門／同發送單位的；別人的只能看', <span className="text-body text-fg-secondary">列選單只有查看、複製</span>],
         ['推播與 SMS 備援都失敗', '算未送達，兩個原因都列出', <span className="flex flex-col gap-1"><Tag size="sm" color="red" unbounded>未送達</Tag><span className="text-caption text-fg-secondary">沒有註冊裝置，SMS 號碼也已停用</span></span>],
         ['大部分送達，少數人沒收到', 'Sent＋未送達人數（待確認）', <DeliveredCell r={LIST_ROWS.find(r => r.id === 'm012')!} />],
         ['系統錯誤，沒有人收到', 'Failed，詳情有錯誤說明與重試', <span className="flex items-center gap-2"><StatusTag s="error" /><span className="text-body tabular-nums">0 / 45</span></span>],
@@ -153,7 +153,7 @@ function EdgeTab() {
         ['外部電話或外部 Email', '只能走 SMS 或 Email', <ChIcons list={['sms', 'email']} />],
         ['排程訊息需 ICSD 核准但還沒核准', '待確認', <span className="flex items-center gap-2"><StatusTag s="scheduled" /><Tag size="sm" color="amber" unbounded>待核准</Tag></span>],
         ['建立者調部門或離職', '待確認：訊息是否仍對原部門可見', <span className="text-body text-fg-secondary">—</span>],
-        ['收件人超過 100 人沒送達', '名單對話框只顯示前 100 人，完整名單請下載', <span className="text-body">{fmtN(128)} 人 → 顯示 100 人</span>],
+        ['沒送達的人很多', '名單對話框內的表格捲動顯示全部，可搜尋與依原因篩選', <span className="text-body">{fmtN(128)} 人全部列出</span>],
       ]} />
     </Section>
   )

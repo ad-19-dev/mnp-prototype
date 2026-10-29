@@ -7,7 +7,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CircleAlert, Copy, Download, Globe, Pencil, Phone, RotateCw, Users } from 'lucide-react'
+import { Building2, CircleAlert, Copy, Globe, Pencil, Phone, RotateCw, Users } from 'lucide-react'
 import {
   ORGS, PEOPLE, PMAP, addMin, audToTags, failList, fmtDT, fmtN, fmtSize, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Fail, type Group, type Row, type Tag as RTag,
@@ -163,7 +163,6 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
   if (r) {
     const list = failList(r), counts: Record<string, number> = {}, order: string[] = []
     list.forEach(f => { if (!counts[f.reason]) { counts[f.reason] = 0; order.push(f.reason) } counts[f.reason]++ })
-    const shown = list.slice(0, 60)
     body = (
       <>
         <DialogHeader>
@@ -177,12 +176,10 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
             {r.err ? <Banner tone="error" title={r.err.title}>{r.err.text}</Banner> : null}
             {r.channels.length > 1 ? <p className="text-body text-fg-secondary">These receivers weren’t reached on any of the channels this message used.</p> : null}
             {order.length > 1 ? <div className="flex flex-wrap gap-2">{order.map(k => <Tag key={k} size="md">{k} · {fmtN(counts[k])}</Tag>)}</div> : null}
-            <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols as any} data={shown} bordered height="340px" autoRowHeight getRowId={(_, i) => String(i)} />
-            {list.length > shown.length ? <p className="text-body text-fg-secondary">Showing {shown.length} of {fmtN(list.length)}. Download the list to see everyone.</p> : null}
+            <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols as any} data={list} bordered height="340px" autoRowHeight getRowId={(_, i) => String(i)} />
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button variant="tertiary" startIcon={Download} onClick={() => flash('Downloading the not-sent list as a .csv file.')}>Download list</Button>
           <Button variant="primary" startIcon={RotateCw} onClick={() => m.resendNotSent(r)}>{r.status === 'error' ? 'Retry sending' : 'Resend to these ' + fmtN(list.length)}</Button>
         </DialogFooter>
       </>

@@ -6,7 +6,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
+import { Ban, ChevronDown, CircleAlert, Copy, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { CHN, ChIcons, PAvatar, StatusTag, Two } from '../../components/ui'
@@ -26,7 +26,6 @@ function RowMenu({ m, r }: { m: SendCtl; r: Row }) {
         {r.status === 'scheduled' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => m.startCompose('duplicate', r)}>{L('Duplicate', '複製')}</DropdownMenuItem>
         {r.status === 'error' ? <DropdownMenuItem startIcon={RotateCw} onSelect={() => m.retry(r.id)}>{L('Retry', '重新傳送')}</DropdownMenuItem> : null}
-        {r.status === 'sent' ? <DropdownMenuItem startIcon={Download} onSelect={() => flash(L('Downloading report', '下載報表中'), 'ok', r.title)}>{L('Download report', '下載報表')}</DropdownMenuItem> : null}
         {r.status === 'scheduled' ? (
           <>
             <DropdownMenuSeparator />

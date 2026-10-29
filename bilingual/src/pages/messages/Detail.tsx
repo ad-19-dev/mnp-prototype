@@ -7,7 +7,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CircleAlert, Copy, Download, Globe, Pencil, Phone, RotateCw, Users } from 'lucide-react'
+import { Building2, CircleAlert, Copy, Globe, Pencil, Phone, RotateCw, Users } from 'lucide-react'
 import {
   ORGS, PEOPLE, PMAP, addMin, audToTags, failList, fmtDT, fmtN, fmtSize, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Fail, type Group, type Row, type Tag as RTag,
@@ -164,7 +164,6 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
   if (r) {
     const list = failList(r), counts: Record<string, number> = {}, order: string[] = []
     list.forEach(f => { if (!counts[f.reason]) { counts[f.reason] = 0; order.push(f.reason) } counts[f.reason]++ })
-    const shown = list.slice(0, 60)
     body = (
       <>
         <DialogHeader>
@@ -178,12 +177,10 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
             {r.err ? <Banner tone="error" title={tx(r.err.title)}>{tx(r.err.text)}</Banner> : null}
             {r.channels.length > 1 ? <p className="text-body text-fg-secondary">{L('None of the channels reached them.', '所有通道都沒送達這些人。')}</p> : null}
             {order.length > 1 ? <div className="flex flex-wrap gap-2">{order.map(k => <Tag key={k} size="md" unbounded>{tx(k)} · {fmtN(counts[k])}</Tag>)}</div> : null}
-            <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols() as any} data={shown} bordered height="340px" autoRowHeight getRowId={(_, i) => String(i)} />
-            {list.length > shown.length ? <p className="text-body text-fg-secondary">{L('Showing ' + shown.length + ' of ' + fmtN(list.length) + '. Download for the full list.', '顯示 ' + shown.length + ' / ' + fmtN(list.length) + ' 人，完整名單請下載。')}</p> : null}
+            <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols() as any} data={list} bordered height="340px" autoRowHeight getRowId={(_, i) => String(i)} />
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button variant="tertiary" startIcon={Download} onClick={() => flash(L('Downloading list', '下載名單中'), 'ok', 'not_sent.csv')}>{L('Download list', '下載名單')}</Button>
           <Button variant="primary" startIcon={RotateCw} onClick={() => m.resendNotSent(r)}>{r.status === 'error' ? L('Retry', '重新傳送') : L('Resend to ' + fmtN(list.length), '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
         </DialogFooter>
       </>

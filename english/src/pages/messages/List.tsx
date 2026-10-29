@@ -6,7 +6,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Ban, ChevronDown, CircleAlert, Copy, Download, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
+import { Ban, ChevronDown, CircleAlert, Copy, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { CHN, ChIcons, PAvatar, PageIntro, STATUS, StatusTag, Two } from '../../components/ui'
@@ -25,7 +25,6 @@ function RowMenu({ m, r }: { m: SendCtl; r: Row }) {
         {r.status === 'scheduled' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>Edit</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => m.startCompose('duplicate', r)}>Duplicate</DropdownMenuItem>
         {r.status === 'error' ? <DropdownMenuItem startIcon={RotateCw} onSelect={() => m.retry(r.id)}>Retry sending</DropdownMenuItem> : null}
-        {r.status === 'sent' ? <DropdownMenuItem startIcon={Download} onSelect={() => flash('Downloading the delivery report for “' + r.title + '”.')}>Download report</DropdownMenuItem> : null}
         {r.status === 'scheduled' ? (
           <>
             <DropdownMenuSeparator />

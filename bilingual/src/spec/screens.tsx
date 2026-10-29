@@ -22,7 +22,7 @@ const LIST_NOTES: Note[] = [
   { n: 7, title: '狀態', body: <>四種狀態標籤，規則見「狀態呈現」分頁。</> },
   { n: 8, title: '已送達', body: '「已送達 / 總人數」，以人計。傳送中加進度條。' },
   { n: 9, title: 'n 人未送達', body: '送完且有人沒收到時出現，黃色連結，點了打開未成功名單。' },
-  { n: 10, title: '列選單', body: '查看、複製成新訊息、下載未送達名單；自己的排程訊息另有編輯與取消。' },
+  { n: 10, title: '列選單', body: '查看、複製成新訊息；自己的排程訊息另有編輯與取消，傳送失敗的可以重試。' },
   { n: 11, title: '分頁與更新時間', body: '分頁列固定在底部，右側選每頁 10 / 20 / 50 筆（預設 20，切換後回到第 1 頁）；「更新於」標示傳送中的數字是哪個時間點的結果。' },
 ]
 
@@ -69,7 +69,7 @@ const DETAIL_NOTES: Note[] = [
   { n: 5, title: '未送達原因', body: '依原因分組計數，讓寄件人判斷要不要補發、要不要找 IT。' },
   { n: 6, title: '收件人結果', body: '逐人的送達方式：Device Notifications、「經 SMS 送達」（黃）、「未送達」（紅）＋原因。完整清單另開。' },
   { n: 7, title: '時間軸', body: '建立、核准（需要時）、開始傳送、完成或失敗的時間。' },
-  { n: 8, title: '操作', body: '下載未送達名單、複製成新訊息；自己的排程訊息加取消與編輯；失敗時重試放在錯誤提示上。' },
+  { n: 8, title: '操作', body: '複製成新訊息、關閉；自己的排程訊息加取消與編輯；失敗時重試放在錯誤提示上。' },
 ]
 const DIFF: Record<Scenario['key'], string> = {
   scheduled: '還沒有結果：送達結果改成一句說明，沒有通道結果、原因與收件人。自己的排程訊息可編輯、取消。',
@@ -101,15 +101,14 @@ export function DetailTab() {
 const FAILED_NOTES: Note[] = [
   { n: 1, title: '標題', body: '「x / 總人數 人未送達」，下方是訊息標題。' },
   { n: 2, title: '搜尋與原因篩選', body: '搜尋姓名、工號、NT 帳號；原因不只一種時，用按鈕依原因篩選並顯示人數。' },
-  { n: 3, title: '名單', body: '收件人（固定在左）、組織、沒送到的通道、原因（第二行是 SMS 備援結果）。' },
-  { n: 4, title: '超過 100 人', body: '只顯示前 100 人並說明，完整名單請下載。上限待確認。' },
-  { n: 5, title: '下載與發新訊息', body: '「下載名單」下載 Excel；「用這份名單發新訊息」帶入收件人與原內容，進入發送流程第 1 步。' },
+  { n: 3, title: '名單', body: '收件人（固定在左）、組織、沒送到的通道、原因（第二行是 SMS 備援結果）。人多時表格固定高度、在框內捲動，所有人都看得到。' },
+  { n: 4, title: '發新訊息', body: '「用這份名單發新訊息」帶入收件人與原內容，進入發送流程第 1 步。' },
 ]
 export function FailedTab() {
   const [v, setV] = React.useState<'few' | 'many'>('few')
   return (
     <>
-      <Section eyebrow="Screen 3" title="未成功名單" lead="入口有三個，都開同一個對話框：列表的黃色「n 人未送達」、詳情的送達結果、列選單的「下載未送達名單」。名單的目的是補發，所以直接提供發新訊息。">
+      <Section eyebrow="Screen 3" title="未成功名單" lead="入口有兩個，都開同一個對話框：列表的黃色「n 人未送達」、詳情的送達結果。名單的目的是補發，所以直接提供發新訊息。">
         <SegmentedControl value={v} onValueChange={x => x && setV(x as 'few' | 'many')} aria-label="名單人數">
           <SegmentedControlItem value="few">少量（3 人）</SegmentedControlItem>
           <SegmentedControlItem value="many">大量（128 人）</SegmentedControlItem>
@@ -120,18 +119,6 @@ export function FailedTab() {
             : <NotSentView list={MISS_MANY} total={412} title="Chiller maintenance tonight 18:00–22:00" pins many />}
         </Frame>
       </Section>
-      <Section eyebrow="Download" title="下載檔案" lead="下載內容與畫面一致，私人手機一律遮蔽。">
-        <SpecTable head={['項目', '規格']} rows={[
-          ['格式', 'Excel（.xlsx）；是否另提供 CSV 待確認'],
-          ['檔名', <code>MNP_未送達_&lt;訊息標題&gt;_&lt;傳送日期&gt;.xlsx</code>],
-          ['欄位', '姓名、NT 帳號、工號、組織、沒送到的通道、原因、SMS 備援結果'],
-          ['個資', '私人手機遮蔽為 09••-•••-123，與畫面一致'],
-          ['權限', '別人建立的訊息能否下載待確認'],
-        ]} />
-        <SpecTable head={['姓名', 'NT 帳號', '工號', '組織', '沒送到的通道', '原因', 'SMS 備援結果']} rows={MISS_FEW.map(x => [
-          x.p.zh + ' ' + x.p.en, x.p.nt, x.p.emp, x.p.org, x.chans.map(c => c === 'sms' ? 'SMS' : 'Device Notifications').join('、'), x.why[1], x.sms[1],
-        ])} />
-      </Section>
     </>
   )
 }
@@ -141,7 +128,7 @@ const FLOW_ROWS: Row[] = LIST_ROWS.filter(r => ['m012', 'm016', 'm010'].indexOf(
 const SCN_FOR: Record<string, Scenario['key']> = { m012: 'sentSome', m016: 'progress', m010: 'sentAll' }
 const STEPS = [
   '在列表找到「Typhoon alert」那列，點黃色的「3 人未送達」。',
-  '對話框列出沒收到的 3 人與原因，可以搜尋、下載。',
+  '對話框列出沒收到的 3 人與原因，可以搜尋、依原因篩選。',
   '點「用這份名單發新訊息」。',
   '進入發送流程第 1 步，收件人已帶入。',
 ]
