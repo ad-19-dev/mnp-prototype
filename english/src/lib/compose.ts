@@ -103,8 +103,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
   if (extE && !c.ch.email) e.ext = plural(extE, 'external email address', 'external email addresses') + ' can only get Email. Add Email, or remove ' + (extE === 1 ? 'it' : 'them') + '.'
   if (extP && !c.ch.sms) e.extp = plural(extP, 'external phone number', 'external phone numbers') + ' can only get SMS. Turn on Device Notifications with SMS fallback, or remove ' + (extP === 1 ? 'it' : 'them') + '.'
   // 2. Message
-  if (!c.sender.trim()) e.sender = 'Enter a sender name.'
-  else if (c.sender.length > LIM.sender) e.sender = 'Sender name can be up to ' + LIM.sender + ' characters.'
+  if (c.sender.length > LIM.sender) e.sender = 'Sender name can be up to ' + LIM.sender + ' characters.'
   if (hasNotif(c)) {
     if (!c.title.trim()) e.title = 'Enter a title.'
     else if (c.title.length > LIM.title) e.title = 'Title can be up to ' + LIM.title + ' characters.'

@@ -89,8 +89,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
       if (!nm) e.name = L('Enter a name.', '請輸入名稱。')
       else if (ed.name.length > LIM.name) e.name = tooLong(LIM.name)
       else if (getApp().templates.some(t => t.id !== ed.id && t.name.toLowerCase() === nm.toLowerCase())) e.name = L('This name is taken.', '這個名稱已經有人用了。')
-      if (!ed.sender.trim()) e.sender = L('Enter a sender name.', '請輸入寄件人名稱。')
-      else if (ed.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
+      if (ed.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
       const hasT = !!ed.title.trim(), hasC = !!ed.content.trim()
       if (hasT && !hasC) e.content = L('Add text, or clear the title.', '請輸入內文，或清空標題。')
       if (hasC && !hasT) e.title = L('Add a title, or clear the text.', '請輸入標題，或清空內文。')
@@ -264,8 +263,8 @@ function TplEditor({ m }: { m: TCtl }) {
         <Section title={L('Content', '內容')} sub={L('Fill in the channels you need. Only the text is saved.', '填寫需要的通道就好，模板只存文字。')}>
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
             {ed.tried && e.formats ? <Banner tone="error">{e.formats}</Banner> : null}
-            <FormField id="t-sender" label={L('Sender name', '寄件人名稱')} required count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} error={show('sender')}>
-              <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
+            <FormField id="t-sender" label={L('Sender name', '寄件人名稱')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Leave blank to use the NT account of whoever sends.', '不填會用發送者的 NT 帳號。')} error={show('sender')}>
+              <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('NT account of whoever sends', '發送者的 NT 帳號')} />
             </FormField>
             <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Device Notifications', 'Device Notifications')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop OS', '桌面通知')}</Tag></span>}>
               <FormField id="t-title" label={L('Title', '標題')} count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>

@@ -86,8 +86,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
       if (!nm) e.name = 'Enter a template name.'
       else if (ed.name.length > LIM.name) e.name = 'Template names can be up to 50 characters.'
       else if (getApp().templates.some(t => t.id !== ed.id && t.name.toLowerCase() === nm.toLowerCase())) e.name = 'Another template already uses this name.'
-      if (!ed.sender.trim()) e.sender = 'Enter a sender name.'
-      else if (ed.sender.length > LIM.sender) e.sender = 'Sender name can be up to 20 characters.'
+      if (ed.sender.length > LIM.sender) e.sender = 'Sender name can be up to 20 characters.'
       const hasT = !!ed.title.trim(), hasC = !!ed.content.trim()
       if (hasT && !hasC) e.content = 'Add the notification text, or clear the title.'
       if (hasC && !hasT) e.title = 'Add a title, or clear the notification text.'
@@ -264,8 +263,8 @@ function TplEditor({ m }: { m: TCtl }) {
         <Section title="Message text" sub="Fill in the formats this template is for. When someone uses it, MNP fills in the parts that match the channels they pick. Receivers aren’t part of a template.">
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
             {ed.tried && e.formats ? <Banner tone="error">{e.formats}</Banner> : null}
-            <FormField id="t-sender" label="Sender name" required count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} error={show('sender')}>
-              <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder="e.g. IT Service Desk" />
+            <FormField id="t-sender" label="Sender name" count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint="Leave blank to use the NT account of whoever sends." error={show('sender')}>
+              <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder="NT account of whoever sends" />
             </FormField>
             <Block icon={MessageSquareText} title="Notification text" right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>Device Notifications</Tag><Tag size="sm" icon={Monitor}>Desktop OS</Tag></span>}>
               <FormField id="t-title" label="Title" count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>

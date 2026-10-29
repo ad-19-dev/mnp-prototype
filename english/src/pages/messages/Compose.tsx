@@ -13,6 +13,7 @@ import {
 import {
   CAP, CH_CARDS, DESK, DOMAIN, LIM, ORGS, PMAP, SUPERVISOR, addMin, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   joinList, niceDT, pad, placeholders, plural, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
+  ME,
 } from '../../lib/data'
 import {
   approval, effEmailMode, hasNotif, multiPeople, noNumber, reachNote, recvCount, smsCoverText, smsOn, stepOk, unresolved,
@@ -296,8 +297,8 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
       </div>
       <Section title="Message" sub={'Write each format once. Device Notifications and Desktop OS share the notification text' + (c.ch.email ? ', and Email can reuse it or have its own version' : '') + '.'}>
         <div className="flex flex-col gap-[var(--layout-space-loose)]">
-          <FormField id="f-sender" label="Sender name" required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint="Shown as who the message is from, on every channel." error={eSender}>
-            <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder="e.g. IT Service Desk" />
+          <FormField id="f-sender" label="Sender name" count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={'Shown on every channel. Leave blank to use your NT account (' + PMAP[ME].nt + ').'} error={eSender}>
+            <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={PMAP[ME].nt} />
           </FormField>
           {hasN ? (
             <FormatBlock icon={MessageSquareText} title="Notification text" uses={<>{c.ch.push ? <Tag size="sm" icon={Smartphone}>Device Notifications</Tag> : null}{c.ch.desktop ? <Tag size="sm" icon={Monitor}>Desktop OS</Tag> : null}</>}>

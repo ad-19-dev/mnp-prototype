@@ -168,7 +168,7 @@ export function SaveTplDialog({ m }: { m: SendCtl }) {
   if (st) {
     const nm = st.name.trim(), dup = app.templates.some(t => t.name.toLowerCase() === nm.toLowerCase())
     const err = (st.tried && !nm) ? 'Enter a template name.' : st.name.length > LIM.name ? 'Template names can be up to 50 characters.' : (nm && dup) ? 'A template with this name already exists.' : ''
-    const mode = effEmailMode(c), rows = [{ k: 'Sender name', v: c.sender }]
+    const mode = effEmailMode(c), rows = [{ k: 'Sender name', v: c.sender.trim() || PMAP[ME].nt }]
     if (hasNotif(c)) rows.push({ k: 'Notification text', v: c.title })
     if (smsOn(c)) rows.push({ k: 'SMS text', v: c.smsText })
     if (c.ch.email) rows.push({ k: 'Email', v: mode === 'own' ? c.subject : 'Same as the notification text' })

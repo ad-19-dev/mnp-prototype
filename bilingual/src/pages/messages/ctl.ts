@@ -284,7 +284,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.ch.desktop) why.push('no desktop agent')
       const reason = why.length ? why.join(' and ').replace(/^./, x => x.toUpperCase()) : 'Not delivered' // stored in English; shown through tx()
       const base: Partial<Row> = {
-        sender: c.sender.trim(), tpl: c.tplId, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
+        sender: c.sender.trim() || PMAP[ME].nt, tpl: c.tplId, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
         smsText: smsOn(c) ? c.smsText.trim() : '', channels, sms: smsOn(c), email: em,
         total: rc.total, ok: 0, aud: tagsToAud(c.receivers), fresh: Date.now(), _f: null, err: null, byCh: null,
         fw: rc.unr.map(p => p.id), fr: [[reason + (smsOn(c) ? ', and no phone number for SMS' : '')]],

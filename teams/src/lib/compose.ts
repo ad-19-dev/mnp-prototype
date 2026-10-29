@@ -107,8 +107,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
   if (extE && !c.ch.email) e.ext = L(P(extE, 'external email', '', 'external emails') + ' can only get Email. Turn on Email or remove ' + (extE === 1 ? 'it' : 'them') + '.', extE + ' 個外部 Email 只能收 Email。請開啟 Email，或移除它們。')
   if (extP && !c.ch.sms) e.extp = L(P(extP, 'external phone', '', 'external phones') + ' can only get SMS. Turn on SMS fallback or remove ' + (extP === 1 ? 'it' : 'them') + '.', extP + ' 支外部電話只能收 SMS。請開啟 SMS 備援，或移除它們。')
   // 2. Message
-  if (!c.sender.trim()) e.sender = L('Enter a sender name.', '請輸入寄件人名稱。')
-  else if (c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
+  if (c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
   if (hasNotif(c)) {
     if (!c.title.trim()) e.title = L('Enter a title.', '請輸入標題。')
     else if (c.title.length > LIM.title) e.title = tooLong(LIM.title)

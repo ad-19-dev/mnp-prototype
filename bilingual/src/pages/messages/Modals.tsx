@@ -168,7 +168,7 @@ export function SaveTplDialog({ m }: { m: SendCtl }) {
   if (st) {
     const nm = st.name.trim(), dup = app.templates.some(t => t.name.toLowerCase() === nm.toLowerCase())
     const err = (st.tried && !nm) ? L('Enter a name.', '請輸入名稱。') : st.name.length > LIM.name ? L('Up to 50 characters.', '最多 50 字。') : (nm && dup) ? L('This name is taken.', '這個名稱已經有人用了。') : ''
-    const mode = effEmailMode(c), rows = [{ k: L('Sender', '寄件人'), v: c.sender }]
+    const mode = effEmailMode(c), rows = [{ k: L('Sender', '寄件人'), v: c.sender.trim() || PMAP[ME].nt }]
     if (hasNotif(c)) rows.push({ k: L('Notification', '通知'), v: c.title })
     if (smsOn(c)) rows.push({ k: 'SMS', v: c.smsText })
     if (c.ch.email) rows.push({ k: 'Email', v: mode === 'own' ? c.subject : L('Same as notification', '同通知內容') })

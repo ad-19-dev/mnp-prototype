@@ -15,6 +15,7 @@ import {
 import {
   CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
+  ME,
 } from '../../lib/data'
 import {
   approval, effEmailMode, hasNotif, multiPeople, noNumber, reachNote, smsCoverText, smsOn, stepOk, unresolved,
@@ -304,8 +305,8 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
       </div>
       <Section title={L('Message', '訊息內容')}>
         <div className="flex flex-col gap-[var(--layout-space-loose)]">
-          <FormField id="f-sender" label={L('Sender name', '寄件人名稱')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Shown on every channel.', '顯示在每個通道。')} error={eSender}>
-            <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
+          <FormField id="f-sender" label={L('Sender name', '寄件人名稱')} count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Shown on every channel. Leave blank to use your NT account (' + PMAP[ME].nt + ').', '顯示在每個通道。不填會用你的 NT 帳號（' + PMAP[ME].nt + '）。')} error={eSender}>
+            <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={PMAP[ME].nt} />
           </FormField>
           {hasN ? (
             <FormatBlock icon={MessageSquareText} title={L('Notification', '通知')} uses={<>{c.ch.push ? <Tag size="sm" icon={Smartphone}>{CHN.push.name}</Tag> : null}{c.ch.desktop ? <Tag size="sm" icon={Monitor}>{CHN.desktop.name}</Tag> : null}</>}>
