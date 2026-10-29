@@ -6,6 +6,7 @@
 |---|---|---|
 | 中英雙語版（主要版本） | `bilingual/` | https://claude.ai/artifact/QwiqnwmVSsZWpNSdb5Jnpq |
 | 英文原版 | `english/` | https://claude.ai/artifact/QNA3grD2q5vsNvfZ6JCmZX |
+| 團隊版（提案，未取代雙語版） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息發送紀錄設計規格 | `bilingual/spec.html`、`bilingual/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
 
 密碼不放在這個儲存庫裡，請另外保管。
@@ -35,6 +36,7 @@ npm run build      # 輸出到 bilingual/dist/
 ```
 node tools/lock.mjs <密碼> publish/mnp-prototype-i18n.html bilingual "MNP Bilingual Prototype"
 node tools/lock.mjs <密碼> publish/mnp-prototype.html english "MNP Prototype"
+node tools/lock.mjs <密碼> publish/mnp-teams-prototype.html teams "MNP Teams Prototype"
 ```
 
 設計規格頁另外建置，輸出到 `bilingual/spec/dist/`：
