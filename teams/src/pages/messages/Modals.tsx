@@ -8,8 +8,8 @@ import { ArrowRight, Building2, ChevronLeft, Globe, Lock, Phone, Plus, Search, W
 import { LIM, ME, PEOPLE, PMAP, fmtPhone, maskPhone, plural, splitTokens, tplFormats, SAMPLE_SEND } from '../../lib/data'
 import { effEmailMode, hasNotif, multiPeople, recvFlat, smsOn, tplFit } from '../../lib/compose'
 import { useApp } from '../../lib/store'
-import { Banner, FmtChips, FormField, IconBox, KV, ListBox, ListRow, PAvatar, Two, TeamTags } from '../../components/ui'
-import { canSeeItem, inTeam } from '../../lib/teams'
+import { Banner, FmtChips, FormField, IconBox, KV, ListBox, ListRow, PAvatar, Two } from '../../components/ui'
+import { groupInSpace, tplInSpace } from '../../lib/teams'
 import type { SendCtl } from './ctl'
 import { L, P, tx } from '../../lib/i18n'
 
@@ -146,7 +146,7 @@ export function SaveGroupDialog({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, sg = s.sg, close = () => m.set({ sg: null })
   let body: React.ReactNode = null, sub = ''
   if (sg) {
-    const nm = sg.name.trim(), dup = app.groups.some(g => g.name.toLowerCase() === nm.toLowerCase())
+    const nm = sg.name.trim(), dup = app.groups.some(g => groupInSpace(g) && g.name.toLowerCase() === nm.toLowerCase())
     const err = (sg.tried && !nm) ? L('Enter a name.', '請輸入名稱。') : sg.name.length > 50 ? L('Up to 50 characters.', '最多 50 字。') : (nm && dup) ? L('This name is taken.', '這個名稱已經有人用了。') : ''
     const hasSets = s.c.receivers.some(t => t.type === 'group' || t.type === 'org'), ext = s.c.receivers.some(t => t.type === 'ext')
     sub = L('Saves ' + P(recvFlat(s.c, app.groups).people.length, 'person', '', 'people') + ' for reuse.', '把 ' + recvFlat(s.c, app.groups).people.length + ' 人存成群組，之後可重複使用。') + (ext ? L(' External addresses aren’t saved.', '外部收件人不會存入。') : '')
@@ -187,9 +187,8 @@ export function SaveTplDialog({ m }: { m: SendCtl }) {
 export function TplPickerDialog({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, tp = s.tp, close = () => m.set({ tp: null })
   const q = tp ? tp.q.trim().toLowerCase() : ''
-  // templates you can see; those of the team you're sending for come first
-  const list = app.templates.filter(canSeeItem).filter(t => !q || [t.name, t.title, t.content, t.email && t.email.subject].join(' ').toLowerCase().indexOf(q) >= 0)
-    .sort((a, b) => Number(!!s.c.team && (b.teams || []).indexOf(s.c.team) >= 0) - Number(!!s.c.team && (a.teams || []).indexOf(s.c.team) >= 0))
+  // this space's templates
+  const list = app.templates.filter(t => tplInSpace(t)).filter(t => !q || [t.name, t.title, t.content, t.email && t.email.subject].join(' ').toLowerCase().indexOf(q) >= 0)
   return (
     <Shell open={!!tp} onClose={close} width={720} title={L('Choose a template', '選擇模板')} sub={L('Replaces the text only. Receivers and channels stay.', '只會替換文字，收件人和通道不變。')} foot={<Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button>}>
       <Input startIcon={Search} type="search" autoFocus placeholder={L('Search templates', '搜尋模板')} aria-label={L('Search templates', '搜尋模板')} value={tp ? tp.q : ''} onChange={ev => m.set({ tp: { q: ev.target.value } })} />
@@ -202,7 +201,7 @@ export function TplPickerDialog({ m }: { m: SendCtl }) {
               <span className="flex items-center gap-2"><span className="flex-1 text-body font-medium">{t.name}</span><FmtChips list={tplFormats(t)} /></span>
               <span className="truncate text-body text-fg-secondary">{t.title || (t.email && t.email.subject) || ''}</span>
               <span className={cn('text-caption', fit.warn ? 'text-warning-text' : 'text-success-text')}>{fit.text}</span>
-              <span className="flex items-center gap-2 text-caption text-fg-muted"><TeamTags ids={(t.teams || []).filter(inTeam)} />{t.updated} · {ow.en}{t.owner === ME ? L(' (you)', '（你）') : ''}</span>
+              <span className="flex items-center gap-2 text-caption text-fg-muted">{t.updated} · {ow.en}{t.owner === ME ? L(' (you)', '（你）') : ''}</span>
             </button>
           )
         })}

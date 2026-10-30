@@ -24,13 +24,15 @@ export interface Org { code: string; name: string; count: number }
 export interface Group {
   id: string; name: string; desc: string; count: number; updated: string; creator: string
   role: 'Owner' | 'Editor' | 'Viewer'; members?: { pid: string }[]; collabs?: { pid: string; role: string }[]; fresh?: number
-  teams?: string[]
+  // the team it belongs to; null means the creator's personal space
+  team?: string | null
 }
 export interface EmailBody { mode: 'same' | 'own'; subject?: string; html?: string; atts?: { name: string; size: number }[] }
 export interface Template {
   id: string; name: string; sender: string; title: string; content: string; sms: string
   email: EmailBody; shared: [string, string][]; updated: string; owner: string; fresh?: number
-  teams?: string[]
+  // the team it belongs to; null means the owner's personal space
+  team?: string | null
 }
 export type Status = 'scheduled' | 'progress' | 'sent' | 'error'
 export interface Row {
@@ -331,23 +333,28 @@ export const TEAMS: Team[] = [
   { id: 'tm4', name: 'UX Team', desc: 'Research recruiting and design system updates.', created: '2026/06/30', members: TM('p09 p01 p05 p18') },
   { id: 'tm5', name: 'IT Service Desk', desc: 'IT notices for employees.', created: '2026/02/11', members: TM('p14 p11 p21') },
 ]
-// teams that were closed after their last member left; their messages keep the name
-export const CLOSED_TEAMS: Record<string, string> = { tm0: 'Fab 18 Canteen Notices' }
-// who owns what in the sample data; messages not listed are personal, templates and groups not listed aren't shared with a team
+// which space owns what in the sample data; anything not listed is in its creator's personal space
 const ROW_TEAM: Record<string, string> = {
-  m017: 'tm1', m005: 'tm1', m016: 'tm2', m015: 'tm2', m018: 'tm2', m004: 'tm2', m010: 'tm2',
+  m017: 'tm1', m005: 'tm1', m011: 'tm1', m016: 'tm2', m015: 'tm2', m018: 'tm2', m004: 'tm2', m010: 'tm2',
   m019: 'tm3', m012: 'tm3', m009: 'tm3', m001: 'tm3', m008: 'tm4', m003: 'tm4', m014: 'tm5', m002: 'tm5', m006: 'tm5',
 }
 ROWS0.forEach(r => { r.team = ROW_TEAM[r.id] || null })
-// the typhoon template and the ERT group are shared with two teams
-const TPL_TEAMS: Record<string, string[]> = { t1: ['tm2'], t3: ['tm2'], t2: ['tm3', 'tm2'], t4: ['tm1'], t8: ['tm1'], t9: ['tm1'] }
-TEMPLATES.forEach(t => { t.teams = TPL_TEAMS[t.id] || [] })
-const GROUP_TEAMS: Record<string, string[]> = { g1: ['tm2'], g2: ['tm1'], g3: ['tm1'], g4: ['tm3', 'tm2'], g6: ['tm4'] }
-GROUPS.forEach(g => { g.teams = GROUP_TEAMS[g.id] || [] })
+TEMPLATES.push(
+  { id: 't10', name: 'Personal reminder', sender: '', title: 'Reminder: [what] by [date]', content: 'Quick reminder: please [what] by [date]. Reply to me if anything blocks you.', sms: '', email: { mode: 'same' }, shared: [], updated: '2026/10/10', owner: 'p01' },
+  { id: 't11', name: 'Out of office', sender: '', title: 'I’m out of office [dates]', content: 'I’m out of office [dates] with limited access to email. For urgent matters, contact [backup].', sms: '', email: { mode: 'same' }, shared: [], updated: '2026/08/21', owner: 'p01' },
+  { id: 't12', name: 'Research recruiting', sender: 'UX Team', title: '', content: '', sms: '', email: { mode: 'own', subject: 'Help us test [feature]: [length] sessions on [dates]', html: '<p>Hi,</p><p>We’re testing <b>[feature]</b> and need [n] volunteers for [length] remote sessions on [dates].</p><p>Reply to this email to pick a slot.</p><p>UX Team</p>' }, shared: [], updated: '2026/09/29', owner: 'p09' },
+)
+GROUPS.push(
+  { id: 'g9', name: 'Project Atlas core', desc: 'People I work with on Project Atlas.', count: 7, updated: '2026/10/18 11:20', creator: 'p01', role: 'Owner' },
+)
+GSEED.g9 = { m: ['p01', 'p02', 'p03', 'p08', 'p10', 'p17', 'p22'], fill: [], col: [['p01', 'Owner']] }
+const TPL_TEAM: Record<string, string> = { t1: 'tm2', t3: 'tm2', t2: 'tm3', t4: 'tm1', t8: 'tm1', t9: 'tm1', t5: 'tm5', t12: 'tm4' }
+TEMPLATES.forEach(t => { t.team = TPL_TEAM[t.id] || null })
+const GROUP_TEAM: Record<string, string> = { g1: 'tm2', g2: 'tm1', g3: 'tm1', g4: 'tm3', g6: 'tm4', g7: 'tm5' }
+GROUPS.forEach(g => { g.team = GROUP_TEAM[g.id] || null })
 
-// More of your own messages, so My messages fills two pages and covers each case: personal and team,
-// every status, every channel mix, SMS fallback, external receivers, attachments, a blank sender name
-// (sent as your NT account), a team you left (IT Service Desk) and a team that was closed (tm0).
+// More of your own messages, covering each case: personal and team, every status, every channel mix,
+// SMS fallback, external receivers, attachments and a blank sender name (sent as your NT account).
 const em = (subject: string, text: string, atts: { name: string; size: number }[] = []): EmailBody => ({ mode: 'own', subject, html: textToHtml(text), atts })
 const MINE: Row[] = [
   { id: 'm122', sender: 'Grace Wu', tpl: null, title: 'Team lunch moves to 12:30 today', content: 'Lunch with the Platform intern group moves to 12:30 today, same place: B1 cafeteria, table area C.', channels: ['push'], sms: false, status: 'sent', created: '2026/10/21 10:12', sched: null, total: 6, ok: 6, creator: 'p01', team: null, aud: [['p', 'p02'], ['p', 'p03'], ['p', 'p08'], ['p', 'p10'], ['p', 'p17'], ['p', 'p22']] },
@@ -360,19 +367,44 @@ const MINE: Row[] = [
   { id: 'm115', sender: 'Grace Wu', tpl: null, title: 'Vendor visit Thu 10/23: guest Wi-Fi and badges', content: 'Our vendor visits on Thu, Oct 23 from 13:30. Guest badges are at the B lobby. Guest Wi-Fi: TSMC-Guest, code on your badge.', smsText: 'Vendor visit Thu 10/23 13:30. Badges at B lobby.', channels: ['push', 'email'], sms: true, status: 'sent', created: '2026/10/19 17:22', sched: null, total: 5, ok: 4, creator: 'p01', team: null, aud: [['p', 'p02'], ['p', 'p22'], ['e', 'ken.lu@vendor-example.com'], ['e', '0988-000-111'], ['e', 'amy.lai@vendor-example.com']], email: { mode: 'same' }, byCh: { push: [2, 2], email: [3, 4], sms: [1, 1] }, fx: [['amy.lai@vendor-example.com', 'Mailbox full (552)']] },
   { id: 'm114', sender: 'F18 MFG3', tpl: 't3', title: 'Shift handover moves to 19:15 from 10/27', content: 'Starting Oct 27, the night-shift handover meeting moves to 19:15 in room 3F-07. Day-shift leads, please update your handover notes before 19:00.', channels: ['push'], sms: false, status: 'scheduled', created: '2026/10/19 11:03', sched: '2026/10/26 18:00', total: 86, ok: 0, creator: 'p01', team: 'tm2', aud: [['g', 'g1']] },
   { id: 'm113', sender: 'Platform Ops', tpl: 't8', title: 'Resolved: slow page loads in tWorkspace', content: 'The slow page loads reported at 08:50 are resolved. If pages still load slowly, clear your browser cache and sign in again. Thanks for your patience.', channels: ['push', 'desktop'], sms: false, status: 'sent', created: '2026/10/17 10:40', sched: null, total: 560, ok: 551, creator: 'p01', team: 'tm1', aud: [['o', 'PLT/ENG1'], ['o', 'PLT/ENG2'], ['o', 'IT/INFRA'], ['g', 'g3']], byCh: { push: [532, 560], desktop: [551, 560] }, fr: [['Desktop agent offline for 7+ days'], ['Notifications turned off on the device'], ['Desktop agent not installed']], fo: 'PLT/ENG2' },
-  { id: 'm112', sender: 'IT Service Desk', tpl: 't5', title: 'Your password expires in 7 days', content: 'Change your Windows password before Oct 23 to keep access to tWorkspace and email. Press Ctrl+Alt+Del and choose Change a password.', channels: ['desktop'], sms: false, status: 'sent', created: '2026/10/16 09:00', sched: null, total: 198, ok: 198, creator: 'p01', team: 'tm5', aud: [['o', 'IT/INFRA'], ['o', 'PLT/ENG1']] },
-  { id: 'm111', sender: 'UX Team', tpl: null, title: 'Design critique: bring one screen you’re stuck on', content: 'Design critique this Thursday, 15:00–16:00 in 5F-Ocean. Bring one screen you’re stuck on; 10 minutes each.', channels: ['desktop'], sms: false, status: 'sent', created: '2026/10/15 16:10', sched: null, total: 9, ok: 9, creator: 'p01', team: 'tm4', aud: [['g', 'g8']] },
+  { id: 'm111', sender: 'UX Team', tpl: null, title: 'Design critique: bring one screen you’re stuck on', content: 'Design critique this Thursday, 15:00–16:00 in 5F-Ocean. Bring one screen you’re stuck on; 10 minutes each.', channels: ['desktop'], sms: false, status: 'sent', created: '2026/10/15 16:10', sched: null, total: 37, ok: 37, creator: 'p01', team: 'tm4', aud: [['g', 'g6']] },
   { id: 'm110', sender: 'Platform Ops', tpl: 't9', title: 'Weekly release digest: W42', content: 'This week in tWorkspace:\n\n• Profile: pronouns and working hours\n• MNP: send for a team\n• Search: filter by file type\n\nFull changelog in tWorkspace › What’s new.', channels: ['email'], sms: false, status: 'error', created: '2026/10/16 17:00', sched: '2026/10/17 09:00', total: 560, ok: 290, creator: 'p01', team: 'tm1', aud: [['o', 'PLT/ENG1'], ['o', 'PLT/ENG2'], ['o', 'IT/INFRA'], ['g', 'g3']], email: em('Weekly release digest: W42', 'This week in tWorkspace:\n\n• Profile: pronouns and working hours\n• MNP: send for a team\n• Search: filter by file type\n\nFull changelog in tWorkspace › What’s new.'), fr: [['Not delivered (MNP-4188)']], fo: 'PLT/ENG2', err: { title: 'The mail relay stopped accepting this batch halfway at 09:12.', text: '290 people received the email; 270 didn’t. Retry sends it only to the people who didn’t get it.' } },
   { id: 'm109', sender: 'ESH Emergency', tpl: null, title: 'Chemical spill drill: Fab 15 Phase 7, Wed 10:30', content: 'ERT members: a chemical spill drill starts Wed, Oct 15 at 10:30 in Fab 15 Phase 7, sub-fab level. Report to the ERT room by 10:15 with full PPE.', smsText: 'Spill drill Wed 10:30 F15 P7 sub-fab. ERT room by 10:15, full PPE.', channels: ['push'], sms: true, status: 'sent', created: '2026/10/14 16:45', sched: '2026/10/15 07:30', total: 45, ok: 45, creator: 'p01', team: 'tm3', aud: [['g', 'g4']], byCh: { push: [42, 45], sms: [3, 3] } },
   { id: 'm108', sender: 'Grace Wu', tpl: null, title: 'Notes from the Q4 planning workshop with the Platform, IT Infrastructure and Fab 18 teams, plus next steps for the notification rollout', content: 'Thanks for joining. Notes and the decision log are attached. Next steps: confirm owners by Oct 17, then a pilot in Fab 18 from Nov 3.', channels: ['email'], sms: false, status: 'sent', created: '2026/10/13 18:30', sched: null, total: 24, ok: 24, creator: 'p01', team: null, aud: [['p', 'p02'], ['p', 'p12'], ['p', 'p14'], ['o', 'PLT/UX']], email: em('Q4 planning workshop: notes and next steps', 'Thanks for joining. Notes and the decision log are attached.\n\nNext steps: confirm owners by Oct 17, then a pilot in Fab 18 from Nov 3.', [{ name: 'Q4_workshop_notes.pdf', size: 1260000 }, { name: 'Decision_log.xlsx', size: 54000 }, { name: 'Rollout_timeline.png', size: 418000 }]) },
-  { id: 'm107', sender: 'IT Service Desk', tpl: null, title: 'Printer queue change on 5F from Monday', content: 'From Monday, Oct 13, the 5F printers use the new queue “PLT-5F-Follow”. Print once and release the job at any 5F printer with your badge.', channels: ['desktop', 'email'], sms: false, status: 'sent', created: '2026/10/09 14:20', sched: null, total: 79, ok: 77, creator: 'p01', team: 'tm5', aud: [['o', 'PLT/ENG1'], ['o', 'PLT/UX']], email: { mode: 'same' }, byCh: { desktop: [77, 79], email: [79, 79] }, fr: [['Desktop agent offline for 7+ days'], ['Desktop agent not installed']], fo: 'PLT/ENG1' },
-  { id: 'm106', sender: 'F18 Canteen', tpl: null, title: 'Canteen B closes early on Fri 10/10', content: 'Canteen B in Fab 18 closes at 18:30 on Fri, Oct 10 for deep cleaning. Canteen A stays open until 21:00.', channels: ['push'], sms: false, status: 'sent', created: '2026/10/08 11:15', sched: null, total: 412, ok: 405, creator: 'p01', team: 'tm0', aud: [['o', 'F18/MFG3']], fr: [['No registered device'], ['Notifications turned off on the device']], fo: 'F18/MFG3' },
-  { id: 'm105', sender: 'Grace Wu', tpl: null, title: 'On-call swap: I’m covering Oct 11–12', content: 'Heads-up: I’m swapping on-call with Jimmy and covering Oct 11–12. Page me as primary for those two days.', channels: ['push', 'desktop'], sms: false, status: 'error', created: '2026/10/08 09:40', sched: null, total: 24, ok: 0, creator: 'p01', team: null, aud: [['g', 'g2']], fr: [['Not dispatched (MNP-5022)']], fo: 'PLT/ENG1', err: { title: 'Sending was interrupted by a platform restart at 09:41.', text: 'No one received this message. You can retry now.' } },
+  { id: 'm105', sender: 'Grace Wu', tpl: null, title: 'On-call swap: I’m covering Oct 11–12', content: 'Heads-up: I’m swapping on-call with Jimmy and covering Oct 11–12. Page me as primary for those two days.', channels: ['push', 'desktop'], sms: false, status: 'error', created: '2026/10/08 09:40', sched: null, total: 4, ok: 0, creator: 'p01', team: null, aud: [['p', 'p02'], ['p', 'p22'], ['p', 'p10'], ['p', 'p08']], fr: [['Not dispatched (MNP-5022)']], fo: 'PLT/ENG1', err: { title: 'Sending was interrupted by a platform restart at 09:41.', text: 'No one received this message. You can retry now.' } },
   { id: 'm104', sender: 'UX Team', tpl: null, title: 'Design system 3.1: migration office hours', content: 'Hi all,\n\nWe’re holding office hours for the 3.1 migration every Tuesday in October, 14:00–15:00, in 5F-Ocean or on Teams.\n\nBring your questions and a screen you’re migrating.\n\nUX Team', channels: ['email'], sms: false, status: 'sent', created: '2026/09/30 10:00', sched: null, total: 39, ok: 38, creator: 'p01', team: 'tm4', aud: [['g', 'g6'], ['e', 'mark.tan@example.com'], ['e', 'lena.ho@example.com']], email: em('Design system 3.1: migration office hours', 'Hi all,\n\nWe’re holding office hours for the 3.1 migration every Tuesday in October, 14:00–15:00, in 5F-Ocean or on Teams.\n\nBring your questions and a screen you’re migrating.\n\nUX Team'), fx: [['mark.tan@example.com', 'Recipient address rejected (550)']] },
   { id: 'm103', sender: 'Platform Ops', tpl: 't4', title: 'tWorkspace maintenance: Sat 9/27 01:00–03:00', content: 'tWorkspace will be unavailable on Sat, Sep 27 from 01:00 to 03:00 (GMT+8) for a storage upgrade. Save your work before 00:50.', channels: ['push', 'desktop', 'email'], sms: false, status: 'sent', created: '2026/09/24 15:30', sched: '2026/09/26 17:00', total: 560, ok: 560, creator: 'p01', team: 'tm1', aud: [['o', 'PLT/ENG1'], ['o', 'PLT/ENG2'], ['o', 'IT/INFRA'], ['g', 'g3']], email: em('tWorkspace maintenance on Sep 27, 01:00–03:00', 'Hi all,\n\ntWorkspace will be unavailable on Sat, Sep 27 from 01:00 to 03:00 (GMT+8) for a storage upgrade. Save your work before 00:50.\n\nPlatform Ops'), byCh: { push: [560, 560], desktop: [560, 560], email: [560, 560] } },
   { id: 'm102', sender: 'F18 Facility', tpl: null, title: 'Water outage: F18 Phase 5 office building, 9/20', content: 'Tap water in the Phase 5 office building is off on Sat, Sep 20 from 09:00 to 15:00. Restrooms on 1F stay open.', channels: ['push'], sms: false, status: 'sent', created: '2026/09/18 13:00', sched: null, total: 412, ok: 398, creator: 'p01', team: 'tm2', aud: [['o', 'F18/MFG3']], fr: [['No registered device'], ['Device unreachable for 72+ hours'], ['Notifications turned off on the device']], fo: 'F18/MFG3' },
   { id: 'm101', sender: 'Grace Wu', tpl: null, title: 'Welcome to the team, Kevin!', content: 'Please welcome Kevin Lin, who joins Platform Engineering 2 today. Say hi at desk 5F-B12.', channels: ['push'], sms: false, status: 'sent', created: '2026/09/01 09:05', sched: null, total: 73, ok: 73, creator: 'p01', team: null, aud: [['o', 'PLT/ENG2']] },
 ]
+// Platform Ops is a busy team: routine notices from several members, so its list fills two pages
+const OPS: [string, string, string, string, Channel[], Status, string, number, number, string | null][] = [
+  ['m140', 'p22', 'Deploy freeze starts Fri 18:00', 'No production deploys from Fri 18:00 to Mon 09:00. Hotfixes need approval in #platform-ops.', ['desktop'], 'sent', '2026/10/17 16:20', 131, 131, null],
+  ['m139', 'p02', 'On-call handover: week 43', 'Week 43 on-call: primary Kevin Lin, secondary Grace Wu. The runbook link is pinned in the channel.', ['push'], 'sent', '2026/10/17 09:00', 24, 24, null],
+  ['m138', 'p10', 'Resolved: calendar sync delay', 'The calendar sync delay reported at 13:10 is resolved. Events created during the delay now show up.', ['push', 'desktop'], 'sent', '2026/10/14 14:05', 560, 552, 't8'],
+  ['m137', 'p08', 'Weekly release digest: W41', 'This week in tWorkspace: faster people search, room equipment in Calendar, MNP approval status.', ['email'], 'sent', '2026/10/10 09:00', 560, 560, 't9'],
+  ['m136', 'p22', 'Database failover test tonight 23:00', 'We test database failover tonight at 23:00. tWorkspace may pause for up to 2 minutes.', ['desktop'], 'sent', '2026/10/09 15:40', 560, 548, 't4'],
+  ['m135', 'p17', 'Pilot: new search beta opens Monday', 'Pilot users: the new search beta opens Monday. Turn it on in Settings › Labs and tell us what breaks.', ['push', 'email'], 'sent', '2026/10/08 10:30', 312, 309, null],
+  ['m134', 'p02', 'On-call handover: week 42', 'Week 42 on-call: primary Ethan Huang, secondary Vivian Lin.', ['push'], 'sent', '2026/10/10 09:00', 24, 24, null],
+  ['m133', 'p10', 'Resolved: login loop on Safari', 'The login loop on Safari is fixed. If you still see it, clear cookies for tworkspace and sign in again.', ['push', 'desktop'], 'sent', '2026/10/06 11:15', 560, 557, 't8'],
+  ['m132', 'p08', 'Weekly release digest: W40', 'This week in tWorkspace: profile working hours, MNP drafts, faster file preview.', ['email'], 'sent', '2026/10/03 09:00', 560, 560, 't9'],
+  ['m131', 'p22', 'tWorkspace maintenance: Sat 10/4 01:00–02:00', 'tWorkspace will be unavailable on Sat, Oct 4 from 01:00 to 02:00 (GMT+8) for a network upgrade.', ['desktop', 'email'], 'sent', '2026/10/01 16:00', 560, 560, 't4'],
+  ['m130', 'p02', 'On-call handover: week 41', 'Week 41 on-call: primary Grace Wu, secondary Kevin Lin.', ['push'], 'sent', '2026/10/03 09:00', 24, 24, null],
+  ['m129', 'p17', 'Pilot feedback survey closes Friday', 'Pilot users: 3 minutes, 5 questions. The survey closes Friday 18:00.', ['email'], 'sent', '2026/09/29 14:00', 312, 305, null],
+  ['m128', 'p10', 'Resolved: notification badges stuck', 'Unread badges that stayed after reading are fixed. Restart the app if you still see them.', ['push'], 'sent', '2026/09/25 17:30', 560, 541, 't8'],
+  ['m127', 'p08', 'Weekly release digest: W39', 'This week in tWorkspace: dark mode for Calendar, bulk file move, MNP templates by format.', ['email'], 'sent', '2026/09/26 09:00', 560, 560, 't9'],
+]
+OPS.forEach(([id, creator, title, content, channels, status, created, total, ok, tpl]) => {
+  const email = channels.indexOf('email') >= 0 ? (channels.length > 1 ? { mode: 'same' as const } : { mode: 'own' as const, subject: title, html: textToHtml(content), atts: [] }) : null
+  MINE.push({ id, sender: 'Platform Ops', tpl, title, content, channels, sms: false, status, created, sched: null, total, ok, creator, team: 'tm1', aud: total === 24 ? [['g', 'g2']] : total === 312 ? [['g', 'g3']] : [['o', 'PLT/ENG1'], ['o', 'PLT/ENG2'], ['o', 'IT/INFRA'], ['g', 'g3']], email, fr: [['No registered device'], ['Desktop agent offline for 7+ days']], fo: 'PLT/ENG2' })
+})
+// a few personal test sends: the personal space is also where you try things out
+MINE.push(
+  { id: 'm126', sender: '', tpl: 't10', title: 'Test: reminder layout on desktop', content: 'Quick reminder: please check how this looks on your desktop by Friday.', channels: ['desktop'], sms: false, status: 'sent', created: '2026/10/16 11:02', sched: null, total: 1, ok: 1, creator: 'p01', team: null, aud: [['p', 'p01']] },
+  { id: 'm125', sender: 'Grace Wu', tpl: 't11', title: 'I’m out of office 10/27–10/29', content: 'I’m out of office Oct 27–29 with limited access to email. For urgent matters, contact Jimmy Chen.', channels: ['push', 'email'], sms: false, status: 'scheduled', created: '2026/10/20 17:40', sched: '2026/10/24 17:30', total: 9, ok: 0, creator: 'p01', team: null, aud: [['g', 'g8']], email: { mode: 'same' } },
+  { id: 'm124', sender: 'Grace Wu', tpl: null, title: 'Project Atlas: kickoff notes', content: 'Kickoff notes are in the Atlas folder. Owners: please confirm your milestones by Oct 22.', channels: ['email'], sms: false, status: 'sent', created: '2026/10/18 11:30', sched: null, total: 7, ok: 7, creator: 'p01', team: null, aud: [['g', 'g9']], email: { mode: 'own', subject: 'Project Atlas: kickoff notes', html: textToHtml('Kickoff notes are in the Atlas folder. Owners: please confirm your milestones by Oct 22.'), atts: [{ name: 'Atlas_kickoff.pdf', size: 520000 }] } },
+)
+MINE.forEach(r => { if (r.sender === '') r.sender = 'gywu' })
 ROWS0.push(...MINE)
 ROWS0.sort((a, b) => b.created.localeCompare(a.created))
 

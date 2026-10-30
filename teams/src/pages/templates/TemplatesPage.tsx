@@ -1,54 +1,42 @@
-// Templates: message text stored by format, shared with people or orgs
+// Templates: message text stored by format. Each belongs to one sending space; everyone in it can use and edit it.
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty,
-  Input, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Tag, Textarea,
+  Input, SegmentedControl, SegmentedControlItem, Tag, Textarea,
 } from '@qijenchen/design-system'
-import { FilterMenu, NO_HIDE, TeamsField, Trunc, ownKeys, ownOpts } from '../../components/ui'
-import { canEditTemplate, canSeeItem, inTeam } from '../../lib/teams'
-import { presetFilter, useClearPreset } from '../../lib/teams'
+import { NO_HIDE, Trunc } from '../../components/ui'
+import { ME_SPACE, spaceName, spaceTeam, tplInSpace } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
-  Building2, Check, CircleAlert, Copy, Eye, LayoutTemplate, Lock, Mail, MessageSquareText, Monitor, MoreVertical, Pencil, Plus,
-  Search, Send, Smartphone, Trash2, UserPlus, Users, X, Share2, User,
+  Check, CircleAlert, Copy, LayoutTemplate, Mail, MessageSquareText, Monitor, MoreVertical, Pencil, Plus,
+  Search, Send, Smartphone, Trash2, User,
 } from 'lucide-react'
 import {
-  LIM, ME, ORGS, PEOPLE, PMAP, cleanHtml, fmtDT, fmtN, htmlToText, placeholders, plural, textToHtml, tplFormats, tplHasEmail,
+  LIM, ME, PEOPLE, PMAP, cleanHtml, fmtDT, fmtN, htmlToText, textToHtml, tplFormats, tplHasEmail,
   type Template,
 } from '../../lib/data'
 import { flash, getApp, go, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
 import { Banner, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, type Confirm } from '../../components/ui'
-import { PageHeader, useNavHome } from '../../components/shell'
+import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RichText } from '../../components/RichText'
 import { L, P } from '../../lib/i18n'
 
 interface TEd {
   id: string | null; isNew: boolean; role: 'Owner' | 'Viewer'; name: string; sender: string; title: string; content: string; sms: string
   emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
-  shared: [string, string][]; owner: string; teams: string[]; updated: string; sq: string; sOpen: boolean; tried: boolean; dirty: boolean
+  shared: [string, string][]; owner: string; team: string | null; updated: string; sq: string; sOpen: boolean; tried: boolean; dirty: boolean
 }
-interface TS { view: 'list' | 'edit'; q: string; fT: string[]; cf: Confirm | null; ed: TEd | null }
+interface TS { view: 'list' | 'edit'; q: string; cf: Confirm | null; ed: TEd | null }
 
 function makeTplEd(t: Template | null, dup?: boolean): TEd {
   const base = { sq: '', sOpen: false, tried: false, dirty: false, htmlKey: Date.now() % 100000 }
-  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', emailMode: 'same', subject: '', html: '', bodyText: '', shared: [], owner: ME, teams: [], updated: '' }
+  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', emailMode: 'same', subject: '', html: '', bodyText: '', shared: [], owner: ME, team: spaceTeam(), updated: '' }
   const own = tplHasEmail(t), h = own ? t.email.html || '' : ''
   const body = { sender: t.sender || '', title: t.title || '', content: t.content || '', sms: t.sms || '', emailMode: (own ? 'own' : 'same') as 'own' | 'same', subject: own ? t.email.subject || '' : '', html: h, bodyText: htmlToText(h) }
-  if (dup) return { ...base, ...body, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + t.name).slice(0, LIM.name), shared: [], owner: ME, teams: (t.teams || []).filter(inTeam), updated: '', dirty: true }
-  return { ...base, ...body, id: t.id, isNew: false, role: canEditTemplate(t) ? 'Owner' : 'Viewer', name: t.name, shared: (t.shared || []).map(x => x.slice() as [string, string]), owner: t.owner, teams: (t.teams || []).slice(), updated: t.updated }
+  if (dup) return { ...base, ...body, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + t.name).slice(0, LIM.name), shared: [], owner: ME, team: spaceTeam(), updated: '', dirty: true }
+  return { ...base, ...body, id: t.id, isNew: false, role: 'Owner', name: t.name, shared: (t.shared || []).map(x => x.slice() as [string, string]), owner: t.owner, team: t.team || null, updated: t.updated }
 }
-function shareVM(sh: [string, string]) {
-  if (sh[0] === 'o') { const o = ORGS.find(x => x.code === sh[1]) || { code: sh[1], name: '', count: 0 }; return { key: 'o:' + sh[1], isOrg: true, label: o.code, short: o.code, sub: o.name + ' · ' + P(o.count, 'member', '人'), p: null } }
-  const p = PMAP[sh[1]]
-  return { key: 'p:' + sh[1], isOrg: false, label: p ? (p.zh + ' ' + p.en).trim() : sh[1], short: p ? p.en : sh[1], sub: p ? p.title + ' · ' + p.org : '', p }
-}
-function shareSummary(shared: [string, string][]) {
-  if (!shared || !shared.length) return L('Only me', '只有我')
-  const first = shareVM(shared[0]).short
-  return shared.length === 1 ? first : first + ' +' + (shared.length - 1)
-}
-
 let seq = 0
 function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>)) => void) {
   const m = {
@@ -57,8 +45,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
     setEd(patch: Partial<TEd>, clean?: boolean) { const ed = { ...get().ed!, ...patch }; if (!clean) ed.dirty = true; set({ ed }) },
     listRows() {
       const s = get(), q = s.q.trim().toLowerCase()
-      return getApp().templates.filter(canSeeItem).filter(t => {
-        if (s.fT.length && !ownKeys(t).some(k => s.fT.indexOf(k) >= 0)) return false
+      return getApp().templates.filter(t => tplInSpace(t)).filter(t => {
         if (!q) return true
         const ow = PMAP[t.owner] || ({} as any)
         return [t.name, t.title, t.content, t.sms, t.email && t.email.subject, t.sender, ow.en, ow.zh].join(' ').toLowerCase().indexOf(q) >= 0
@@ -108,10 +95,10 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
     saveTpl() {
       const ed = get().ed!, e = m.errs()
       if (Object.keys(e).length) { m.setEd({ tried: true }, true); flash(L('Fix the highlighted fields', '請修正標示的欄位'), 'err'); return }
-      const patch: Partial<Template> = { teams: ed.teams, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updated: fmtDT(new Date()).slice(0, 10), fresh: Date.now() }
+      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updated: fmtDT(new Date()).slice(0, 10), fresh: Date.now() }
       if (ed.id) setApp(a => ({ templates: a.templates.map(t => t.id === ed.id ? { ...t, ...patch } : t) }))
       else setApp(a => ({ templates: [{ id: 'tt' + (++seq), owner: ME, ...patch } as Template].concat(a.templates) }))
-      set({ view: 'list', ed: null, fT: [], q: '' })
+      set({ view: 'list', ed: null, q: '' })
       flash(ed.id ? L('Changes saved', '已儲存變更') : L('Template created', '已建立模板'), 'ok', patch.name)
       scrollTop()
     },
@@ -121,35 +108,20 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
       m.setEd(p)
     },
     insertPh(tok: string) { const c = get().ed!.content; m.setEd({ content: c + (c && !/\s$/.test(c) ? ' ' : '') + tok }) },
-    shareResults() {
-      const ed = get().ed!, low = ed.sq.trim().toLowerCase(), have: Record<string, boolean> = {}
-      if (!low) return { people: [] as ShareOpt[], orgs: [] as ShareOpt[], orgsFirst: false }
-      ed.shared.forEach(x => { have[x[0] + ':' + x[1]] = true })
-      const people: ShareOpt[] = PEOPLE.filter(p => p.id !== ed.owner && [p.zh, p.en, p.nt, p.emp].some(v => v.toLowerCase().indexOf(low) >= 0)).slice(0, 5).map(p => ({ key: 'p:' + p.id, p, name: p.zh + ' ' + p.en, sub: p.title + ' · ' + p.org, added: !!have['p:' + p.id], add: () => m.addShare(['p', p.id]) }))
-      const orgs: ShareOpt[] = ORGS.filter(o => o.code.toLowerCase().indexOf(low) >= 0 || o.name.toLowerCase().indexOf(low) >= 0).slice(0, 4).map(o => ({ key: 'o:' + o.code, p: null, name: o.code, sub: o.name + ' · ' + P(o.count, 'member', '人'), added: !!have['o:' + o.code], add: () => m.addShare(['o', o.code]) }))
-      return { people, orgs, orgsFirst: low.indexOf('/') >= 0 || ORGS.some(o => o.code.toLowerCase().indexOf(low) === 0) }
-    },
-    addShare(sh: [string, string]) {
-      const ed = get().ed!
-      if (ed.shared.some(x => x[0] === sh[0] && x[1] === sh[1])) return
-      m.setEd({ shared: ed.shared.concat([sh]), sq: '', sOpen: false })
-    },
-    removeShare(key: string) { m.setEd({ shared: get().ed!.shared.filter(x => x[0] + ':' + x[1] !== key) }) },
   }
   return m
 }
 type TCtl = ReturnType<typeof makeCtl>
 
 function TplMenu({ m, t }: { m: TCtl; t: Template }) {
-  const mine = t.owner === ME
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild><Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + t.name} /></DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={208}>
         <DropdownMenuItem startIcon={Send} onSelect={() => m.useTemplate(t)}>{L('Use', '使用')}</DropdownMenuItem>
-        <DropdownMenuItem startIcon={mine ? Pencil : Eye} onSelect={() => m.openEd(t)}>{mine ? L('Edit', '編輯') : L('View', '檢視')}</DropdownMenuItem>
+        <DropdownMenuItem startIcon={Pencil} onSelect={() => m.openEd(t)}>{L('Edit', '編輯')}</DropdownMenuItem>
         <DropdownMenuItem startIcon={Copy} onSelect={() => m.openEd(t, true)}>{L('Duplicate', '複製')}</DropdownMenuItem>
-        {mine ? <><DropdownMenuSeparator /><DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => m.askDelete(t)}>{L('Delete', '刪除')}</DropdownMenuItem></> : null}
+        <DropdownMenuSeparator /><DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => m.askDelete(t)}>{L('Delete', '刪除')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -157,8 +129,8 @@ function TplMenu({ m, t }: { m: TCtl; t: Template }) {
 
 const tcol = createColumnHelper<Template>()
 function TplList({ m }: { m: TCtl }) {
-  const app = useApp(), s = m.s, rows = m.listRows(), vis = app.templates.filter(canSeeItem), nAll = vis.length
-  const filtered = s.q.trim() || s.fT.length > 0
+  const app = useApp(), s = m.s, rows = m.listRows(), nAll = app.templates.filter(t => tplInSpace(t)).length
+  const filtered = !!s.q.trim()
   const cols = React.useMemo(() => [
     tcol.accessor('name', { header: L('Template', '模板'), meta: { width: 280 }, cell: i => { const t = i.row.original, first = t.title || (t.email && t.email.subject) || ''; return (
       <span className="flex min-w-0 flex-col">
@@ -169,65 +141,19 @@ function TplList({ m }: { m: TCtl }) {
     tcol.display({ id: 'fmt', header: L('Channels', '通道'), meta: { width: 140 }, cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
     tcol.accessor('updated', { header: L('Updated', '更新日期'), meta: { width: 110 } }),
-    tcol.accessor('owner', { header: L('Owner', '擁有者'), meta: { width: 180 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } }),
-    // same idea as audience groups: owner edits and shares, team members edit, people it's shared with only use it
-    tcol.display({ id: 'role', header: L('Your role', '你的角色'), meta: { width: 130 }, cell: i => { const t = i.row.original, r = t.owner === ME ? 'owner' : canEditTemplate(t) ? 'editor' : 'user'; return <Tag size="sm" color={r === 'owner' ? 'blue' : r === 'editor' ? 'green' : 'neutral'}>{r === 'owner' ? L('Owner', '擁有者') : r === 'editor' ? L('Editor', '編輯者') : L('Can use', '可使用')}</Tag> } }),
-  ], [m, app.lang, app.teams])
+    // the personal space holds only your own templates, so Created by appears in team spaces only
+    ...(app.space === ME_SPACE ? [] : [tcol.accessor('owner', { header: L('Created by', '建立者'), meta: { width: 180 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } })]),
+  ], [m, app.lang, app.space])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
+      <SpaceIntro />
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-60 max-w-sm flex-1"><Input startIcon={Search} type="search" placeholder={L('Search templates', '搜尋模板')} aria-label={L('Search templates', '搜尋模板')} value={s.q} onChange={e => m.set({ q: e.target.value })} /></div>
-        <FilterMenu label={L('Team', '團隊')} opts={ownOpts(vis)} sel={s.fT} toggle={k => m.set({ fT: s.fT.indexOf(k) >= 0 ? s.fT.filter(x => x !== k) : s.fT.concat([k]) })} clear={() => m.set({ fT: [] })} />
       </div>
       <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['name']} columns={cols as any} data={rows} bordered height="100%" autoRowHeight getRowId={t => t.id}
         rowActions={(t: Template) => <TplMenu m={m} t={t} />}
-        emptyState={<Empty icon={LayoutTemplate} title={L('No matching templates', '找不到符合的模板')} description={L('Try another search.', '換個關鍵字試試。')} action={<Button onClick={() => m.set({ q: '', fT: [] })}>{L('Show all', '顯示全部')}</Button>} />} />
+        emptyState={<Empty icon={LayoutTemplate} title={L('No matching templates', '找不到符合的模板')} description={L('Try another search.', '換個關鍵字試試。')} action={<Button onClick={() => m.set({ q: '' })}>{L('Show all', '顯示全部')}</Button>} />} />
       <span className="text-body text-fg-secondary">{filtered ? L(rows.length + ' of ' + nAll, rows.length + ' / ' + nAll + ' 個模板') : P(nAll, 'template', '個模板')}</span>
-    </div>
-  )
-}
-
-interface ShareOpt { key: string; p: import('../../lib/data').Person | null; name: string; sub: string; added: boolean; add: () => void }
-function ShareField({ m, ro }: { m: TCtl; ro: boolean }) {
-  const ed = m.s.ed!, r = m.shareResults(), open = !ro && ed.sOpen && !!ed.sq.trim(), none = !r.people.length && !r.orgs.length
-  const ow = PMAP[ed.owner] || PEOPLE[0], anchor = React.useRef<HTMLDivElement>(null)
-  const opt = (o: ShareOpt) => (
-    <button key={o.key} type="button" disabled={o.added} onClick={o.add} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-neutral-hover disabled:opacity-60">
-      {o.p ? <PAvatar p={o.p} size={28} /> : <IconBox icon={Building2} />}<Two a={o.name} b={o.sub} strong className="flex-1" /><span className="text-caption text-fg-muted">{o.added ? L('Added', '已加入') : L('Can use', '可使用')}</span>
-    </button>
-  )
-  const orgs = r.orgs.length ? <><div className="px-3 pb-1 pt-2 text-caption font-medium text-fg-secondary">{L('Orgs', '組織')}</div>{r.orgs.map(opt)}</> : null
-  const first = (r.orgsFirst && r.orgs.find(x => !x.added)) || r.people.find(x => !x.added) || r.orgs.find(x => !x.added)
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-body font-medium">{L('Shared with', '分享對象')}</span>
-      {ro ? null : (
-        <Popover open={open} onOpenChange={o => { if (!o) m.setEd({ sOpen: false }, true) }}>
-          <PopoverAnchor asChild>
-            <div ref={anchor}>
-              <Input startIcon={UserPlus} autoComplete="off" placeholder={L('Add people or orgs', '加入人員或組織')} aria-label={L('Share with people or orgs', '分享給人員或組織')} value={ed.sq}
-                onChange={e => m.setEd({ sq: e.target.value, sOpen: true }, true)}
-                onKeyDown={e => { if (e.key === 'Escape') m.setEd({ sOpen: false }, true); if (e.key === 'Enter') { e.preventDefault(); first?.add() } }} />
-            </div>
-          </PopoverAnchor>
-          <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => { if (anchor.current?.contains(e.target as Node)) e.preventDefault() }}>
-            {none ? <div className="px-3 py-3 text-body text-fg-secondary">{L('No match for “' + ed.sq.trim() + '”.', '找不到「' + ed.sq.trim() + '」。')}</div> : null}
-            {r.orgsFirst ? orgs : null}
-            {r.people.length ? <><div className="px-3 pb-1 pt-2 text-caption font-medium text-fg-secondary">{L('People', '人員')}</div>{r.people.map(opt)}</> : null}
-            {r.orgsFirst ? null : orgs}
-          </PopoverContent>
-        </Popover>
-      )}
-      <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
-        <div className="flex min-h-12 items-center gap-3 px-3 py-2"><PAvatar p={ow} size={28} /><Two a={ow.zh + ' ' + ow.en + (ed.owner === ME ? L(' (you)', '（你）') : '')} b={ow.title + ' · ' + ow.org} strong className="flex-1" /><Tag size="sm" color="blue">{L('Owner', '擁有者')}</Tag>{ro ? null : <span className="w-7 shrink-0" aria-hidden />}</div>
-        {ed.shared.map(sh => { const v = shareVM(sh); return (
-          <div key={v.key} className="flex min-h-12 items-center gap-3 px-3 py-2">
-            {v.p ? <PAvatar p={v.p} size={28} /> : <IconBox icon={Building2} />}<Two a={v.label} b={v.sub} strong className="flex-1" /><Tag size="sm">{L('Can use', '可使用')}</Tag>
-            {ro ? null : <Button variant="text" size="sm" iconOnly startIcon={X} aria-label={L('Stop sharing with ', '取消分享：') + v.label} onClick={() => m.removeShare(v.key)} />}
-          </div>
-        ) })}
-      </div>
-      <span className="text-caption text-fg-secondary">{ed.shared.length ? L('They can use and copy it. Only you can edit it.', '他們可以使用和複製，只有擁有者能編輯。') : L('Only you can see this template.', '目前只有你看得到。')}</span>
     </div>
   )
 }
@@ -248,7 +174,7 @@ function TplEditor({ m }: { m: TCtl }) {
   const title = ed.name.trim() || (ed.isNew ? L('New template', '新模板') : L('Untitled template', '未命名模板'))
   return (
     <div className="flex min-h-full flex-col">
-      <PageHeader crumbs={[{ label: L('Templates', '模板'), onClick: () => m.goList() }, { label: title }]} actions={<><Tag size="sm" color={ro ? 'neutral' : 'blue'}>{ro ? L('View only', '僅檢視') : L('Owner', '擁有者')}</Tag>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Updated ' + ed.updated + ' · by ' + ow.en, ed.updated + ' 更新 · ' + ow.en)}</span>}</>} />
+      <PageHeader crumbs={[{ label: spaceName(getApp().space), onClick: () => m.goList() }, { label: title }]} actions={<>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Updated ' + ed.updated + ' · by ' + ow.en, ed.updated + ' 更新 · ' + ow.en)}</span>}</>} />
       <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
         {ro ? <Banner tone="neutral" action={<Button size="sm" variant="secondary" startIcon={Copy} onClick={() => m.openEd(saved, true)}>{L('Duplicate', '複製')}</Button>}>{L(ow.en + ' shared this with you. Duplicate it to make changes.', ow.en + ' 分享給你的模板。想修改請先複製一份。')}</Banner> : null}
         <Section title={L('Details', '基本資料')}>
@@ -256,8 +182,6 @@ function TplEditor({ m }: { m: TCtl }) {
             <FormField id="t-name" label={L('Name', '名稱')} required count={ed.name.length + ' / ' + LIM.name} over={ed.name.length > LIM.name} error={show('name')}>
               <Input id="t-name" disabled={ro} value={ed.name} error={!!show('name')} onChange={ev => m.setEd({ name: ev.target.value })} placeholder={L('e.g. Chiller maintenance notice', '例如：冰水機維修通知')} />
             </FormField>
-            <TeamsField what="template" value={ed.teams} disabled={ro} onChange={teams => m.setEd({ teams })} />
-            <ShareField m={m} ro={ro} />
           </div>
         </Section>
         <Section title={L('Content', '內容')} sub={L('Fill in the channels you need. Only the text is saved.', '填寫需要的通道就好，模板只存文字。')}>
@@ -314,14 +238,16 @@ function TplEditor({ m }: { m: TCtl }) {
 }
 
 export function TemplatesPage() {
-  const [s, m] = useLogic<TS, TCtl>(() => ({ view: 'list', q: '', fT: presetFilter(), cf: null, ed: null }), makeCtl)
-  useClearPreset()
+  const [s, m] = useLogic<TS, TCtl>(() => ({ view: 'list', q: '', cf: null, ed: null }), makeCtl)
+  const { space } = useApp()
+  // another space opens on its list
+  React.useEffect(() => { m.set({ view: 'list', ed: null, q: '' }) }, [space, m])
   useNavHome(() => m.goList())
   return (
     <>
       {s.view === 'edit' && s.ed ? <TplEditor m={m} /> : (
         <>
-          <PageHeader crumbs={[{ label: L('Templates', '模板') }]} actions={<Button variant="primary" startIcon={Plus} onClick={() => m.openEd(null)}>{L('New template', '新增模板')}</Button>} />
+          <PageHeader crumbs={[{ label: spaceName(space) }]} actions={<><Button variant="primary" startIcon={Plus} onClick={() => m.openEd(null)}>{L('New template', '新增模板')}</Button><SpaceSettings /></>} />
           <TplList m={m} />
         </>
       )}

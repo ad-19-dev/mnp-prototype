@@ -5,13 +5,13 @@ import {
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
-import { canSeeItem, myTeams, teamById, teamName } from '../../lib/teams'
+import { groupInSpace, spaceName } from '../../lib/teams'
 import { scopeLabel } from './ctl'
-import { getApp } from '../../lib/store'
+import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
-  MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UsersRound } from 'lucide-react'
+  MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
@@ -182,23 +182,6 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
   )
 }
 
-// Who the message belongs to, chosen only when writing from My messages. A team's members all see it;
-// a personal message only you see.
-function TeamPick({ m }: { m: SendCtl }) {
-  const c = m.s.c, teams = myTeams(), t = teamById(c.team)
-  // started from a team's list: the team is already chosen (the breadcrumb and the review step show it)
-  if (!teams.length || getApp().msgScope !== 'mine') return null
-  const hint = t ? L('All ' + t.members.length + ' members of ' + t.name + ' can see this message and its results.', '「' + t.name + '」的 ' + t.members.length + ' 位成員都能看到這則訊息和送達結果。') : L('Only you can see this message and its results.', '只有你看得到這則訊息和送達結果。')
-  return (
-    <Section title={L('Send for', '發送單位')} sub={hint}>
-      <div className="w-80 max-w-full">
-        <Select aria-label={L('Send for', '發送單位')} value={c.team || 'personal'} onChange={v => m.setC({ team: v === 'personal' ? null : v })}
-          options={[{ value: 'personal', label: L('Personal', '個人') }].concat(teams.map(x => ({ value: x.id, label: x.name })))} />
-      </div>
-    </Section>
-  )
-}
-
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const tpl = c.tplId ? m.tplById(c.tplId) : null, ap = approval(c), sms = smsOn(c)
@@ -206,12 +189,11 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   return (
     <>
       {tpl ? <Banner tone="info" action={<FmtChips list={tplFormats(tpl)} />}>{L('Using template: ', '使用模板：') + tpl.name}</Banner> : null}
-      <TeamPick m={m} />
       <Section title={L('Receivers', '收件人')} sub={L('Up to ' + CAP + ' people. Add contractors by phone or email.', '最多 ' + CAP + ' 人。外包人員可用電話或 Email 加入。')}
         actions={<span className={cn('shrink-0 text-body tabular-nums', total > CAP ? 'font-medium text-error-text' : 'text-fg-secondary')} aria-label={L('Receiver count', '收件人數')}>{fmtN(total)} / {fmtN(CAP)}</span>}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RecvInput
-            id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(canSeeItem)}
+            id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(g => groupInSpace(g))}
             bad={(tried[1] && !c.receivers.length) || total > CAP}
             isAdded={it => c.receivers.some(t => t.key === riKey(it))}
             onAdd={it => { const k = riKey(it); if (it.kind === 'ext') m.addRecv({ key: k, type: 'ext', email: it.value }); else m.addRecv({ key: k, type: it.kind, id: it.id }) }}
@@ -395,7 +377,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
   const toMsg = () => m.goStep(2), notif = c.title.trim() + (c.content.trim() ? ' — ' + c.content.trim() : '')
   const reaches = (n: number) => L('Reaches ' + fmtN(n) + ' of ' + fmtN(rc.total), '可觸及 ' + fmtN(n) + ' / ' + fmtN(rc.total) + ' 人')
-  const rows: React.ReactNode[] = [<RvRow key="t" icon={UsersRound} k={L('Send for', '發送單位')} v={c.team ? teamName(c.team) + L(' · its members can see this message', '・成員都看得到這則訊息') : L('Personal · only you can see this message', '個人・只有你看得到這則訊息')} edit={() => m.goStep(1)} />, <RvRow key="r" icon={Users} k={L('Receivers', '收件人')} v={P(rc.total, 'receiver', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} edit={() => m.goStep(1)} />]
+  const rows: React.ReactNode[] = [<RvRow key="t" icon={c.team ? UsersRound : UserRound} k={L('Sending space', '發送空間')} v={spaceName(c.team || 'me') + (c.team ? L(' · its members can see this message', '・成員都看得到這則訊息') : L(' · only you can see this message', '・只有你看得到這則訊息'))} />, <RvRow key="r" icon={Users} k={L('Receivers', '收件人')} v={P(rc.total, 'receiver', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} edit={() => m.goStep(1)} />]
   if (c.ch.push) rows.push(<RvRow key="p" icon={Smartphone} k={CHN.push.name} v={reaches(rc.push)} q={notif} edit={toMsg} />)
   if (c.ch.desktop) { const cut = vwidth(c.content) > DESK.text || vwidth(c.title) > DESK.title; rows.push(<RvRow key="d" icon={Monitor} warn={cut} k={CHN.desktop.name} v={reaches(rc.desktop) + (cut ? L(' · text gets cut short', ' · 內容會被截斷') : '')} q={notif} edit={toMsg} />) }
   if (c.ch.email) rows.push(<RvRow key="e" icon={Mail} k="Email" v={reaches(rc.email) + (mode === 'own' ? L(' · Separate email', ' · 另寫 Email') + (c.atts.length ? L(', ' + P(c.atts.length, 'file', ''), '，' + c.atts.length + ' 個附件') : '') : L(' · Same as notification', ' · 同通知內容'))} q={mode === 'own' ? c.subject : ''} edit={toMsg} />)

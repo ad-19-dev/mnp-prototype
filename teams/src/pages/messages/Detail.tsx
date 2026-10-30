@@ -13,8 +13,7 @@ import {
   type Fail, type Group, type Row, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
-import { Banner, CHN, IconBox, PAvatar, StatusTag, TeamTag, Two } from '../../components/ui'
-import { canManageRow, leftTeamRow, teamClosed, teamName } from '../../lib/teams'
+import { Banner, CHN, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
 import { MailHtml } from '../../components/RichText'
 import { ShellAside } from '../../components/shell'
 import type { SendCtl } from './ctl'
@@ -75,15 +74,13 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           <div className="flex items-center gap-2"><StatusTag s={r.status} /><span className="font-mono text-caption text-fg-secondary">{reqIdFor(r)}</span></div>
           <h3 className="text-body-lg font-medium text-foreground">{r.title}</h3>
           <div className="flex flex-wrap gap-2">
-            {r.status === 'scheduled' && canManageRow(r) ? <Button variant="tertiary" size="sm" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
+            {r.status === 'scheduled' ? <Button variant="tertiary" size="sm" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
             <Button variant="tertiary" size="sm" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate', '複製')}</Button>
           </div>
         </div>
         <div className="flex flex-col gap-[var(--layout-space-loose)] pb-[var(--layout-space-loose)]">
-          {leftTeamRow(r) ? <Banner tone="neutral">{teamClosed(r.team) ? L(teamName(r.team) + ' was closed. You can still view and duplicate the messages you sent for it.', '「' + teamName(r.team) + '」已解散，你仍可查看和複製你當時以團隊名義送出的訊息。') : L('You left ' + teamName(r.team) + '. You can still view and duplicate the messages you sent for it.', '你已離開「' + teamName(r.team) + '」，仍可查看和複製你當時以團隊名義送出的訊息。')}</Banner> : null}
           <DescriptionList orientation="horizontal" divided>
             <DescriptionItem label={L('Sender', '寄件人')}>{r.sender}</DescriptionItem>
-            <DescriptionItem label={L('Team', '團隊')}><TeamTag id={r.team} /></DescriptionItem>
             <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || L('None', '無')}</DescriptionItem>
             <DescriptionItem label={L('Channels', '通道')}>{chs.map(k => CHN[k].name).join(', ')}</DescriptionItem>
             <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>
@@ -177,7 +174,7 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button variant="primary" startIcon={RotateCw} onClick={() => m.resendNotSent(r)}>{r.status === 'error' && canManageRow(r) ? L('Retry', '重新傳送') : L('Resend to ' + fmtN(list.length), '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
+          <Button variant="primary" startIcon={RotateCw} onClick={() => m.resendNotSent(r)}>{r.status === 'error' ? L('Retry', '重新傳送') : L('Resend to ' + fmtN(list.length), '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
         </DialogFooter>
       </>
     )

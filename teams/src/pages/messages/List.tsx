@@ -5,19 +5,17 @@ import {
   Pagination, ProgressBar,
 } from '@qijenchen/design-system'
 import { FilterMenu, NO_HIDE, Trunc, PageSize } from '../../components/ui'
-import { canManageRow, leftTeamRow, teamName } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Users, UsersRound } from 'lucide-react'
-import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
-import { flash, useApp } from '../../lib/store'
+import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
+import { PEOPLE, PMAP, fmtN, rowChs, type Channel, type Row, type Status } from '../../lib/data'
+import { useApp } from '../../lib/store'
 import { CHN, ChIcons, PAvatar, StatusTag, Two } from '../../components/ui'
-import { L, P } from '../../lib/i18n'
+import { L } from '../../lib/i18n'
 import type { SendCtl } from './ctl'
 
 const col = createColumnHelper<Row>()
 
 function RowMenu({ m, r }: { m: SendCtl; r: Row }) {
-  const own = canManageRow(r)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,10 +23,10 @@ function RowMenu({ m, r }: { m: SendCtl; r: Row }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={208}>
         <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: r.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
-        {own && r.status === 'scheduled' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</DropdownMenuItem> : null}
+        {r.status === 'scheduled' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => m.startCompose('duplicate', r)}>{L('Duplicate', '複製')}</DropdownMenuItem>
-        {own && r.status === 'error' ? <DropdownMenuItem startIcon={RotateCw} onSelect={() => m.retry(r.id)}>{L('Retry', '重新傳送')}</DropdownMenuItem> : null}
-        {own && r.status === 'scheduled' ? (
+        {r.status === 'error' ? <DropdownMenuItem startIcon={RotateCw} onSelect={() => m.retry(r.id)}>{L('Retry', '重新傳送')}</DropdownMenuItem> : null}
+        {r.status === 'scheduled' ? (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem startIcon={Ban} className="text-error-text" onSelect={() => m.askCancel(r)}>{L('Cancel schedule', '取消排程')}</DropdownMenuItem>
@@ -57,7 +55,6 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
     col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => (
       <span className="flex min-w-0 flex-col">
         <Trunc text={i.getValue()} className="font-medium" />
-        {app.msgScope === 'mine' && i.row.original.team ? <span className="flex min-w-0 items-center gap-1 text-caption text-fg-secondary"><UsersRound className="size-3 shrink-0" aria-hidden /><Trunc text={L('Sent for ' + teamName(i.row.original.team), '以「' + teamName(i.row.original.team) + '」送出')} /></span> : null}
       </span>
     ) }),
     col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
@@ -85,9 +82,9 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
       )
     } }),
     col.accessor('sched', { header: L('Scheduled', '排程時間'), meta: { width: 130 }, cell: i => { const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    // My messages holds only what you created, so Created by appears in team lists only
-    ...(app.msgScope === 'mine' ? [] : [col.accessor('creator', { header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
-  ], [m, app.lang, app.teams, app.msgScope])
+    // the personal space holds only what you created, so Created by appears in team spaces only
+    ...(app.space === 'me' ? [] : [col.accessor('creator', { header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
+  ], [m, app.lang, app.teams, app.space])
 
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">

@@ -1,8 +1,8 @@
-// App-wide data shared by Messages, Audience Group and Templates.
+// App-wide data shared by Messages, Audience Group and Templates, grouped into sending spaces.
 // A tiny external store: every page reads it with useApp() and writes with setApp().
 import { useSyncExternalStore } from 'react'
 import { toast } from '@qijenchen/design-system'
-import { CLOSED_TEAMS, GROUPS, ROWS0, TEAMS, TEMPLATES, type Group, type Row, type Team, type Template } from './data'
+import { GROUPS, ROWS0, TEAMS, TEMPLATES, type Group, type Row, type Team, type Template } from './data'
 import type { Lang } from './i18n'
 
 export type Page = 'send' | 'groups' | 'templates'
@@ -13,13 +13,11 @@ export interface AppState {
   groups: Group[]
   templates: Template[]
   teams: Team[]
-  closedTeams: Record<string, string>
   // set by Templates › Use template; Messages picks it up and opens the send flow
   useTemplateId: string | null
-  // set by Teams › a team's messages / templates / groups; the list opens filtered to that team
-  presetTeam: string | null
-  // which message list is open: 'mine' or a team id
-  msgScope: string
+  // the sending space that's open: 'me' (your personal space) or a team id. Messages, audience groups
+  // and templates each belong to exactly one space; `page` is the tab within it.
+  space: string
 }
 
 function initialLang(): Lang {
@@ -33,11 +31,9 @@ let state: AppState = {
   rows: ROWS0,
   groups: GROUPS.map(g => ({ ...g })),
   templates: TEMPLATES.map(t => ({ ...t })),
-  closedTeams: { ...CLOSED_TEAMS },
   teams: TEAMS.map(t => ({ ...t, members: t.members.map(x => ({ ...x })) })),
   useTemplateId: null,
-  presetTeam: null,
-  msgScope: 'mine',
+  space: 'me',
 }
 document.documentElement.lang = state.lang === 'zh' ? 'zh-Hant' : 'en'
 const subs = new Set<() => void>()

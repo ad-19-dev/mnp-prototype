@@ -1,5 +1,6 @@
-// Creating a team and managing its members. Teams are open like chat groups: any member can add or
-// remove people, and anyone can leave; there are no admins.
+// Creating a team and managing its members. Each team has a shared sending space; adding someone here gives
+// them all of its messages, audience groups and templates. Teams are open like chat groups: any member can
+// add or remove people, and anyone can leave; there are no admins.
 import * as React from 'react'
 import {
   Button, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Popover,
@@ -75,23 +76,27 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
     }
     const id = 'tn' + Date.now().toString(36)
     const t: Team = { id, name: nm, desc: desc.trim(), created: new Date().toISOString().slice(0, 10).replace(/-/g, '/'), members: pids.map(pid => ({ pid })) }
-    setApp(a => ({ teams: a.teams.concat([t]), msgScope: id }))
+    setApp(a => ({ teams: a.teams.concat([t]), space: id }))
     go('send'); onClose()
     flash(L('Team created', '已建立團隊'), 'ok', nm + ' · ' + P(pids.length, 'member', '人'))
   }
   const askLeave = () => {
     if (!team) return
-    const mine = getApp().rows.filter(r => r.team === team.id && r.creator === ME).length, last = team.members.length === 1
+    const a = getApp(), last = team.members.length === 1
+    const n = { msg: a.rows.filter(r => r.team === team.id).length, grp: a.groups.filter(g => g.team === team.id).length, tpl: a.templates.filter(t => t.team === team.id).length }
+    const what = L(P(n.msg, 'message', '') + ', ' + P(n.grp, 'audience group', '') + ' and ' + P(n.tpl, 'template', ''), n.msg + ' 則訊息、' + n.grp + ' 個收件群組和 ' + n.tpl + ' 個模板')
     setCf({
       title: L('Leave ' + team.name + '?', '要離開「' + team.name + '」嗎？'),
-      text: last ? L('You’re the last member, so the team will close.', '你是最後一位成員，離開後團隊會解散。') : L('You’ll no longer see this team’s messages, templates and groups. Anyone in the team can add you back.', '離開後你會看不到這個團隊的訊息、模板和群組，團隊裡的任何人都能再把你加回來。'),
-      rows: [{ k: L('You keep', '你仍保有'), v: mine ? L(P(mine, 'message', '') + ' you sent for the team, in My messages, to view and duplicate', '你以團隊名義送出的 ' + mine + ' 則訊息，仍在「我的訊息」裡（只能查看和複製）') : L('Nothing; you haven’t sent for this team', '沒有，你沒有以這個團隊發過訊息') },
-             { k: L('The team keeps', '團隊保留'), v: last ? L('Nothing; the team closes', '團隊解散，不再保留') : L('Its messages, including yours', '團隊的訊息，包括你送出的') }],
-      icon: LogOut, tone: 'warn', cancel: L('Stay', '留下'), ok: L('Leave team', '離開團隊'), danger: true,
+      text: last ? L('You’re the last member. Leaving deletes the team and its shared space.', '你是最後一位成員，離開後團隊和它的共享發送空間會一起刪除。') : L('You’ll lose access to this team’s shared space, including what you made there. Anyone in the team can add you back.', '離開後你就看不到這個團隊的共享發送空間，包括你在裡面建立的內容。團隊裡的任何人都能再把你加回來。'),
+      rows: [{ k: L('In this space', '空間裡有'), v: what },
+             { k: last ? L('After you leave', '離開後') : L('The team keeps', '團隊保留'), v: last ? L('All of it is deleted', '全部刪除') : L('All of it, including what you made', '全部，包括你建立的內容') }],
+      icon: LogOut, tone: 'warn', cancel: L('Stay', '留下'), ok: last ? L('Leave and delete team', '離開並刪除團隊') : L('Leave team', '離開團隊'), danger: true,
       run: () => {
-        setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t).filter(t => t.members.length > 0), closedTeams: last ? { ...a.closedTeams, [team.id]: team.name } : a.closedTeams, msgScope: 'mine' }))
+        setApp(s => last
+          ? { teams: s.teams.filter(t => t.id !== team.id), rows: s.rows.filter(r => r.team !== team.id), groups: s.groups.filter(g => g.team !== team.id), templates: s.templates.filter(t => t.team !== team.id), space: 'me' }
+          : { teams: s.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t), space: 'me' })
         setCf(null); onClose()
-        flash(L('You left ' + team.name, '已離開「' + team.name + '」'))
+        flash(last ? L('Team deleted', '已刪除團隊') : L('You left ' + team.name, '已離開「' + team.name + '」'), 'ok', last ? team.name : undefined)
       },
     })
   }
@@ -100,13 +105,13 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
       <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
         {open ? (
           <DialogContent maxWidth={560} height="hug">
-            <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{team ? L('Team settings', '團隊設定') : L('New team', '建立團隊')}</DialogTitle><DialogDescription className="text-body text-fg-secondary">{L('Members see each other’s messages, and can add or remove people.', '成員看得到彼此的訊息，也都能加入或移除成員。')}</DialogDescription></div></DialogHeader>
+            <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{team ? L('Team settings', '團隊設定') : L('New team', '建立團隊')}</DialogTitle><DialogDescription className="text-body text-fg-secondary">{L('Members share this team’s messages, audience groups and templates, and can add or remove people.', '成員共用這個團隊的訊息、收件群組和模板，也都能加入或移除成員。')}</DialogDescription></div></DialogHeader>
             <DialogBody>
               <div className="flex flex-col gap-[var(--layout-space-loose)]">
                 <FormField id="nt-name" label={L('Name', '名稱')} required count={name.length + ' / 50'} over={name.length > 50} error={err}>
                   <Input id="nt-name" autoFocus={!team} value={name} error={!!err} onChange={e => setName(e.target.value)} placeholder={L('e.g. Fab 18 Communications', '例如：Fab 18 Communications')} />
                 </FormField>
-                <FormField id="nt-desc" label={L('Description', '說明')} count={desc.length + ' / 200'} over={desc.length > 200} hint={L('Shown at the top of the team’s messages.', '顯示在團隊訊息列表的上方。')}>
+                <FormField id="nt-desc" label={L('Description', '說明')} count={desc.length + ' / 200'} over={desc.length > 200} hint={L('Shown at the top of the team’s space.', '顯示在團隊空間的上方。')}>
                   <Textarea id="nt-desc" rows={2} value={desc} onChange={e => setDesc(e.target.value)} placeholder={L('What this team sends', '這個團隊負責發送什麼')} />
                 </FormField>
                 <div className="flex flex-col gap-2">

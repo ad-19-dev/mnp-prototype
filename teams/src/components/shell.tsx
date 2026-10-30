@@ -6,19 +6,16 @@ import {
   AccountMenu, AppShell, AppShellAside, Avatar, Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
   Button, ChromeHeader, Input, Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarMenu,
-  SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem,
+  SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem, Tabs, TabsList, TabsTrigger,
 } from '@qijenchen/design-system'
-import { Bell, CircleHelp, LayoutTemplate, Plus, Radio, Search, Send, Users, UsersRound, BookUser } from 'lucide-react'
+import { Bell, CircleHelp, Plus, Radio, Search, Settings, UserRound, UsersRound } from 'lucide-react'
 import { go, setApp, setLang, useApp, type Page } from '../lib/store'
-import { myTeams } from '../lib/teams'
+import { ME_SPACE, myTeams, spaceName, teamById } from '../lib/teams'
 import { TeamDialog } from './TeamPanels'
 import { L } from '../lib/i18n'
 
-// Messages is a group: your own messages, then one list per team you're in. Groups and templates follow.
-const NAV = (): { id: Page; label: string; icon: typeof Send }[] => [
-  { id: 'groups', label: L('Audience groups', '收件群組'), icon: BookUser },
-  { id: 'templates', label: L('Templates', '模板'), icon: LayoutTemplate },
-]
+// The sidebar lists sending spaces: your personal space, then a Shared spaces group with one space per team.
+// Messages, audience groups and templates are tabs inside each space.
 
 // Pages render their header into the AppShell header slot through this context
 const HeaderSlot = React.createContext<HTMLElement | null>(null)
@@ -46,7 +43,7 @@ export interface Crumb { label: string; onClick?: () => void }
 export function PageHeader({ crumbs, actions }: { crumbs: Crumb[]; actions?: React.ReactNode }) {
   const el = React.useContext(HeaderSlot)
   if (!el) return null
-  // the local header is a breadcrumb rooted at the page: My messages / New message (the sidebar's Messages is only a group label)
+  // the local header is a breadcrumb rooted at the space: Platform Ops / New message (Shared spaces is only a group label)
   const all = crumbs
   const last = all[all.length - 1]
   return createPortal(
@@ -94,7 +91,7 @@ function GlobalHeader() {
   )
 }
 
-function MnpSidebar({ onNav, onScope }: { onNav: (p: Page) => void; onScope: (scope: string) => void }) {
+function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
   const [creating, setCreating] = React.useState(false)
   useApp()
   const teams = myTeams()
@@ -111,27 +108,22 @@ function MnpSidebar({ onNav, onScope }: { onNav: (p: Page) => void; onScope: (sc
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{L('Messages', '訊息')}</SidebarGroupLabel>
-          <SidebarGroupAction icon={Plus} aria-label={L('New team', '建立團隊')} onClick={() => setCreating(true)} />
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton id="msg:mine" startIcon={Send} tooltip={L('My messages', '我的訊息')} onClick={() => onScope('mine')}>{L('My messages', '我的訊息')}</SidebarMenuButton>
+                <SidebarMenuButton id={'sp:' + ME_SPACE} startIcon={UserRound} tooltip={spaceName(ME_SPACE)} onClick={() => onSpace(ME_SPACE)}>{spaceName(ME_SPACE)}</SidebarMenuButton>
               </SidebarMenuItem>
-              {teams.map(t => (
-                <SidebarMenuItem key={t.id}>
-                  <SidebarMenuButton id={'msg:' + t.id} startIcon={UsersRound} tooltip={t.name} onClick={() => onScope(t.id)}>{t.name}</SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
+          <SidebarGroupLabel>{L('Shared spaces', '共享發送空間')}</SidebarGroupLabel>
+          <SidebarGroupAction icon={Plus} aria-label={L('New team', '建立團隊')} onClick={() => setCreating(true)} />
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV().map(n => (
-                <SidebarMenuItem key={n.id}>
-                  <SidebarMenuButton id={n.id} startIcon={n.icon} tooltip={n.label} onClick={() => onNav(n.id)}>{n.label}</SidebarMenuButton>
+              {teams.map(t => (
+                <SidebarMenuItem key={t.id}>
+                  <SidebarMenuButton id={'sp:' + t.id} startIcon={UsersRound} tooltip={t.name} onClick={() => onSpace(t.id)}>{t.name}</SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -143,32 +135,58 @@ function MnpSidebar({ onNav, onScope }: { onNav: (p: Page) => void; onScope: (sc
   )
 }
 
+// Top of every space: its name and description, then tabs for its messages, audience groups and templates.
+// DS: the title repeats the breadcrumb's last item (text-h3 under an md breadcrumb), bold.
+export function SpaceIntro() {
+  const { space, page } = useApp(), team = teamById(space)
+  const tabs: [Page, string][] = [['send', L('Messages', '訊息')], ['groups', L('Audience groups', '收件群組')], ['templates', L('Templates', '模板')]]
+  return (
+    <div className="flex flex-col gap-[var(--layout-space-tight)]">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-h3 font-bold text-foreground">{spaceName(space)}</h1>
+        <p className="text-body text-fg-secondary">{team ? team.desc : L('Only you can see this space. Use it for tests and notices of your own.', '只有你看得到這個空間，適合測試和發送個人通知。')}</p>
+      </div>
+      <Tabs value={page} onValueChange={v => go(v as Page)}>
+        <TabsList aria-label={spaceName(space)}>
+          {tabs.map(([k, label]) => <TabsTrigger key={k} value={k}>{label}</TabsTrigger>)}
+        </TabsList>
+      </Tabs>
+    </div>
+  )
+}
+
+// Team settings sits right of the page's primary action, in a team's space only
+export function SpaceSettings() {
+  const { space } = useApp(), team = teamById(space), [open, setOpen] = React.useState(false)
+  if (!team) return null
+  return (
+    <>
+      <Button variant="tertiary" iconOnly startIcon={Settings} aria-label={L('Team settings', '團隊設定')} onClick={() => setOpen(true)} />
+      <TeamDialog team={team} open={open} onClose={() => setOpen(false)} />
+    </>
+  )
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
-  const { page, msgScope } = useApp()
+  const { space } = useApp()
   const [slot, setSlot] = React.useState<HTMLElement | null>(null)
   const [aside, setAside] = React.useState<AsideCfg | null>(null), [asideEl, setAsideEl] = React.useState<HTMLElement | null>(null)
   const asideCtx = React.useMemo(() => ({ el: asideEl, set: setAside }), [asideEl])
   const home = React.useRef<HomeFn | null>(null)
-  const onNav = (p: Page) => {
-    if (p === page) { home.current?.(); return }
-    home.current = null
-    go(p)
-  }
-  // a message list: switching lists on the Messages page first returns it to the list (asking about unsent work)
-  const onScope = (scope: string) => {
-    if (page === 'send') { home.current?.(); setApp({ msgScope: scope }); return }
-    home.current = null
-    setApp({ msgScope: scope }); go('send')
+  // switching spaces first returns the open tab to its list (asking about unsaved work), and keeps the tab
+  const onSpace = (sp: string) => {
+    home.current?.()
+    if (sp !== space) setApp({ space: sp })
   }
   return (
-    <SidebarProvider activeId={page === 'send' ? 'msg:' + msgScope : page} onActiveChange={() => {}}>
+    <SidebarProvider activeId={'sp:' + space} onActiveChange={() => {}}>
       <HomeRegistry.Provider value={home}>
         <HeaderSlot.Provider value={slot}>
         <AsideSlot.Provider value={asideCtx}>
           <AppShell
             layout="primary-header"
             globalHeader={<GlobalHeader />}
-            sidebar={<MnpSidebar onNav={onNav} onScope={onScope} />}
+            sidebar={<MnpSidebar onSpace={onSpace} />}
             header={<ChromeHeader className="bg-surface"><div ref={setSlot} className="contents" /></ChromeHeader>}
             asideOpen={!!aside} onAsideOpenChange={o => { if (!o) aside?.onClose() }}
             aside={aside ? <AppShellAside title={aside.title} width={{ md: 400, xl: 480 }}><div ref={setAsideEl} /></AppShellAside> : undefined}
