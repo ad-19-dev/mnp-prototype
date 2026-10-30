@@ -46,7 +46,7 @@ export interface Crumb { label: string; onClick?: () => void }
 export function PageHeader({ crumbs, actions }: { crumbs: Crumb[]; actions?: React.ReactNode }) {
   const el = React.useContext(HeaderSlot)
   if (!el) return null
-  // the local header is a breadcrumb rooted at the section: Messages / New message
+  // the local header is a breadcrumb rooted at the page: My messages / New message (the sidebar's Messages is only a group label)
   const all = crumbs
   const last = all[all.length - 1]
   return createPortal(

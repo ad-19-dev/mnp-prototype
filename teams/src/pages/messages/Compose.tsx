@@ -40,7 +40,7 @@ export function ComposeView({ m }: { m: SendCtl }) {
   return (
     <div data-compose className="flex min-h-full flex-col">
       <PageHeader
-        crumbs={[{ label: L('Messages', '訊息'), onClick: () => m.goList() }, { label: scopeLabel(), onClick: () => m.goList() }, { label: title(c.mode) }]}
+        crumbs={[{ label: scopeLabel(), onClick: () => m.goList() }, { label: title(c.mode) }]}
         actions={c.result ? null : (
           <>
             {ap.mgr ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs supervisor approval', '需主管核准')}</Tag> : null}
