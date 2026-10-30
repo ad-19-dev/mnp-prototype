@@ -53,8 +53,8 @@ export function MessagesPage() {
       {s.view === 'compose' ? <ComposeView m={m} /> : (
         <>
           <PageHeader crumbs={[{ label: L('Messages', '訊息') }, { label: scopeLabel() }]} actions={<>
-            {team ? <Button variant="tertiary" startIcon={Settings} onClick={() => setEditing(true)}>{L('Team settings', '團隊設定')}</Button> : null}
             <Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>
+            {team ? <Button variant="tertiary" iconOnly startIcon={Settings} aria-label={L('Team settings', '團隊設定')} onClick={() => setEditing(true)} /> : null}
           </>} />
           <SendList m={m} intro={<ListIntro team={team} />} />
         </>

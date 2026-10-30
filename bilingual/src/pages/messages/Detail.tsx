@@ -1,9 +1,9 @@
-// Message details (side sheet) and the list of receivers a message didn't reach (dialog)
+// Message details (side panel next to the list) and the list of receivers a message didn't reach (dialog)
 import * as React from 'react'
 import {
   Button, DataTable, DescriptionItem, DescriptionList, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle, FileItem, ProgressBar, Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader,
-  SheetTitle, StepDescription, StepItem, StepLabel, Steps, Tag,
+  DialogHeader, DialogTitle, FileItem, ProgressBar,
+  StepDescription, StepItem, StepLabel, Steps, Tag,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -15,6 +15,7 @@ import {
 import { flash, useApp } from '../../lib/store'
 import { Banner, CHN, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
 import { MailHtml } from '../../components/RichText'
+import { ShellAside } from '../../components/shell'
 import type { SendCtl } from './ctl'
 import { L, P, tx } from '../../lib/i18n'
 
@@ -43,15 +44,11 @@ function H3({ children }: { children: React.ReactNode }) { return <h3 className=
 
 export function DetailSheet({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, r = s.det ? app.rows.find(x => x.id === s.det) : null
-  const close = () => m.set({ det: null })
-  return (
-    <Sheet open={!!r} onOpenChange={o => { if (!o) close() }}>
-      {r ? <SheetContent side="right" className="w-full sm:max-w-[560px]"><DetailBody m={m} r={r} groups={app.groups} close={close} /></SheetContent> : null}
-    </Sheet>
-  )
+  if (!r) return null
+  return <ShellAside title={L('Message details', '訊息詳情')} onClose={() => m.set({ det: null })}><DetailBody m={m} r={r} groups={app.groups} /></ShellAside>
 }
 
-function DetailBody({ m, r, groups, close }: { m: SendCtl; r: Row; groups: Group[]; close: () => void }) {
+function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
   const cr = PMAP[r.creator] || PEOPLE[0], chs = rowChs(r), done = r.status === 'sent' || r.status === 'error'
   const fails = done ? r.total - r.ok : 0, hasN = r.channels.indexOf('push') >= 0 || r.channels.indexOf('desktop') >= 0
   const created = parseDT(r.created) || new Date(), sched = r.sched ? parseDT(r.sched) : null
@@ -72,14 +69,15 @@ function DetailBody({ m, r, groups, close }: { m: SendCtl; r: Row; groups: Group
   const pct = Math.round(r.ok / Math.max(1, r.total) * 100), em = r.email
   return (
     <>
-      <SheetHeader>
-        <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2"><StatusTag s={r.status} /><span className="font-mono text-caption text-fg-secondary">{reqIdFor(r)}</span></div>
-          <SheetTitle className="text-body-lg">{r.title}</SheetTitle>
-          <SheetDescription className="sr-only">{L('Message details', '訊息詳情')}</SheetDescription>
+          <h3 className="text-body-lg font-medium text-foreground">{r.title}</h3>
+          <div className="flex flex-wrap gap-2">
+            {r.status === 'scheduled' ? <Button variant="tertiary" size="sm" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
+            <Button variant="tertiary" size="sm" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate', '複製')}</Button>
+          </div>
         </div>
-      </SheetHeader>
-      <SheetBody>
         <div className="flex flex-col gap-[var(--layout-space-loose)] pb-[var(--layout-space-loose)]">
           <DescriptionList orientation="horizontal" divided>
             <DescriptionItem label={L('Sender', '寄件人')}>{r.sender}</DescriptionItem>
@@ -140,12 +138,7 @@ function DetailBody({ m, r, groups, close }: { m: SendCtl; r: Row; groups: Group
             ))}
           </Steps>
         </div>
-      </SheetBody>
-      <SheetFooter>
-        {r.status === 'scheduled' ? <Button variant="tertiary" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
-        <Button variant="tertiary" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate', '複製')}</Button>
-        <Button variant="primary" onClick={close}>{L('Close', '關閉')}</Button>
-      </SheetFooter>
+      </div>
     </>
   )
 }

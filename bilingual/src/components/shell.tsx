@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { createPortal } from 'react-dom'
 import {
-  AccountMenu, AppShell, Avatar, Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
+  AccountMenu, AppShell, AppShellAside, Avatar, Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
   Button, ChromeHeader, Input, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem,
 } from '@qijenchen/design-system'
@@ -25,6 +25,18 @@ const HomeRegistry = React.createContext<React.MutableRefObject<HomeFn | null> |
 export function useNavHome(fn: HomeFn) {
   const reg = React.useContext(HomeRegistry)
   React.useEffect(() => { if (reg) reg.current = fn })
+}
+
+// Pages put a side panel (message details) into the AppShell aside. Per the DS, it sits inline next to the
+// list on desktop, without a mask, so the list stays usable; on phones the DS turns it into a sheet.
+interface AsideCfg { title: string; onClose: () => void }
+const AsideSlot = React.createContext<{ el: HTMLElement | null; set: (c: AsideCfg | null) => void } | null>(null)
+export function ShellAside({ title, onClose, children }: AsideCfg & { children: React.ReactNode }) {
+  const ctx = React.useContext(AsideSlot), close = React.useRef(onClose), set = ctx?.set
+  close.current = onClose
+  React.useEffect(() => { set?.({ title, onClose: () => close.current() }) }, [set, title])
+  React.useEffect(() => () => set?.(null), [set])
+  return ctx?.el ? createPortal(children, ctx.el) : null
 }
 
 export interface Crumb { label: string; onClick?: () => void }
@@ -111,6 +123,8 @@ function MnpSidebar({ onNav }: { onNav: (p: Page) => void }) {
 export function Shell({ children }: { children: React.ReactNode }) {
   const { page } = useApp()
   const [slot, setSlot] = React.useState<HTMLElement | null>(null)
+  const [aside, setAside] = React.useState<AsideCfg | null>(null), [asideEl, setAsideEl] = React.useState<HTMLElement | null>(null)
+  const asideCtx = React.useMemo(() => ({ el: asideEl, set: setAside }), [asideEl])
   const home = React.useRef<HomeFn | null>(null)
   const onNav = (p: Page) => {
     if (p === page) { home.current?.(); return }
@@ -121,14 +135,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <SidebarProvider activeId={page} onActiveChange={() => {}}>
       <HomeRegistry.Provider value={home}>
         <HeaderSlot.Provider value={slot}>
+        <AsideSlot.Provider value={asideCtx}>
           <AppShell
             layout="primary-header"
             globalHeader={<GlobalHeader />}
             sidebar={<MnpSidebar onNav={onNav} />}
             header={<ChromeHeader className="bg-surface"><div ref={setSlot} className="contents" /></ChromeHeader>}
+            asideOpen={!!aside} onAsideOpenChange={o => { if (!o) aside?.onClose() }}
+            aside={aside ? <AppShellAside title={aside.title} width={{ md: 400, xl: 480 }}><div ref={setAsideEl} /></AppShellAside> : undefined}
           >
             {children}
           </AppShell>
+        </AsideSlot.Provider>
         </HeaderSlot.Provider>
       </HomeRegistry.Provider>
     </SidebarProvider>
