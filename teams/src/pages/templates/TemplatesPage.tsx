@@ -160,7 +160,7 @@ function TplList({ m }: { m: TCtl }) {
 
 function Block({ icon, title, right, children, tone }: { icon: typeof Mail; title: string; right?: React.ReactNode; children: React.ReactNode; tone?: 'warn' }) {
   return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)] pt-[var(--layout-space-tight)]">
+    <div className="flex flex-col gap-[var(--layout-space-tight)]">
       <div className="flex flex-wrap items-center justify-between gap-2"><span className="flex items-center gap-2 text-body font-semibold"><IconBox icon={icon} tone={tone || 'info'} />{title}</span>{right}</div>
       {children}
     </div>
@@ -175,15 +175,11 @@ function TplEditor({ m }: { m: TCtl }) {
   return (
     <div className="flex min-h-full flex-col">
       <PageHeader crumbs={[{ label: spaceName(getApp().space), onClick: () => m.goList() }, { label: title }]} actions={<>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Updated ' + ed.updated + ' · by ' + ow.en, ed.updated + ' 更新 · ' + ow.en)}</span>}</>} />
-      <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
+      <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
         {ro ? <Banner tone="neutral" action={<Button size="sm" variant="secondary" startIcon={Copy} onClick={() => m.openEd(saved, true)}>{L('Duplicate', '複製')}</Button>}>{L(ow.en + ' shared this with you. Duplicate it to make changes.', ow.en + ' 分享給你的模板。想修改請先複製一份。')}</Banner> : null}
-        <Section title={L('Details', '基本資料')}>
-          <div className="flex flex-col gap-[var(--layout-space-loose)]">
-            <FormField id="t-name" label={L('Name', '名稱')} required count={ed.name.length + ' / ' + LIM.name} over={ed.name.length > LIM.name} error={show('name')}>
-              <Input id="t-name" disabled={ro} value={ed.name} error={!!show('name')} onChange={ev => m.setEd({ name: ev.target.value })} placeholder={L('e.g. Chiller maintenance notice', '例如：冰水機維修通知')} />
-            </FormField>
-          </div>
-        </Section>
+        <FormField id="t-name" label={L('Template name', '模板名稱')} required count={ed.name.length + ' / ' + LIM.name} over={ed.name.length > LIM.name} error={show('name')}>
+          <Input id="t-name" disabled={ro} value={ed.name} error={!!show('name')} onChange={ev => m.setEd({ name: ev.target.value })} placeholder={L('e.g. Chiller maintenance notice', '例如：冰水機維修通知')} />
+        </FormField>
         <Section title={L('Content', '內容')} sub={L('Fill in the channels you need. Only the text is saved.', '填寫需要的通道就好，模板只存文字。')}>
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
             {ed.tried && e.formats ? <Banner tone="error">{e.formats}</Banner> : null}

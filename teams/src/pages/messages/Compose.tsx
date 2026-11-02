@@ -50,7 +50,7 @@ export function ComposeView({ m }: { m: SendCtl }) {
       />
       {c.result ? <ResultView m={m} /> : (
         <>
-          <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
+          <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
             <StepBar m={m} e={e} />
             {c.step === 1 ? <Step1 m={m} e={e} /> : c.step === 2 ? <Step2 m={m} e={e} /> : <Step3 m={m} e={e} />}
           </div>
@@ -251,7 +251,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 // ---------- step 2 ----------
 function FormatBlock({ icon, title, uses, children, tone }: { icon: typeof Mail; title: string; uses?: React.ReactNode; children: React.ReactNode; tone?: 'warn' }) {
   return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)] pt-[var(--layout-space-tight)]">
+    <div className="flex flex-col gap-[var(--layout-space-tight)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-2 text-body font-semibold"><IconBox icon={icon} tone={tone || 'info'} />{title}</span>
         {uses ? <span className="flex flex-wrap items-center gap-1.5">{uses}</span> : null}

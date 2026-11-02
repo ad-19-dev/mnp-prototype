@@ -264,7 +264,7 @@ function GroupEditor({ m }: { m: GCtl }) {
   return (
     <div className="flex min-h-full flex-col">
       <PageHeader crumbs={[{ label: spaceName(getApp().space), onClick: () => m.backFromEd() }, { label: title }]} actions={<>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Updated ' + ed.updated + ' · by ' + cr.en, ed.updated + ' 更新 · 建立者 ' + cr.en)}</span>}</>} />
-      <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
+      <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
         <Section title={L('Details', '基本資料')}>
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
             <FormField id="g-name" label={L('Name', '名稱')} required count={ed.name.length + ' / 50'} over={ed.name.length > 50} error={nameErr}>

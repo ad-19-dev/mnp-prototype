@@ -298,7 +298,7 @@ function GroupEditor({ m }: { m: GCtl }) {
   return (
     <div className="flex min-h-full flex-col">
       <PageHeader crumbs={[{ label: L('Audience groups', '收件群組'), onClick: () => m.backFromEd() }, { label: title }]} actions={<><RoleTag r={ed.role}>{roleText}</RoleTag>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Updated ' + ed.updated + ' · by ' + cr.en, ed.updated + ' 更新 · 建立者 ' + cr.en)}</span>}</>} />
-      <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
+      <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
         {isViewer ? <Banner tone="neutral">{L('You can use this group but not edit it. Ask an owner: ' + ownerNames + '.', '你可以使用這個群組，但不能編輯。如需修改請找擁有者：' + ownerNames + '。')}</Banner> : null}
         <Section title={L('Details', '基本資料')}>
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
