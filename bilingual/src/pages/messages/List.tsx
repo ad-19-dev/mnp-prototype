@@ -6,7 +6,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Ban, ChevronDown, CircleAlert, Copy, Eye, Filter, MoreVertical, Pencil, RotateCw, Search, ShieldAlert } from 'lucide-react'
+import { Ban, ChevronDown, CircleAlert, Copy, Eye, Filter, MoreVertical, Pencil, RotateCw, Search } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, plural, rowChs, type Channel, type Row, type Status } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { CHN, ChIcons, PAvatar, StatusTag, Two } from '../../components/ui'
@@ -87,13 +87,8 @@ export function SendList({ m }: { m: SendCtl }) {
         </span>
       )
     } }),
-    col.display({ id: 'ch', header: L('Channels', '通道'), meta: { width: 130 }, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
-    col.accessor('status', { header: L('Status', '狀態'), meta: { width: 140 }, cell: i => (
-      <span className="flex flex-col items-start gap-1">
-        <StatusTag s={i.getValue()} />
-        {i.row.original.bypass ? <span className="inline-flex items-center gap-1 text-caption text-error-text"><ShieldAlert className="size-3" aria-hidden />{L('SMS approval skipped', '略過 SMS 核准')}</span> : null}
-      </span>
-    ) }),
+    col.display({ id: 'ch', header: L('Channels', '通道'), meta: { width: 130 }, cell: i => <ChIcons list={rowChs(i.row.original)} urgentSms={!!i.row.original.bypass} /> }),
+    col.accessor('status', { header: L('Status', '狀態'), meta: { width: 140 }, cell: i => <StatusTag s={i.getValue()} /> }),
     col.accessor('created', { header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     col.display({ id: 'recv', header: L('Delivered', '已送達'), meta: { width: 160 }, cell: i => {
       const r = i.row.original, fails = (r.status === 'sent' || r.status === 'error') ? r.total - r.ok : 0
