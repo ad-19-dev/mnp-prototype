@@ -1,11 +1,14 @@
-// Design options for the reach preview under "Channels" in the send flow. Every option runs on the same
+// Design studies, one per tab: the reach preview under "Channels" in the send flow (#reach), and how the
+// message list marks an urgent send (#urgent).
+// Reach preview: Every option runs on the same
 // sample audience (86 shift leads), and each mock is live: tick channels to see how it responds.
 import * as React from 'react'
-import { Button, Checkbox, SegmentedControl, SegmentedControlItem, Tag, cn } from '@qijenchen/design-system'
+import { Button, Checkbox, SegmentedControl, SegmentedControlItem, Tabs, TabsList, TabsTrigger, Tag, cn } from '@qijenchen/design-system'
 import { CircleCheck, Mail, MessageSquareText, Monitor, Plus, Smartphone, UserX, type LucideIcon } from 'lucide-react'
 import { IconBox } from '../components/ui'
 import { setLang, useApp } from '../lib/store'
 import { L } from '../lib/i18n'
+import { UrgentStudy } from './UrgentStudy'
 
 // ---------- sample audience ----------
 // 86 people: 78 have the app; 68 have the desktop agent (6 of them among the 8 without the app);
@@ -205,50 +208,74 @@ const OPTIONS: { key: string; title: () => string; idea: () => string; good: () 
     cost: () => L('A chart takes a moment to read; the legend adds words.', '圖表要花一點時間看，圖例也會多一些字。') },
 ]
 
+function ReachStudy() {
+  return (
+    <>
+    <section className="opt-card">
+      <h2>{L('Sample audience', '範例收件人')}</h2>
+      <div className="opt-facts">
+        <div className="opt-fact"><b>86</b><span>{L('people in Fab 18 Shift Leads', '人（Fab 18 Shift Leads 群組）')}</span></div>
+        <div className="opt-fact"><b>78</b><span>{L('have the app', '人有 App')}</span></div>
+        <div className="opt-fact"><b>68</b><span>{L('have the desktop agent', '人有桌面程式')}</span></div>
+        <div className="opt-fact"><b>2</b><span>{L('of the 8 without the app have a phone number', '人沒有 App 但有電話（共 8 人沒 App）')}</span></div>
+      </div>
+      <p className="opt-hint">{L('Starts with Device Notifications, Desktop OS and SMS on: 84 of 86 get it. Turning on Email reaches everyone.', '預設勾選 Device Notifications、桌面通知和 SMS：86 人中 84 人收得到。加上 Email 就能送到全部。')}</p>
+    </section>
+
+    <section className="opt-card">
+      <h2>{L('What feels complicated today', '現在哪裡太複雜')}</h2>
+      <Today />
+    </section>
+
+    {OPTIONS.map(o => (
+      <section key={o.key} className="opt-section" aria-labelledby={'opt-' + o.key}>
+        <div className="opt-notes">
+          <span className="opt-tag">{L('Option ', '方案 ') + o.key}</span>
+          <h2 id={'opt-' + o.key}>{o.title()}</h2>
+          {o.reco ? <span className="opt-reco">{L('My pick', '我的推薦')}</span> : null}
+          <p>{o.idea()}</p>
+          <h3>{L('Good', '優點')}</h3><p>{o.good()}</p>
+          <h3>{L('Trade-off', '取捨')}</h3><p>{o.cost()}</p>
+        </div>
+        <div className="opt-frame"><div className="opt-screen"><o.Mock /></div></div>
+      </section>
+    ))}
+    </>
+  )
+}
+
+type Study = 'reach' | 'urgent'
+const STUDIES = (): { k: Study; tab: string; title: string; sub: string }[] => [
+  { k: 'reach', tab: L('Channel reach', '通道觸及'), title: L('Channel reach: design options', '通道觸及：設計方案'), sub: L('Four simpler ways to show how many people a message reaches while you pick channels. Every mock is live: tick channels to see how it responds.', '在選通道時顯示「幾個人收得到」的四種簡化做法。每個畫面都可以操作，勾選通道看看它怎麼變化。') },
+  { k: 'urgent', tab: L('Urgent sends in the list', '緊急發送標示'), title: L('Marking urgent sends: design options', '緊急發送標示：設計方案'), sub: L('Five ways to show, in the message list, that a message skipped SMS approval as urgent. Each uses the real list table.', '在訊息列表標示「這則訊息以緊急為由略過 SMS 核准」的五種做法，都用真實的列表元件呈現。') },
+]
+// each study has its own link: #reach or #urgent
+const fromHash = (): Study => (location.hash === '#urgent' ? 'urgent' : 'reach')
+
 export default function OptionsApp() {
   const { lang } = useApp()
+  const [study, setStudy] = React.useState<Study>(fromHash)
+  React.useEffect(() => { const f = () => setStudy(fromHash()); window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f) }, [])
+  const go = (k: Study) => { setStudy(k); try { history.replaceState(null, '', '#' + k) } catch { /* sandboxed frame */ } }
+  const cur = STUDIES().find(x => x.k === study)!
   return (
     <main className="opt-page">
       <header className="opt-head">
         <div>
-          <h1>{L('Channel reach: design options', '通道觸及：設計方案')}</h1>
-          <p>{L('Four simpler ways to show how many people a message reaches while you pick channels. Every mock is live: tick channels to see how it responds.', '在選通道時顯示「幾個人收得到」的四種簡化做法。每個畫面都可以操作，勾選通道看看它怎麼變化。')}</p>
+          <h1>{cur.title}</h1>
+          <p>{cur.sub}</p>
         </div>
         <SegmentedControl size="sm" value={lang} onValueChange={v => v && setLang(v as 'en' | 'zh')} aria-label={L('Language', '語言')}>
           <SegmentedControlItem value="zh">中文</SegmentedControlItem>
           <SegmentedControlItem value="en">EN</SegmentedControlItem>
         </SegmentedControl>
       </header>
-
-      <section className="opt-card">
-        <h2>{L('Sample audience', '範例收件人')}</h2>
-        <div className="opt-facts">
-          <div className="opt-fact"><b>86</b><span>{L('people in Fab 18 Shift Leads', '人（Fab 18 Shift Leads 群組）')}</span></div>
-          <div className="opt-fact"><b>78</b><span>{L('have the app', '人有 App')}</span></div>
-          <div className="opt-fact"><b>68</b><span>{L('have the desktop agent', '人有桌面程式')}</span></div>
-          <div className="opt-fact"><b>2</b><span>{L('of the 8 without the app have a phone number', '人沒有 App 但有電話（共 8 人沒 App）')}</span></div>
-        </div>
-        <p className="opt-hint">{L('Starts with Device Notifications, Desktop OS and SMS on: 84 of 86 get it. Turning on Email reaches everyone.', '預設勾選 Device Notifications、桌面通知和 SMS：86 人中 84 人收得到。加上 Email 就能送到全部。')}</p>
-      </section>
-
-      <section className="opt-card">
-        <h2>{L('What feels complicated today', '現在哪裡太複雜')}</h2>
-        <Today />
-      </section>
-
-      {OPTIONS.map(o => (
-        <section key={o.key} className="opt-section" aria-labelledby={'opt-' + o.key}>
-          <div className="opt-notes">
-            <span className="opt-tag">{L('Option ', '方案 ') + o.key}</span>
-            <h2 id={'opt-' + o.key}>{o.title()}</h2>
-            {o.reco ? <span className="opt-reco">{L('My pick', '我的推薦')}</span> : null}
-            <p>{o.idea()}</p>
-            <h3>{L('Good', '優點')}</h3><p>{o.good()}</p>
-            <h3>{L('Trade-off', '取捨')}</h3><p>{o.cost()}</p>
-          </div>
-          <div className="opt-frame"><div className="opt-screen"><o.Mock /></div></div>
-        </section>
-      ))}
+      <Tabs value={study} onValueChange={v => go(v as Study)}>
+        <TabsList aria-label={L('Design studies', '設計主題')}>
+          {STUDIES().map(x => <TabsTrigger key={x.k} value={x.k}>{x.tab}</TabsTrigger>)}
+        </TabsList>
+      </Tabs>
+      {study === 'reach' ? <ReachStudy /> : <UrgentStudy />}
     </main>
   )
 }

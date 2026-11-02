@@ -38,3 +38,16 @@ body { font-family: var(--opt-font); }
 .opt-frame { background: var(--opt-canvas); border-radius: 12px; padding: 20px; min-width: 0; }
 .opt-screen { background: var(--opt-surface); border-radius: 8px; box-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 0 0 1px rgb(16 24 40 / 0.06); padding: 24px; min-width: 0; }
 .opt-hint { margin-top: 10px; font-size: 13px; color: var(--opt-muted); }
+
+.opt-p { margin: 0; font-size: 14px; line-height: 1.6; max-width: 72ch; }
+.opt-now { align-self: flex-start; background: var(--opt-canvas); color: var(--opt-muted); border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
+.opt-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; }
+.opt-table th, .opt-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--opt-line); vertical-align: top; }
+.opt-table thead th { font-size: 12px; font-weight: 700; color: var(--opt-muted); }
+.opt-table tbody th { font-weight: 600; }
+.opt-table td { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.opt-table tr.is-reco { background: #f0f6ff; }
+.opt-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.opt-dot.is-yes { background: #1f8f4e; }
+.opt-dot.is-part { background: linear-gradient(90deg, #c27a00 50%, transparent 50%); box-shadow: inset 0 0 0 1.5px #c27a00; }
+.opt-dot.is-no { box-shadow: inset 0 0 0 1.5px #98a1b0; }

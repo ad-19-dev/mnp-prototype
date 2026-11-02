@@ -37,7 +37,7 @@ function RowMenu({ m, r }: { m: SendCtl; r: Row }) {
   )
 }
 
-function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }: {
+export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }: {
   label: string; sel: K[]; toggle: (k: K) => void; clear: () => void
   opts: { k: K; view: React.ReactNode; n: number }[]
 }) {
