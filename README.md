@@ -8,6 +8,7 @@
 | 英文原版（已停止更新） | `english/` | https://claude.ai/artifact/QNA3grD2q5vsNvfZ6JCmZX |
 | 團隊版（發送空間，未取代雙語版） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息發送紀錄設計規格 | `bilingual/spec.html`、`bilingual/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
+| 通道觸及設計方案（比較頁） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
 
 密碼不放在這個儲存庫裡，請另外保管。
 
@@ -45,6 +46,13 @@ node tools/lock.mjs <密碼> publish/mnp-teams-prototype.html teams "MNP Teams P
 ```
 cd bilingual && npx vite build -c vite.spec.config.ts && cd ..
 node tools/lock.mjs <密碼> publish/mnp-message-log-spec.html bilingual/spec "MNP 訊息紀錄規格"
+```
+
+通道觸及設計方案頁同樣另外建置，輸出到 `bilingual/options/dist/`：
+
+```
+cd bilingual && npx vite build -c vite.options.config.ts && cd ..
+node tools/lock.mjs <密碼> publish/mnp-channel-reach-options.html bilingual/options "MNP 通道觸及設計方案"
 ```
 
 產生的檔案打開後要輸入密碼才看得到內容。整個 prototype 是加密的，看原始碼也只會看到亂碼。
