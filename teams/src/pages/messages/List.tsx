@@ -73,7 +73,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
     col.accessor('status', { header: L('Status', '狀態'), meta: { width: 140 }, cell: i => (
       <span className="flex flex-col items-start gap-1">
         <StatusTag s={i.getValue()} />
-        {i.row.original.bypass ? <span className="inline-flex items-center gap-1 text-caption text-error-text"><ShieldAlert className="size-3" aria-hidden />{L('ICSD skipped', '略過 ICSD')}</span> : null}
+        {i.row.original.bypass ? <span className="inline-flex items-center gap-1 text-caption text-error-text"><ShieldAlert className="size-3" aria-hidden />{L('SMS approval skipped', '略過 SMS 核准')}</span> : null}
       </span>
     ) }),
     col.accessor('created', { header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
