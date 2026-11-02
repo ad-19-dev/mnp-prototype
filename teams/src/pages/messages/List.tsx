@@ -6,7 +6,7 @@ import {
 } from '@qijenchen/design-system'
 import { FilterMenu, NO_HIDE, Tip, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Zap } from 'lucide-react'
+import { Ban, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Siren } from 'lucide-react'
 import { PEOPLE, PMAP, fmtN, rowChs, type Channel, type Row, type Status } from '../../lib/data'
 import { useApp } from '../../lib/store'
 import { CHN, ChIcons, PAvatar, StatusTag, Two } from '../../components/ui'
@@ -66,7 +66,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
         <span className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
             {/* an urgent send skipped SMS approval: a word, not just a colour, in front of the title */}
-            {r.bypass ? <Tip text={L('Urgent: sent without SMS approval', '緊急發送：略過 SMS 核准')}><span tabIndex={0} className="inline-flex shrink-0 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="red" icon={Zap}>{L('Urgent', '緊急')}</Tag></span></Tip> : null}
+            {r.bypass ? <Tip text={L('Urgent: sent without SMS approval', '緊急發送：略過 SMS 核准')}><span tabIndex={0} className="inline-flex shrink-0 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="amber" icon={Siren}>{L('Urgent', '緊急')}</Tag></span></Tip> : null}
             <Trunc text={r.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: r.id })} />
           </span>
           <Trunc text={text} className="text-caption text-fg-secondary" />
