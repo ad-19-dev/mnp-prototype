@@ -31,7 +31,9 @@ function Shell({ open, onClose, title, sub, width = 560, children, foot }: { ope
     </Dialog>
   )
 }
-const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-body font-semibold">{children}</h3>
+const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-h6 font-bold">{children}</h3>
+// a titled group of match results: heading close to its items, groups set apart from each other
+const Group = ({ children }: { children: React.ReactNode }) => <section className="flex flex-col gap-2 pt-[var(--layout-space-tight)]">{children}</section>
 
 // ---------- batch import ----------
 export function ImportDialog({ m }: { m: SendCtl }) {
@@ -72,7 +74,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
         {sets.miss.length ? <Tag size="md" color="red">{L(sets.miss.length + ' not found', sets.miss.length + ' 筆找不到')}</Tag> : null}
         {sets.dup ? <Tag size="md">{L(sets.dup + ' already added', sets.dup + ' 筆已在名單中')}</Tag> : null}
       </div>
-      {amb.length ? <>
+      {amb.length ? <Group>
         <H3>{L('Who do you mean?', '你指的是誰？')}</H3>
         {amb.map(a => (
           <div key={a.i} className="flex flex-col gap-1 rounded-md border border-divider p-2">
@@ -86,8 +88,8 @@ export function ImportDialog({ m }: { m: SendCtl }) {
             ))}
           </div>
         ))}
-      </> : null}
-      {sets.ready.length ? <>
+      </Group> : null}
+      {sets.ready.length ? <Group>
         <H3>{L('Ready to add', '可加入')}</H3>
         <ListBox max={240}>
           {sets.ready.map((x, i) => {
@@ -103,15 +105,15 @@ export function ImportDialog({ m }: { m: SendCtl }) {
             )
           })}
         </ListBox>
-      </> : null}
-      {sets.miss.length ? <>
+      </Group> : null}
+      {sets.miss.length ? <Group>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <H3>{L('Not found', '找不到')}</H3>
           <Button variant="link" size="sm" startIcon={Copy} onClick={() => { try { navigator.clipboard.writeText(sets.miss.map(x => x.tok).join('\n')) } catch { /* clipboard blocked */ } flash(L('Copied ', '已複製 ') + P(sets.miss.length, 'entry', '筆', 'entries')) }}>{L('Copy', '複製')}</Button>
         </div>
         <p className="text-body text-fg-secondary">{addN ? L('After you add the others, these come back to the list box so you can fix them.', '加入其他人之後，這些項目會放回名單欄位，讓你修正後再比對。') : L('Fix them and match again.', '請修正後再比對一次。')}</p>
         <ListBox>{sets.miss.map((x, i) => <ListRow key={i}><code className="w-32 shrink-0 truncate font-mono text-caption">{x.tok}</code><span className="text-body text-fg-secondary">{tx(x.why)}</span></ListRow>)}</ListBox>
-      </> : null}
+      </Group> : null}
     </Shell>
   )
 }

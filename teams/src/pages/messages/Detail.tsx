@@ -40,7 +40,11 @@ function statText(x: { k: string; ok: number; of: number }) {
   if (x.k === 'sms') return x.of ? L(fmtN(x.ok) + ' of ' + fmtN(x.of) + ' delivered', fmtN(x.ok) + ' / ' + fmtN(x.of) + ' 已送達') : L('Not needed', '不需要')
   return L(fmtN(x.ok) + ' of ' + fmtN(x.of) + ' delivered', fmtN(x.ok) + ' / ' + fmtN(x.of) + ' 已送達')
 }
-function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-body font-semibold text-foreground">{children}</h3> }
+function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-h6 font-bold text-foreground">{children}</h3> }
+// a titled part of the details: heading to content is tight; parts sit twice the loose gap apart (see DetailBody)
+function Part({ title, children }: { title: string; children: React.ReactNode }) {
+  return <section className="flex flex-col gap-[var(--layout-space-tight)]"><H3>{title}</H3>{children}</section>
+}
 
 export function DetailSheet({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, r = s.det ? app.rows.find(x => x.id === s.det) : null
@@ -63,7 +67,8 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
             <Button variant="tertiary" size="sm" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate', '複製')}</Button>
           </div>
         </div>
-        <div className="flex flex-col gap-[var(--layout-space-loose)] pb-[var(--layout-space-loose)]">
+        <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)] pb-[var(--layout-space-loose)]">
+          <div className="flex flex-col gap-[var(--layout-space-loose)]">
           {r.bypass ? (
             <Banner tone="warning" title={L('Sent without ICSD approval (urgent)', '未經 ICSD 核准送出（緊急）')}>
               {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
@@ -78,8 +83,9 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
             <DescriptionItem label={L('Created', '建立時間')}>{r.created}</DescriptionItem>
             <DescriptionItem label={L('Send time', '傳送時間')}>{r.sched || L('Right away', '立即傳送')}</DescriptionItem>
           </DescriptionList>
+          </div>
 
-          <H3>{L('Delivery', '送達狀況')}</H3>
+          <Part title={L('Delivery', '送達狀況')}>
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-body"><span className="font-medium">{r.status === 'scheduled' ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'audience', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : L('reached', '已送達')}</span></span>
@@ -98,12 +104,12 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
               </div>
             ) : null}
           </div>
+          </Part>
 
-          {hasN ? <><H3>{L('Notification', '通知內容')}</H3><div className="whitespace-pre-wrap rounded-md bg-neutral-1 p-3 text-body"><strong className="font-medium">{r.title}</strong>{'\n'}{r.content}</div></> : null}
-          {r.sms && r.smsText ? <><H3>{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}</H3><div className="rounded-md bg-neutral-1 p-3 text-body">{r.smsText}</div></> : null}
+          {hasN ? <Part title={L('Notification', '通知內容')}><div className="whitespace-pre-wrap rounded-md border border-divider p-3 text-body"><strong className="font-medium">{r.title}</strong>{'\n'}{r.content}</div></Part> : null}
+          {r.sms && r.smsText ? <Part title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')}><div className="rounded-md border border-divider p-3 text-body">{r.smsText}</div></Part> : null}
           {em ? (
-            <>
-              <H3>Email</H3>
+            <Part title="Email">
               {em.mode === 'own' ? (
                 <div className="flex flex-col gap-2">
                   <span className="text-body text-fg-secondary"><span className="font-medium text-foreground">{L('Subject:', '主旨：')}</span> {em.subject}</span>
@@ -111,11 +117,12 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
                   {(em.atts || []).map(a => <FileItem key={a.name} name={a.name} description={fmtSize(a.size)} onDownload={() => flash(L('Downloading', '下載中'), 'ok', a.name)} />)}
                 </div>
               ) : <p className="text-body text-fg-secondary">{L('Same as the notification.', '和通知內容相同。')}</p>}
-            </>
+            </Part>
           ) : null}
 
-          <H3>{L('Audiences', '收件人')}</H3>
-          <div className="flex flex-wrap gap-2">{audToTags(r.aud).map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div>
+          <Part title={L('Audiences', '收件人')}>
+            <div className="flex flex-wrap gap-2">{audToTags(r.aud).map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div>
+          </Part>
 
         </div>
       </div>
