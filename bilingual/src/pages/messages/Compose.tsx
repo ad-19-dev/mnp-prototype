@@ -218,7 +218,20 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
                 label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')} <Tag size="sm" color="amber">{L('Needs ICSD approval', '需 ICSD 核准')}</Tag></span>}
                 description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。') + (hasR ? smsCoverText(rc) : '')}
               />
-              {c.ch.sms ? <Banner tone="warning" title={L('ICSD must approve this message', '這則訊息需要 ICSD 核准')}>{L('Usually takes about 3 business days, and nothing is sent until then. If it’s urgent, you can skip approval in the last step; that’s logged.', '通常需要約 3 個工作天，核准前不會送出。如果很緊急，可以在最後一步略過核准，這會留下紀錄。')}</Banner> : null}
+              {c.ch.sms ? (
+                <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
+                  <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('ICSD approval will be skipped', '將略過 ICSD 核准') : L('ICSD approves this message before it’s sent', 'ICSD 核准後才會送出')}</span>
+                  <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
+                    label={L('It’s urgent: send without waiting for ICSD', '這是緊急訊息，不等 ICSD 核准直接傳送')}
+                    description={L('Only for urgent, important messages. ICSD reviews it afterwards. Your name, the time and the reason are kept on the message’s record.', '只用於緊急且重要的訊息。ICSD 會事後審查；你的姓名、時間和原因會記錄在這則訊息上。')} />
+                  {c.urgent ? (
+                    <FormField id="f-urgent" label={L('Reason', '原因')} required count={c.urgentReason.length + ' / 200'} over={c.urgentReason.length > 200} error={tried[1] || c.urgentReason.length > 200 ? e.urgent : ''}>
+                      <Textarea id="f-urgent" rows={2} value={c.urgentReason} error={!!(tried[1] && e.urgent)} onChange={ev => m.setC({ urgentReason: ev.target.value })} placeholder={L('e.g. Typhoon warning issued at 07:30; staff must know before commuting.', '例如：07:30 發布颱風警報，員工必須在通勤前得知。')} />
+                    </FormField>
+                  ) : null}
+                  {ap.mgr && c.urgent ? <Banner tone="neutral">{L('Your supervisor still has to approve it, because it goes outside the company.', '因為有外部收件人，仍需要主管核准。')}</Banner> : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
           {tried[1] && e.ch ? <ErrText>{e.ch}</ErrText> : null}
@@ -383,6 +396,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   if (c.ch.sms) {
     const parts = [rc.extP ? L(P(rc.extP, 'external phone', '', 'external phones'), rc.extP + ' 支外部電話') : '', c.ch.push && rc.smsable ? L('up to ' + rc.smsable + ' without the app', '最多 ' + rc.smsable + ' 位沒裝 App 的人') : ''].filter(Boolean)
     rows.push(<RvRow key="s" icon={MessageSquareText} k={CHN.sms.name} v={parts.length ? L('Goes to ', '傳給') + joinL(parts) : L('No one needs it', '目前沒有人需要')} q={c.smsText} edit={toMsg} />)
+    rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('ICSD approval', 'ICSD 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after ICSD approves it', 'ICSD 核准後才會送出')} edit={() => m.goStep(1)} />)
   }
   const phs = placeholders([hasNotif(c) ? c.title + ' ' + c.content : '', smsOn(c) ? c.smsText : '', mode === 'own' ? c.subject + ' ' + c.bodyText : ''].join(' '))
   if (phs.length) rows.push(<RvRow key="ph" icon={AlertTriangle} warn k={L(P(phs.length, 'placeholder', '', 'placeholders') + ' to replace', '還有 ' + phs.length + ' 個 [方括號] 沒替換')} v={joinL(phs) + L(' — audiences would see these.', '：收件人會看到這些字。')} edit={toMsg} />)
@@ -410,21 +424,6 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
           ) : null}
         </div>
       </Section>
-      {c.ch.sms ? (
-        <Section title={L('ICSD approval', 'ICSD 核准')} sub={L('Device Notifications (SMS) needs ICSD approval, which usually takes about 3 business days.', 'Device Notifications（SMS）需要 ICSD 核准，通常約 3 個工作天。')}>
-          <div className="flex flex-col gap-[var(--layout-space-tight)]">
-            <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
-              label={L('Urgent: send without waiting for ICSD', '緊急：不等 ICSD 核准直接傳送')}
-              description={L('Only for urgent, important messages. ICSD reviews it afterwards. Your name, the time and the reason are kept on the message’s record.', '只用於緊急且重要的訊息。ICSD 會事後審查；你的姓名、時間和原因會記錄在這則訊息上。')} />
-            {c.urgent ? (
-              <FormField id="f-urgent" label={L('Reason', '原因')} required count={c.urgentReason.length + ' / 200'} over={c.urgentReason.length > 200} error={tried[3] || c.urgentReason.length > 200 ? e.urgent : ''}>
-                <Textarea id="f-urgent" rows={2} value={c.urgentReason} error={!!(tried[3] && e.urgent)} onChange={ev => m.setC({ urgentReason: ev.target.value })} placeholder={L('e.g. Typhoon warning issued at 07:30; staff must know before commuting.', '例如：07:30 發布颱風警報，員工必須在通勤前得知。')} />
-              </FormField>
-            ) : null}
-            {ap.mgr && c.urgent ? <Banner tone="neutral">{L('Your supervisor still has to approve it, because it goes outside the company.', '因為有外部收件人，仍需要主管核准。')}</Banner> : null}
-          </div>
-        </Section>
-      ) : null}
       <Section title={L('Review', '確認內容')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">{rows}</div>

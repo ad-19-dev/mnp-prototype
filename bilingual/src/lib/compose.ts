@@ -19,7 +19,7 @@ export interface Compose {
   emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
   atts: Att[]; attErr: string
   sendMode: 'now' | 'schedule'; schedAt: string
-  // urgent: send without waiting for ICSD (about 3 business days); needs a reason, and it's logged on the message
+  // urgent: send without waiting for ICSD; needs a reason, and it's logged on the message
   urgent: boolean; urgentReason: string
   tried: Record<number, boolean>
   dirty: boolean
@@ -141,9 +141,9 @@ export function errs(c: Compose, groups: Group[]): Errs {
   return e
 }
 export function stepOk(n: number, e: Errs) {
-  if (n === 1) return !e.recv && !e.ch && !e.ext && !e.extp
+  if (n === 1) return !e.recv && !e.ch && !e.ext && !e.extp && !e.urgent
   if (n === 2) return !e.sender && !e.title && !e.content && !e.sms && !e.subject && !e.body
-  return !e.sched && !e.urgent
+  return !e.sched
 }
 export const msgErr = (e: Errs) => e.sender || e.title || e.content || e.sms || e.subject || e.body
 
