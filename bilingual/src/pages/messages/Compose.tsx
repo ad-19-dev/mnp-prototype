@@ -201,7 +201,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         </div>
       </Section>
 
-      <Section title={L('Channels', '通道')} sub={hasR ? undefined : L('Add audiences to see how many each channel reaches.', '加入收件人後，會顯示每個通道能送到多少人。')}>
+      <Section title={L('Channels', '通道')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} rc={rc} />)}</div>
           {c.ch.push ? (
