@@ -11,7 +11,7 @@ import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
-  MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
+  CircleCheck, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
@@ -169,13 +169,6 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
         <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
-      {/* how many of the receivers this channel reaches */}
-      {hasR ? (
-        <span className="flex items-center gap-3">
-          <span className="flex-1"><Meter pct={pct} tone={pct >= 100 ? 'ok' : undefined} label={meta.name + L(' reach', ' 觸及率')} /></span>
-          <span className="shrink-0 text-caption text-fg-secondary tabular-nums">{L('Reaches', '可觸及')} <span className="text-body font-medium text-foreground">{fmtN(n)}</span> / {fmtN(rc.total)}</span>
-        </span>
-      ) : null}
       {tpl ? <span className={cn('text-caption', tplHas ? 'text-success-text' : 'text-fg-secondary')}>{tplHas ? L('Template has text for this', '模板有這個通道的內容') : L('Template has no text for this', '模板沒有這個通道的內容')}</span> : null}
     </label>
   )
@@ -218,7 +211,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
               <Checkbox
                 checked={c.ch.sms} onCheckedChange={() => m.pickChannel('sms')}
                 label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')} <Tag size="sm" color="amber">{L('Needs ICSD approval', '需 ICSD 核准')}</Tag></span>}
-                description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。') + (hasR ? smsCoverText(rc) : '')}
+                description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。')}
               />
               {c.ch.sms ? (
                 <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
@@ -241,19 +234,14 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           {e.extp ? <ErrText>{e.extp}</ErrText> : null}
           {ap.mgr ? <Banner tone="warning">{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</Banner> : null}
           {hasR && anyCh ? (
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="text-body">{L('Reaches ', '可觸及 ')}<span className="font-medium">{fmtN(rc.reachable)} / {fmtN(rc.total)}</span>{L('', ' 人')}</span>
-                {rc.unrN ? <Button variant="link" size="sm" onClick={() => m.set({ unr: true })}>{L('See who’s missed', '查看收不到的人')}</Button> : null}
-              </div>
-              <Meter pct={Math.round(rc.reachable / Math.max(1, rc.total) * 100)} tone={rc.unrN ? undefined : 'ok'} label={L('Coverage', '觸及率')} />
-              {rc.unrN ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-body text-warning-text">{L(P(rc.unrN, 'person', '', 'people') + ' won’t get it.', rc.unrN + ' 人收不到。')}</span>
-                  {rc.viaEmail ? <Button size="sm" variant="secondary" startIcon={Plus} onClick={() => m.pickChannel('email')}>{L('Add Email (+' + rc.viaEmail + ')', '加入 Email（+' + rc.viaEmail + ' 人）')}</Button> : null}
-                  {rc.viaSms ? <Button size="sm" variant="secondary" startIcon={Plus} onClick={() => m.pickChannel('sms')}>{L('Turn on SMS fallback (+' + rc.viaSms + ')', '開啟 SMS 備援（+' + rc.viaSms + ' 人）')}</Button> : null}
-                </div>
-              ) : null}
+            // how many people get it, in one line; when one channel would reach everyone left, offer it
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-divider pt-[var(--layout-space-tight)]">
+              {rc.unrN ? <>
+                <p className="text-body"><span className="font-medium">{L(fmtN(rc.reachable) + ' of ' + fmtN(rc.total) + ' people get it', fmtN(rc.reachable) + ' / ' + fmtN(rc.total) + ' 人收得到')}</span><span className="text-fg-secondary">{L(' · ' + fmtN(rc.unrN) + ' don’t', '，' + fmtN(rc.unrN) + ' 人收不到')}</span></p>
+                <Button variant="link" size="sm" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button>
+                {rc.viaEmail ? <Button size="sm" variant="secondary" startIcon={Plus} className="ml-auto" onClick={() => m.pickChannel('email')}>{rc.viaEmail >= rc.unrN ? L('Add Email to reach everyone', '加入 Email，全部收得到') : L('Add Email (+' + rc.viaEmail + ')', '加入 Email（多 ' + rc.viaEmail + ' 人）')}</Button>
+                  : rc.viaSms ? <Button size="sm" variant="secondary" startIcon={Plus} className="ml-auto" onClick={() => m.pickChannel('sms')}>{rc.viaSms >= rc.unrN ? L('Add SMS to reach everyone', '加入 SMS，全部收得到') : L('Add SMS (+' + rc.viaSms + ')', '加入 SMS（多 ' + rc.viaSms + ' 人）')}</Button> : null}
+              </> : <p className="flex items-center gap-2 text-body font-medium text-success-text"><CircleCheck className="size-4" aria-hidden />{L('All ' + fmtN(rc.total) + ' people get it', fmtN(rc.total) + ' 人都收得到')}</p>}
             </div>
           ) : null}
         </div>
