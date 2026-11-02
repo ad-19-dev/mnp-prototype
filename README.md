@@ -4,15 +4,15 @@
 
 | 版本 | 資料夾 | 線上網址（需輸入密碼） |
 |---|---|---|
-| 中英雙語版（主要版本） | `bilingual/` | https://claude.ai/artifact/QwiqnwmVSsZWpNSdb5Jnpq |
+| 中英雙語版（已停止更新） | `bilingual/` | https://claude.ai/artifact/QwiqnwmVSsZWpNSdb5Jnpq |
 | 英文原版（已停止更新） | `english/` | https://claude.ai/artifact/QNA3grD2q5vsNvfZ6JCmZX |
-| 團隊版（發送空間，未取代雙語版） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
+| 團隊版（發送空間，主要版本） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息發送紀錄設計規格 | `bilingual/spec.html`、`bilingual/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
 | 設計方案比較頁（通道觸及、緊急發送標示） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
 
 密碼不放在這個儲存庫裡，請另外保管。
 
-以後的修改只做雙語版和團隊版。英文原版停在 2026/10/29 的狀態，不再跟著改。
+以後的修改只做團隊版。雙語版停在 2026/11/02、英文原版停在 2026/10/29 的狀態，不再跟著改。
 
 ## 分享給別人
 

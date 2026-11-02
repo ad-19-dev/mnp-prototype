@@ -1,5 +1,7 @@
 # MNP prototype — rebuilt on @qijenchen/design-system
 
+> 已停止更新（2026/11/02）。新的修改請做在 `teams/`。
+
 把 MNP v2 prototype(Preact 單檔版)用 `@qijenchen/design-system@0.1.0-beta.147` 的元件重做一次。
 功能、假資料、文案、驗證規則都跟 v2 一樣。
 

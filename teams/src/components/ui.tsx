@@ -40,21 +40,19 @@ export function StatusTag({ s }: { s: Status }) {
 
 // channel icons with a tooltip each, drawn as icon-only DS Tags so they read like the Status tag next
 // to them (data indicators, not buttons); SMS is amber as the fallback channel. The empty text slot is hidden.
-// urgentSms: the SMS went out without approval as an urgent send; shown in red
-export function ChIcons({ list, urgentSms }: { list: Channel[]; urgentSms?: boolean }) {
+export function ChIcons({ list }: { list: Channel[] }) {
   return (
     <span className="inline-flex items-center gap-1">
       {list.map(k => {
-        const c = chn(k), I = c.icon, urgent = k === 'sms' && !!urgentSms
-        const name = urgent ? c.name + L(' · urgent, SMS approval skipped', '・緊急發送，略過 SMS 核准') : c.name
+        const c = chn(k), I = c.icon
         return (
           <Tooltip key={k}>
             <TooltipTrigger asChild>
-              <span tabIndex={0} aria-label={name} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
-                <Tag size="sm" color={urgent ? 'red' : k === 'sms' ? 'amber' : 'neutral'} icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
+              <span tabIndex={0} aria-label={c.name} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
+                <Tag size="sm" color={k === 'sms' ? 'amber' : 'neutral'} icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
               </span>
             </TooltipTrigger>
-            <TooltipContent>{name}</TooltipContent>
+            <TooltipContent>{c.name}</TooltipContent>
           </Tooltip>
         )
       })}
