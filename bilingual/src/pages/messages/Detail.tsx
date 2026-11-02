@@ -64,10 +64,16 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           </div>
         </div>
         <div className="flex flex-col gap-[var(--layout-space-loose)] pb-[var(--layout-space-loose)]">
+          {r.bypass ? (
+            <Banner tone="warning" title={L('Sent without ICSD approval (urgent)', '未經 ICSD 核准送出（緊急）')}>
+              {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
+            </Banner>
+          ) : null}
           <DescriptionList orientation="horizontal" divided>
             {r.channels.indexOf('push') >= 0 ? <DescriptionItem label={L('Sender name', '寄件人名稱')}>{r.sender}</DescriptionItem> : null}
             <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || L('None', '無')}</DescriptionItem>
             <DescriptionItem label={L('Channels', '通道')}>{chs.map(k => CHN[k].name).join(', ')}</DescriptionItem>
+            {r.sms ? <DescriptionItem label={L('ICSD approval', 'ICSD 核准')}>{r.bypass ? L('Skipped (urgent)', '已略過（緊急）') : L('Approved', '已核准')}</DescriptionItem> : null}
             <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>
             <DescriptionItem label={L('Created', '建立時間')}>{r.created}</DescriptionItem>
             <DescriptionItem label={L('Send time', '傳送時間')}>{r.sched || L('Right away', '立即傳送')}</DescriptionItem>

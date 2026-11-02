@@ -11,7 +11,7 @@ import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
-  MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
+  MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
@@ -45,6 +45,7 @@ export function ComposeView({ m }: { m: SendCtl }) {
           <>
             {ap.mgr ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs supervisor approval', '需主管核准')}</Tag> : null}
             {ap.icsd ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs ICSD approval', '需 ICSD 核准')}</Tag> : null}
+            {ap.skipped ? <Tag size="md" color="red" unbounded icon={ShieldAlert}>{L('Skipping ICSD approval (urgent)', '略過 ICSD 核准（緊急）')}</Tag> : null}
           </>
         )}
       />
@@ -219,7 +220,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
                 label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')} <Tag size="sm" color="amber">{L('Needs ICSD approval', '需 ICSD 核准')}</Tag></span>}
                 description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。') + (hasR ? smsCoverText(rc) : '')}
               />
-              {c.ch.sms ? <Banner tone="warning" title={L('ICSD must approve this message', '這則訊息需要 ICSD 核准')}>{L('Usually takes 1 business day. Nothing is sent until then.', '通常需要 1 個工作天，核准前不會送出。')}</Banner> : null}
+              {c.ch.sms ? <Banner tone="warning" title={L('ICSD must approve this message', '這則訊息需要 ICSD 核准')}>{L('Usually takes about 3 business days, and nothing is sent until then. If it’s urgent, you can skip approval in the last step; that’s logged.', '通常需要約 3 個工作天，核准前不會送出。如果很緊急，可以在最後一步略過核准，這會留下紀錄。')}</Banner> : null}
             </div>
           ) : null}
           {tried[1] && e.ch ? <ErrText>{e.ch}</ErrText> : null}
@@ -411,6 +412,21 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
           ) : null}
         </div>
       </Section>
+      {c.ch.sms ? (
+        <Section title={L('ICSD approval', 'ICSD 核准')} sub={L('Device Notifications (SMS) needs ICSD approval, which usually takes about 3 business days.', 'Device Notifications（SMS）需要 ICSD 核准，通常約 3 個工作天。')}>
+          <div className="flex flex-col gap-[var(--layout-space-tight)]">
+            <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
+              label={L('Urgent: send without waiting for ICSD', '緊急：不等 ICSD 核准直接傳送')}
+              description={L('Only for urgent, important messages. ICSD reviews it afterwards. Your name, the time and the reason are kept on the message’s record.', '只用於緊急且重要的訊息。ICSD 會事後審查；你的姓名、時間和原因會記錄在這則訊息上。')} />
+            {c.urgent ? (
+              <FormField id="f-urgent" label={L('Reason', '原因')} required count={c.urgentReason.length + ' / 200'} over={c.urgentReason.length > 200} error={tried[3] || c.urgentReason.length > 200 ? e.urgent : ''}>
+                <Textarea id="f-urgent" rows={2} value={c.urgentReason} error={!!(tried[3] && e.urgent)} onChange={ev => m.setC({ urgentReason: ev.target.value })} placeholder={L('e.g. Typhoon warning issued at 07:30; staff must know before commuting.', '例如：07:30 發布颱風警報，員工必須在通勤前得知。')} />
+              </FormField>
+            ) : null}
+            {ap.mgr && c.urgent ? <Banner tone="neutral">{L('Your supervisor still has to approve it, because it goes outside the company.', '因為有外部收件人，仍需要主管核准。')}</Banner> : null}
+          </div>
+        </Section>
+      ) : null}
       <Section title={L('Review', '確認內容')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">{rows}</div>
@@ -424,7 +440,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
 // ---------- footer and result ----------
 function FootBar({ m }: { m: SendCtl }) {
   const c = m.s.c, ap = approval(c)
-  const primary = ap.need ? L('Submit for approval', '送出審核') : c.sendMode === 'schedule' ? L('Schedule', '排程傳送') : L('Send', '傳送')
+  const primary = ap.need ? L('Submit for approval', '送出審核') : ap.skipped ? L('Send without approval', '略過核准並傳送') : c.sendMode === 'schedule' ? L('Schedule', '排程傳送') : L('Send', '傳送')
   return (
     <div className="sticky bottom-0 z-10 border-t border-divider bg-surface">
       <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
@@ -438,7 +454,7 @@ function FootBar({ m }: { m: SendCtl }) {
           {c.step > 1 ? <Button variant="tertiary" startIcon={ChevronLeft} onClick={() => m.goStep(c.step - 1)}>{L('Back', '上一步')}</Button> : null}
           {c.step < 3
             ? <Button variant="primary" endIcon={ChevronRight} onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>
-            : <Button variant="primary" startIcon={ap.need ? ShieldCheck : c.sendMode === 'schedule' ? CalendarClock : Send} onClick={() => m.submit()}>{primary}</Button>}
+            : <Button variant="primary" startIcon={ap.need ? ShieldCheck : ap.skipped ? ShieldAlert : c.sendMode === 'schedule' ? CalendarClock : Send} onClick={() => m.submit()}>{primary}</Button>}
         </div>
       </div>
     </div>

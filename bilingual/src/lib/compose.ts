@@ -19,11 +19,14 @@ export interface Compose {
   emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
   atts: Att[]; attErr: string
   sendMode: 'now' | 'schedule'; schedAt: string
+  // urgent: send without waiting for ICSD (about 3 business days); needs a reason, and it's logged on the message
+  urgent: boolean; urgentReason: string
   tried: Record<number, boolean>
   dirty: boolean
   result: null | { reqId: string; ap: Approval; when: string; sends: string; total: number; chs: Channel[] }
 }
-export interface Approval { icsd: boolean; mgr: boolean; ext: number; need: boolean; who: string[] }
+// icsd: ICSD still has to approve; skipped: SMS is on but ICSD approval is skipped as urgent
+export interface Approval { icsd: boolean; skipped: boolean; mgr: boolean; ext: number; need: boolean; who: string[] }
 
 export function blankCompose(): Compose {
   return {
@@ -32,7 +35,7 @@ export function blankCompose(): Compose {
     ch: { push: false, desktop: false, email: false, sms: false },
     tplId: null, sender: '', title: '', content: '', smsText: '',
     emailMode: 'same', subject: '', html: '', bodyText: '', htmlKey: 0, atts: [], attErr: '',
-    sendMode: 'now', schedAt: '', tried: {}, dirty: false, result: null,
+    sendMode: 'now', schedAt: '', urgent: false, urgentReason: '', tried: {}, dirty: false, result: null,
   }
 }
 
@@ -76,14 +79,15 @@ export function reach(c: Compose, groups: Group[]) {
   }
 }
 
-// ICSD reviews every SMS; your supervisor approves anything going outside the company
+// ICSD reviews every SMS, unless the sender skips it as urgent; your supervisor approves anything going
+// outside the company, and that can't be skipped
 export function approval(c: Compose): Approval {
-  const icsd = !!c.ch.sms
+  const skipped = !!c.ch.sms && c.urgent, icsd = !!c.ch.sms && !c.urgent
   const ext = c.receivers.filter(t => t.type === 'ext' && (isExtPhone(t) ? c.ch.sms : c.ch.email)).length, mgr = ext > 0
   const who: string[] = []
   if (mgr) who.push(L('your supervisor', '你的主管'))
   if (icsd) who.push('ICSD')
-  return { icsd, mgr, ext, need: icsd || mgr, who }
+  return { icsd, skipped, mgr, ext, need: icsd || mgr, who }
 }
 
 export function peopleTags(c: Compose) { return c.receivers.filter(t => t.type === 'person').map(t => PMAP[t.id!]).filter(Boolean) }
@@ -91,7 +95,7 @@ export function multiPeople(c: Compose) { return smsOn(c) ? peopleTags(c).filter
 export function unresolved(c: Compose) { return multiPeople(c).filter(p => !c.pick['p:' + p.id]) }
 export function noNumber(c: Compose) { return smsOn(c) ? peopleTags(c).filter(p => !p.co && !p.pp) : [] }
 
-export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'sms' | 'subject' | 'body' | 'sched', string>>
+export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent', string>>
 export function errs(c: Compose, groups: Group[]): Errs {
   const e: Errs = {}, lim = LIM.push, total = recvFlat(c, groups)
   const totalN = total.people.length + total.ext.length
@@ -130,12 +134,16 @@ export function errs(c: Compose, groups: Group[]): Errs {
     else if (d < addMin(now, 10)) e.sched = L('Pick a time at least 10 minutes from now.', '請選 10 分鐘以後的時間。')
     else if (d > addMin(now, 30 * 24 * 60)) e.sched = L('Pick a time within 30 days.', '最多只能排 30 天內。')
   }
+  if (c.ch.sms && c.urgent) {
+    if (!c.urgentReason.trim()) e.urgent = L('Say why this can’t wait for ICSD.', '請說明為什麼不能等 ICSD 核准。')
+    else if (c.urgentReason.length > 200) e.urgent = tooLong(200)
+  }
   return e
 }
 export function stepOk(n: number, e: Errs) {
   if (n === 1) return !e.recv && !e.ch && !e.ext && !e.extp
   if (n === 2) return !e.sender && !e.title && !e.content && !e.sms && !e.subject && !e.body
-  return !e.sched
+  return !e.sched && !e.urgent
 }
 export const msgErr = (e: Errs) => e.sender || e.title || e.content || e.sms || e.subject || e.body
 

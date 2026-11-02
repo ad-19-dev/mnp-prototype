@@ -37,6 +37,8 @@ export interface Row {
   total: number; ok: number; creator: string; aud: [string, string][]; email?: EmailBody | null
   fr?: string[][]; fo?: string; fw?: string[]; fx?: string[][]; err?: { title: string; text: string } | null
   byCh?: Partial<Record<Channel, [number, number]>> | null; fresh?: number; _f?: Fail[] | null
+  // ICSD approval skipped because the message was urgent: who, when and why (kept for the record)
+  bypass?: { by: string; at: string; reason: string } | null
 }
 export interface Tag { key: string; type: 'person' | 'group' | 'org' | 'ext'; id?: string; email?: string }
 export interface Fail { p?: Person; ext?: string; reason: string; fallback: string }
@@ -364,6 +366,8 @@ function buildRows(): Row[] {
   return rows
 }
 export const ROWS0 = buildRows()
+// urgent messages that skipped ICSD approval keep who, when and why
+Object.assign(ROWS0.find(r => r.id === 'm019')!, { bypass: { by: 'p19', at: '2026/10/21 08:38', reason: 'Typhoon warning issued at 07:30. Staff must know before they commute.' } })
 
 // channels of a sent message, with SMS fallback listed after Device Notifications
 export function rowChs(r: Row): Channel[] { return CH_ORDER.filter(k => k === 'sms' ? !!r.sms : r.channels.indexOf(k) >= 0) }

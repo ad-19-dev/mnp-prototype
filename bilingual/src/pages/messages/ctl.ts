@@ -1,6 +1,6 @@
 // Messages page controller: list, row actions, the 3-step send flow and its dialogs.
 import {
-  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
+  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
   joinList, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
   type Channel, type Group, type ListKind, type Match, type Row, type Status, type Tag, type Template,
 } from '../../lib/data'
@@ -13,7 +13,7 @@ import { scrollTop } from '../../lib/logic'
 import type { Confirm } from '../../components/ui'
 import { chText } from '../../components/ui'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
-import { CircleAlert, LayoutTemplate, Trash2, Ban } from 'lucide-react'
+import { CircleAlert, LayoutTemplate, Trash2, Ban, ShieldAlert } from 'lucide-react'
 import type { RiState } from '../../components/RecvInput'
 
 // kind: what the pasted list holds; done: how many were added in the last round, when the not-found ones came back to fix
@@ -255,13 +255,21 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     clearTemplate() { m.setC({ tplId: null }); flash(L('Template removed. Your text stays.', '已取消模板，內容保留。')) },
 
     // ---------- sending ----------
-    submit() {
+    submit(confirmed?: boolean) {
       const c = get().c, e = m.errs()
       for (let k = 1; k <= 3; k++) {
         if (!stepOk(k, e)) { m.setC({ step: k, tried: { ...c.tried, [k]: true } }, true); m.scrollToErr(); return }
       }
       if (unresolved(c).length) { m.openNumbers(); return }
       const ap = approval(c)
+      // skipping ICSD is confirmed separately: it can't be undone and it's logged on the message
+      if (ap.skipped && !confirmed) {
+        const me = PMAP[ME]
+        set({ cf: { title: L('Send without ICSD approval?', '要略過 ICSD 核准直接送出嗎？'), text: L('Only for urgent, important messages. ICSD reviews it afterwards, and this is kept on the message’s record.', '只用於緊急且重要的訊息。ICSD 會事後審查，這次略過也會記錄在訊息上。'),
+          rows: [{ k: L('Reason', '原因'), v: c.urgentReason.trim() }, { k: L('Logged as', '記錄為'), v: me.en + ' ' + me.zh + ' · ' + fmtDT(new Date()) }, { k: L('Notified', '通知對象'), v: L('ICSD and your supervisor, ' + SUPERVISOR, 'ICSD 和你的主管 ' + SUPERVISOR) }],
+          icon: ShieldAlert, tone: 'warn', cancel: L('Go back', '返回'), ok: L('Skip approval and send', '略過核准並送出'), danger: true, run: () => { set({ cf: null }); m.submit(true) } } })
+        return
+      }
       if (ap.need) {
         const now = new Date(), schedD = c.sendMode === 'schedule' ? fromIso(c.schedAt) : null
         const reqId = 'MNP-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + (1000 + Math.floor(Math.random() * 9000))
@@ -287,6 +295,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const base: Partial<Row> = {
         sender: c.ch.push ? c.sender.trim() || PMAP[ME].nt : '', tpl: c.tplId, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
         smsText: smsOn(c) ? c.smsText.trim() : '', channels, sms: smsOn(c), email: em,
+        bypass: smsOn(c) && c.urgent ? { by: ME, at: fmtDT(now), reason: c.urgentReason.trim() } : null,
         total: rc.total, ok: 0, aud: tagsToAud(c.receivers), fresh: Date.now(), _f: null, err: null, byCh: null,
         fw: rc.unr.map(p => p.id), fr: [[reason + (smsOn(c) ? ', and no phone number for SMS' : '')]],
         status: schedD ? 'scheduled' : 'progress', sched: schedD ? fmtDT(schedD) : null,
