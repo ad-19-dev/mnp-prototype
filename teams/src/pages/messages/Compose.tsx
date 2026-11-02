@@ -218,7 +218,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
                   <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('ICSD approval will be skipped', '將略過 ICSD 核准') : L('ICSD approves this message before it’s sent', 'ICSD 核准後才會送出')}</span>
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
                     label={L('It’s urgent: send without waiting for ICSD', '這是緊急訊息，不等 ICSD 核准直接傳送')}
-                    description={L('Only for urgent, important messages. ICSD reviews it afterwards. Your name, the time and the reason are kept on the message’s record.', '只用於緊急且重要的訊息。ICSD 會事後審查；你的姓名、時間和原因會記錄在這則訊息上。')} />
+                    description={L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。')} />
                   {c.urgent ? (
                     <FormField id="f-urgent" label={L('Reason', '原因')} required count={c.urgentReason.length + ' / 200'} over={c.urgentReason.length > 200} error={tried[1] || c.urgentReason.length > 200 ? e.urgent : ''}>
                       <Textarea id="f-urgent" rows={2} value={c.urgentReason} error={!!(tried[1] && e.urgent)} onChange={ev => m.setC({ urgentReason: ev.target.value })} placeholder={L('e.g. Typhoon warning issued at 07:30; staff must know before commuting.', '例如：07:30 發布颱風警報，員工必須在通勤前得知。')} />
