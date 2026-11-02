@@ -54,7 +54,8 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
   const columns = React.useMemo(() => [
     col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => (
       <span className="flex min-w-0 flex-col">
-        <Trunc text={i.getValue()} className="font-medium" />
+        {/* the sender name only exists on Device Notifications */}
+        {i.row.original.channels.indexOf('push') >= 0 ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span>}
       </span>
     ) }),
     col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
@@ -77,7 +78,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
         <span className="flex w-full min-w-0 flex-col gap-1">
           <span className="text-body tabular-nums"><span className="font-medium">{r.status === 'scheduled' ? '–' : fmtN(r.ok)}</span><span className="text-fg-secondary"> / {fmtN(r.total)}</span></span>
           {r.status === 'progress' ? <ProgressBar aria-label={L('Delivery progress', '傳送進度')} value={Math.round(r.ok / Math.max(1, r.total) * 100)} /> : null}
-          {fails ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !justify-start !p-0 !text-warning-text hover:!text-warning-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' not sent', fails + ' 人未送達')}</Button> : null}
+          {fails ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' not sent', fails + ' 人未送達')}</Button> : null}
         </span>
       )
     } }),

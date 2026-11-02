@@ -3,7 +3,7 @@ import * as React from 'react'
 import {
   Button, DataTable, DescriptionItem, DescriptionList, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, FileItem, ProgressBar,
-  StepDescription, StepItem, StepLabel, Steps, Tag,
+  Tag,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -51,21 +51,6 @@ export function DetailSheet({ m }: { m: SendCtl }) {
 function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
   const cr = PMAP[r.creator] || PEOPLE[0], chs = rowChs(r), done = r.status === 'sent' || r.status === 'error'
   const fails = done ? r.total - r.ok : 0, hasN = r.channels.indexOf('push') >= 0 || r.channels.indexOf('desktop') >= 0
-  const created = parseDT(r.created) || new Date(), sched = r.sched ? parseDT(r.sched) : null
-  const events: { t: string; when: string; cls: 'done' | 'cur' | 'bad' }[] = [{ t: L('Created by ' + cr.en, cr.en + ' 建立'), when: r.created, cls: 'done' }]
-  let t = created
-  if (r.aud.some(a => a[0] === 'e') && r.channels.indexOf('email') >= 0) { t = addMin(t, 41); events.push({ t: L('Approved by supervisor Jimmy Chen', '主管 Jimmy Chen 已核准'), when: fmtDT(t), cls: 'done' }) }
-  if (r.sms) { t = addMin(t, 23); events.push({ t: L('Approved by ICSD', 'ICSD 已核准'), when: fmtDT(t), cls: 'done' }) }
-  const start = sched || addMin(t, 2)
-  if (r.status === 'scheduled') events.push({ t: L('Scheduled', '排程傳送'), when: fmtDT(start), cls: 'cur' })
-  else {
-    events.push({ t: L('Started sending', '開始傳送'), when: fmtDT(start), cls: 'done' })
-    if (r.status === 'progress') events.push({ t: L(fmtN(r.ok) + ' of ' + fmtN(r.total) + ' reached', '已送達 ' + fmtN(r.ok) + ' / ' + fmtN(r.total)), when: L('Sending…', '傳送中…'), cls: 'cur' })
-    if (r.status === 'sent') events.push({ t: L('Done: ' + fmtN(r.ok) + ' reached' + (fails ? ', ' + fails + ' not sent' : ''), '完成：' + fmtN(r.ok) + ' 人送達' + (fails ? '，' + fails + ' 人未送達' : '')), when: fmtDT(addMin(start, Math.max(1, Math.round(r.total / 90)))), cls: 'done' })
-    if (r.status === 'error') events.push({ t: L('Failed: nothing was delivered', '失敗：所有人都沒收到'), when: fmtDT(addMin(start, 1)), cls: 'bad' })
-  }
-  const evId = (i: number) => 'ev' + i
-  const curIdx = Math.max(0, events.findIndex(e => e.cls !== 'done'))
   const pct = Math.round(r.ok / Math.max(1, r.total) * 100), em = r.email
   return (
     <>
@@ -80,7 +65,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
         </div>
         <div className="flex flex-col gap-[var(--layout-space-loose)] pb-[var(--layout-space-loose)]">
           <DescriptionList orientation="horizontal" divided>
-            <DescriptionItem label={L('Sender', '寄件人')}>{r.sender}</DescriptionItem>
+            {r.channels.indexOf('push') >= 0 ? <DescriptionItem label={L('Sender name', '寄件人名稱')}>{r.sender}</DescriptionItem> : null}
             <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || L('None', '無')}</DescriptionItem>
             <DescriptionItem label={L('Channels', '通道')}>{chs.map(k => CHN[k].name).join(', ')}</DescriptionItem>
             <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>
@@ -91,8 +76,8 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           <H3>{L('Delivery', '送達狀況')}</H3>
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-body"><span className="font-medium">{r.status === 'scheduled' ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'receiver', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : L('reached', '已送達')}</span></span>
-              {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-warning-text hover:!text-warning-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' not sent', fails + ' 人未送達')}</Button> : null}
+              <span className="text-body"><span className="font-medium">{r.status === 'scheduled' ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'audience', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : L('reached', '已送達')}</span></span>
+              {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' not sent', fails + ' 人未送達')}</Button> : null}
             </div>
             <ProgressBar aria-label={L('Delivered', '已送達')} value={pct} status={r.status === 'error' ? 'error' : r.status === 'sent' ? 'success' : 'inProgress'} />
             {done && chs.length > 1 ? (
@@ -109,7 +94,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           </div>
 
           {hasN ? <><H3>{L('Notification', '通知內容')}</H3><div className="whitespace-pre-wrap rounded-md bg-neutral-1 p-3 text-body"><strong className="font-medium">{r.title}</strong>{'\n'}{r.content}</div></> : null}
-          {r.sms && r.smsText ? <><H3>SMS</H3><div className="rounded-md bg-neutral-1 p-3 text-body">{r.smsText}</div></> : null}
+          {r.sms && r.smsText ? <><H3>{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}</H3><div className="rounded-md bg-neutral-1 p-3 text-body">{r.smsText}</div></> : null}
           {em ? (
             <>
               <H3>Email</H3>
@@ -123,20 +108,9 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
             </>
           ) : null}
 
-          <H3>{L('Receivers', '收件人')}</H3>
+          <H3>{L('Audiences', '收件人')}</H3>
           <div className="flex flex-wrap gap-2">{audToTags(r.aud).map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div>
 
-          <H3>{L('Activity', '紀錄')}</H3>
-          <Steps orientation="vertical" size="sm" value={evId(events[curIdx].cls === 'done' ? events.length - 1 : curIdx)}
-            completedValues={events.map((e, i) => e.cls === 'done' ? evId(i) : '').filter(Boolean)}
-            errorValues={events.map((e, i) => e.cls === 'bad' ? evId(i) : '').filter(Boolean)}>
-            {events.map((ev, i) => (
-              <StepItem key={i} value={evId(i)} state={ev.cls === 'bad' ? 'error' : undefined}>
-                <StepLabel>{ev.t}</StepLabel>
-                <StepDescription>{ev.when}</StepDescription>
-              </StepItem>
-            ))}
-          </Steps>
         </div>
       </div>
     </>
@@ -145,7 +119,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 
 const fcol = createColumnHelper<Fail>()
 const failCols = () => [
-  fcol.display({ id: 'who', header: L('Receiver', '收件人'), meta: { width: 260 }, cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
+  fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 260 }, cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
   fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),
   fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 280 }, cell: i => <Two a={tx(i.row.original.reason)} b={tx(i.row.original.fallback)} /> }),
 ]

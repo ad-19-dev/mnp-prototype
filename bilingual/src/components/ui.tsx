@@ -7,7 +7,8 @@ import {
   type CategoricalColor,
 } from '@qijenchen/design-system'
 import { AlertTriangle, Calendar, CheckCircle2, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
-import type { Channel, Fmt, Person, Status } from '../lib/data'
+import type { Channel, Fmt, ListKind, Person, Status } from '../lib/data'
+import { LIST_KINDS } from '../lib/data'
 import { L } from '../lib/i18n'
 
 // ---------- channels and statuses ----------
@@ -17,7 +18,7 @@ export function chn(k: Channel) {
     push: ['Device Notifications', 'Device Notifications', 'Device', 'Device', 'Push to the app on company phones.', '推播到公司手機的 App。'],
     desktop: ['Desktop OS', '桌面通知', 'Desktop', '桌面', 'Pop-up on company Windows PCs.', '在公司 Windows 電腦跳出通知。'],
     email: ['Email', 'Email', 'Email', 'Email', 'Company mailbox, with formatting and files.', '寄到公司信箱，可加格式和附件。'],
-    sms: ['SMS fallback', 'SMS 備援', 'SMS', 'SMS', '', ''],
+    sms: ['Device Notifications (SMS)', 'Device Notifications（SMS）', 'SMS', 'SMS', '', ''],
   }
   const x = names[k]
   return { name: L(x[0], x[1]), short: L(x[2], x[3]), desc: L(x[4], x[5]), icon: CH_ICON[k] }
@@ -94,6 +95,27 @@ export const NO_HIDE = { enableHiding: false }
 // ---------- tables ----------
 // Rows per page next to the DS Pagination. Its own size menu labels options in Chinese only ("N 筆/頁"),
 // so the menu is a DS Select here, worded in the current language.
+// ---------- pasted lists ----------
+// What a pasted list holds; chosen before pasting, one kind per list
+export const listKindName = (k: ListKind) => ({
+  nt: L('NT accounts', 'NT 帳號'), emp: L('Employee IDs', '工號'), name: L('Names', '姓名'), email: L('Emails', 'Email'),
+  phone: L('Mobile numbers', '手機號碼'), mvpn: L('MVPN', 'MVPN'), org: L('Org codes', '組織代碼'),
+})[k]
+export const listKindExample = (k: ListKind) => ({
+  nt: 'gywu, cmchen', emp: '120588, 112306', name: L('陳怡君, Kevin Lin', '陳怡君, Kevin Lin'), email: 'gywu@tsmc.com, partner@example.com',
+  phone: '0918-226-588, 0921660734', mvpn: '61588, 60217', org: 'PLT/UX, F18/MFG3',
+})[k]
+export function ListKindField({ id, value, onChange, error }: { id: string; value: ListKind | null; onChange: (k: ListKind) => void; error?: string }) {
+  return (
+    <FormField id={id} label={L('Data type', '資料類型')} required hint={L('Every entry in the list must be this type.', '名單裡的每一筆都要是這個類型。')} error={error}>
+      <div className="w-64 max-w-full">
+        <Select id={id} aria-label={L('Data type', '資料類型')} placeholder={L('Choose a type', '請選擇')} value={value || ''} onChange={v => onChange(v as ListKind)}
+          options={LIST_KINDS.map(k => ({ value: k, label: listKindName(k) }))} />
+      </div>
+    </FormField>
+  )
+}
+
 export const PAGE_SIZES = [10, 20, 50]
 export function PageSize({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
@@ -139,7 +161,7 @@ export function Section({ title, sub, actions, children, className }: { title?: 
       {title ? (
         <div className="mb-[var(--layout-space-tight)] flex items-start justify-between gap-[var(--layout-space-loose)]">
           <div className="flex min-w-0 flex-col gap-0.5">
-            <h2 className="text-h5 font-semibold text-foreground">{title}</h2>
+            <h2 className="text-h4 font-bold text-foreground">{title}</h2>
             {sub ? <p className="text-body text-fg-secondary">{sub}</p> : null}
           </div>
           {actions}

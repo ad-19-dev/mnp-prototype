@@ -31,7 +31,7 @@ import type { SendCtl } from './ctl'
 
 const title = (mode: string) => ({
   new: L('New message', '新訊息'), edit: L('Edit message', '編輯訊息'),
-  duplicate: L('Duplicate message', '複製訊息'), resend: L('Resend to missed receivers', '重寄給未送達的人'),
+  duplicate: L('Duplicate message', '複製訊息'), resend: L('Resend to missed audiences', '重寄給未送達的人'),
 } as Record<string, string>)[mode] || L('New message', '新訊息')
 
 export function ComposeView({ m }: { m: SendCtl }) {
@@ -45,8 +45,6 @@ export function ComposeView({ m }: { m: SendCtl }) {
           <>
             {ap.mgr ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs supervisor approval', '需主管核准')}</Tag> : null}
             {ap.icsd ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs ICSD approval', '需 ICSD 核准')}</Tag> : null}
-            {c.savedAt ? <span className="text-caption text-fg-secondary">{L('Saved ', '已存 ')}{pad(c.savedAt.getHours())}:{pad(c.savedAt.getMinutes())}</span> : null}
-            <Button variant="tertiary" startIcon={Save} onClick={() => m.saveDraft()}>{L('Save draft', '存草稿')}</Button>
           </>
         )}
       />
@@ -65,7 +63,7 @@ export function ComposeView({ m }: { m: SendCtl }) {
 
 function StepBar({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, narrow = useIsNarrowViewport()
-  const steps = [L('Receivers & channels', '收件人與通道'), L('Message', '訊息內容'), L('Review & send', '確認送出')]
+  const steps = [L('Audiences & channels', '收件人與通道'), L('Message', '訊息內容'), L('Review & send', '確認送出')]
   const done = [1, 2, 3].filter(n => n !== c.step && n <= c.maxStep && stepOk(n, e)).map(n => 's' + n)
   // on a phone the three steps don't fit side by side
   if (narrow) return (
@@ -119,7 +117,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   }).filter(x => !q || (x.label + ' ' + x.sub + ' ' + x.kind).toLowerCase().indexOf(q) >= 0)
 
   const cols = React.useMemo(() => [
-    rcol.display({ id: 'who', header: L('Receiver', '收件人'), meta: { width: 320 }, cell: i => {
+    rcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
       const Icon = t.type === 'group' ? BookUser : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Globe
       return (
@@ -142,12 +140,12 @@ function RecvTable({ m }: { m: SendCtl }) {
     ) }),
   ], [m, app.lang])
 
-  if (!c.receivers.length) return <Empty icon={Users} title={L('No receivers yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
+  if (!c.receivers.length) return <Empty icon={Users} title={L('No audiences yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
     <div className="flex flex-col gap-2">
       {c.receivers.length > 6 ? (
         <div className="flex items-center gap-2">
-          <div className="w-64"><Input size="sm" startIcon={Search} type="search" placeholder={L('Filter receivers', '篩選收件人')} aria-label={L('Filter receivers', '篩選收件人')} value={s.rf} onChange={ev => m.set({ rf: ev.target.value })} /></div>
+          <div className="w-64"><Input size="sm" startIcon={Search} type="search" placeholder={L('Filter audiences', '篩選收件人')} aria-label={L('Filter audiences', '篩選收件人')} value={s.rf} onChange={ev => m.set({ rf: ev.target.value })} /></div>
           {rows.length !== c.receivers.length ? <span className="text-caption text-fg-secondary">{rows.length} / {c.receivers.length}</span> : null}
           <Button variant="link" size="sm" danger className="ml-auto" onClick={() => m.askRemoveAll()}>{L('Remove all', '全部移除')}</Button>
         </div>
@@ -189,8 +187,8 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   return (
     <>
       {tpl ? <Banner tone="info" action={<FmtChips list={tplFormats(tpl)} />}>{L('Using template: ', '使用模板：') + tpl.name}</Banner> : null}
-      <Section title={L('Receivers', '收件人')} sub={L('Up to ' + CAP + ' people. Add contractors by phone or email.', '最多 ' + CAP + ' 人。外包人員可用電話或 Email 加入。')}
-        actions={<span className={cn('shrink-0 text-body tabular-nums', total > CAP ? 'font-medium text-error-text' : 'text-fg-secondary')} aria-label={L('Receiver count', '收件人數')}>{fmtN(total)} / {fmtN(CAP)}</span>}>
+      <Section title={L('Audiences', '收件人')} sub={L('Up to ' + CAP + ' people. Add contractors by phone or email.', '最多 ' + CAP + ' 人。外包人員可用電話或 Email 加入。')}
+        actions={<span className={cn('shrink-0 text-body tabular-nums', total > CAP ? 'font-medium text-error-text' : 'text-fg-secondary')} aria-label={L('Audience count', '收件人數')}>{fmtN(total)} / {fmtN(CAP)}</span>}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RecvInput
             id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(g => groupInSpace(g))}
@@ -200,7 +198,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
             extra={<Button variant="tertiary" startIcon={Upload} onClick={() => m.openImport()}>{L('Batch import', '批次匯入')}</Button>}
           />
           <RecvTable m={m} />
-          {tried[1] && !hasR ? <ErrText>{L('Add at least one receiver.', '請加入至少一位收件人。')}</ErrText> : null}
+          {tried[1] && !hasR ? <ErrText>{L('Add at least one audience.', '請加入至少一位收件人。')}</ErrText> : null}
           {total > CAP ? <ErrText>{L(fmtN(total - CAP) + ' over the limit. Remove some, or split into separate messages.', '超過上限 ' + fmtN(total - CAP) + ' 人。請移除部分收件人，或分成多則訊息。')}</ErrText> : null}
           {sms && multi.length ? (
             <Banner tone={unres.length ? 'warning' : 'info'} action={<Button size="sm" variant="secondary" onClick={() => m.openNumbers()}>{unres.length ? L('Choose', '選擇號碼') : L('Review', '檢視')}</Button>}>
@@ -211,14 +209,14 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         </div>
       </Section>
 
-      <Section title={L('Channels', '通道')} sub={hasR ? undefined : L('Add receivers to see how many each channel reaches.', '加入收件人後，會顯示每個通道能送到多少人。')}>
+      <Section title={L('Channels', '通道')} sub={hasR ? undefined : L('Add audiences to see how many each channel reaches.', '加入收件人後，會顯示每個通道能送到多少人。')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} rc={rc} />)}</div>
           {c.ch.push ? (
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <Checkbox
                 checked={c.ch.sms} onCheckedChange={() => m.pickChannel('sms')}
-                label={<span className="inline-flex items-center gap-2">{L('SMS fallback', 'SMS 備援')} <Tag size="sm" color="amber">{L('Needs ICSD approval', '需 ICSD 核准')}</Tag></span>}
+                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')} <Tag size="sm" color="amber">{L('Needs ICSD approval', '需 ICSD 核准')}</Tag></span>}
                 description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。') + (hasR ? smsCoverText(rc) : '')}
               />
               {c.ch.sms ? <Banner tone="warning" title={L('ICSD must approve this message', '這則訊息需要 ICSD 核准')}>{L('Usually takes 1 business day. Nothing is sent until then.', '通常需要 1 個工作天，核准前不會送出。')}</Banner> : null}
@@ -227,7 +225,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           {tried[1] && e.ch ? <ErrText>{e.ch}</ErrText> : null}
           {e.ext ? <ErrText>{e.ext}</ErrText> : null}
           {e.extp ? <ErrText>{e.extp}</ErrText> : null}
-          {ap.mgr ? <Banner tone="warning">{L('Includes ' + P(ap.ext, 'external receiver', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</Banner> : null}
+          {ap.mgr ? <Banner tone="warning">{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</Banner> : null}
           {hasR && anyCh ? (
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -287,12 +285,14 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
       </div>
       <Section title={L('Message', '訊息內容')}>
         <div className="flex flex-col gap-[var(--layout-space-loose)]">
-          <FormField id="f-sender" label={L('Sender name', '寄件人名稱')} count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Shown on every channel. Leave blank to use your NT account (' + PMAP[ME].nt + ').', '顯示在每個通道。不填會用你的 NT 帳號（' + PMAP[ME].nt + '）。')} error={eSender}>
-            <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={PMAP[ME].nt} />
-          </FormField>
           {hasN ? (
             <FormatBlock icon={MessageSquareText} title={L('Notification', '通知')} uses={<>{c.ch.push ? <Tag size="sm" icon={Smartphone}>{CHN.push.name}</Tag> : null}{c.ch.desktop ? <Tag size="sm" icon={Monitor}>{CHN.desktop.name}</Tag> : null}</>}>
               {tpl && !tplHasNotif(tpl) ? <Banner tone="neutral">{L('This template has no notification text.', '這個模板沒有通知內容。')}</Banner> : null}
+              {c.ch.push ? (
+                <FormField id="f-sender" label={L('Sender name', '寄件人名稱')} count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Shown on Device Notifications only. Leave blank to use your NT account (' + PMAP[ME].nt + ').', '只顯示在 Device Notifications。不填會用你的 NT 帳號（' + PMAP[ME].nt + '）。')} error={eSender}>
+                  <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={PMAP[ME].nt} />
+                </FormField>
+              ) : null}
               <FormField id="f-title" label={L('Title', '標題')} required count={c.title.length + ' / ' + LIM.title} over={c.title.length > LIM.title} error={eTitle}>
                 <Input id="f-title" value={c.title} error={!!eTitle} onChange={ev => m.setC({ title: ev.target.value })} placeholder={L('One line people can act on', '一句話說清楚重點')} />
               </FormField>
@@ -304,7 +304,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
             </FormatBlock>
           ) : null}
           {smsOn(c) ? (
-            <FormatBlock icon={MessageSquareText} tone="warn" title={L('SMS fallback', 'SMS 備援')} uses={<Tag size="sm" unbounded>{smsWho}</Tag>}>
+            <FormatBlock icon={MessageSquareText} tone="warn" title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} uses={<Tag size="sm" unbounded>{smsWho}</Tag>}>
               <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
                 <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} placeholder={L('Short version', '簡短版本')} />
               </FormField>
@@ -377,7 +377,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
   const toMsg = () => m.goStep(2), notif = c.title.trim() + (c.content.trim() ? ' — ' + c.content.trim() : '')
   const reaches = (n: number) => L('Reaches ' + fmtN(n) + ' of ' + fmtN(rc.total), '可觸及 ' + fmtN(n) + ' / ' + fmtN(rc.total) + ' 人')
-  const rows: React.ReactNode[] = [<RvRow key="t" icon={c.team ? UsersRound : UserRound} k={L('Sending space', '發送空間')} v={spaceName(c.team || 'me') + (c.team ? L(' · its members can see this message', '・成員都看得到這則訊息') : L(' · only you can see this message', '・只有你看得到這則訊息'))} />, <RvRow key="r" icon={Users} k={L('Receivers', '收件人')} v={P(rc.total, 'receiver', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} edit={() => m.goStep(1)} />]
+  const rows: React.ReactNode[] = [<RvRow key="t" icon={c.team ? UsersRound : UserRound} k={L('Sending space', '發送空間')} v={spaceName(c.team || 'me') + (c.team ? L(' · its members can see this message', '・成員都看得到這則訊息') : L(' · only you can see this message', '・只有你看得到這則訊息'))} />, <RvRow key="r" icon={Users} k={L('Audiences', '收件人')} v={P(rc.total, 'audience', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} edit={() => m.goStep(1)} />]
   if (c.ch.push) rows.push(<RvRow key="p" icon={Smartphone} k={CHN.push.name} v={reaches(rc.push)} q={notif} edit={toMsg} />)
   if (c.ch.desktop) { const cut = vwidth(c.content) > DESK.text || vwidth(c.title) > DESK.title; rows.push(<RvRow key="d" icon={Monitor} warn={cut} k={CHN.desktop.name} v={reaches(rc.desktop) + (cut ? L(' · text gets cut short', ' · 內容會被截斷') : '')} q={notif} edit={toMsg} />) }
   if (c.ch.email) rows.push(<RvRow key="e" icon={Mail} k="Email" v={reaches(rc.email) + (mode === 'own' ? L(' · Separate email', ' · 另寫 Email') + (c.atts.length ? L(', ' + P(c.atts.length, 'file', ''), '，' + c.atts.length + ' 個附件') : '') : L(' · Same as notification', ' · 同通知內容'))} q={mode === 'own' ? c.subject : ''} edit={toMsg} />)
@@ -386,7 +386,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
     rows.push(<RvRow key="s" icon={MessageSquareText} k={CHN.sms.name} v={parts.length ? L('Goes to ', '傳給') + joinL(parts) : L('No one needs it', '目前沒有人需要')} q={c.smsText} edit={toMsg} />)
   }
   const phs = placeholders([hasNotif(c) ? c.title + ' ' + c.content : '', smsOn(c) ? c.smsText : '', mode === 'own' ? c.subject + ' ' + c.bodyText : ''].join(' '))
-  if (phs.length) rows.push(<RvRow key="ph" icon={AlertTriangle} warn k={L(P(phs.length, 'placeholder', '', 'placeholders') + ' to replace', '還有 ' + phs.length + ' 個 [方括號] 沒替換')} v={joinL(phs) + L(' — receivers would see these.', '：收件人會看到這些字。')} edit={toMsg} />)
+  if (phs.length) rows.push(<RvRow key="ph" icon={AlertTriangle} warn k={L(P(phs.length, 'placeholder', '', 'placeholders') + ' to replace', '還有 ' + phs.length + ' 個 [方括號] 沒替換')} v={joinL(phs) + L(' — audiences would see these.', '：收件人會看到這些字。')} edit={toMsg} />)
   if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} edit={() => m.goStep(1)} />)
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
@@ -453,7 +453,7 @@ function ResultView({ m }: { m: SendCtl }) {
     { k: L('Channels', '通道'), v: r.chs.map(k => CHN[k].name).join(L(', ', '、')) },
     { k: L('Submitted', '送出時間'), v: r.when },
     { k: L('Sends', '傳送時間'), v: r.sends },
-    { k: L('Receivers', '收件人'), v: fmtN(r.total) },
+    { k: L('Audiences', '收件人'), v: fmtN(r.total) },
   ]
   const text = both ? L('Your supervisor reviews it first, then ICSD. We’ll notify you at each step.', '先由主管審核，再由 ICSD 審核，每一步都會通知你。')
     : ap.icsd ? L('ICSD will review it. We’ll notify you when it’s approved.', 'ICSD 審核後會通知你。')

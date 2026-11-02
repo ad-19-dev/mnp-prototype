@@ -1,8 +1,8 @@
 // Messages page controller: list, row actions, the 3-step send flow and its dialogs.
 import {
   BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
-  joinList, pad, parseDT, parseList, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
-  type Channel, type Group, type Match, type Row, type Status, type Tag, type Template,
+  joinList, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
+  type Channel, type Group, type ListKind, type Match, type Row, type Status, type Tag, type Template,
 } from '../../lib/data'
 import {
   approval, blankCompose, effEmailMode, errs, hasNotif, msgErr, multiPeople, reach, recvFlat, seedEmail, selChs, smsOn,
@@ -17,7 +17,8 @@ import { L, P, joinL, niceDT } from '../../lib/i18n'
 import { CircleAlert, LayoutTemplate, Trash2, Ban } from 'lucide-react'
 import type { RiState } from '../../components/RecvInput'
 
-export interface ImpState { text: string; file: string; res: Match[] | null; picks: Record<number, Record<string, boolean>> }
+// kind: what the pasted list holds; done: how many were added in the last round, when the not-found ones came back to fix
+export interface ImpState { text: string; file: string; res: Match[] | null; picks: Record<number, Record<string, boolean>>; kind: ListKind | null; done: number }
 export interface SendState {
   view: 'list' | 'compose'
   q: string; fS: Status[]; fC: Channel[]; fT: string[]; page: number
@@ -142,7 +143,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     goList() {
       const s = get()
       if (s.view === 'compose' && s.c.dirty && !s.c.result) {
-        set({ cf: { title: L('Leave without sending?', '還沒送出，要離開嗎？'), text: L('Save a draft to finish later.', '可以先存成草稿，之後再完成。'), icon: CircleAlert, tone: 'warn', cancel: L('Keep editing', '繼續編輯'), alt: L('Discard', '捨棄'), altDanger: true, runAlt: () => m.toList(), ok: L('Save draft', '存草稿'), run: () => { m.toList(); flash(L('Draft saved', '已存草稿')) } } })
+        set({ cf: { title: L('Leave without sending?', '還沒送出，要離開嗎？'), text: L('What you’ve written won’t be kept.', '你填寫的內容不會保留。'), icon: CircleAlert, tone: 'warn', cancel: L('Keep editing', '繼續編輯'), ok: L('Discard', '捨棄'), danger: true, run: () => m.toList() } })
         return
       }
       m.toList()
@@ -250,7 +251,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     askTemplate(t: Template) {
       const c = get().c, has = (c.title + c.content + c.smsText + c.subject + c.bodyText).trim()
       if (!has || c.tplId === t.id) { m.applyTemplate(t); return }
-      set({ tp: null, cf: { title: L('Replace your text?', '要取代目前的內容嗎？'), text: L('“' + t.name + '” will replace what you’ve written. Receivers and channels stay the same.', '「' + t.name + '」會取代你寫的內容，收件人和通道不變。'), icon: LayoutTemplate, tone: 'warn', cancel: L('Keep mine', '保留我的'), ok: L('Replace', '取代'), run: () => m.applyTemplate(t) } })
+      set({ tp: null, cf: { title: L('Replace your text?', '要取代目前的內容嗎？'), text: L('“' + t.name + '” will replace what you’ve written. Audiences and channels stay the same.', '「' + t.name + '」會取代你寫的內容，收件人和通道不變。'), icon: LayoutTemplate, tone: 'warn', cancel: L('Keep mine', '保留我的'), ok: L('Replace', '取代'), run: () => m.applyTemplate(t) } })
     },
     applyTemplate(t: Template, quiet?: boolean) {
       const c = get().c, own = tplHasEmail(t)
@@ -292,7 +293,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.ch.desktop) why.push('no desktop agent')
       const reason = why.length ? why.join(' and ').replace(/^./, x => x.toUpperCase()) : 'Not delivered' // stored in English; shown through tx()
       const base: Partial<Row> = {
-        sender: c.sender.trim() || PMAP[ME].nt, tpl: c.tplId, team: c.team, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
+        sender: c.ch.push ? c.sender.trim() || PMAP[ME].nt : '', tpl: c.tplId, team: c.team, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
         smsText: smsOn(c) ? c.smsText.trim() : '', channels, sms: smsOn(c), email: em,
         total: rc.total, ok: 0, aud: tagsToAud(c.receivers), fresh: Date.now(), _f: null, err: null, byCh: null,
         fw: rc.unr.map(p => p.id), fr: [[reason + (smsOn(c) ? ', and no phone number for SMS' : '')]],
@@ -304,7 +305,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', fS: [], fC: [] })
       scrollTop()
       if (schedD) { flash(L('Scheduled for ', '已排程：') + niceDT(schedD)); return }
-      flash(L('Sending to ', '傳送給 ') + P(rc.total, 'receiver', '位收件人'), 'ok', chText(rowChs(base as Row)))
+      flash(L('Sending to ', '傳送給 ') + P(rc.total, 'audience', '位收件人'), 'ok', chText(rowChs(base as Row)))
       const byCh: Partial<Record<Channel, [number, number]>> = {}
       if (c.ch.push) byCh.push = [rc.push, rc.people]
       if (c.ch.sms) byCh.sms = [rc.sms, rc.extP + (c.ch.push ? rc.noDev : 0)]
@@ -313,7 +314,6 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       setTimeout(() => patchRow(id, { ok: Math.round(rc.reachable * 0.55) }), 1400)
       setTimeout(() => patchRow(id, { status: 'sent', ok: rc.reachable, byCh }), 3000)
     },
-    saveDraft() { m.setC({ savedAt: new Date(), dirty: false }, true); flash(L('Draft saved', '已存草稿')) },
     sendTest() {
       if (msgErr(m.errs())) { m.setC({ tried: { ...get().c.tried, 2: true } }, true); flash(L('Finish the message first', '請先完成訊息內容'), 'err'); return }
       const c = get().c, where: string[] = []
@@ -346,13 +346,15 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       flash(L('Group saved', '已存成群組'), 'ok', name + ' · ' + P(g.count, 'member', '人'))
     },
     askRemoveAll() {
-      set({ cf: { title: L('Remove all receivers?', '移除所有收件人？'), text: L('Channels and text stay the same.', '通道和內容不受影響。'), icon: Trash2, tone: 'warn', cancel: L('Keep', '保留'), ok: L('Remove all', '全部移除'), danger: true, run: () => { m.setC({ receivers: [], pick: {} }); set({ cf: null }) } } })
+      set({ cf: { title: L('Remove all audiences?', '移除所有收件人？'), text: L('Channels and text stay the same.', '通道和內容不受影響。'), icon: Trash2, tone: 'warn', cancel: L('Keep', '保留'), ok: L('Remove all', '全部移除'), danger: true, run: () => { m.setC({ receivers: [], pick: {} }); set({ cf: null }) } } })
     },
 
     // ---------- batch import ----------
-    openImport() { set({ imp: { text: '', file: '', res: null, picks: {} } }) },
+    openImport() { set({ imp: { text: '', file: '', res: null, picks: {}, kind: null, done: 0 } }) },
     setImp(p: Partial<ImpState>) { set({ imp: { ...get().imp!, ...p } }) },
-    identify() { m.setImp({ res: parseList(get().imp!.text, { allowExt: true, extWhy: '' }), picks: {} }) },
+    identify() { const imp = get().imp!; if (!imp.kind) return; m.setImp({ res: parseListAs(imp.text, imp.kind, { allowExt: true }), picks: {} }) },
+    // put the entries that weren't found back in the box, to fix and match again
+    impFixMissing(done = 0) { const imp = get().imp!, miss = m.impSets().miss.map(x => x.tok!); m.setImp({ text: miss.join('\n'), file: '', res: null, picks: {}, done }) },
     impSets() {
       const s = get(), imp = s.imp!, have: Record<string, boolean> = {}, seen: Record<string, boolean> = {}
       const ready: { m: Match; tag: Tag }[] = [], amb: { m: Match & { kind: 'amb' }; i: number }[] = [], miss: (Match & { kind: 'miss' })[] = []
@@ -382,8 +384,9 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
         a.m.cands.forEach(p => { const key = 'p:' + p.id; if (pk[p.id] && !sets.have[key] && !sets.seen[key] && !tags.some(t => t.key === key)) tags.push({ key, type: 'person', id: p.id }) })
       })
       m.setC({ receivers: s.c.receivers.concat(tags) })
+      if (sets.miss.length) { m.impFixMissing(tags.length); return }
       set({ imp: null })
-      flash(L('Added ', '已加入 ') + P(tags.length, 'receiver', '位收件人'))
+      flash(L('Added ', '已加入 ') + P(tags.length, 'audience', '位收件人'))
     },
     onImpFile(f?: File) {
       if (!f) return

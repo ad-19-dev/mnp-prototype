@@ -20,7 +20,6 @@ export interface Compose {
   atts: Att[]; attErr: string
   sendMode: 'now' | 'schedule'; schedAt: string
   tried: Record<number, boolean>
-  savedAt: Date | null
   dirty: boolean
   result: null | { reqId: string; ap: Approval; when: string; sends: string; total: number; chs: Channel[] }
 }
@@ -33,7 +32,7 @@ export function blankCompose(): Compose {
     ch: { push: false, desktop: false, email: false, sms: false },
     tplId: null, sender: '', title: '', content: '', smsText: '',
     emailMode: 'same', subject: '', html: '', bodyText: '', htmlKey: 0, atts: [], attErr: '',
-    sendMode: 'now', schedAt: '', tried: {}, savedAt: null, dirty: false, result: null,
+    sendMode: 'now', schedAt: '', tried: {}, dirty: false, result: null,
   }
 }
 
@@ -98,14 +97,15 @@ export function errs(c: Compose, groups: Group[]): Errs {
   const totalN = total.people.length + total.ext.length
   const tooLong = (n: number) => L('Up to ' + fmtN(n) + ' characters.', '最多 ' + fmtN(n) + ' 字。')
   // 1. Receivers and channels
-  if (!c.receivers.length) e.recv = L('Add at least one receiver.', '請加入至少一位收件人。')
-  else if (totalN > CAP) e.recv = L('Over the ' + CAP + '-receiver limit.', '超過 ' + CAP + ' 人上限。')
+  if (!c.receivers.length) e.recv = L('Add at least one audience.', '請加入至少一位收件人。')
+  else if (totalN > CAP) e.recv = L('Over the ' + CAP + '-audience limit.', '超過 ' + CAP + ' 人上限。')
   const extP = c.receivers.filter(t => isExtPhone(t)).length, extE = c.receivers.filter(t => t.type === 'ext').length - extP
   if (!c.ch.push && !c.ch.desktop && !c.ch.email) e.ch = L('Pick at least one channel.', '請選擇至少一個通道。')
   if (extE && !c.ch.email) e.ext = L(P(extE, 'external email', '', 'external emails') + ' can only get Email. Turn on Email or remove ' + (extE === 1 ? 'it' : 'them') + '.', extE + ' 個外部 Email 只能收 Email。請開啟 Email，或移除它們。')
   if (extP && !c.ch.sms) e.extp = L(P(extP, 'external phone', '', 'external phones') + ' can only get SMS. Turn on SMS fallback or remove ' + (extP === 1 ? 'it' : 'them') + '.', extP + ' 支外部電話只能收 SMS。請開啟 SMS 備援，或移除它們。')
   // 2. Message
-  if (c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
+  // the sender name only shows on Device Notifications
+  if (c.ch.push && c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
   if (hasNotif(c)) {
     if (!c.title.trim()) e.title = L('Enter a title.', '請輸入標題。')
     else if (c.title.length > LIM.title) e.title = tooLong(LIM.title)
@@ -173,6 +173,6 @@ export function reachNote(k: Channel, rc: Reach, c: Compose) {
   if (k === 'sms') return ''
   const miss = k === 'push' ? rc.noDev : rc.people - rc.desktop, parts: string[] = []
   if (miss) parts.push(k === 'push' ? L(P(miss, 'person', '', 'people') + ' without a device', miss + ' 人沒有裝置') : L(P(miss, 'person', '', 'people') + ' without the agent', miss + ' 人沒裝桌面程式'))
-  if (rc.ext) parts.push(L(P(rc.ext, 'external receiver', '', 'external receivers') + ' can’t get it', rc.ext + ' 位外部收件人收不到'))
+  if (rc.ext) parts.push(L(P(rc.ext, 'external audience', '', 'external audiences') + ' can’t get it', rc.ext + ' 位外部收件人收不到'))
   return parts.length ? parts.join(L('; ', '；')) : L('Everyone can get it', '每個人都收得到')
 }

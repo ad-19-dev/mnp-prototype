@@ -264,10 +264,10 @@ function TplEditor({ m }: { m: TCtl }) {
         <Section title={L('Content', '內容')} sub={L('Fill in the channels you need. Only the text is saved.', '填寫需要的通道就好，模板只存文字。')}>
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
             {ed.tried && e.formats ? <Banner tone="error">{e.formats}</Banner> : null}
-            <FormField id="t-sender" label={L('Sender name', '寄件人名稱')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Leave blank to use the NT account of whoever sends.', '不填會用發送者的 NT 帳號。')} error={show('sender')}>
-              <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('NT account of whoever sends', '發送者的 NT 帳號')} />
-            </FormField>
             <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Device Notifications', 'Device Notifications')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop OS', '桌面通知')}</Tag></span>}>
+              <FormField id="t-sender" label={L('Sender name', '寄件人名稱')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Shown on Device Notifications only. Leave blank to use the NT account of whoever sends.', '只顯示在 Device Notifications。不填會用發送者的 NT 帳號。')} error={show('sender')}>
+                <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('NT account of whoever sends', '發送者的 NT 帳號')} />
+              </FormField>
               <FormField id="t-title" label={L('Title', '標題')} count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>
                 <Input id="t-title" disabled={ro} value={ed.title} error={!!show('title')} onChange={ev => m.setEd({ title: ev.target.value })} placeholder={L('e.g. Fire drill at [time] today', '例如：今天 [time] 消防演習')} />
               </FormField>
@@ -275,7 +275,7 @@ function TplEditor({ m }: { m: TCtl }) {
                 <Textarea id="t-content" rows={4} disabled={ro} value={ed.content} error={!!show('content')} onChange={ev => m.setEd({ content: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
               </FormField>
             </Block>
-            <Block icon={MessageSquareText} tone="warn" title="SMS" right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
+            <Block icon={MessageSquareText} tone="warn" title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
               <FormField id="t-sms" label={L('SMS text', 'SMS 內容')} count={ed.sms.length + ' / ' + LIM.sms} over={ed.sms.length > LIM.sms} error={show('sms')}>
                 <Textarea id="t-sms" rows={2} disabled={ro} value={ed.sms} error={!!show('sms')} onChange={ev => m.setEd({ sms: ev.target.value })} placeholder={L('Short version for SMS fallback', 'SMS 備援用的簡短版本')} />
               </FormField>

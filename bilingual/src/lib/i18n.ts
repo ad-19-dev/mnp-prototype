@@ -7,7 +7,7 @@ export type Lang = 'en' | 'zh'
 export const isZh = () => getApp().lang === 'zh'
 export const L = (en: string, zh: string) => (isZh() ? zh : en)
 
-// Count + noun. English pluralises; Chinese keeps the measure word, e.g. P(3, 'receiver', '位收件人')
+// Count + noun. English pluralises; Chinese keeps the measure word, e.g. P(3, 'audience', '位收件人')
 export function P(n: number, en: string, zh: string, enMany?: string) {
   return isZh() ? fmtN(n) + ' ' + zh : plural(n, en, enMany)
 }
@@ -56,5 +56,8 @@ const ZH: Record<string, string> = {
   'No employee with this ID': '找不到這個工號', 'No one uses this MVPN': '沒有人用這個 MVPN',
   'No employee with this phone number': '找不到這支電話的員工', 'No match in the employee directory': '員工名錄找不到',
   'External addresses can’t be group members': '外部 Email 不能加入群組',
+  'No org with this code': '找不到這個組織代碼', 'Not an NT account': '不是 NT 帳號格式', 'No employee with this NT account': '找不到這個 NT 帳號',
+  'Not a 6-digit employee ID': '不是 6 碼工號', 'Not a 5-digit MVPN': '不是 5 碼 MVPN', 'Not a phone number': '不是電話號碼',
+  'No employee with this name': '找不到這個姓名的員工',
 }
 export const tx = (s: string) => (isZh() && ZH[s]) || s

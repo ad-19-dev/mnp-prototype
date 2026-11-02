@@ -95,7 +95,7 @@ export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, o
       <div className="flex flex-wrap items-start gap-2">
         <div className="w-32 shrink-0">
           <Select
-            aria-label={L('Receiver type', '收件人類型')}
+            aria-label={L('Audience type', '收件人類型')}
             value={ri.type}
             options={RI_KEYS.map(k => ({ value: k, label: riType(k).label }))}
             onChange={v => { set({ type: v as RiType, q: '', open: true, exp: null }); setTimeout(() => inputRef.current?.focus(), 60) }}

@@ -250,6 +250,56 @@ export function parseList(text: string, opts: { allowExt?: boolean; extWhy?: str
   })
   return out
 }
+// A pasted list holds one kind of data, chosen before pasting: every entry is matched as that kind only,
+// so "61588" can't be read as an MVPN in one list and an employee ID in another.
+export type ListKind = 'nt' | 'emp' | 'name' | 'email' | 'phone' | 'mvpn' | 'org'
+export const LIST_KINDS: ListKind[] = ['nt', 'emp', 'name', 'email', 'phone', 'mvpn', 'org']
+export const LIST_SAMPLES: Record<ListKind, string> = {
+  nt: 'gywu, cmchen, ytchang, celee\nsywangd, psyang, a19999',
+  emp: '120588, 112306, 110958, 114389\n999999, 12345',
+  name: '陳怡君\nKevin Lin\nGrace Wu\n王小明',
+  email: 'gywu@tsmc.com, cmchen@tsmc.com\npartner@example.com\nnobody@tsmc.com, not-an-email',
+  phone: '0918-226-588\n0921660734\n0988-000-111\n0900-000-000',
+  mvpn: '61588, 60217, 68842\n66904, 99999',
+  org: 'PLT/UX\nF18/MFG3\nXYZ/123',
+}
+export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string }): Match {
+  const t = tok.trim(), low = t.toLowerCase(), digits = t.replace(/\D/g, '')
+  if (kind === 'org') { const org = ORGS.find(o => o.code.toLowerCase() === low); return org ? { kind: 'org', org, by: 'Org code' } : { kind: 'miss', why: 'No org with this code' } }
+  if (kind === 'nt') {
+    if (!/^[a-z][a-z0-9._-]{1,19}$/i.test(t)) return { kind: 'miss', why: 'Not an NT account' }
+    const p = PEOPLE.find(x => x.nt === low); return p ? { kind: 'one', p, by: 'NT account' } : { kind: 'miss', why: 'No employee with this NT account' }
+  }
+  if (kind === 'emp') {
+    if (!/^\d{6}$/.test(t)) return { kind: 'miss', why: 'Not a 6-digit employee ID' }
+    const p = PEOPLE.find(x => x.emp === t); return p ? { kind: 'one', p, by: 'Employee ID' } : { kind: 'miss', why: 'No employee with this ID' }
+  }
+  if (kind === 'mvpn') {
+    if (!/^\d{5}$/.test(t)) return { kind: 'miss', why: 'Not a 5-digit MVPN' }
+    const p = PEOPLE.find(x => x.mvpn === t); return p ? { kind: 'one', p, by: 'MVPN' } : { kind: 'miss', why: 'No one uses this MVPN' }
+  }
+  if (kind === 'email') {
+    if (!EMAIL_RE.test(t)) return { kind: 'miss', why: 'Not a valid email address' }
+    const parts = low.split('@')
+    if (parts[1] === DOMAIN) { const p = PEOPLE.find(x => x.nt === parts[0]); return p ? { kind: 'one', p, by: 'Email' } : { kind: 'miss', why: 'No employee with this email' } }
+    return opts.allowExt ? { kind: 'ext', email: low, by: 'External email' } : { kind: 'miss', why: opts.extWhy || 'External addresses can’t be group members' }
+  }
+  if (kind === 'phone') {
+    const d = /^09\d{8}$/.test(digits) ? digits : phoneDigits(t)
+    if (!d) return { kind: 'miss', why: 'Not a phone number' }
+    const p = PEOPLE.find(x => x.co === d || x.pp === d)
+    if (p) return { kind: 'one', p, by: opts.phoneBy || (p.co === d ? 'Company mobile' : 'Personal phone') }
+    return opts.allowExt ? { kind: 'ext', email: fmtExtPhone(d), by: 'External phone number' } : { kind: 'miss', why: 'No employee with this phone number' }
+  }
+  let hits = PEOPLE.filter(x => x.zh === t || x.en.toLowerCase() === low)
+  if (!hits.length) hits = PEOPLE.filter(x => x.en.split(' ')[0].toLowerCase() === low)
+  if (hits.length === 1) return { kind: 'one', p: hits[0], by: 'Name' }
+  if (hits.length > 1) return { kind: 'amb', cands: hits, by: 'Name' }
+  return { kind: 'miss', why: 'No employee with this name' }
+}
+export function parseListAs(text: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string }): Match[] {
+  return splitTokens(text).map(tok => Object.assign({ tok }, matchAs(tok, kind, opts)))
+}
 export const SAMPLE_SEND = 'gywu, cmchen, 112306, ytchang, celee, sywangd, 110958, psyang, chhsu, shcheng\nythsieh; hykuo; prhung; 114389; chchiu; ycliao; shlai; cnchou; thliu\n陳怡君\nKevin Lin\nPLT/UX\n0921660734\na19999\n0988-000-111'
 export const SAMPLE_GROUP = 'ytchang, 115630, Kevin Lin\n0920-775-641; 66904\nPLT/UX\npartner@example.com, a19999'
 

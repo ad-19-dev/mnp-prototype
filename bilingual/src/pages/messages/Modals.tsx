@@ -4,11 +4,11 @@ import {
   Button, Checkbox, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, FileUpload,
   Input, RadioGroup, RadioGroupItem, Tag, Textarea, cn,
 } from '@qijenchen/design-system'
-import { ArrowRight, Building2, ChevronLeft, Globe, Lock, Phone, Plus, Search, Wand2 } from 'lucide-react'
-import { LIM, ME, PEOPLE, PMAP, fmtPhone, maskPhone, plural, splitTokens, tplFormats, SAMPLE_SEND } from '../../lib/data'
+import { ArrowRight, Building2, ChevronLeft, Copy, Globe, Lock, Phone, Plus, Search, Wand2 } from 'lucide-react'
+import { LIM, ME, PEOPLE, PMAP, fmtPhone, maskPhone, plural, splitTokens, tplFormats, LIST_SAMPLES } from '../../lib/data'
 import { effEmailMode, hasNotif, multiPeople, recvFlat, smsOn, tplFit } from '../../lib/compose'
-import { useApp } from '../../lib/store'
-import { Banner, FmtChips, FormField, IconBox, KV, ListBox, ListRow, PAvatar, Two } from '../../components/ui'
+import { flash, useApp } from '../../lib/store'
+import { Banner, FmtChips, FormField, IconBox, KV, ListBox, ListKindField, ListRow, PAvatar, Two, listKindExample } from '../../components/ui'
 import type { SendCtl } from './ctl'
 import { L, P, tx } from '../../lib/i18n'
 
@@ -36,21 +36,22 @@ const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-
 export function ImportDialog({ m }: { m: SendCtl }) {
   const imp = m.s.imp, close = () => m.set({ imp: null })
   if (!imp) return <Shell open={false} onClose={close} title="" foot={null}>{null}</Shell>
-  const howto = L('Accepts NT accounts, employee IDs, names, MVPN, phone numbers, org codes and external emails. Separate with commas or new lines.', '可輸入 NT 帳號、工號、姓名、MVPN、手機、組織代碼或外部 Email，用逗號或換行分隔。')
+  // step 1: choose what the list holds, then paste or upload it
   if (!imp.res) {
-    const n = splitTokens(imp.text).length
+    const n = splitTokens(imp.text).length, k = imp.kind
     return (
-      <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')} sub={L('Paste a list or upload a file. You’ll review matches before adding.', '貼上名單或上傳檔案，加入前會先讓你確認。')}
-        foot={<><Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" startIcon={Wand2} disabled={!n} onClick={() => m.identify()}>{L('Find matches', '比對名單')}</Button></>}>
-        <FormField id="imp-text" label={L('List', '名單')} count={n ? P(n, 'entry', '筆', 'entries') : ''}>
-          <Textarea id="imp-text" rows={9} className="font-mono" autoFocus value={imp.text} onChange={ev => m.setImp({ text: ev.target.value, file: '' })} placeholder="gywu, 120588, 陳怡君, 61204, 0918-226-588, PLT/UX, partner@example.com" />
+      <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')} sub={L('Choose what your list holds, then paste it or upload a file. You’ll review matches before adding.', '先選擇名單的資料類型，再貼上名單或上傳檔案，加入前會先讓你確認。')}
+        foot={<><Button variant="tertiary" onClick={close}>{imp.done ? L('Close', '關閉') : L('Cancel', '取消')}</Button><Button variant="primary" startIcon={Wand2} disabled={!n || !k} onClick={() => m.identify()}>{L('Find matches', '比對名單')}</Button></>}>
+        {imp.done ? <Banner tone="success" title={L('Added ' + P(imp.done, 'audience', ''), '已加入 ' + imp.done + ' 位收件人')}>{L('The entries below weren’t found. Fix them and match again, or close.', '下面是找不到的項目，修正後再比對一次，或直接關閉。')}</Banner> : null}
+        <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />
+        <FormField id="imp-text" label={L('List', '名單')} count={n ? P(n, 'entry', '筆', 'entries') : ''} hint={L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
+          <Textarea id="imp-text" rows={8} className="font-mono" value={imp.text} onChange={ev => m.setImp({ text: ev.target.value, file: '' })} placeholder={k ? L('e.g. ', '例如：') + listKindExample(k) : L('Choose a data type first', '請先選擇資料類型')} />
         </FormField>
         <div className="flex flex-wrap items-center gap-3">
           <FileUpload variant="button" accept=".csv,.txt,text/csv,text/plain" buttonLabel={L('Upload .csv or .txt', '上傳 .csv 或 .txt')} onUpload={files => m.onImpFile(files[0])} />
-          <Button variant="link" size="sm" onClick={() => m.setImp({ text: SAMPLE_SEND, file: '' })}>{L('Try a sample', '使用範例名單')}</Button>
+          <Button variant="link" size="sm" disabled={!k} onClick={() => k && m.setImp({ text: LIST_SAMPLES[k], file: '' })}>{L('Try a sample', '使用範例名單')}</Button>
           {imp.file ? <span className="text-caption text-fg-secondary">{L('Loaded ', '已載入 ') + imp.file}</span> : null}
         </div>
-        <Banner tone="info">{howto}</Banner>
       </Shell>
     )
   }
@@ -63,7 +64,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
   const addN = sets.ready.length + pickedN
   return (
     <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')} sub={L('Check the matches, then add them.', '確認比對結果後加入。')}
-      foot={<><Button variant="tertiary" startIcon={ChevronLeft} onClick={() => m.setImp({ res: null, picks: {} })}>{L('Edit list', '修改名單')}</Button><Button variant="primary" disabled={!addN} onClick={() => m.impAdd()}>{addN ? L('Add ', '加入 ') + P(addN, 'receiver', '人') : L('Nothing to add', '沒有可加入的人')}</Button></>}>
+      foot={<><Button variant="tertiary" startIcon={ChevronLeft} onClick={() => m.setImp({ res: null, picks: {} })}>{L('Edit list', '修改名單')}</Button>{!addN && sets.miss.length ? <Button variant="primary" onClick={() => m.impFixMissing()}>{L('Fix entries not found', '修正找不到的項目')}</Button> : <Button variant="primary" disabled={!addN} onClick={() => m.impAdd()}>{addN ? L('Add ', '加入 ') + P(addN, 'audience', '人') : L('Nothing to add', '沒有可加入的人')}</Button>}</>}>
       <div className="flex flex-wrap gap-2">
         <Tag size="md" color="green">{L(sets.ready.length + ' ready', sets.ready.length + ' 筆可加入')}</Tag>
         {amb.length ? <Tag size="md" color="amber">{L(amb.length + ' to choose', amb.length + ' 筆待選擇')}</Tag> : null}
@@ -103,7 +104,11 @@ export function ImportDialog({ m }: { m: SendCtl }) {
         </ListBox>
       </> : null}
       {sets.miss.length ? <>
-        <H3>{L('Not found', '找不到')}</H3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <H3>{L('Not found', '找不到')}</H3>
+          <Button variant="link" size="sm" startIcon={Copy} onClick={() => { try { navigator.clipboard.writeText(sets.miss.map(x => x.tok).join('\n')) } catch { /* clipboard blocked */ } flash(L('Copied ', '已複製 ') + P(sets.miss.length, 'entry', '筆', 'entries')) }}>{L('Copy', '複製')}</Button>
+        </div>
+        <p className="text-body text-fg-secondary">{addN ? L('After you add the others, these come back to the list box so you can fix them.', '加入其他人之後，這些項目會放回名單欄位，讓你修正後再比對。') : L('Fix them and match again.', '請修正後再比對一次。')}</p>
         <ListBox>{sets.miss.map((x, i) => <ListRow key={i}><code className="w-32 shrink-0 truncate font-mono text-caption">{x.tok}</code><span className="text-body text-fg-secondary">{tx(x.why)}</span></ListRow>)}</ListBox>
       </> : null}
     </Shell>
@@ -168,7 +173,7 @@ export function SaveTplDialog({ m }: { m: SendCtl }) {
   if (st) {
     const nm = st.name.trim(), dup = app.templates.some(t => t.name.toLowerCase() === nm.toLowerCase())
     const err = (st.tried && !nm) ? L('Enter a name.', '請輸入名稱。') : st.name.length > LIM.name ? L('Up to 50 characters.', '最多 50 字。') : (nm && dup) ? L('This name is taken.', '這個名稱已經有人用了。') : ''
-    const mode = effEmailMode(c), rows = [{ k: L('Sender', '寄件人'), v: c.sender.trim() || PMAP[ME].nt }]
+    const mode = effEmailMode(c), rows: { k: string; v: string }[] = c.ch.push ? [{ k: L('Sender name', '寄件人名稱'), v: c.sender.trim() || L('Blank: the NT account of whoever sends', '空白：用發送者的 NT 帳號') }] : []
     if (hasNotif(c)) rows.push({ k: L('Notification', '通知'), v: c.title })
     if (smsOn(c)) rows.push({ k: 'SMS', v: c.smsText })
     if (c.ch.email) rows.push({ k: 'Email', v: mode === 'own' ? c.subject : L('Same as notification', '同通知內容') })
@@ -179,7 +184,7 @@ export function SaveTplDialog({ m }: { m: SendCtl }) {
       <KV rows={rows} />
     </>
   }
-  return <Shell open={!!st} onClose={close} title={L('Save as template', '存成模板')} sub={L('Saves the text only, not receivers or files.', '只存文字內容，不含收件人和附件。')} foot={<><Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" onClick={() => m.saveTpl()}>{L('Save', '儲存')}</Button></>}>{body}</Shell>
+  return <Shell open={!!st} onClose={close} title={L('Save as template', '存成模板')} sub={L('Saves the text only, not audiences or files.', '只存文字內容，不含收件人和附件。')} foot={<><Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" onClick={() => m.saveTpl()}>{L('Save', '儲存')}</Button></>}>{body}</Shell>
 }
 
 // ---------- choose a template ----------
@@ -188,7 +193,7 @@ export function TplPickerDialog({ m }: { m: SendCtl }) {
   const q = tp ? tp.q.trim().toLowerCase() : ''
   const list = app.templates.filter(t => !q || [t.name, t.title, t.content, t.email && t.email.subject].join(' ').toLowerCase().indexOf(q) >= 0)
   return (
-    <Shell open={!!tp} onClose={close} width={720} title={L('Choose a template', '選擇模板')} sub={L('Replaces the text only. Receivers and channels stay.', '只會替換文字，收件人和通道不變。')} foot={<Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button>}>
+    <Shell open={!!tp} onClose={close} width={720} title={L('Choose a template', '選擇模板')} sub={L('Replaces the text only. Audiences and channels stay.', '只會替換文字，收件人和通道不變。')} foot={<Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button>}>
       <Input startIcon={Search} type="search" autoFocus placeholder={L('Search templates', '搜尋模板')} aria-label={L('Search templates', '搜尋模板')} value={tp ? tp.q : ''} onChange={ev => m.set({ tp: { q: ev.target.value } })} />
       <div className="flex max-h-[420px] flex-col gap-2 overflow-auto">
         {list.map(t => {

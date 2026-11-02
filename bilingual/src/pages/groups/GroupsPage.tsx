@@ -5,15 +5,15 @@ import {
   Input, Pagination, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Textarea,
   Checkbox, Tooltip, TooltipContent, TooltipTrigger, cn,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Trunc, Tip, PageSize } from '../../components/ui'
+import { ListKindField, listKindExample, NO_HIDE, Trunc, Tip, PageSize } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   Check, CircleCheck, Copy, Eye, FileText, Info, Lock, Mail, MessageSquareText, Minus, Monitor, MoreVertical, Pencil, Plus,
   Search, Smartphone, Trash2, Undo2, UserPlus, Users, Wand2, X, CircleAlert,
 } from 'lucide-react'
 import {
-  GSEED, ME, ORGS, PEOPLE, PMAP, SAMPLE_GROUP, extPerson, fmtDT, fmtN, maskPhone, membersFor, orgMembers, parseList, plural,
-  splitTokens, type Group, type Person,
+  GSEED, ME, ORGS, PEOPLE, PMAP, LIST_SAMPLES, extPerson, fmtDT, fmtN, maskPhone, membersFor, orgMembers, parseListAs, plural,
+  splitTokens, type Group, type ListKind, type Person,
 } from '../../lib/data'
 import { flash, getApp, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
@@ -32,12 +32,12 @@ interface Ed {
   id: string | null; isNew: boolean; role: Role; name: string; desc: string; collabs: { pid: string; role: Role }[]; members: { pid: string }[]
   updated: string; creator: string; input: string; fb: Fb | null; picks: Record<string, Record<string, boolean>>
   cq: string; cOpen: boolean; cRole: Role; mq: string; mf: 'all' | 'dev' | 'desk' | 'email' | 'sms'; mpage: number
-  fresh: Record<string, boolean>; tried: boolean; dirty: boolean; ri: RiState; showPaste: boolean
+  fresh: Record<string, boolean>; tried: boolean; dirty: boolean; ri: RiState; showPaste: boolean; listKind: ListKind | null
 }
 interface GS { view: 'list' | 'edit'; q: string; own: 'all' | 'mine' | 'shared'; cf: Confirm | null; ed: Ed | null }
 
 function makeEd(g: Group | null, dup?: boolean): Ed {
-  const base = { input: '', fb: null, picks: {}, cq: '', cOpen: false, cRole: 'Editor' as Role, mq: '', mf: 'all' as const, mpage: 1, fresh: {}, tried: false, dirty: false, ri: { type: 'person' as const, q: '', open: false, exp: null }, showPaste: false }
+  const base = { listKind: null as ListKind | null, input: '', fb: null, picks: {}, cq: '', cOpen: false, cRole: 'Editor' as Role, mq: '', mf: 'all' as const, mpage: 1, fresh: {}, tried: false, dirty: false, ri: { type: 'person' as const, q: '', open: false, exp: null }, showPaste: false }
   if (!g) return { ...base, id: null, isNew: true, role: 'Owner', name: '', desc: '', collabs: [{ pid: ME, role: 'Owner' }], members: [], updated: '', creator: ME }
   const seed = GSEED[g.id] || ({} as any)
   const members = membersFor(g).map(m => ({ pid: m.pid }))
@@ -105,7 +105,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
       return PEOPLE.filter(p => !have[p.id] && [p.zh, p.en, p.nt, p.emp].some(v => v.toLowerCase().indexOf(low) >= 0)).slice(0, 6)
     },
     parseMembers() {
-      const ed = get().ed!, res = parseList(ed.input, { phoneBy: 'Mobile number' }), have: Record<string, boolean> = {}, add: string[] = []
+      const ed = get().ed!, res = ed.listKind ? parseListAs(ed.input, ed.listKind, { phoneBy: 'Mobile number' }) : [], have: Record<string, boolean> = {}, add: string[] = []
       const amb: Fb['amb'] = [], miss: Fb['miss'] = [], by: Record<string, number> = {}, orgs: Fb['orgs'] = []
       let dup = 0
       ed.members.forEach(x => { have[x.pid] = true })
@@ -254,7 +254,7 @@ function GroupEditor({ m }: { m: GCtl }) {
     { key: 'dev' as const, label: L('Device Notifications', 'Device Notifications'), icon: Smartphone, ok: plist.filter(p => p.dev).length, word: L('no device', '沒有裝置') },
     { key: 'desk' as const, label: L('Desktop OS', '桌面通知'), icon: Monitor, ok: plist.filter(p => p.desk).length, word: L('no desktop agent', '沒有桌面程式') },
     { key: 'email' as const, label: 'Email', icon: Mail, ok: plist.filter(p => p.extKind !== 'phone').length, word: L('no email', '沒有 Email') },
-    { key: 'sms' as const, label: 'SMS', icon: MessageSquareText, ok: plist.filter(p => p.co || p.pp).length, word: L('no phone', '沒有電話') },
+    { key: 'sms' as const, label: L('Device Notifications (SMS)', 'Device Notifications（SMS）'), icon: MessageSquareText, ok: plist.filter(p => p.co || p.pp).length, word: L('no phone', '沒有電話') },
   ]
   let filt = plist
   if (ed.mf === 'dev') filt = filt.filter(p => !p.dev)
@@ -277,7 +277,7 @@ function GroupEditor({ m }: { m: GCtl }) {
     mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), meta: { width: 160 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
     mcol.display({ id: 'desk', header: L('Desktop OS', '桌面通知'), meta: { width: 130 }, cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? L('Installed', '已安裝') : L('Not installed', '未安裝')}</Cv> }),
     mcol.display({ id: 'email', header: 'Email', meta: { width: 110 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
-    mcol.display({ id: 'sms', header: L('SMS', 'SMS'), meta: { width: 100 }, cell: i => {
+    mcol.display({ id: 'sms', header: L('Device Notifications (SMS)', 'Device Notifications（SMS）'), meta: { width: 200 }, cell: i => {
       const p = i.row.original.p, co = p.extKind === 'phone' ? p.value : p.co ? 'MVPN ' + p.mvpn : '', pp = !p.extKind && p.pp ? maskPhone(p.pp) : ''
       if (!co && !pp) return <Cv ok={false}>{L('No number', '沒有號碼')}</Cv>
       // which number gets the SMS shows on hover
@@ -367,15 +367,16 @@ function GroupEditor({ m }: { m: GCtl }) {
             ) : null}
             {canEdit && ed.showPaste ? (
               <div className="flex flex-col gap-2">
+                <ListKindField id="g-kind" value={ed.listKind} onChange={listKind => m.setEd({ listKind }, true)} />
                 <FormField id="g-input" label={L('List', '名單')} count={inputN ? P(inputN, 'entry', '筆', 'entries') : ''}>
                   <Textarea id="g-input" rows={3} className="font-mono" value={ed.input} onChange={e => m.setEd({ input: e.target.value }, true)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (splitTokens(m.s.ed!.input).length) m.parseMembers() } }}
-                    placeholder={L('e.g. ytchang, 115630, 陳怡君, 0920-775-641, PLT/UX', '例如：ytchang, 115630, 陳怡君, 0920-775-641, PLT/UX')} />
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (splitTokens(m.s.ed!.input).length && m.s.ed!.listKind) m.parseMembers() } }}
+                    placeholder={ed.listKind ? L('e.g. ', '例如：') + listKindExample(ed.listKind) : L('Choose a data type first', '請先選擇資料類型')} />
                 </FormField>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-caption text-fg-secondary">{L('Separate with commas or new lines.', '用逗號或換行分隔。')}</span>
-                  <Button variant="link" size="sm" onClick={() => m.setEd({ input: SAMPLE_GROUP }, true)}>{L('Try a sample', '使用範例')}</Button>
-                  <Button variant="primary" startIcon={Wand2} className="ml-auto" disabled={!inputN} onClick={() => m.parseMembers()}>{L('Add', '加入')}</Button>
+                  <Button variant="link" size="sm" disabled={!ed.listKind} onClick={() => ed.listKind && m.setEd({ input: LIST_SAMPLES[ed.listKind] }, true)}>{L('Try a sample', '使用範例')}</Button>
+                  <Button variant="primary" startIcon={Wand2} className="ml-auto" disabled={!inputN || !ed.listKind} onClick={() => m.parseMembers()}>{L('Add', '加入')}</Button>
                 </div>
               </div>
             ) : null}
@@ -471,7 +472,8 @@ function Feedback({ m, ed, fb }: { m: GCtl; ed: Ed; fb: Fb }) {
       })}
       {fb.miss.length ? (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2"><span className="text-body font-medium">{L(P(fb.miss.length, 'entry', '', 'entries') + ' not found', fb.miss.length + ' 筆找不到')}</span><Button variant="link" size="sm" onClick={() => m.setEd({ fb: { ...ed.fb!, miss: [] } }, true)}>{L('Dismiss all', '全部關閉')}</Button></div>
+          <div className="flex items-center justify-between gap-2"><span className="text-body font-medium">{L(P(fb.miss.length, 'entry', '', 'entries') + ' not found', fb.miss.length + ' 筆找不到')}</span><span className="flex gap-2"><Button variant="secondary" size="sm" onClick={() => m.setEd({ input: fb.miss.map(x => x.tok).join('\n'), showPaste: true, fb: { ...ed.fb!, miss: [] } }, true)}>{L('Fix in the list box', '放回名單修正')}</Button><Button variant="text" size="sm" onClick={() => m.setEd({ fb: { ...ed.fb!, miss: [] } }, true)}>{L('Dismiss all', '全部關閉')}</Button></span></div>
+          <p className="text-body text-fg-secondary">{L('These weren’t added. Put them back in the list box to fix and add again.', '這些沒有加入。可以放回名單欄位，修正後再加入一次。')}</p>
           <div className="flex flex-wrap gap-2">
             {fb.miss.map(x => <Tag key={x.id} size="md" color="red" unbounded onRemove={() => m.setEd({ fb: { ...m.s.ed!.fb!, miss: m.s.ed!.fb!.miss.filter(y => y.id !== x.id) } }, true)} removeAriaLabel={L('Dismiss ', '關閉 ') + x.tok}><span className="font-mono">{x.tok}</span> · {tx(x.why)}</Tag>)}
           </div>

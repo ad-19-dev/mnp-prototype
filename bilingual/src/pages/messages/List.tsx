@@ -75,7 +75,7 @@ export function SendList({ m }: { m: SendCtl }) {
   })
 
   const columns = React.useMemo(() => [
-    col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 150 }, cell: i => <Trunc text={i.getValue()} className="font-medium" /> }),
+    col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 150 }, cell: i => i.row.original.channels.indexOf('push') >= 0 ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span> }), // the sender name only exists on Device Notifications
     col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     col.accessor('title', { header: L('Message', '標題與內容'), meta: { width: 400 }, cell: i => {
       // title (opens the details) over the first line of the text: one wide column instead of two narrow ones
@@ -96,7 +96,7 @@ export function SendList({ m }: { m: SendCtl }) {
         <span className="flex w-full min-w-0 flex-col gap-1">
           <span className="text-body tabular-nums"><span className="font-medium">{r.status === 'scheduled' ? '–' : fmtN(r.ok)}</span><span className="text-fg-secondary"> / {fmtN(r.total)}</span></span>
           {r.status === 'progress' ? <ProgressBar aria-label={L('Delivery progress', '傳送進度')} value={Math.round(r.ok / Math.max(1, r.total) * 100)} /> : null}
-          {fails ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !justify-start !p-0 !text-warning-text hover:!text-warning-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' not sent', fails + ' 人未送達')}</Button> : null}
+          {fails ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' not sent', fails + ' 人未送達')}</Button> : null}
         </span>
       )
     } }),

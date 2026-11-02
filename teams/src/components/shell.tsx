@@ -144,7 +144,7 @@ export function SpaceIntro() {
     <div className="flex flex-col gap-[var(--layout-space-tight)]">
       <div className="flex flex-col gap-1">
         <h1 className="text-h3 font-bold text-foreground">{spaceName(space)}</h1>
-        <p className="text-body text-fg-secondary">{team ? team.desc : L('Only you can see this space. Use it for tests and notices of your own.', '只有你看得到這個空間，適合測試和發送個人通知。')}</p>
+        <p className="text-body text-fg-secondary">{team ? team.desc : L('Private space for your personal templates, audience groups, and sending history created only within this space.', '你的私人空間，存放只在這裡建立的個人模板、收件群組和發送紀錄。')}</p>
       </div>
       <Tabs value={page} onValueChange={v => go(v as Page)}>
         <TabsList aria-label={spaceName(space)}>
