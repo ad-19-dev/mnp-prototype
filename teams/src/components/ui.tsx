@@ -7,7 +7,7 @@ import {
   Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor,
 } from '@qijenchen/design-system'
-import { AlertTriangle, Calendar, CheckCircle2, ChevronDown, Filter, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
+import { AlertTriangle, Calendar, CalendarX2, CheckCircle2, ChevronDown, CircleX, Hourglass, Filter, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
 import type { Channel, Fmt, ListKind, Person, Status } from '../lib/data'
 import { LIST_KINDS } from '../lib/data'
 import { L } from '../lib/i18n'
@@ -28,10 +28,13 @@ export const CHN = new Proxy({} as Record<Channel, ReturnType<typeof chn>>, { ge
 export function chText(list: Channel[]) { return list.length === 1 ? chn(list[0]).name : list.map(k => chn(k).short).join(' + ') }
 
 const ST: Record<Status, { en: string; zh: string; color: CategoricalColor; icon: LucideIcon }> = {
+  pending: { en: 'Pending approval', zh: '待核准', color: 'amber', icon: Hourglass },
+  expired: { en: 'Scheduled expired', zh: '排程已過期', color: 'deep-orange', icon: CalendarX2 },
+  rejected: { en: 'Rejected', zh: '已駁回', color: 'red', icon: CircleX },
   scheduled: { en: 'Scheduled', zh: '已排程', color: 'neutral', icon: Calendar },
-  progress: { en: 'Sending', zh: '傳送中', color: 'blue', icon: Send },
+  progress: { en: 'In progress', zh: '傳送中', color: 'blue', icon: Send },
   sent: { en: 'Sent', zh: '已送出', color: 'green', icon: CheckCircle2 },
-  error: { en: 'Failed', zh: '傳送失敗', color: 'red', icon: AlertTriangle },
+  error: { en: 'Error', zh: '傳送錯誤', color: 'red', icon: AlertTriangle },
 }
 export const statusLabel = (s: Status) => L(ST[s].en, ST[s].zh)
 export function StatusTag({ s }: { s: Status }) {

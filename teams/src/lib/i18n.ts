@@ -57,6 +57,7 @@ const ZH: Record<string, string> = {
   'No one received this message. You can retry now.': '所有人都沒收到。你可以現在重試。',
   'The mail relay stopped accepting this batch halfway at 09:12.': '郵件伺服器在 09:12 停止接收，這批信只寄出一半。',
   '290 people received the email; 270 didn’t. Retry sends it only to the people who didn’t get it.': '290 人收到，270 人沒收到。重試只會寄給沒收到的人。',
+  'The SMS text includes a personal phone number. Remove it and submit again.': 'SMS 內容有個人電話號碼，請移除後重新送審。',
   // match results
   'Org code': '組織代碼', 'Email': 'Email', 'Employee ID': '工號', 'MVPN': 'MVPN', 'Company mobile': '公務手機',
   'Personal phone': '私人手機', 'Mobile number': '手機', 'NT account': 'NT 帳號', 'Name': '姓名',

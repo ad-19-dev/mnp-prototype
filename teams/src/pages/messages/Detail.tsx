@@ -2,22 +2,22 @@
 import * as React from 'react'
 import {
   Button, DataTable, DescriptionItem, DescriptionList, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle, FileItem, ProgressBar,
+  DialogHeader, DialogTitle, DatePicker, FileItem, ProgressBar,
   Tag,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CircleAlert, Copy, Globe, Pencil, Phone, RotateCw, Users, BookUser } from 'lucide-react'
+import { Building2, CalendarClock, CircleAlert, Copy, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
 import {
-  ORGS, PEOPLE, PMAP, addMin, audToTags, failList, fmtDT, fmtN, fmtSize, isExtPhone, parseDT, plural, reqIdFor, rowChs,
+  ORGS, PEOPLE, PMAP, addMin, audToTags, failList, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Fail, type Group, type Row, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
-import { Banner, CHN, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
+import { Banner, CHN, FormField, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
 import { MailHtml } from '../../components/RichText'
 import { ShellAside } from '../../components/shell'
 import type { SendCtl } from './ctl'
-import { L, P, tx } from '../../lib/i18n'
+import { L, P, niceDT, tx } from '../../lib/i18n'
 
 export function RecvTag({ t, groups }: { t: RTag; groups: Group[] }) {
   if (t.type === 'person') {
@@ -41,6 +41,10 @@ function statText(x: { k: string; ok: number; of: number }) {
   return L(fmtN(x.ok) + ' of ' + fmtN(x.of) + ' delivered', fmtN(x.ok) + ' / ' + fmtN(x.of) + ' 已送達')
 }
 function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-h6 font-bold text-foreground">{children}</h3> }
+// who reviews the message, as people say it
+const reviewer = (r: Row) => (r.review?.by === 'mgr' ? L('your supervisor', '主管') : r.review?.by === 'both' ? L('your supervisor and ICSD', '主管和 ICSD ') : 'ICSD')
+const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' || r.status === 'rejected' || r.status === 'scheduled'
+
 // a titled part of the details: heading to content is tight; parts sit twice the loose gap apart (see DetailBody)
 function Part({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="flex flex-col gap-[var(--layout-space-tight)]"><H3>{title}</H3>{children}</section>
@@ -63,12 +67,21 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           <div className="flex items-center gap-2"><StatusTag s={r.status} /><span className="font-mono text-caption text-fg-secondary">{reqIdFor(r)}</span></div>
           <h3 className="text-body-lg font-medium text-foreground">{r.title}</h3>
           <div className="flex flex-wrap gap-2">
+            {r.status === 'expired' ? <>
+              <Button variant="primary" size="sm" startIcon={Send} onClick={() => m.askSendNow(r)}>{L('Send now', '立即傳送')}</Button>
+              <Button variant="tertiary" size="sm" startIcon={CalendarClock} onClick={() => m.openReschedule(r)}>{L('Reschedule', '重新排程')}</Button>
+            </> : null}
             {r.status === 'scheduled' ? <Button variant="tertiary" size="sm" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
-            <Button variant="tertiary" size="sm" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate', '複製')}</Button>
+            {r.status === 'rejected' ? <Button variant="tertiary" size="sm" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit and resubmit', '修改後重新送審')}</Button> : null}
+            <Button variant="tertiary" size="sm" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate to new message', '複製為新訊息')}</Button>
+            {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <Button variant="text" size="sm" danger startIcon={Trash2} onClick={() => m.askDelete(r)}>{L('Delete', '刪除')}</Button> : null}
           </div>
         </div>
         <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)] pb-[var(--layout-space-loose)]">
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
+          {r.status === 'pending' ? <Banner tone="info" title={L('Waiting for approval from ' + reviewer(r), '等待' + reviewer(r) + '核准')}>{r.sched ? L('Sends at ' + r.sched + ' if it’s approved by then.', '核准後會在 ' + r.sched + ' 送出。') : L('Sends as soon as it’s approved.', '核准後立即送出。')}</Banner> : null}
+          {r.status === 'expired' ? <Banner tone="warning" title={L('Approved after its scheduled time', '核准時已過排程時間')}>{L(reviewer(r) + ' approved it on ' + (r.review?.at || '') + ', after the scheduled ' + r.sched + ', so it wasn’t sent. Send it now, pick a new time, or delete it.', reviewer(r) + '於 ' + (r.review?.at || '') + ' 核准，已超過原訂的 ' + r.sched + '，所以沒有送出。可以立即傳送、重新排程或刪除。')}</Banner> : null}
+          {r.status === 'rejected' ? <Banner tone="error" title={L('Rejected by ' + reviewer(r), reviewer(r) + '駁回')}>{L((r.review?.at ? r.review.at + '. ' : '') + 'Reason: ' + (r.review?.reason || '') + ' Edit the message and submit it again.', (r.review?.at ? r.review.at + '。' : '') + '原因：' + tx(r.review?.reason || '') + ' 修改訊息後可以重新送審。')}</Banner> : null}
           {r.bypass ? (
             <Banner tone="warning" title={L('Sent without ICSD approval (urgent)', '未經 ICSD 核准送出（緊急）')}>
               {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
@@ -78,7 +91,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
             {r.channels.indexOf('push') >= 0 ? <DescriptionItem label={L('Sender name', '寄件人名稱')}>{r.sender}</DescriptionItem> : null}
             <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || L('None', '無')}</DescriptionItem>
             <DescriptionItem label={L('Channels', '通道')}>{chs.map(k => CHN[k].name).join(', ')}</DescriptionItem>
-            {r.sms ? <DescriptionItem label={L('ICSD approval', 'ICSD 核准')}>{r.bypass ? L('Skipped (urgent)', '已略過（緊急）') : L('Approved', '已核准')}</DescriptionItem> : null}
+            {r.sms || r.review ? <DescriptionItem label={L('Approval', '核准')}>{r.bypass ? L('ICSD skipped (urgent)', '已略過 ICSD（緊急）') : r.status === 'pending' ? L('Waiting for ', '等待') + reviewer(r) : r.status === 'rejected' ? L('Rejected by ', '') + reviewer(r) + L('', '駁回') : L('Approved', '已核准')}</DescriptionItem> : null}
             <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>
             <DescriptionItem label={L('Created', '建立時間')}>{r.created}</DescriptionItem>
             <DescriptionItem label={L('Send time', '傳送時間')}>{r.sched || L('Right away', '立即傳送')}</DescriptionItem>
@@ -88,8 +101,8 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           <Part title={L('Delivery', '送達狀況')}>
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-body"><span className="font-medium">{r.status === 'scheduled' ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'audience', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : L('reached', '已送達')}</span></span>
-              {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' not sent', fails + ' 人未送達')}</Button> : null}
+              <span className="text-body"><span className="font-medium">{notStarted(r) ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'audience', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : notStarted(r) ? L(P(r.total, 'audience', ''), r.total + ' 位收件人') : L('reached', '已送達')}</span></span>
+              {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
             </div>
             <ProgressBar aria-label={L('Delivered', '已送達')} value={pct} status={r.status === 'error' ? 'error' : r.status === 'sent' ? 'success' : 'inProgress'} />
             {done && chs.length > 1 ? (
@@ -148,7 +161,7 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
       <>
         <DialogHeader>
           <div className="flex flex-col gap-0.5">
-            <DialogTitle>{L(fmtN(list.length) + ' of ' + fmtN(r.total) + ' not sent', fmtN(list.length) + ' / ' + fmtN(r.total) + ' 人未送達')}</DialogTitle>
+            <DialogTitle>{L(fmtN(list.length) + ' of ' + fmtN(r.total) + ' failed', fmtN(list.length) + ' / ' + fmtN(r.total) + ' 人失敗')}</DialogTitle>
             <DialogDescription className="text-body text-fg-secondary">{r.title}</DialogDescription>
           </div>
         </DialogHeader>
@@ -169,6 +182,36 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
   return (
     <Dialog open={!!r} onOpenChange={o => { if (!o) close() }}>
       {r ? <DialogContent maxWidth={760} height="hug">{body}</DialogContent> : null}
+    </Dialog>
+  )
+}
+
+// Reschedule an expired message: a new time, no new approval
+export function RescheduleDialog({ m }: { m: SendCtl }) {
+  const app = useApp(), rs = m.s.rs, r = rs ? app.rows.find(x => x.id === rs.id) : null, close = () => m.set({ rs: null })
+  const err = rs && (rs.tried || rs.at) ? m.rescheduleErr() : '', show = rs?.tried ? err : ''
+  const d = rs ? fromIso(rs.at) : null
+  return (
+    <Dialog open={!!r} onOpenChange={o => { if (!o) close() }}>
+      {r && rs ? (
+        <DialogContent maxWidth={480} height="hug">
+          <DialogHeader>
+            <div className="flex flex-col gap-0.5">
+              <DialogTitle>{L('Reschedule', '重新排程')}</DialogTitle>
+              <DialogDescription className="text-body text-fg-secondary">{L('It’s already approved, so it won’t go back for review.', '這則訊息已經核准，改時間不需要重新送審。')}</DialogDescription>
+            </div>
+          </DialogHeader>
+          <DialogBody>
+            <FormField id="rs-at" label={L('New date and time', '新的日期和時間')} required hint={d && !err ? L('Sends ', '將於 ') + niceDT(d) + L('', ' 傳送') : L('Taipei time (GMT+8), up to 30 days ahead', '台北時間（GMT+8），30 天內')} error={show}>
+              <DatePicker id="rs-at" showTime typeable locale={L('en-US', 'zh-TW')} value={rs.at || null} error={!!show} onChange={v => m.set({ rs: { ...rs, at: v || '' } })} placeholder="YYYY/MM/DD HH:MM" />
+            </FormField>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button>
+            <Button variant="primary" startIcon={CalendarClock} onClick={() => m.reschedule()}>{L('Reschedule', '重新排程')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      ) : null}
     </Dialog>
   )
 }

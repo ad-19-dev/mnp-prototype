@@ -11,7 +11,7 @@ import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../compone
 import { initSend, makeSendCtl } from './ctl'
 import { L } from '../../lib/i18n'
 import { SendList } from './List'
-import { DetailSheet, NotSentDialog } from './Detail'
+import { DetailSheet, NotSentDialog, RescheduleDialog } from './Detail'
 import { ComposeView } from './Compose'
 import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog, UnreachDialog } from './Modals'
 
@@ -46,6 +46,7 @@ export function MessagesPage() {
       )}
       <DetailSheet m={m} />
       <NotSentDialog m={m} />
+      <RescheduleDialog m={m} />
       <ImportDialog m={m} />
       <NumbersDialog m={m} />
       <SaveGroupDialog m={m} />

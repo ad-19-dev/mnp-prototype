@@ -34,7 +34,10 @@ export interface Template {
   // the team it belongs to; null means the owner's personal space
   team?: string | null
 }
-export type Status = 'scheduled' | 'progress' | 'sent' | 'error'
+// pending: waiting for approval; expired: approved after its scheduled time, so it wasn't sent and waits for
+// the sender (send now, reschedule or delete); rejected: the approver turned it down
+export type Status = 'pending' | 'expired' | 'rejected' | 'scheduled' | 'progress' | 'sent' | 'error'
+export const STATUS_ORDER: Status[] = ['pending', 'expired', 'rejected', 'scheduled', 'progress', 'sent', 'error']
 export interface Row {
   id: string; sender: string; tpl: string | null; title: string; content: string; smsText?: string
   channels: Channel[]; sms: boolean; status: Status; created: string; sched: string | null
@@ -44,6 +47,8 @@ export interface Row {
   team?: string | null
   // ICSD approval skipped because the message was urgent: who, when and why (kept for the record)
   bypass?: { by: string; at: string; reason: string } | null
+  // approval: who reviews it (ICSD, the sender's supervisor, or both in turn), when they decided, and why if rejected
+  review?: { by: 'icsd' | 'mgr' | 'both'; at?: string; reason?: string } | null
 }
 export interface Tag { key: string; type: 'person' | 'group' | 'org' | 'ext'; id?: string; email?: string }
 export interface Fail { p?: Person; ext?: string; reason: string; fallback: string }
@@ -457,6 +462,14 @@ MINE.push(
   { id: 'm126', sender: '', tpl: 't10', title: 'Test: reminder layout on desktop', content: 'Quick reminder: please check how this looks on your desktop by Friday.', channels: ['desktop'], sms: false, status: 'sent', created: '2026/10/16 11:02', sched: null, total: 1, ok: 1, creator: 'p01', team: null, aud: [['p', 'p01']] },
   { id: 'm125', sender: 'Grace Wu', tpl: 't11', title: 'I’m out of office 10/27–10/29', content: 'I’m out of office Oct 27–29 with limited access to email. For urgent matters, contact Jimmy Chen.', channels: ['push', 'email'], sms: false, status: 'scheduled', created: '2026/10/20 17:40', sched: '2026/10/24 17:30', total: 9, ok: 0, creator: 'p01', team: null, aud: [['g', 'g8']], email: { mode: 'same' } },
   { id: 'm124', sender: 'Grace Wu', tpl: null, title: 'Project Atlas: kickoff notes', content: 'Kickoff notes are in the Atlas folder. Owners: please confirm your milestones by Oct 22.', channels: ['email'], sms: false, status: 'sent', created: '2026/10/18 11:30', sched: null, total: 7, ok: 7, creator: 'p01', team: null, aud: [['g', 'g9']], email: { mode: 'own', subject: 'Project Atlas: kickoff notes', html: textToHtml('Kickoff notes are in the Atlas folder. Owners: please confirm your milestones by Oct 22.'), atts: [{ name: 'Atlas_kickoff.pdf', size: 520000 }] } },
+)
+// messages still in approval, or stopped by it: one waiting with a schedule, one rejected, one approved too
+// late for its schedule (scheduled expired) and one waiting for the supervisor because it goes outside
+MINE.push(
+  { id: 'm153', sender: 'Platform Ops', tpl: null, title: 'Vendor maintenance window: Sat 11/8 01:00–03:00', content: 'Our hosting vendor will patch the load balancers on Sat, Nov 8 from 01:00 to 03:00. Expect brief reconnects.', channels: ['email'], sms: false, status: 'pending', created: '2026/11/03 08:50', sched: null, total: 562, ok: 0, creator: 'p01', team: 'tm1', aud: [['o', 'PLT/ENG1'], ['o', 'PLT/ENG2'], ['o', 'IT/INFRA'], ['g', 'g3'], ['e', 'noc@vendor-example.com'], ['e', 'ops@vendor-example.com']], email: { mode: 'own', subject: 'Vendor maintenance window: Sat 11/8 01:00–03:00', html: textToHtml('Our hosting vendor will patch the load balancers on Sat, Nov 8 from 01:00 to 03:00. Expect brief reconnects.'), atts: [] }, review: { by: 'mgr' } },
+  { id: 'm152', sender: 'Platform Ops', tpl: 't4', title: 'tWorkspace maintenance: Fri 10/31 22:00–23:00', content: 'tWorkspace will be unavailable on Fri, Oct 31 from 22:00 to 23:00 (GMT+8) for a security patch.', smsText: 'tWorkspace down Fri 10/31 22:00-23:00 for a patch.', channels: ['push'], sms: true, status: 'expired', created: '2026/10/27 10:00', sched: '2026/10/30 09:00', total: 560, ok: 0, creator: 'p22', team: 'tm1', aud: [['o', 'PLT/ENG1'], ['o', 'PLT/ENG2'], ['o', 'IT/INFRA'], ['g', 'g3']], review: { by: 'icsd', at: '2026/11/02 14:10' } },
+  { id: 'm151', sender: 'Grace Wu', tpl: null, title: 'Reminder: badge photo update by 11/7', content: 'Please upload a new badge photo in tWorkspace › Profile by Nov 7. Questions? Call me at 0912-337-415.', smsText: 'Upload a new badge photo by 11/7. Call 0912-337-415.', channels: ['push'], sms: true, status: 'rejected', created: '2026/10/31 15:40', sched: null, total: 9, ok: 0, creator: 'p01', team: null, aud: [['g', 'g8']], review: { by: 'icsd', at: '2026/11/01 10:05', reason: 'The SMS text includes a personal phone number. Remove it and submit again.' } },
+  { id: 'm150', sender: 'Grace Wu', tpl: null, title: 'Project Atlas demo moves to Mon 11/10 09:00', content: 'The Atlas demo moves to Mon, Nov 10 at 09:00 in 5F-Ocean. Bring your laptop.', smsText: 'Atlas demo moves to Mon 11/10 09:00, 5F-Ocean.', channels: ['push'], sms: true, status: 'pending', created: '2026/11/02 16:20', sched: '2026/11/10 08:30', total: 7, ok: 0, creator: 'p01', team: null, aud: [['g', 'g9']], review: { by: 'icsd' } },
 )
 MINE.forEach(r => { if (r.sender === '') r.sender = 'gywu' })
 ROWS0.push(...MINE)

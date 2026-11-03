@@ -19,3 +19,7 @@
 /* No header ⌄ menu in this product. Sorting stays on the header click; the DS menu only repeats it,
    with fixed Chinese labels and a trailing divider once "hide column" is off (tableOptions.enableHiding = false). */
 [data-col-menu] { display: none !important; }
+
+/* The message list centres every cell vertically (product decision 2026-11-03). The DS DataTable tops
+   aligns cells in auto row height, so this overrides it for that one table. */
+.mnp-center [role="row"], .mnp-center [role="cell"], .mnp-center [role="cell"] > .items-start { align-items: center !important; }

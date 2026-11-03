@@ -1,6 +1,6 @@
 // Messages page controller: list, row actions, the 3-step send flow and its dialogs.
 import {
-  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
+  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, addMin, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
   joinList, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
   type Channel, type Group, type ListKind, type Match, type Row, type Status, type Tag, type Template,
 } from '../../lib/data'
@@ -14,15 +14,18 @@ import { scrollTop } from '../../lib/logic'
 import type { Confirm } from '../../components/ui'
 import { chText } from '../../components/ui'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
-import { CircleAlert, LayoutTemplate, Trash2, Ban, ShieldAlert } from 'lucide-react'
+import { CircleAlert, LayoutTemplate, Trash2, Ban, Send, ShieldAlert } from 'lucide-react'
 import type { RiState } from '../../components/RecvInput'
 
 // kind: what the pasted list holds; done: how many were added in the last round, when the not-found ones came back to fix
 export interface ImpState { text: string; file: string; res: Match[] | null; picks: Record<number, Record<string, boolean>>; kind: ListKind | null; done: number }
 export interface SendState {
   view: 'list' | 'compose'
-  q: string; fS: Status[]; fC: Channel[]; fT: string[]; page: number
+  // fSd: senders, fT: templates ('' = no template)
+  q: string; fS: Status[]; fC: Channel[]; fSd: string[]; fT: string[]; page: number
   det: string | null; ns: string | null; cf: Confirm | null
+  // reschedule a message whose approval came after its scheduled time
+  rs: { id: string; at: string; tried: boolean } | null
   c: Compose
   ri: RiState; rf: string
   imp: ImpState | null
@@ -34,12 +37,14 @@ export interface SendState {
   gp: { q: string; tab: 'all' | 'mine' | 'shared'; sel: Record<string, boolean> } | null
 }
 export const initSend = (): SendState => ({
-  view: 'list', q: '', fS: [], fC: [], fT: [], page: 1, det: null, ns: null, cf: null,
+  view: 'list', q: '', fS: [], fC: [], fSd: [], fT: [], page: 1, det: null, ns: null, cf: null, rs: null,
   c: blankCompose(), ri: { type: 'person', q: '', open: false, exp: null }, rf: '',
   imp: null, num: null, sg: null, stpl: null, tp: null, unr: false, gp: null,
 })
 
 // the name of the open space, for headers and breadcrumbs
+// the sender shown in the list: only Device Notifications carry a sender name
+export const listSender = (r: Row) => (r.channels.indexOf('push') >= 0 ? r.sender : '')
 export const scopeLabel = () => spaceName(getApp().space)
 
 let seq = 0
@@ -68,12 +73,14 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       return m.visible().filter(r => {
         if (s.fS.length && s.fS.indexOf(r.status) < 0) return false
         if (s.fC.length && !rowChs(r).some(k => s.fC.indexOf(k) >= 0)) return false
+        if (s.fSd.length && s.fSd.indexOf(listSender(r)) < 0) return false
+        if (s.fT.length && s.fT.indexOf(r.tpl || '') < 0) return false
         if (!q) return true
         const cr = PMAP[r.creator] || ({} as any)
         return [r.sender, m.tplName(r.tpl), r.title, r.content, r.email && r.email.subject, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
       })
     },
-    toggleIn(key: 'fS' | 'fC' | 'fT', val: string) {
+    toggleIn(key: 'fS' | 'fC' | 'fSd' | 'fT', val: string) {
       const arr = (get()[key] as string[]).slice(), i = arr.indexOf(val)
       if (i >= 0) arr.splice(i, 1); else arr.push(val)
       set({ page: 1, [key]: arr } as any)
@@ -86,14 +93,44 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       setTimeout(() => patchRow(id, { ok: Math.round(r.total * 0.6) }), 1300)
       setTimeout(() => patchRow(id, { status: 'sent', ok: r.total }), 2800)
     },
-    askCancel(r: Row) {
-      set({ cf: { title: L('Cancel this message?', '取消這則排程？'), text: L('“' + r.title + '” won’t be sent. This can’t be undone.', '「' + r.title + '」將不會送出，無法復原。'), icon: Ban, tone: 'err', cancel: L('Keep', '保留'), ok: L('Cancel message', '取消排程'), danger: true, run: () => m.cancelSched(r.id) } })
+    // delete a message that hasn't gone out (scheduled, expired or rejected): the row is removed
+    askDelete(r: Row) {
+      set({ cf: { title: L('Delete this message?', '要刪除這則訊息嗎？'), text: L('“' + r.title + '” won’t be sent, and it’s removed from the list. This can’t be undone.', '「' + r.title + '」不會送出，也會從列表移除，無法復原。'), icon: Trash2, tone: 'err', cancel: L('Keep', '保留'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteRow(r.id) } })
     },
-    cancelSched(id: string) {
+    deleteRow(id: string) {
       const r = app().rows.find(x => x.id === id)!
       setApp(s => ({ rows: s.rows.filter(x => x.id !== id) }))
       set({ cf: null, det: null })
-      flash(L('Message canceled', '已取消排程'), 'ok', r.title)
+      flash(L('Message deleted', '已刪除訊息'), 'ok', r.title)
+    },
+    // expired: approved too late for its schedule. Send it now, ignoring the old time
+    askSendNow(r: Row) {
+      set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It goes out right away instead of at ' + r.sched + '. It’s already approved.', '會立刻送出，不再等原訂的 ' + r.sched + '。這則訊息已經核准。'), icon: Send, tone: 'info', cancel: L('Not now', '先不要'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
+    },
+    sendNow(id: string) {
+      const r = app().rows.find(x => x.id === id)!
+      set({ cf: null })
+      patchRow(id, { status: 'progress', sched: null, ok: 0, fresh: Date.now() })
+      flash(L('Sending to ', '傳送給 ') + P(r.total, 'audience', '位收件人'), 'ok', r.title)
+      setTimeout(() => patchRow(id, { ok: Math.round(r.total * 0.6) }), 1300)
+      setTimeout(() => patchRow(id, { status: 'sent', ok: r.total }), 2800)
+    },
+    // expired: pick a new time; the approval still holds, so it doesn't go back for review
+    openReschedule(r: Row) { const d = new Date(); set({ rs: { id: r.id, at: toIso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 9, 0)), tried: false } }) },
+    rescheduleErr() {
+      const rs = get().rs, d = rs ? fromIso(rs.at) : null, now = new Date()
+      if (!d) return L('Pick a date and time.', '請選擇日期和時間。')
+      if (d < addMin(now, 10)) return L('Pick a time at least 10 minutes from now.', '請選 10 分鐘以後的時間。')
+      if (d > addMin(now, 30 * 24 * 60)) return L('Pick a time within 30 days.', '最多只能排 30 天內。')
+      return ''
+    },
+    reschedule() {
+      const rs = get().rs!
+      if (m.rescheduleErr()) { set({ rs: { ...rs, tried: true } }); return }
+      const d = fromIso(rs.at)!
+      patchRow(rs.id, { status: 'scheduled', sched: fmtDT(d), fresh: Date.now() })
+      set({ rs: null })
+      flash(L('Rescheduled for ', '已改為 ') + niceDT(d), 'ok', L('No new approval needed.', '不需要重新送審。'))
     },
     // delivery per channel; SMS counts the people the device notification missed
     chStats(r: Row) {
@@ -279,6 +316,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
         return
       }
       if (ap.need) {
+        m.doSend({ by: ap.icsd && ap.mgr ? 'both' : ap.icsd ? 'icsd' : 'mgr' })
         const now = new Date(), schedD = c.sendMode === 'schedule' ? fromIso(c.schedAt) : null
         const reqId = 'MNP-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + (1000 + Math.floor(Math.random() * 9000))
         m.setC({ result: { reqId, ap, when: fmtDT(now), sends: schedD ? niceDT(schedD) + ', if it’s approved by then' : 'As soon as it’s approved', total: m.recvTotal(), chs: selChs(c) }, dirty: false }, true)
@@ -292,7 +330,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (!c.ch.email) return null
       return effEmailMode(c) === 'own' ? { mode: 'own' as const, subject: c.subject.trim(), html: cleanHtml(c.html), atts: c.atts.map(a => ({ name: a.name, size: a.size })) } : { mode: 'same' as const }
     },
-    doSend() {
+    // review: the message waits for approval instead of going out
+    doSend(review?: NonNullable<Row['review']>) {
       const c = get().c, now = new Date(), rc = m.reach(), hasN = hasNotif(c)
       const schedD = c.sendMode === 'schedule' ? fromIso(c.schedAt) : null, em = m.emailOut()
       const channels = CH_ORDER.filter(k => k !== 'sms' && c.ch[k])
@@ -306,11 +345,12 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
         bypass: smsOn(c) && c.urgent ? { by: ME, at: fmtDT(now), reason: c.urgentReason.trim() } : null,
         total: rc.total, ok: 0, aud: tagsToAud(c.receivers), fresh: Date.now(), _f: null, err: null, byCh: null,
         fw: rc.unr.map(p => p.id), fr: [[reason + (smsOn(c) ? ', and no phone number for SMS' : '')]],
-        status: schedD ? 'scheduled' : 'progress', sched: schedD ? fmtDT(schedD) : null,
+        status: review ? 'pending' : schedD ? 'scheduled' : 'progress', sched: schedD ? fmtDT(schedD) : null, review: review || null,
       }
       let id: string
       if (c.mode === 'edit' && c.editId) { id = c.editId; setApp(s => ({ rows: s.rows.map(r => r.id === id ? { ...r, ...base } as Row : r) })) }
       else { id = 'n' + (++seq); setApp(s => ({ rows: [{ id, creator: ME, created: fmtDT(now), ...base } as Row].concat(s.rows) })) }
+      if (review) return
       set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', fS: [], fC: [] })
       scrollTop()
       if (schedD) { flash(L('Scheduled for ', '已排程：') + niceDT(schedD)); return }
