@@ -11,6 +11,7 @@ import { L } from '../lib/i18n'
 import { UrgentStudy } from './UrgentStudy'
 import { FilterStudy } from './FilterStudy'
 import { DetailStudy } from './DetailStudy'
+import { MembersStudy } from './MembersStudy'
 
 // ---------- sample audience ----------
 // 86 people: 78 have the app; 68 have the desktop agent (6 of them among the 8 without the app);
@@ -246,15 +247,16 @@ function ReachStudy() {
   )
 }
 
-type Study = 'reach' | 'urgent' | 'filter' | 'detail'
+type Study = 'reach' | 'urgent' | 'filter' | 'detail' | 'members'
 const STUDIES = (): { k: Study; tab: string; title: string; sub: string }[] => [
   { k: 'reach', tab: L('Channel reach', '通道觸及'), title: L('Channel reach: design options', '通道觸及：設計方案'), sub: L('Four simpler ways to show how many people a message reaches while you pick channels. Every mock is live: tick channels to see how it responds.', '在選通道時顯示「幾個人收得到」的四種簡化做法。每個畫面都可以操作，勾選通道看看它怎麼變化。') },
   { k: 'urgent', tab: L('Urgent sends in the list', '緊急發送標示'), title: L('Marking urgent sends: design options', '緊急發送標示：設計方案'), sub: L('Five ways to show, in the message list, that a message skipped SMS approval as urgent. Each uses the real list table.', '在訊息列表標示「這則訊息以緊急為由略過 SMS 核准」的五種做法，都用真實的列表元件呈現。') },
   { k: 'filter', tab: L('Filtering the list', '列表篩選'), title: L('Filtering the message list', '訊息列表篩選'), sub: L('The message list filtered the way the DS table toolbar does it: one Filter button and the DS filter panel. The table is live.', '照 DS 表格工具列的做法篩選訊息列表：一顆「篩選」按鈕加上 DS 的篩選面板。表格可以直接操作。') },
   { k: 'detail', tab: L('Channels in details', '詳情的多通道內容'), title: L('Each channel’s content in message details', '訊息詳情：各通道內容的呈現'), sub: L('Four ways to show what each channel sent, once channels carry their own content. Each mock is as wide as the details panel and can be clicked.', '當各通道有各自的內容時，訊息詳情要怎麼呈現每個通道送出的內容。每個畫面和詳情面板一樣寬，可以直接操作。') },
+  { k: 'members', tab: L('Group members', '群組成員'), title: L('Seeing who is in a group or org', '查看群組和組織的成員'), sub: L('Four ways to check who is in an audience group or org while picking audiences. Every mock uses the same three audiences and can be clicked.', '在選收件人時，查看群組或組織裡有哪些人的四種做法。每個畫面都用同樣三個收件人，可以直接操作。') },
 ]
 // each study has its own link: #reach or #urgent
-const fromHash = (): Study => (location.hash === '#urgent' ? 'urgent' : location.hash === '#filter' ? 'filter' : location.hash === '#detail' ? 'detail' : 'reach')
+const fromHash = (): Study => (location.hash === '#urgent' ? 'urgent' : location.hash === '#filter' ? 'filter' : location.hash === '#detail' ? 'detail' : location.hash === '#members' ? 'members' : 'reach')
 
 export default function OptionsApp() {
   const { lang } = useApp()
@@ -279,7 +281,7 @@ export default function OptionsApp() {
           {STUDIES().map(x => <TabsTrigger key={x.k} value={x.k}>{x.tab}</TabsTrigger>)}
         </TabsList>
       </Tabs>
-      {study === 'reach' ? <ReachStudy /> : study === 'urgent' ? <UrgentStudy /> : study === 'filter' ? <FilterStudy /> : <DetailStudy />}
+      {study === 'reach' ? <ReachStudy /> : study === 'urgent' ? <UrgentStudy /> : study === 'filter' ? <FilterStudy /> : study === 'detail' ? <DetailStudy /> : <MembersStudy />}
     </main>
   )
 }
