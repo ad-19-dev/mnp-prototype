@@ -14,7 +14,7 @@ import {
   CircleCheck, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
-  pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Template, type Tag as RTag,
+  pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Person, type Template, type Tag as RTag,
   ME,
 } from '../../lib/data'
 import {
@@ -27,6 +27,7 @@ import { Banner, CHN, ChIcons, ErrText, FmtChips, FormField, IconBox, KV, Meter,
 import { RecvInput, riKey } from '../../components/RecvInput'
 import { RichText } from '../../components/RichText'
 import { ChannelPreview, type PreviewChannel } from '../../components/ChannelPreview'
+import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
 import { PageHeader } from '../../components/shell'
 import type { SendCtl } from './ctl'
 
@@ -87,7 +88,7 @@ function StepBar({ m, e }: { m: SendCtl; e: Errs }) {
 }
 
 // ---------- step 1 ----------
-type RRow = { t: RTag; label: string; sub: string; kind: string; cnt: number; can: { k: Channel; n: number; of: number }[]; warn: boolean; badge: string; badgeBtn: boolean }
+type RRow = { t: RTag; label: string; sub: string; kind: string; cnt: number; can: { k: Channel; n: number; of: number }[]; warn: boolean; badge: string; badgeBtn: boolean; ppl: Person[] }
 const rcol = createColumnHelper<RRow>()
 
 function recvKind(t: RTag) {
@@ -96,6 +97,7 @@ function recvKind(t: RTag) {
 
 function RecvTable({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, c = s.c, q = (s.rf || '').trim().toLowerCase(), sms = smsOn(c)
+  const [mem, setMem] = React.useState<MemberSet | null>(null)
   const rows: RRow[] = c.receivers.map(t => {
     let label = '', sub = '', ppl: any[] = [], cnt = 1, warn = false, badge = '', badgeBtn = false
     if (t.type === 'person') {
@@ -115,7 +117,7 @@ function RecvTable({ m }: { m: SendCtl }) {
     const can = t.type === 'ext'
       ? [{ k: (isExtPhone(t) ? 'sms' : 'email') as Channel, n: 1, of: 1 }]
       : [{ k: 'push' as Channel, n: internal.filter(p => p.dev).length, of: cnt }, { k: 'desktop' as Channel, n: internal.filter(p => p.desk).length, of: cnt }, { k: 'email' as Channel, n: internal.length + xe, of: cnt }, { k: 'sms' as Channel, n: internal.filter(p => p.co || p.pp).length + xp, of: cnt }]
-    return { t, label, sub, kind: recvKind(t), cnt, can, warn, badge, badgeBtn }
+    return { t, label, sub, kind: recvKind(t), cnt, can, warn, badge, badgeBtn, ppl }
   }).filter(x => !q || (x.label + ' ' + x.sub + ' ' + x.kind).toLowerCase().indexOf(q) >= 0)
 
   const cols = React.useMemo(() => [
@@ -131,7 +133,13 @@ function RecvTable({ m }: { m: SendCtl }) {
       )
     } }),
     rcol.accessor('kind', { header: L('Type', '類型'), meta: { width: 130 } }),
-    rcol.accessor('cnt', { header: L('People', '人數'), meta: { width: 90, align: 'right' }, cell: i => <span className="tabular-nums">{fmtN(i.getValue())}</span> }),
+    // a group or org's count opens its member list
+    rcol.accessor('cnt', { header: L('People', '人數'), meta: { width: 100, align: 'right' }, cell: i => {
+      const x = i.row.original
+      return x.t.type === 'group' || x.t.type === 'org'
+        ? <Button variant="link" size="sm" className="!h-auto !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl })}>{fmtN(x.cnt)}</Button>
+        : <span className="tabular-nums">{fmtN(i.getValue())}</span>
+    } }),
     rcol.display({ id: 'can', header: L('Can receive', '可收到的通道'), meta: { width: 260 }, cell: i => (
       <span className="flex flex-wrap items-center gap-1.5">
         {i.row.original.can.map(x => {
@@ -154,6 +162,7 @@ function RecvTable({ m }: { m: SendCtl }) {
       ) : null}
       <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} autoRowHeight getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
+      <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
   )
 }

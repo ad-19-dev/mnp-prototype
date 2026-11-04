@@ -254,11 +254,10 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
         <DialogHeader>
           <div className="flex flex-col gap-0.5">
             <DialogTitle>{L(fmtN(n) + ' of ' + fmtN(st ? st.of : 0) + ' didn’t get ' + CHN[nch].name, fmtN(n) + ' / ' + fmtN(st ? st.of : 0) + ' 人沒收到' + CHN[nch].name)}</DialogTitle>
-            <DialogDescription className="text-body text-fg-secondary">{r.title}</DialogDescription>
           </div>
         </DialogHeader>
         <DialogBody>
-          <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols(true) as any} data={list} bordered height="380px" autoRowHeight getRowId={(_, i) => String(i)} />
+          <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols() as any} data={list} bordered height="380px" autoRowHeight getRowId={(_, i) => String(i)} />
         </DialogBody>
       </>
     )

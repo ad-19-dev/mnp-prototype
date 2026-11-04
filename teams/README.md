@@ -21,5 +21,6 @@
 | 預覽 | 第三步用 DS 樣式的簡單卡片預覽各通道，不畫擬真裝置 |
 | 訊息詳情 | 方案 D：「送達狀況」先看全部通道都沒收到的人數；「各通道」每個通道一列（預設收合），展開看該通道的內容和未送達的人，並標出他們是否已由其他通道收到；不顯示進度條。「收件人」裡的群組和組織可展開看成員 |
 | 列表欄位 | Sender、Channels、Title / Content、Status、Template、Reach / Audience、Created、Scheduled、Created by |
+| 群組成員 | 第一步加入群組或組織後，點「人數」開對話框，可搜尋成員（方案 C）；選群組的選單不再展開成員 |
 
 執行方式與雙語版相同：`npm install --legacy-peer-deps` 後 `npm run dev`。

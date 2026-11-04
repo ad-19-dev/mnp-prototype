@@ -130,13 +130,7 @@ export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, o
                     <Two a={x.name} b={x.sub} strong className="flex-1" />
                     <span className="shrink-0 text-caption text-fg-muted">{x.added ? L('Added', '已加入') : x.meta}</span>
                   </button>
-                  {x.group ? (
-                    <Button variant="text" size="sm" iconOnly startIcon={ri.exp === x.group.id ? ChevronDown : ChevronRight}
-                      aria-label={(ri.exp === x.group.id ? L('Hide members of ', '收起成員：') : L('Show members of ', '查看成員：')) + x.name} aria-expanded={ri.exp === x.group.id}
-                      onClick={() => set({ exp: ri.exp === x.group!.id ? null : x.group!.id })} />
-                  ) : null}
                 </div>
-                {x.group && ri.exp === x.group.id ? <GroupPeek g={x.group} /> : null}
               </React.Fragment>
             ))}
             {r.err ? <div className="flex items-center gap-1 px-3 py-3 text-body text-error-text"><CircleAlert className="size-4" aria-hidden />{r.err}</div> : null}
