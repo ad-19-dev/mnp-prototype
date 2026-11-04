@@ -7,7 +7,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CalendarClock, CircleAlert, Copy, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
+import { Building2, CalendarClock, CircleAlert, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
 import {
   ORGS, PEOPLE, PMAP, addMin, audToTags, failList, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Fail, type Group, type Row, type Tag as RTag,
@@ -130,17 +130,17 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 
         </div>
       </div>
-      {/* actions sit at the bottom of the panel (DS footer: destructive on the left, primary on the right) */}
-      <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-divider bg-surface px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
-        {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <Button variant="text" danger startIcon={Trash2} className="mr-auto" onClick={() => m.askDelete(r)}>{L('Delete', '刪除')}</Button> : <span className="mr-auto" />}
-        <Button variant="tertiary" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate to new message', '複製為新訊息')}</Button>
+      {/* actions sit at the bottom of the panel (DS footer: destructive on the left, primary on the right);
+          only messages that haven't gone out have any, so the others show no footer */}
+      {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-divider bg-surface px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
+        <Button variant="text" danger startIcon={Trash2} className="mr-auto" onClick={() => m.askDelete(r)}>{L('Delete', '刪除')}</Button>
         {r.status === 'scheduled' ? <Button variant="secondary" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
         {r.status === 'rejected' ? <Button variant="primary" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit and resubmit', '修改後重新送審')}</Button> : null}
         {r.status === 'expired' ? <>
           <Button variant="secondary" startIcon={CalendarClock} onClick={() => m.openReschedule(r)}>{L('Reschedule', '重新排程')}</Button>
           <Button variant="primary" startIcon={Send} onClick={() => m.askSendNow(r)}>{L('Send now', '立即傳送')}</Button>
         </> : null}
-      </div>
+      </div> : null}
       </div>
     </>
   )
