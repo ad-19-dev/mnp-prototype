@@ -19,5 +19,7 @@
 | 送審 | 需要核准的訊息送出後列為「待核准」；核准時已過排程時間就變成「排程已過期」，可立即傳送、重新排程（不需重新送審）或刪除；駁回後可修改再送審 |
 | 訊息內容 | 第二步先選「新訊息」或「使用模板」（下拉選單）；Device Notifications 和 Desktop OS 各寫各的，桌面通知限 40 字標題、120 字內文，所以不會被截斷 |
 | 預覽 | 第三步用 DS 樣式的簡單卡片預覽各通道，不畫擬真裝置 |
+| 訊息詳情 | 方案 D：「送達狀況」先看全部通道都沒收到的人數；「各通道」每個通道一列（送達數、未送達數），展開看該通道的內容和未送達的人，並標出他們是否已由其他通道收到 |
+| 列表欄位 | Sender、Channels、Title / Content、Status、Template、Reach / Audience、Created、Scheduled、Created by |
 
 執行方式與雙語版相同：`npm install --legacy-peer-deps` 後 `npm run dev`。

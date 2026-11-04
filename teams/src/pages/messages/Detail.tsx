@@ -1,7 +1,7 @@
 // Message details (side panel next to the list) and the list of receivers a message didn't reach (dialog)
 import * as React from 'react'
 import {
-  Button, DataTable, DescriptionItem, DescriptionList, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter,
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, Button, DataTable, DescriptionItem, DescriptionList, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DatePicker, FileItem, ProgressBar,
   Tag,
 } from '@qijenchen/design-system'
@@ -9,8 +9,8 @@ import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Building2, CalendarClock, CircleAlert, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
 import {
-  ORGS, PEOPLE, PMAP, addMin, audToTags, failList, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
-  type Fail, type Group, type Row, type Tag as RTag,
+  ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
+  type Channel, type Fail, type Group, type Row, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { Banner, CHN, FormField, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
@@ -48,6 +48,73 @@ const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' 
 // a titled part of the details: heading to content is tight; parts sit twice the loose gap apart (see DetailBody)
 function Part({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="flex flex-col gap-[var(--layout-space-tight)]"><H3>{title}</H3>{children}</section>
+}
+
+// what one channel sent, as text (the previews belong to the send flow)
+function ChannelText({ r, k }: { r: Row; k: Channel }) {
+  const box = 'whitespace-pre-wrap rounded-md border border-divider p-3 text-body'
+  if (k === 'sms') return <div className={box}>{r.smsText}</div>
+  if (k === 'email') {
+    const em = r.email
+    if (!em || em.mode !== 'own') return <div className={box}><strong className="font-medium">{r.title}</strong>{'\n'}{r.content}</div>
+    return (
+      <div className="flex flex-col gap-2">
+        <span className="text-body text-fg-secondary"><span className="font-medium text-foreground">{L('Subject:', '主旨：')}</span> {em.subject}</span>
+        <MailHtml html={em.html || ''} />
+        {(em.atts || []).map(a => <FileItem key={a.name} name={a.name} description={fmtSize(a.size)} onDownload={() => flash(L('Downloading', '下載中'), 'ok', a.name)} />)}
+      </div>
+    )
+  }
+  const d = k === 'desktop' && r.desk ? r.desk : r
+  return <div className={box}>{d.sender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}<strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</div>
+}
+
+// a person a channel missed, and whether another channel still reached them
+function MissRow({ f }: { f: Fail }) {
+  return (
+    <div className="flex items-start gap-2 py-2">
+      {f.ext ? <IconBox icon={Globe} /> : <PAvatar p={f.p!} />}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-body font-medium">{f.ext || f.p!.zh + ' ' + f.p!.en}</span>
+        <span className="text-caption text-fg-secondary">{tx(f.reason)}</span>
+      </span>
+      {f.via ? <span className="shrink-0 text-caption text-fg-secondary">{L('Got it by ', '已由') + CHN[f.via].short + L('', ' 收到')}</span> : <span className="shrink-0 text-caption font-medium text-error-text">{L('Not reached', '未收到')}</span>}
+    </div>
+  )
+}
+
+function ChannelRow({ m, r, k, ok, of, last }: { m: SendCtl; r: Row; k: Channel; ok: number; of: number; last: boolean }) {
+  const started = !notStarted(r), miss = started && r.status !== 'progress' ? of - ok : 0
+  const list = miss ? chFailList(r, k, miss) : [], I = CHN[k].icon
+  const line = !started ? (k === 'sms' ? L('Only for people without the app', '只送給沒裝 App 的人') : L('Not sent yet', '尚未傳送'))
+    : k === 'sms' && !of ? L('Not needed', '不需要')
+    : L(fmtN(ok) + ' / ' + fmtN(of) + ' delivered', fmtN(ok) + ' / ' + fmtN(of) + ' 已送達')
+  return (
+    <AccordionItem value={k} className={last ? 'border-b-0' : 'border-b border-divider'}>
+      <AccordionTrigger className="px-3">
+        <span className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-body font-medium">{CHN[k].name}</span>
+            <span className="text-caption text-fg-secondary">{line}{miss ? <span className="text-error-text">{L(' · ' + miss + ' missed', '・' + miss + ' 人未送達')}</span> : null}</span>
+          </span>
+          {started && of ? <span className="w-20 shrink-0"><ProgressBar aria-label={CHN[k].name} value={Math.round(ok / of * 100)} status={miss && ok === 0 ? 'error' : 'success'} /></span> : null}
+        </span>
+      </AccordionTrigger>
+      <AccordionContent className="px-3">
+        <div className="flex flex-col gap-[var(--layout-space-loose)] pb-1">
+          <ChannelText r={r} k={k} />
+          {miss ? (
+            <div className="flex flex-col gap-1">
+              <span className="text-body font-medium">{L('Not delivered (' + fmtN(miss) + ')', '未送達（' + fmtN(miss) + ' 人）')}</span>
+              <div className="flex flex-col divide-y divide-divider">{list.slice(0, 3).map((f, i) => <MissRow key={i} f={f} />)}</div>
+              {miss > 3 ? <div><Button variant="link" size="sm" onClick={() => m.set({ ns: r.id + '|' + k })}>{L('View all ' + fmtN(miss), '查看全部 ' + fmtN(miss) + ' 人')}</Button></div> : null}
+            </div>
+          ) : null}
+        </div>
+      </AccordionContent>
+    </AccordionItem>
+  )
 }
 
 export function DetailSheet({ m }: { m: SendCtl }) {
@@ -95,34 +162,16 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
               <span className="text-body"><span className="font-medium">{notStarted(r) ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'audience', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : notStarted(r) ? L(P(r.total, 'audience', ''), r.total + ' 位收件人') : L('reached', '已送達')}</span></span>
               {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
             </div>
-            <ProgressBar aria-label={L('Delivered', '已送達')} value={pct} status={r.status === 'error' ? 'error' : r.status === 'sent' ? 'success' : 'inProgress'} />
-            {done && chs.length > 1 ? (
-              <div className="mt-1 flex flex-col gap-3 border-t border-divider pt-3">
-                {m.chStats(r).map(x => (
-                  <div key={x.k} className="grid grid-cols-[auto_1fr_120px] items-center gap-3">
-                    <IconBox icon={CHN[x.k].icon} tone={x.k === 'sms' ? 'warn' : 'neutral'} />
-                    <Two a={CHN[x.k].name} b={statText(x)} strong />
-                    <ProgressBar aria-label={CHN[x.k].name} value={x.of ? Math.round(x.ok / x.of * 100) : 0} status="success" />
-                  </div>
-                ))}
-              </div>
-            ) : null}
+            {notStarted(r) ? null : <ProgressBar aria-label={L('Delivered', '已送達')} value={pct} status={r.status === 'error' ? 'error' : r.status === 'sent' ? 'success' : 'inProgress'} />}
           </div>
           </Part>
 
-          {hasN ? <Part title={L('Notification', '通知內容')}><div className="whitespace-pre-wrap rounded-md border border-divider p-3 text-body"><strong className="font-medium">{r.title}</strong>{'\n'}{r.content}</div></Part> : null}
-          {r.sms && r.smsText ? <Part title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')}><div className="rounded-md border border-divider p-3 text-body">{r.smsText}</div></Part> : null}
-          {em ? (
-            <Part title="Email">
-              {em.mode === 'own' ? (
-                <div className="flex flex-col gap-2">
-                  <span className="text-body text-fg-secondary"><span className="font-medium text-foreground">{L('Subject:', '主旨：')}</span> {em.subject}</span>
-                  <MailHtml html={em.html || ''} />
-                  {(em.atts || []).map(a => <FileItem key={a.name} name={a.name} description={fmtSize(a.size)} onDownload={() => flash(L('Downloading', '下載中'), 'ok', a.name)} />)}
-                </div>
-              ) : <p className="text-body text-fg-secondary">{L('Same as the notification.', '和通知內容相同。')}</p>}
-            </Part>
-          ) : null}
+          {/* one row per channel: its delivery on the row, open it for what it sent and who it missed */}
+          <Part title={L('By channel', '各通道')}>
+            <Accordion type="multiple" defaultValue={[chs[0]]} className="rounded-md border border-divider">
+              {m.chStats(r).map((x, i) => <ChannelRow key={x.k} m={m} r={r} k={x.k} ok={x.ok} of={x.of} last={i === chs.length - 1} />)}
+            </Accordion>
+          </Part>
 
           <Part title={L('Audiences', '收件人')}>
             <div className="flex flex-wrap gap-2">{audToTags(r.aud).map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div>
@@ -147,17 +196,35 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 }
 
 const fcol = createColumnHelper<Fail>()
-const failCols = () => [
+const failCols = (byCh?: boolean) => [
   fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 260 }, cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
   fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),
-  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 280 }, cell: i => <Two a={tx(i.row.original.reason)} b={tx(i.row.original.fallback)} /> }),
+  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: byCh ? 230 : 280 }, cell: i => <Two a={tx(i.row.original.reason)} b={tx(i.row.original.fallback)} /> }),
+  // on one channel's list: did another channel still reach them?
+  ...(byCh ? [fcol.display({ id: 'via', header: L('Other channels', '其他通道'), meta: { width: 170 }, cell: i => { const v = i.row.original.via; return v ? <span>{L('Got it by ', '已由') + CHN[v].short + L('', ' 收到')}</span> : <span className="font-medium text-error-text">{L('Not reached', '未收到')}</span> } })] : []),
 ]
 
 export function NotSentDialog({ m }: { m: SendCtl }) {
-  const app = useApp(), s = m.s, r = s.ns ? app.rows.find(x => x.id === s.ns) : null
+  // ns is a message id for the people no channel reached, or "id|channel" for the people one channel missed
+  const app = useApp(), s = m.s, [nid, nch] = (s.ns || '').split('|') as [string, Channel | undefined], r = nid ? app.rows.find(x => x.id === nid) : null
   const close = () => m.set({ ns: null })
   let body: React.ReactNode = null
-  if (r) {
+  if (r && nch) {
+    const st = m.chStats(r).find(x => x.k === nch), n = st ? st.of - st.ok : 0, list = chFailList(r, nch, n)
+    body = (
+      <>
+        <DialogHeader>
+          <div className="flex flex-col gap-0.5">
+            <DialogTitle>{L(fmtN(n) + ' of ' + fmtN(st ? st.of : 0) + ' didn’t get ' + CHN[nch].name, fmtN(n) + ' / ' + fmtN(st ? st.of : 0) + ' 人沒收到' + CHN[nch].name)}</DialogTitle>
+            <DialogDescription className="text-body text-fg-secondary">{r.title}</DialogDescription>
+          </div>
+        </DialogHeader>
+        <DialogBody>
+          <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols(true) as any} data={list} bordered height="380px" autoRowHeight getRowId={(_, i) => String(i)} />
+        </DialogBody>
+      </>
+    )
+  } else if (r) {
     const list = failList(r), counts: Record<string, number> = {}, order: string[] = []
     list.forEach(f => { if (!counts[f.reason]) { counts[f.reason] = 0; order.push(f.reason) } counts[f.reason]++ })
     body = (
@@ -184,7 +251,7 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
   }
   return (
     <Dialog open={!!r} onOpenChange={o => { if (!o) close() }}>
-      {r ? <DialogContent maxWidth={760} height="hug">{body}</DialogContent> : null}
+      {r ? <DialogContent maxWidth={nch ? 860 : 760} height="hug">{body}</DialogContent> : null}
     </Dialog>
   )
 }

@@ -107,13 +107,14 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
 
 
   const columns = React.useMemo(() => [
+    // order: Sender, Channels, Title / Content, Status, Template, Reach / Audience, Created, Scheduled, Created by
     col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => (
       <span className="flex min-w-0 flex-col">
         {/* only Device Notifications and Desktop OS carry a sender name */}
         {listSender(i.row.original) ? <Trunc text={listSender(i.row.original)} className="font-medium" /> : <span className="text-fg-muted">—</span>}
       </span>
     ) }),
-    col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
+    col.display({ id: 'ch', header: L('Channels', '通道'), enableSorting: false, meta: { width: 130 }, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
     col.accessor('title', { header: L('Title / Content', '標題 / 內容'), enableSorting: false, meta: { width: 400 }, cell: i => {
       // title (opens the details) over the first line of the text: one wide column instead of two narrow ones;
       // with several channels it shows one version, Device Notifications first, then Email, then Desktop OS
@@ -129,11 +130,10 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
         </span>
       )
     } }),
-    col.display({ id: 'ch', header: L('Channels', '通道'), enableSorting: false, meta: { width: 130 }, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
     col.accessor('status', { header: L('Status', '狀態'), enableSorting: false, meta: { width: 180 }, cell: i => <StatusTag s={i.getValue()} /> }),
-    col.accessor('created', { header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     // sorts by how many people it goes to
-    col.accessor('total', { id: 'recv', header: L('Audience / Reach', '收件人 / 送達'), meta: { width: 160 }, cell: i => {
+    col.accessor('total', { id: 'recv', header: L('Reach / Audience', '送達 / 收件人'), meta: { width: 160 }, cell: i => {
       const r = i.row.original, fails = (r.status === 'sent' || r.status === 'error') ? r.total - r.ok : 0
       return (
         <span className="flex w-full min-w-0 flex-col gap-1">
@@ -143,6 +143,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
         </span>
       )
     } }),
+    col.accessor('created', { header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     col.accessor('sched', { header: L('Scheduled', '排程時間'), meta: { width: 130 }, cell: i => { const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // the personal space holds only what you created, so Created by appears in team spaces only
     ...(app.space === 'me' ? [] : [col.accessor('creator', { header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),

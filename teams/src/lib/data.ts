@@ -53,7 +53,8 @@ export interface Row {
   review?: { by: 'icsd' | 'mgr' | 'both'; at?: string; reason?: string } | null
 }
 export interface Tag { key: string; type: 'person' | 'group' | 'org' | 'ext'; id?: string; email?: string }
-export interface Fail { p?: Person; ext?: string; reason: string; fallback: string }
+// via: on a channel's list, the other channel that still reached the person (null: none did)
+export interface Fail { p?: Person; ext?: string; reason: string; fallback: string; via?: Channel | null }
 
 const SUR = [['陳','Chen'],['林','Lin'],['黃','Huang'],['張','Chang'],['李','Lee'],['王','Wang'],['吳','Wu'],['劉','Liu'],['蔡','Tsai'],['楊','Yang'],['許','Hsu'],['鄭','Cheng'],['謝','Hsieh'],['郭','Kuo'],['洪','Hung'],['曾','Tseng'],['邱','Chiu'],['廖','Liao'],['賴','Lai'],['周','Chou']]
 const GIV = [['志豪','Jason'],['雅雯','Vivian'],['冠廷','Ethan'],['怡安','Annie'],['柏宇','Brian'],['家瑜','Joyce'],['宗佑','Leo'],['佩芸','Cindy'],['承翰','Ryan'],['思穎','Iris'],['俊傑','Allen'],['欣妤','Tina'],['彥均','Ivan'],['詩婷','Sandy'],['建志','Eric'],['郁芳','Wendy'],['品豪','Sean'],['宜庭','Peggy'],['書瑋','Kevin'],['芷萱','Yvonne'],['育誠','Owen'],['筱涵','Hannah'],['哲維','Victor'],['婉婷','Fiona']]
@@ -493,5 +494,33 @@ export function failList(r: Row): Fail[] {
     out.push({ p, reason: rs[0], fallback: rs[1] || '' })
   }
   r._f = out
+  return out
+}
+
+// Who a single channel missed: the people no channel reached come first (they missed every channel),
+// then made-up people this channel missed but another channel reached
+const CH_WHY: Record<Channel, string[]> = {
+  push: ['No registered device', 'Notifications turned off on the device', 'Device unreachable for 72+ hours'],
+  desktop: ['Desktop agent not installed', 'Desktop agent offline for 7+ days'],
+  sms: ['Number not in service', 'Carrier rejected the message', 'No phone number on file'],
+  email: ['Mailbox full (552)', 'Address not found (550)'],
+}
+const chFailCache: Record<string, Fail[]> = {}
+export function chFailList(r: Row, k: Channel, n: number): Fail[] {
+  const key = r.id + '|' + k + '|' + n
+  if (chFailCache[key]) return chFailCache[key]
+  const all = failList(r), out: Fail[] = []
+  const fits = (f: Fail) => f.ext ? (k === 'email' ? f.ext.indexOf('@') >= 0 : k === 'sms' ? f.ext.indexOf('@') < 0 : false) : true
+  all.filter(fits).forEach(f => {
+    if (out.length >= n) return
+    // the person's recorded reason when it belongs to this channel, otherwise a typical one for it
+    const sms = (f.fallback || '').replace(/^SMS fallback: /, '').replace(/^./, x => x.toUpperCase())
+    const own = k === 'sms' ? sms : f.reason, why = f.ext || CH_WHY[k].indexOf(own) >= 0 ? own : CH_WHY[k][out.length % CH_WHY[k].length]
+    out.push({ p: f.p, ext: f.ext, reason: why, fallback: '', via: null })
+  })
+  // another channel that reached the rest; SMS only goes to people Device Notifications missed
+  const other = rowChs(r).find(x => x !== k && x !== 'sms' && !(k === 'sms' && x === 'push')) || null
+  for (let i = 0; out.length < n; i++) out.push({ p: genPerson(r.id + '-' + k + '-' + i, r.fo), reason: CH_WHY[k][i % CH_WHY[k].length], fallback: '', via: other })
+  chFailCache[key] = out
   return out
 }

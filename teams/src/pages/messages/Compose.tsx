@@ -271,19 +271,18 @@ function TplChoice({ m }: { m: SendCtl }) {
   const chsOf = (t: Template): Channel[] => { const f = tplFormats(t), l: Channel[] = []; if (f.indexOf('notif') >= 0) l.push('push', 'desktop'); if (f.indexOf('email') >= 0) l.push('email'); if (f.indexOf('sms') >= 0) l.push('sms'); return l }
   const pick = (v: string) => { if (v === 'new') { setUseTpl(false); if (c.tplId) m.clearTemplate() } else setUseTpl(true) }
   return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)]">
+    // the template field sits right after its radio and stays disabled until "Use template" is picked
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <RadioGroup value={useTpl ? 'tpl' : 'new'} onValueChange={pick} aria-label={L('Start from', '內容來源')} className="flex flex-wrap gap-x-6 gap-y-2">
         <RadioGroupItem value="new" label={L('New', '新訊息')} />
         <RadioGroupItem value="tpl" label={L('Use template', '使用模板')} />
       </RadioGroup>
-      {useTpl ? (
-        <FormField id="f-tpl" label={L('Template', '模板')} hint={c.tplId ? L('Replace the [brackets] before sending.', '送出前請替換 [方括號] 的內容。') : undefined} className="max-w-md">
-          <Select id="f-tpl" searchable aria-label={L('Template', '模板')} placeholder={L('Choose a template', '選擇模板')} emptyText={L('No matching templates', '找不到符合的模板')}
-            value={c.tplId || ''} onChange={v => { const t = list.find(x => x.id === v); if (t) m.askTemplate(t) }}
-            options={list.map(t => ({ value: t.id, label: t.name, description: chsOf(t).map(k => CHN[k].short).join(' · ') }))}
-            selectedItemRenderer={o => { const t = list.find(x => x.id === o.value); return <span className="flex min-w-0 items-center gap-2"><span className="truncate">{o.label}</span>{t ? <ChIcons list={chsOf(t)} /> : null}</span> }} />
-        </FormField>
-      ) : null}
+      <div className="w-80 max-w-full">
+        <Select id="f-tpl" searchable disabled={!useTpl} aria-label={L('Template', '模板')} placeholder={L('Choose a template', '選擇模板')} emptyText={L('No matching templates', '找不到符合的模板')}
+          value={c.tplId || ''} onChange={v => { const t = list.find(x => x.id === v); if (t) m.askTemplate(t) }}
+          options={list.map(t => ({ value: t.id, label: t.name, description: chsOf(t).map(k => CHN[k].short).join(' · ') }))}
+          selectedItemRenderer={o => { const t = list.find(x => x.id === o.value); return <span className="flex min-w-0 items-center gap-2"><span className="truncate">{o.label}</span>{t ? <ChIcons list={chsOf(t)} /> : null}</span> }} />
+      </div>
     </div>
   )
 }
