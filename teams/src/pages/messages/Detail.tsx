@@ -15,6 +15,7 @@ import {
 import { flash, useApp } from '../../lib/store'
 import { Banner, CHN, FormField, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
 import { MailHtml } from '../../components/RichText'
+import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
 import { ShellAside } from '../../components/shell'
 import { listSender, type SendCtl } from './ctl'
 import { L, P, niceDT, tx } from '../../lib/i18n'
@@ -61,7 +62,7 @@ function ChannelText({ r, k }: { r: Row; k: Channel }) {
       <div className="flex flex-col gap-2">
         <span className="text-body text-fg-secondary"><span className="font-medium text-foreground">{L('Subject:', '主旨：')}</span> {em.subject}</span>
         <MailHtml html={em.html || ''} />
-        {(em.atts || []).map(a => <FileItem key={a.name} name={a.name} description={fmtSize(a.size)} onDownload={() => flash(L('Downloading', '下載中'), 'ok', a.name)} />)}
+        {(em.atts || []).map(a => <FileItem key={a.name} name={a.name} description={fmtSize(a.size)} onDownload={() => flash(L('Downloading', '下載中'), 'ok')} />)}
       </div>
     )
   }
@@ -69,23 +70,9 @@ function ChannelText({ r, k }: { r: Row; k: Channel }) {
   return <div className={box}>{d.sender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}<strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</div>
 }
 
-// a person a channel missed, and whether another channel still reached them
-function MissRow({ f }: { f: Fail }) {
-  return (
-    <div className="flex items-start gap-2 py-2">
-      {f.ext ? <IconBox icon={Globe} /> : <PAvatar p={f.p!} />}
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-body font-medium">{f.ext || f.p!.zh + ' ' + f.p!.en}</span>
-        <span className="text-caption text-fg-secondary">{tx(f.reason)}</span>
-      </span>
-      {f.via ? <span className="shrink-0 text-caption text-fg-secondary">{L('Got it by ', '已由') + CHN[f.via].short + L('', ' 收到')}</span> : <span className="shrink-0 text-caption font-medium text-error-text">{L('Not reached', '未收到')}</span>}
-    </div>
-  )
-}
-
 function ChannelRow({ m, r, k, ok, of, last }: { m: SendCtl; r: Row; k: Channel; ok: number; of: number; last: boolean }) {
   const started = !notStarted(r), miss = started && r.status !== 'progress' ? of - ok : 0
-  const list = miss ? chFailList(r, k, miss) : [], I = CHN[k].icon
+  const I = CHN[k].icon
   const line = !started ? (k === 'sms' ? L('Only for people without the app', '只送給沒裝 App 的人') : L('Not sent yet', '尚未傳送'))
     : k === 'sms' && !of ? L('Not needed', '不需要')
     : L(fmtN(ok) + ' / ' + fmtN(of) + ' delivered', fmtN(ok) + ' / ' + fmtN(of) + ' 已送達')
@@ -103,55 +90,39 @@ function ChannelRow({ m, r, k, ok, of, last }: { m: SendCtl; r: Row; k: Channel;
       <AccordionContent className="px-3">
         <div className="flex flex-col gap-[var(--layout-space-loose)] pb-1">
           <ChannelText r={r} k={k} />
-          {miss ? (
-            <div className="flex flex-col gap-1">
-              <span className="text-body font-medium">{L('Not delivered (' + fmtN(miss) + ')', '未送達（' + fmtN(miss) + ' 人）')}</span>
-              <div className="flex flex-col divide-y divide-divider">{list.slice(0, 3).map((f, i) => <MissRow key={i} f={f} />)}</div>
-              {miss > 3 ? <div><Button variant="link" size="sm" onClick={() => m.set({ ns: r.id + '|' + k })}>{L('View all ' + fmtN(miss), '查看全部 ' + fmtN(miss) + ' 人')}</Button></div> : null}
-            </div>
-          ) : null}
+          {miss ? <div><Button variant="link" size="sm" className="!h-auto !p-0" onClick={() => m.set({ ns: r.id + '|' + k })}>{L('See who didn’t get it (' + fmtN(miss) + ')', '查看未送達名單（' + fmtN(miss) + ' 人）')}</Button></div> : null}
         </div>
       </AccordionContent>
     </AccordionItem>
   )
 }
 
-// groups and orgs open to show who's in them (closed at first); single people and external contacts stay as tags
+// groups and orgs list one per row; the count opens a searchable member list (as in step 1 of the send flow).
+// Single people and external contacts stay as tags.
 function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
+  const [mem, setMem] = React.useState<MemberSet | null>(null)
   const sets = tags.filter(t => t.type === 'group' || t.type === 'org'), rest = tags.filter(t => t.type !== 'group' && t.type !== 'org')
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)]">
       {sets.length ? (
-        <Accordion type="multiple" className="rounded-md border border-divider">
-          {sets.map((t, i) => {
+        <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+          {sets.map(t => {
             const g = t.type === 'group' ? groups.find(x => x.id === t.id) : null, o = t.type === 'org' ? ORGS.find(x => x.code === t.id) : null
             const people = g ? membersFor(g).map(x => PMAP[x.pid]).filter(Boolean) : orgMembers(t.id!)
             const name = g ? g.name : o ? o.code : t.id!, sub = g ? L('Audience group', '收件群組') : o ? o.name : ''
             return (
-              <AccordionItem key={t.key} value={t.key} className={i === sets.length - 1 ? 'border-b-0' : 'border-b border-divider'}>
-                <AccordionTrigger className="px-3">
-                  <span className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                    {g ? <BookUser className="size-4 shrink-0 text-fg-secondary" aria-hidden /> : <Building2 className="size-4 shrink-0 text-fg-secondary" aria-hidden />}
-                    <span className="flex min-w-0 flex-1 flex-col"><span className="truncate text-body font-medium">{name}</span><span className="truncate text-caption text-fg-secondary">{sub}</span></span>
-                    <span className="shrink-0 text-caption text-fg-secondary tabular-nums">{P(people.length, 'person', '人', 'people')}</span>
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-3">
-                  <div className="flex max-h-[280px] flex-col divide-y divide-divider overflow-auto">
-                    {people.map(p => (
-                      <div key={p.id} className="flex items-center gap-2 py-2">
-                        <PAvatar p={p} />
-                        <span className="flex min-w-0 flex-col"><span className="truncate text-body">{p.zh + ' ' + p.en}</span><span className="truncate text-caption text-fg-secondary">{p.emp + ' · ' + p.org}</span></span>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+              <div key={t.key} className="flex items-center gap-3 px-3 py-3">
+                {g ? <BookUser className="size-4 shrink-0 text-fg-secondary" aria-hidden /> : <Building2 className="size-4 shrink-0 text-fg-secondary" aria-hidden />}
+                <span className="flex min-w-0 flex-1 flex-col"><span className="truncate text-body font-medium">{name}</span><span className="truncate text-caption text-fg-secondary">{sub}</span></span>
+                <Button variant="link" size="sm" className="!h-auto shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
+                  onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people })}>{P(people.length, 'person', '人', 'people')}</Button>
+              </div>
             )
           })}
-        </Accordion>
+        </div>
       ) : null}
       {rest.length ? <div className="flex flex-wrap gap-2">{rest.map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div> : null}
+      <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
   )
 }
@@ -253,7 +224,7 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
       <>
         <DialogHeader>
           <div className="flex flex-col gap-0.5">
-            <DialogTitle>{L(fmtN(n) + ' of ' + fmtN(st ? st.of : 0) + ' didn’t get ' + CHN[nch].name, fmtN(n) + ' / ' + fmtN(st ? st.of : 0) + ' 人沒收到' + CHN[nch].name)}</DialogTitle>
+            <DialogTitle>{L(fmtN(n) + ' of ' + fmtN(st ? st.of : 0) + ' didn’t get ' + CHN[nch].name, fmtN(n) + ' / ' + fmtN(st ? st.of : 0) + ' 人沒收到 ' + CHN[nch].name)}</DialogTitle>
           </div>
         </DialogHeader>
         <DialogBody>

@@ -84,7 +84,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const r = app().rows.find(x => x.id === id)!
       set({ ns: null, det: null })
       patchRow(id, { status: 'progress', ok: 0, err: null, fresh: Date.now() })
-      flash(L('Retrying', '重新傳送中'), 'ok', r.title)
+      flash(L('Retrying', '重新傳送中'), 'ok')
       setTimeout(() => patchRow(id, { ok: Math.round(r.total * 0.6) }), 1300)
       setTimeout(() => patchRow(id, { status: 'sent', ok: r.total }), 2800)
     },
@@ -96,7 +96,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const r = app().rows.find(x => x.id === id)!
       setApp(s => ({ rows: s.rows.filter(x => x.id !== id) }))
       set({ cf: null, det: null })
-      flash(L('Message deleted', '已刪除訊息'), 'ok', r.title)
+      flash(L('Message deleted', '已刪除訊息'), 'ok')
     },
     // expired: approved too late for its schedule. Send it now, ignoring the old time
     askSendNow(r: Row) {
@@ -106,7 +106,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const r = app().rows.find(x => x.id === id)!
       set({ cf: null })
       patchRow(id, { status: 'progress', sched: null, ok: 0, fresh: Date.now() })
-      flash(L('Sending to ', '傳送給 ') + P(r.total, 'audience', '位收件人'), 'ok', r.title)
+      flash(L('Sending to ', '傳送給 ') + P(r.total, 'audience', '位收件人'), 'ok')
       setTimeout(() => patchRow(id, { ok: Math.round(r.total * 0.6) }), 1300)
       setTimeout(() => patchRow(id, { status: 'sent', ok: r.total }), 2800)
     },
@@ -125,7 +125,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const d = fromIso(rs.at)!
       patchRow(rs.id, { status: 'scheduled', sched: fmtDT(d), fresh: Date.now() })
       set({ rs: null })
-      flash(L('Rescheduled for ', '已改為 ') + niceDT(d), 'ok', L('No new approval needed.', '不需要重新送審。'))
+      flash(L('Rescheduled for ', '已改為 ') + niceDT(d), 'ok')
     },
     // delivery per channel; SMS counts the people the device notification missed
     chStats(r: Row) {
@@ -293,7 +293,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const sub = own ? t.email.subject || '' : (t.title || ''), body = own ? t.email.html || '' : textToHtml(t.content)
       m.setC({ tplId: t.id, sender: t.sender || c.sender, title: t.title || '', content: t.content || '', dSender: t.sender || c.dSender, dTitle: t.title || '', dContent: t.content || '', smsText: t.sms || '', emailMode: own ? 'own' : 'same', ...seedEmail(c, sub, body) })
       set({ tp: null, cf: null })
-      if (!quiet) flash(L('Template applied', '已套用模板'), 'ok', L('Fill in the [brackets] before sending.', '送出前記得替換 [方括號] 的內容。'))
+      if (!quiet) flash(L('Template applied', '已套用模板'), 'ok')
     },
     clearTemplate() { m.setC({ tplId: null }); flash(L('Template removed. Your text stays.', '已取消模板，內容保留。')) },
 
@@ -354,7 +354,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', ft: createEmptyFilterTree('flat') })
       scrollTop()
       if (schedD) { flash(L('Scheduled for ', '已排程：') + niceDT(schedD)); return }
-      flash(L('Sending to ', '傳送給 ') + P(rc.total, 'audience', '位收件人'), 'ok', chText(rowChs(base as Row)))
+      flash(L('Sending to ', '傳送給 ') + P(rc.total, 'audience', '位收件人'), 'ok')
       const byCh: Partial<Record<Channel, [number, number]>> = {}
       if (c.ch.push) byCh.push = [rc.push, rc.people]
       if (c.ch.sms) byCh.sms = [rc.sms, rc.extP + (c.ch.push ? rc.noDev : 0)]
@@ -369,7 +369,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.ch.push) where.push(L('your phone', '你的手機'))
       if (c.ch.desktop) where.push(L('your PC', '你的電腦'))
       if (c.ch.email) where.push('gywu@' + DOMAIN)
-      flash(L('Test sent', '已寄出測試'), 'ok', L('To ', '寄到') + joinL(where) + (smsOn(c) ? L('. SMS isn’t included.', '（不含 SMS）') : ''))
+      flash(L('Test sent', '已寄出測試'), 'ok')
     },
     openSaveTpl() {
       if (msgErr(m.errs())) { m.setC({ tried: { ...get().c.tried, 2: true } }, true); flash(L('Finish the message first', '請先完成訊息內容'), 'err'); return }
@@ -383,7 +383,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       setApp({ templates: [t].concat(templates) })
       set({ stpl: null })
       m.setC({ tplId: t.id }, true)
-      flash(L('Template saved', '已存成模板'), 'ok', name)
+      flash(L('Template saved', '已存成模板'), 'ok')
     },
     saveGroup() {
       const s = get(), sg = s.sg!, name = sg.name.trim(), groups = app().groups
@@ -392,7 +392,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const g = { id: 'gs' + (++seq), team: s.c.team, name, desc: sg.desc.trim(), count: members.length, updated: fmtDT(new Date()), creator: ME, role: 'Owner' as const, members, collabs: [{ pid: ME, role: 'Owner' }], fresh: Date.now() }
       setApp({ groups: [g as Group].concat(groups) })
       set({ sg: null })
-      flash(L('Group saved', '已存成群組'), 'ok', name + ' · ' + P(g.count, 'member', '人'))
+      flash(L('Group saved', '已存成群組'), 'ok')
     },
     askRemoveAll() {
       set({ cf: { title: L('Remove all audiences?', '移除所有收件人？'), text: L('Channels and text stay the same.', '通道和內容不受影響。'), icon: Trash2, tone: 'warn', cancel: L('Keep', '保留'), ok: L('Remove all', '全部移除'), danger: true, run: () => { m.setC({ receivers: [], pick: {} }); set({ cf: null }) } } })

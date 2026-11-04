@@ -63,8 +63,9 @@ export function go(page: Page) {
 }
 
 // Toasts go through the DS Toaster: a short title, with any detail as the description
-export function flash(title: string, kind: 'ok' | 'err' = 'ok', description?: string) {
-  toast({ variant: kind === 'err' ? 'error' : 'success', title, description })
+// toasts are one short line: they close by themselves after 4 seconds, so there's no time for a second line
+export function flash(title: string, kind: 'ok' | 'err' = 'ok') {
+  toast({ variant: kind === 'err' ? 'error' : 'success', title })
 }
 
 // follow #send / #groups / #templates when the address changes

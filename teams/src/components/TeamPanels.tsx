@@ -71,14 +71,14 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
     if (!nm || name.length > 50 || desc.length > 200 || dup) { setTried(true); return }
     if (team) {
       setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, name: nm, desc: desc.trim(), members: pids.map(pid => ({ pid })) } : t) }))
-      onClose(); flash(L('Team updated', '已更新團隊'), 'ok', nm + ' · ' + P(pids.length, 'member', '人'))
+      onClose(); flash(L('Team updated', '已更新團隊'), 'ok')
       return
     }
     const id = 'tn' + Date.now().toString(36)
     const t: Team = { id, name: nm, desc: desc.trim(), created: new Date().toISOString().slice(0, 10).replace(/-/g, '/'), members: pids.map(pid => ({ pid })) }
     setApp(a => ({ teams: a.teams.concat([t]), space: id }))
     go('send'); onClose()
-    flash(L('Team created', '已建立團隊'), 'ok', nm + ' · ' + P(pids.length, 'member', '人'))
+    flash(L('Team created', '已建立團隊'), 'ok')
   }
   const askLeave = () => {
     if (!team) return
@@ -96,7 +96,7 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
           ? { teams: s.teams.filter(t => t.id !== team.id), rows: s.rows.filter(r => r.team !== team.id), groups: s.groups.filter(g => g.team !== team.id), templates: s.templates.filter(t => t.team !== team.id), space: 'me' }
           : { teams: s.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t), space: 'me' })
         setCf(null); onClose()
-        flash(last ? L('Team deleted', '已刪除團隊') : L('You left ' + team.name, '已離開「' + team.name + '」'), 'ok', last ? team.name : undefined)
+        flash(last ? L('Team deleted', '已刪除團隊') : L('You left ' + team.name, '已離開「' + team.name + '」'), 'ok')
       },
     })
   }

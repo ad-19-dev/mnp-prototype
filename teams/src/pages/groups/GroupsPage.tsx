@@ -66,7 +66,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
       const g = getApp().groups.find(x => x.id === id)
       setApp(s => ({ groups: s.groups.filter(x => x.id !== id) }))
       set({ cf: null, view: 'list', ed: null })
-      flash(L('Group deleted', '已刪除群組'), 'ok', g ? g.name : '')
+      flash(L('Group deleted', '已刪除群組'), 'ok')
       scrollTop()
     },
     backFromEd() {
@@ -143,7 +143,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
       if (ed.id) setApp(a => ({ groups: a.groups.map(g => g.id === ed.id ? { ...g, ...patch } : g) }))
       else setApp(a => ({ groups: [{ id: 'gn' + (++seq), creator: ME, ...patch } as Group].concat(a.groups) }))
       set({ view: 'list', ed: null })
-      flash(ed.id ? L('Changes saved', '已儲存變更') : L('Group created', '已建立群組'), 'ok', name + ' · ' + P(patch.count, 'member', '人'))
+      flash(ed.id ? L('Changes saved', '已儲存變更') : L('Group created', '已建立群組'), 'ok')
       scrollTop()
     },
   }

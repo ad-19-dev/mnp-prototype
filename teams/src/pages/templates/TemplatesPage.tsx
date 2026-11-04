@@ -66,7 +66,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
       set({ cf: { title: L('Delete “' + t.name + '”?', '刪除「' + t.name + '」？'), text: L('No one can use it anymore. Messages already sent aren’t affected.', '刪除後大家都不能再用，已送出的訊息不受影響。'), icon: Trash2, tone: 'err', cancel: L('Keep', '保留'), ok: L('Delete', '刪除'), danger: true, run: () => {
         setApp(a => ({ templates: a.templates.filter(x => x.id !== t.id) }))
         set({ cf: null, view: 'list', ed: null })
-        flash(L('Template deleted', '已刪除模板'), 'ok', t.name)
+        flash(L('Template deleted', '已刪除模板'), 'ok')
         scrollTop()
       } } })
     },
@@ -99,7 +99,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
       if (ed.id) setApp(a => ({ templates: a.templates.map(t => t.id === ed.id ? { ...t, ...patch } : t) }))
       else setApp(a => ({ templates: [{ id: 'tt' + (++seq), owner: ME, ...patch } as Template].concat(a.templates) }))
       set({ view: 'list', ed: null, q: '' })
-      flash(ed.id ? L('Changes saved', '已儲存變更') : L('Template created', '已建立模板'), 'ok', patch.name)
+      flash(ed.id ? L('Changes saved', '已儲存變更') : L('Template created', '已建立模板'), 'ok')
       scrollTop()
     },
     setEmailMode(mode: 'same' | 'own') {
