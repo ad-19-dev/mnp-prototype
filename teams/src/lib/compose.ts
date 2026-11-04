@@ -17,7 +17,9 @@ export interface Compose {
   tplId: string | null
   // who the message belongs to: a team (all its members see it) or null for personal
   team: string | null
+  // Device Notifications text, and Desktop OS's own (kept short so the pop-up shows it all)
   sender: string; title: string; content: string; smsText: string
+  dSender: string; dTitle: string; dContent: string
   emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
   atts: Att[]; attErr: string
   sendMode: 'now' | 'schedule'; schedAt: string
@@ -35,7 +37,7 @@ export function blankCompose(): Compose {
     mode: 'new', editId: null, step: 1, maxStep: 1,
     receivers: [], pick: {},
     ch: { push: false, desktop: false, email: false, sms: false },
-    tplId: null, team: null, sender: '', title: '', content: '', smsText: '',
+    tplId: null, team: null, sender: '', title: '', content: '', smsText: '', dSender: '', dTitle: '', dContent: '',
     emailMode: 'same', subject: '', html: '', bodyText: '', htmlKey: 0, atts: [], attErr: '',
     sendMode: 'now', schedAt: '', urgent: false, urgentReason: '', tried: {}, dirty: false, result: null,
   }
@@ -97,7 +99,7 @@ export function multiPeople(c: Compose) { return smsOn(c) ? peopleTags(c).filter
 export function unresolved(c: Compose) { return multiPeople(c).filter(p => !c.pick['p:' + p.id]) }
 export function noNumber(c: Compose) { return smsOn(c) ? peopleTags(c).filter(p => !p.co && !p.pp) : [] }
 
-export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent', string>>
+export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'dsender' | 'dtitle' | 'dcontent' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent', string>>
 export function errs(c: Compose, groups: Group[]): Errs {
   const e: Errs = {}, lim = LIM.push, total = recvFlat(c, groups)
   const totalN = total.people.length + total.ext.length
@@ -111,13 +113,20 @@ export function errs(c: Compose, groups: Group[]): Errs {
   if (extP && !c.ch.sms) e.extp = L(P(extP, 'external phone', '', 'external phones') + ' can only get SMS. Turn on SMS fallback or remove ' + (extP === 1 ? 'it' : 'them') + '.', extP + ' 支外部電話只能收 SMS。請開啟 SMS 備援，或移除它們。')
   // 2. Message
   // a sender name is required on Device Notifications, optional on Desktop OS, and Email has none
-  if (c.ch.push && !c.sender.trim()) e.sender = L('Enter a sender name.', '請輸入寄件人名稱。')
-  else if ((c.ch.push || c.ch.desktop) && c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
-  if (hasNotif(c)) {
+  if (c.ch.push) {
+    if (!c.sender.trim()) e.sender = L('Enter a sender name.', '請輸入寄件人名稱。')
+    else if (c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
     if (!c.title.trim()) e.title = L('Enter a title.', '請輸入標題。')
     else if (c.title.length > LIM.title) e.title = tooLong(LIM.title)
     if (!c.content.trim()) e.content = L('Enter the text.', '請輸入內文。')
     else if (c.content.length > lim) e.content = tooLong(lim)
+  }
+  if (c.ch.desktop) {
+    if (c.dSender.length > LIM.sender) e.dsender = tooLong(LIM.sender)
+    if (!c.dTitle.trim()) e.dtitle = L('Enter a title.', '請輸入標題。')
+    else if (c.dTitle.length > LIM.dTitle) e.dtitle = tooLong(LIM.dTitle)
+    if (!c.dContent.trim()) e.dcontent = L('Enter the text.', '請輸入內文。')
+    else if (c.dContent.length > LIM.desktop) e.dcontent = tooLong(LIM.desktop)
   }
   if (smsOn(c)) {
     if (!c.smsText.trim()) e.sms = L('Enter the SMS text.', '請輸入 SMS 內容。')
@@ -145,10 +154,10 @@ export function errs(c: Compose, groups: Group[]): Errs {
 }
 export function stepOk(n: number, e: Errs) {
   if (n === 1) return !e.recv && !e.ch && !e.ext && !e.extp && !e.urgent
-  if (n === 2) return !e.sender && !e.title && !e.content && !e.sms && !e.subject && !e.body
+  if (n === 2) return !e.sender && !e.title && !e.content && !e.dsender && !e.dtitle && !e.dcontent && !e.sms && !e.subject && !e.body
   return !e.sched
 }
-export const msgErr = (e: Errs) => e.sender || e.title || e.content || e.sms || e.subject || e.body
+export const msgErr = (e: Errs) => e.sender || e.title || e.content || e.dsender || e.dtitle || e.dcontent || e.sms || e.subject || e.body
 
 // which parts of the message a template fills, given the channels picked
 export function tplFit(c: Compose, t: Template) {

@@ -153,7 +153,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
         c.sender = r.sender
         c.tplId = r.tpl || null
         c.smsText = r.smsText || ''
-        if (c.ch.push || c.ch.desktop) { c.title = r.title; c.content = r.content }
+        if (c.ch.push) { c.title = r.title; c.content = r.content }
+        if (c.ch.desktop) { const d = r.desk || (c.ch.push ? null : r); c.dSender = d ? d.sender : r.sender; c.dTitle = d ? d.title : r.title; c.dContent = d ? d.content : r.content }
         if (r.email && r.email.mode === 'own') {
           c.emailMode = 'own'
           c.subject = r.email.subject || ''
@@ -283,14 +284,14 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
 
     // ---------- templates ----------
     askTemplate(t: Template) {
-      const c = get().c, has = (c.title + c.content + c.smsText + c.subject + c.bodyText).trim()
+      const c = get().c, has = (c.title + c.content + c.dTitle + c.dContent + c.smsText + c.subject + c.bodyText).trim()
       if (!has || c.tplId === t.id) { m.applyTemplate(t); return }
       set({ tp: null, cf: { title: L('Replace your text?', '要取代目前的內容嗎？'), text: L('“' + t.name + '” will replace what you’ve written. Audiences and channels stay the same.', '「' + t.name + '」會取代你寫的內容，收件人和通道不變。'), icon: LayoutTemplate, tone: 'warn', cancel: L('Keep mine', '保留我的'), ok: L('Replace', '取代'), run: () => m.applyTemplate(t) } })
     },
     applyTemplate(t: Template, quiet?: boolean) {
       const c = get().c, own = tplHasEmail(t)
       const sub = own ? t.email.subject || '' : (t.title || ''), body = own ? t.email.html || '' : textToHtml(t.content)
-      m.setC({ tplId: t.id, sender: t.sender || c.sender, title: t.title || '', content: t.content || '', smsText: t.sms || '', emailMode: own ? 'own' : 'same', ...seedEmail(c, sub, body) })
+      m.setC({ tplId: t.id, sender: t.sender || c.sender, title: t.title || '', content: t.content || '', dSender: t.sender || c.dSender, dTitle: t.title || '', dContent: t.content || '', smsText: t.sms || '', emailMode: own ? 'own' : 'same', ...seedEmail(c, sub, body) })
       set({ tp: null, cf: null })
       if (!quiet) flash(L('Template applied', '已套用模板'), 'ok', L('Fill in the [brackets] before sending.', '送出前記得替換 [方括號] 的內容。'))
     },
@@ -337,7 +338,9 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.ch.desktop) why.push('no desktop agent')
       const reason = why.length ? why.join(' and ').replace(/^./, x => x.toUpperCase()) : 'Not delivered' // stored in English; shown through tx()
       const base: Partial<Row> = {
-        sender: c.ch.push || c.ch.desktop ? c.sender.trim() : '', tpl: c.tplId, team: c.team, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
+        sender: c.ch.push ? c.sender.trim() : c.ch.desktop ? c.dSender.trim() : '', tpl: c.tplId, team: c.team,
+        title: c.ch.push ? c.title.trim() : c.ch.desktop ? c.dTitle.trim() : (em as any).subject, content: c.ch.push ? c.content.trim() : c.ch.desktop ? c.dContent.trim() : htmlToText((em as any).html),
+        desk: c.ch.push && c.ch.desktop ? { sender: c.dSender.trim(), title: c.dTitle.trim(), content: c.dContent.trim() } : null,
         smsText: smsOn(c) ? c.smsText.trim() : '', channels, sms: smsOn(c), email: em,
         bypass: smsOn(c) && c.urgent ? { by: ME, at: fmtDT(now), reason: c.urgentReason.trim() } : null,
         total: rc.total, ok: 0, aud: tagsToAud(c.receivers), fresh: Date.now(), _f: null, err: null, byCh: null,
@@ -376,7 +379,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const s = get(), st = s.stpl!, name = st.name.trim(), c = s.c, templates = app().templates
       if (!name || name.length > LIM.name || templates.some(t => tplInSpace(t) && t.name.toLowerCase() === name.toLowerCase())) { set({ stpl: { ...st, tried: true } }); return }
       const hasN = hasNotif(c), em = m.emailOut()
-      const t: Template = { id: 'tn' + (++seq), team: c.team, name, sender: c.sender.trim(), title: hasN ? c.title.trim() : '', content: hasN ? c.content.trim() : '', sms: smsOn(c) ? c.smsText.trim() : '', email: em && em.mode === 'own' ? { mode: 'own', subject: em.subject, html: em.html } : { mode: 'same' }, shared: [], updated: fmtDT(new Date()).slice(0, 10), owner: ME, fresh: Date.now() }
+      const t: Template = { id: 'tn' + (++seq), team: c.team, name, sender: (c.ch.push ? c.sender : c.dSender).trim(), title: hasN ? (c.ch.push ? c.title : c.dTitle).trim() : '', content: hasN ? (c.ch.push ? c.content : c.dContent).trim() : '', sms: smsOn(c) ? c.smsText.trim() : '', email: em && em.mode === 'own' ? { mode: 'own', subject: em.subject, html: em.html } : { mode: 'same' }, shared: [], updated: fmtDT(new Date()).slice(0, 10), owner: ME, fresh: Date.now() }
       setApp({ templates: [t].concat(templates) })
       set({ stpl: null })
       m.setC({ tplId: t.id }, true)

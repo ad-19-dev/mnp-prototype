@@ -5,7 +5,7 @@ import {
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
-import { groupInSpace, spaceName } from '../../lib/teams'
+import { groupInSpace, spaceName, tplInSpace } from '../../lib/teams'
 import { scopeLabel } from './ctl'
 import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -14,7 +14,7 @@ import {
   CircleCheck, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
-  pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
+  pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Template, type Tag as RTag,
   ME,
 } from '../../lib/data'
 import {
@@ -23,7 +23,7 @@ import {
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
-import { Banner, CHN, ErrText, FmtChips, FormField, IconBox, KV, Meter, PAvatar, Section, Two } from '../../components/ui'
+import { Banner, CHN, ChIcons, ErrText, FmtChips, FormField, IconBox, KV, Meter, PAvatar, Section, Two } from '../../components/ui'
 import { RecvInput, riKey } from '../../components/RecvInput'
 import { RichText } from '../../components/RichText'
 import { ChannelPreview, type PreviewChannel } from '../../components/ChannelPreview'
@@ -181,7 +181,6 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const multi = multiPeople(c), unres = unresolved(c), noNum = noNumber(c), anyCh = c.ch.push || c.ch.desktop || c.ch.email
   return (
     <>
-      {tpl ? <Banner tone="info" action={<FmtChips list={tplFormats(tpl)} />}>{L('Using template: ', '使用模板：') + tpl.name}</Banner> : null}
       <Section title={L('Audiences', '收件人')} sub={L('Up to ' + CAP + ' people. Add contractors by phone or email.', '最多 ' + CAP + ' 人。外包人員可用電話或 Email 加入。')}
         actions={<span className={cn('shrink-0 text-body tabular-nums', total > CAP ? 'font-medium text-error-text' : 'text-fg-secondary')} aria-label={L('Audience count', '收件人數')}>{fmtN(total)} / {fmtN(CAP)}</span>}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
@@ -252,14 +251,39 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 }
 
 // ---------- step 2 ----------
-function FormatBlock({ icon, title, uses, children, tone }: { icon: typeof Mail; title: string; uses?: React.ReactNode; children: React.ReactNode; tone?: 'warn' }) {
+function FormatBlock({ title, uses, children }: { title: string; uses?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex items-center gap-2 text-body font-semibold"><IconBox icon={icon} tone={tone || 'info'} />{title}</span>
+        <span className="text-body font-semibold">{title}</span>
         {uses ? <span className="flex flex-wrap items-center gap-1.5">{uses}</span> : null}
       </div>
       {children}
+    </div>
+  )
+}
+
+// New or from a template: the template is picked from a list of this space's templates
+function TplChoice({ m }: { m: SendCtl }) {
+  const app = useApp(), c = m.s.c
+  const [useTpl, setUseTpl] = React.useState(!!c.tplId)
+  const list = app.templates.filter(t => tplInSpace(t))
+  const chsOf = (t: Template): Channel[] => { const f = tplFormats(t), l: Channel[] = []; if (f.indexOf('notif') >= 0) l.push('push', 'desktop'); if (f.indexOf('email') >= 0) l.push('email'); if (f.indexOf('sms') >= 0) l.push('sms'); return l }
+  const pick = (v: string) => { if (v === 'new') { setUseTpl(false); if (c.tplId) m.clearTemplate() } else setUseTpl(true) }
+  return (
+    <div className="flex flex-col gap-[var(--layout-space-tight)]">
+      <RadioGroup value={useTpl ? 'tpl' : 'new'} onValueChange={pick} aria-label={L('Start from', '內容來源')} className="flex flex-wrap gap-x-6 gap-y-2">
+        <RadioGroupItem value="new" label={L('New', '新訊息')} />
+        <RadioGroupItem value="tpl" label={L('Use template', '使用模板')} />
+      </RadioGroup>
+      {useTpl ? (
+        <FormField id="f-tpl" label={L('Template', '模板')} hint={c.tplId ? L('Replace the [brackets] before sending.', '送出前請替換 [方括號] 的內容。') : undefined} className="max-w-md">
+          <Select id="f-tpl" searchable aria-label={L('Template', '模板')} placeholder={L('Choose a template', '選擇模板')} emptyText={L('No matching templates', '找不到符合的模板')}
+            value={c.tplId || ''} onChange={v => { const t = list.find(x => x.id === v); if (t) m.askTemplate(t) }}
+            options={list.map(t => ({ value: t.id, label: t.name, description: chsOf(t).map(k => CHN[k].short).join(' · ') }))}
+            selectedItemRenderer={o => { const t = list.find(x => x.id === o.value); return <span className="flex min-w-0 items-center gap-2"><span className="truncate">{o.label}</span>{t ? <ChIcons list={chsOf(t)} /> : null}</span> }} />
+        </FormField>
+      ) : null}
     </div>
   )
 }
@@ -268,71 +292,66 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, tried = c.tried || {}, hasN = hasNotif(c), lim = LIM.push, tpl = c.tplId ? m.tplById(c.tplId) : null
   const show = (k: keyof Errs, v: string, n: number) => (e[k] && (tried[2] || (v && v.length > n))) ? e[k]! : ''
   const eSender = show('sender', c.sender, LIM.sender), eTitle = show('title', c.title, LIM.title), eContent = show('content', c.content, lim), eSms = show('sms', c.smsText, LIM.sms)
-  const contentHint = c.ch.desktop ? L('Desktop shows about 120 characters. Put the action first.', '桌面通知只顯示約 60 個中文字，重點放前面。') : L('Lock screens show about 4 lines.', '鎖定畫面約顯示 4 行。')
-  const deskTitle = c.ch.desktop && vwidth(c.title) > DESK.title, deskText = c.ch.desktop && vwidth(c.content) > DESK.text
-  const cutNote = (label: string, s: string, w: number) => <Banner tone="warning" title={L('Desktop will cut the ' + label + ' short', '桌面通知會截斷' + label)}>{L('People see “…' + cutAt(s, w).slice(-18) + '” and click to read the rest.', '使用者只看得到「…' + cutAt(s, w).slice(-18) + '」，要點開才看得到全文。')}</Banner>
+  const edSender = show('dsender', c.dSender, LIM.sender), edTitle = show('dtitle', c.dTitle, LIM.dTitle), edContent = show('dcontent', c.dContent, LIM.desktop)
   const rc = m.reach()
   const smsWho = L('For people without the app' + (rc.extP ? ' and external phones' : ''), '給沒裝 App 的人' + (rc.extP ? '和外部電話' : ''))
+  const noNotif = tpl && hasN && !tplHasNotif(tpl) ? <Banner tone="neutral">{L('This template has no notification text.', '這個模板沒有通知內容。')}</Banner> : null
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-3">
-        <IconBox icon={LayoutTemplate} tone="info" />
-        <span className="flex min-w-0 flex-1 flex-col">
-          {tpl ? <><span className="text-body font-medium">{L('Template: ', '模板：') + tpl.name}</span><span className="text-caption text-fg-secondary">{L('Replace the [brackets] before sending.', '送出前請替換 [方括號] 的內容。')}</span></>
-            : <span className="text-body font-medium">{L('Start from a template?', '要從模板開始嗎？')}</span>}
-        </span>
-        <span className="flex gap-2">
-          {tpl ? <><Button size="sm" variant="secondary" onClick={() => m.set({ tp: { q: '' } })}>{L('Change', '更換')}</Button><Button size="sm" variant="text" onClick={() => m.clearTemplate()}>{L('Remove', '不使用')}</Button></>
-            : <Button variant="secondary" startIcon={LayoutTemplate} onClick={() => m.set({ tp: { q: '' } })}>{L('Choose template', '選擇模板')}</Button>}
-        </span>
+    <Section title={L('Message', '訊息內容')}>
+      <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)]">
+        <TplChoice m={m} />
+        {c.ch.push ? (
+          <FormatBlock title={CHN.push.name}>
+            {noNotif}
+            <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} error={eSender}>
+              <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
+            </FormField>
+            <FormField id="f-title" label={L('Title', '標題')} required count={c.title.length + ' / ' + LIM.title} over={c.title.length > LIM.title} error={eTitle}>
+              <Input id="f-title" value={c.title} error={!!eTitle} onChange={ev => m.setC({ title: ev.target.value })} placeholder={L('One line people can act on', '一句話說清楚重點')} />
+            </FormField>
+            <FormField id="f-content" label={L('Text', '內文')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} hint={L('Lock screens show about 4 lines.', '鎖定畫面約顯示 4 行。')} error={eContent}>
+              <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
+            </FormField>
+          </FormatBlock>
+        ) : null}
+        {smsOn(c) ? (
+          <FormatBlock title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} uses={<Tag size="sm" unbounded>{smsWho}</Tag>}>
+            <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
+              <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} placeholder={L('Short version', '簡短版本')} />
+            </FormField>
+          </FormatBlock>
+        ) : null}
+        {c.ch.desktop ? (
+          <FormatBlock title={CHN.desktop.name}>
+            {c.ch.push ? null : noNotif}
+            <FormField id="f-dsender" label={L('Sender', '寄件人')} count={c.dSender.length + ' / ' + LIM.sender} over={c.dSender.length > LIM.sender} hint={L('Optional', '選填')} error={edSender}>
+              <Input id="f-dsender" value={c.dSender} error={!!edSender} onChange={ev => m.setC({ dSender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
+            </FormField>
+            <FormField id="f-dtitle" label={L('Title', '標題')} required count={c.dTitle.length + ' / ' + LIM.dTitle} over={c.dTitle.length > LIM.dTitle} error={edTitle}>
+              <Input id="f-dtitle" value={c.dTitle} error={!!edTitle} onChange={ev => m.setC({ dTitle: ev.target.value })} placeholder={L('One line people can act on', '一句話說清楚重點')} />
+            </FormField>
+            <FormField id="f-dcontent" label={L('Text', '內文')} required count={fmtN(c.dContent.length) + ' / ' + LIM.desktop} over={c.dContent.length > LIM.desktop} hint={L('Put the action first.', '重點放前面。')} error={edContent}>
+              <Textarea id="f-dcontent" rows={3} value={c.dContent} error={!!edContent} onChange={ev => m.setC({ dContent: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
+            </FormField>
+          </FormatBlock>
+        ) : null}
+        {c.ch.email ? <EmailBlock m={m} e={e} show={show} /> : null}
       </div>
-      <Section title={L('Message', '訊息內容')}>
-        <div className="flex flex-col gap-[var(--layout-space-loose)]">
-          {hasN ? (
-            <FormatBlock icon={MessageSquareText} title={L('Notification', '通知')} uses={<>{c.ch.push ? <Tag size="sm" icon={Smartphone}>{CHN.push.name}</Tag> : null}{c.ch.desktop ? <Tag size="sm" icon={Monitor}>{CHN.desktop.name}</Tag> : null}</>}>
-              {tpl && !tplHasNotif(tpl) ? <Banner tone="neutral">{L('This template has no notification text.', '這個模板沒有通知內容。')}</Banner> : null}
-              {c.ch.push || c.ch.desktop ? (
-                <FormField id="f-sender" label={L('Sender', '寄件人')} required={c.ch.push} count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={c.ch.push ? L('Shown on Device Notifications and Desktop OS.', '顯示在 Device Notifications 和桌面通知。') : L('Optional. Shown on Desktop OS.', '選填，顯示在桌面通知。')} error={eSender}>
-                  <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
-                </FormField>
-              ) : null}
-              <FormField id="f-title" label={L('Title', '標題')} required count={c.title.length + ' / ' + LIM.title} over={c.title.length > LIM.title} error={eTitle}>
-                <Input id="f-title" value={c.title} error={!!eTitle} onChange={ev => m.setC({ title: ev.target.value })} placeholder={L('One line people can act on', '一句話說清楚重點')} />
-              </FormField>
-              {deskTitle ? cutNote(L('title', '標題'), c.title, DESK.title) : null}
-              <FormField id="f-content" label={L('Text', '內文')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} hint={contentHint} error={eContent}>
-                <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
-              </FormField>
-              {deskText ? cutNote(L('text', '內文'), c.content, DESK.text) : null}
-            </FormatBlock>
-          ) : null}
-          {smsOn(c) ? (
-            <FormatBlock icon={MessageSquareText} tone="warn" title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} uses={<Tag size="sm" unbounded>{smsWho}</Tag>}>
-              <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
-                <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} placeholder={L('Short version', '簡短版本')} />
-              </FormField>
-              {hasN ? <div><Button variant="link" size="sm" onClick={() => m.copySms()}>{L('Copy from notification', '從通知複製')}</Button></div> : null}
-            </FormatBlock>
-          ) : null}
-          {c.ch.email ? <EmailBlock m={m} e={e} show={show} /> : null}
-        </div>
-      </Section>
-    </>
+    </Section>
   )
 }
 
 function EmailBlock({ m, e, show }: { m: SendCtl; e: Errs; show: (k: keyof Errs, v: string, n: number) => string }) {
-  const c = m.s.c, hasN = hasNotif(c)
+  const c = m.s.c
   const eSub = show('subject', c.subject, LIM.subject), bodyN = c.bodyText.trim().length, eBody = show('body', c.bodyText.trim(), LIM.body)
   return (
-    <FormatBlock icon={Mail} title="Email">
+    <FormatBlock title="Email">
       <FormField id="f-subject" label={L('Subject', '主旨')} required count={c.subject.length + ' / ' + LIM.subject} over={c.subject.length > LIM.subject} error={eSub}>
         <Input id="f-subject" value={c.subject} error={!!eSub} onChange={ev => m.setC({ subject: ev.target.value })} placeholder={L('Email subject', 'Email 主旨')} />
       </FormField>
       <FormField id="f-body" label={L('Email text', 'Email 內文')} required count={fmtN(bodyN) + ' / ' + fmtN(LIM.body)} over={bodyN > LIM.body} error={eBody}>
         <RichText id="f-body" seedKey={'rte-' + c.htmlKey} html={c.html} label={L('Email text', 'Email 內文')} error={!!eBody} placeholder={L('Write the email…', '輸入 Email 內文…')} onInput={(h, t) => m.onEmailInput(h, t)} />
       </FormField>
-      {hasN ? <div><Button variant="link" size="sm" onClick={() => m.copyEmail()}>{L('Copy from notification', '從通知複製')}</Button></div> : null}
     </FormatBlock>
   )
 }
@@ -358,7 +377,7 @@ function Preview({ c }: { c: Compose }) {
   const [cur, setCur] = React.useState<PreviewChannel>(chs[0])
   const k = chs.indexOf(cur) >= 0 ? cur : chs[0]
   if (!k) return null
-  const msg = { sender: c.sender.trim(), title: c.title.trim(), content: c.content.trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
+  const d = k === 'desktop', msg = { sender: (d ? c.dSender : c.sender).trim(), title: (d ? c.dTitle : c.title).trim(), content: (d ? c.dContent : c.content).trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-md border border-divider p-[var(--layout-space-tight)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -378,7 +397,6 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, tried = c.tried || {}, rc = m.reach(), ap = approval(c), mode = effEmailMode(c)
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
   const rows: React.ReactNode[] = [
-    <RvRow key="t" icon={c.team ? UsersRound : UserRound} k={L('Sending space', '發送空間')} v={spaceName(c.team || 'me') + (c.team ? L(' · its members can see this message', '・成員都看得到這則訊息') : L(' · only you can see this message', '・只有你看得到這則訊息'))} />,
     <RvRow key="r" icon={Users} k={L('Audiences', '收件人')} v={P(rc.total, 'audience', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} />,
   ]
   if (c.ch.sms) rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('ICSD approval', 'ICSD 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after ICSD approves it', 'ICSD 核准後才會送出')} />)

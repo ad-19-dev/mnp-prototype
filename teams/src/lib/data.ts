@@ -10,7 +10,7 @@ export const SUPERVISOR = 'Jimmy Chen 陳志明'
 export type Channel = 'push' | 'desktop' | 'email' | 'sms'
 export const CH_ORDER: Channel[] = ['push', 'desktop', 'email', 'sms']
 export const CH_CARDS: Channel[] = ['push', 'desktop', 'email']
-export const LIM = { sender: 20, title: 50, push: 300, desktop: 200, sms: 70, subject: 120, body: 5000, files: 5, bytes: 10 * 1024 * 1024, name: 50 }
+export const LIM = { sender: 20, title: 50, push: 300, desktop: 120, dTitle: 40, sms: 70, subject: 120, body: 5000, files: 5, bytes: 10 * 1024 * 1024, name: 50 }
 export const BLOCKED = ['exe', 'bat', 'cmd', 'com', 'js', 'vbs', 'msi', 'ps1', 'scr']
 // Desktop OS notifications show about 2 lines of title and 2–3 lines of text; CJK characters are about twice as wide
 export const DESK = { title: 80, text: 120 }
@@ -40,6 +40,8 @@ export type Status = 'pending' | 'expired' | 'rejected' | 'scheduled' | 'progres
 export const STATUS_ORDER: Status[] = ['pending', 'expired', 'rejected', 'scheduled', 'progress', 'sent', 'error']
 export interface Row {
   id: string; sender: string; tpl: string | null; title: string; content: string; smsText?: string
+  // Desktop OS has its own text; on a message that also uses Device Notifications, title/content above are the device text
+  desk?: { sender: string; title: string; content: string } | null
   channels: Channel[]; sms: boolean; status: Status; created: string; sched: string | null
   total: number; ok: number; creator: string; aud: [string, string][]; email?: EmailBody | null
   fr?: string[][]; fo?: string; fw?: string[]; fx?: string[][]; err?: { title: string; text: string } | null
