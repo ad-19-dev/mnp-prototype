@@ -16,7 +16,7 @@ import { flash, useApp } from '../../lib/store'
 import { Banner, CHN, FormField, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
 import { MailHtml } from '../../components/RichText'
 import { ShellAside } from '../../components/shell'
-import type { SendCtl } from './ctl'
+import { listSender, type SendCtl } from './ctl'
 import { L, P, niceDT, tx } from '../../lib/i18n'
 
 export function RecvTag({ t, groups }: { t: RTag; groups: Group[] }) {
@@ -62,33 +62,24 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
   const pct = Math.round(r.ok / Math.max(1, r.total) * 100), em = r.email
   return (
     <>
-      <div className="flex flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
+      <div className="flex min-h-full flex-col">
+      <div className="flex flex-1 flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2"><StatusTag s={r.status} /><span className="font-mono text-caption text-fg-secondary">{reqIdFor(r)}</span></div>
           <h3 className="text-body-lg font-medium text-foreground">{r.title}</h3>
-          <div className="flex flex-wrap gap-2">
-            {r.status === 'expired' ? <>
-              <Button variant="primary" size="sm" startIcon={Send} onClick={() => m.askSendNow(r)}>{L('Send now', '立即傳送')}</Button>
-              <Button variant="tertiary" size="sm" startIcon={CalendarClock} onClick={() => m.openReschedule(r)}>{L('Reschedule', '重新排程')}</Button>
-            </> : null}
-            {r.status === 'scheduled' ? <Button variant="tertiary" size="sm" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
-            {r.status === 'rejected' ? <Button variant="tertiary" size="sm" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit and resubmit', '修改後重新送審')}</Button> : null}
-            <Button variant="tertiary" size="sm" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate to new message', '複製為新訊息')}</Button>
-            {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <Button variant="text" size="sm" danger startIcon={Trash2} onClick={() => m.askDelete(r)}>{L('Delete', '刪除')}</Button> : null}
-          </div>
         </div>
         <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)] pb-[var(--layout-space-loose)]">
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
           {r.status === 'pending' ? <Banner tone="info" title={L('Waiting for approval from ' + reviewer(r), '等待' + reviewer(r) + '核准')}>{r.sched ? L('Sends at ' + r.sched + ' if it’s approved by then.', '核准後會在 ' + r.sched + ' 送出。') : L('Sends as soon as it’s approved.', '核准後立即送出。')}</Banner> : null}
           {r.status === 'expired' ? <Banner tone="warning" title={L('Approved after its scheduled time', '核准時已過排程時間')}>{L(reviewer(r) + ' approved it on ' + (r.review?.at || '') + ', after the scheduled ' + r.sched + ', so it wasn’t sent. Send it now, pick a new time, or delete it.', reviewer(r) + '於 ' + (r.review?.at || '') + ' 核准，已超過原訂的 ' + r.sched + '，所以沒有送出。可以立即傳送、重新排程或刪除。')}</Banner> : null}
-          {r.status === 'rejected' ? <Banner tone="error" title={L('Rejected by ' + reviewer(r), reviewer(r) + '駁回')}>{L((r.review?.at ? r.review.at + '. ' : '') + 'Reason: ' + (r.review?.reason || '') + ' Edit the message and submit it again.', (r.review?.at ? r.review.at + '。' : '') + '原因：' + tx(r.review?.reason || '') + ' 修改訊息後可以重新送審。')}</Banner> : null}
+          {r.status === 'rejected' ? <Banner tone="error" title={L('Rejected by ' + reviewer(r), reviewer(r) + '駁回')}>{L((r.review?.at ? r.review.at + '. ' : '') + 'Reason: ' + (r.review?.reason || ''), (r.review?.at ? r.review.at + '。' : '') + '原因：' + tx(r.review?.reason || ''))}</Banner> : null}
           {r.bypass ? (
             <Banner tone="warning" title={L('Sent without ICSD approval (urgent)', '未經 ICSD 核准送出（緊急）')}>
               {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
             </Banner>
           ) : null}
           <DescriptionList orientation="horizontal" divided>
-            {r.channels.indexOf('push') >= 0 ? <DescriptionItem label={L('Sender name', '寄件人名稱')}>{r.sender}</DescriptionItem> : null}
+            {listSender(r) ? <DescriptionItem label={L('Sender', '寄件人')}>{r.sender}</DescriptionItem> : null}
             <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || L('None', '無')}</DescriptionItem>
             <DescriptionItem label={L('Channels', '通道')}>{chs.map(k => CHN[k].name).join(', ')}</DescriptionItem>
             {r.sms || r.review ? <DescriptionItem label={L('Approval', '核准')}>{r.bypass ? L('ICSD skipped (urgent)', '已略過 ICSD（緊急）') : r.status === 'pending' ? L('Waiting for ', '等待') + reviewer(r) : r.status === 'rejected' ? L('Rejected by ', '') + reviewer(r) + L('', '駁回') : L('Approved', '已核准')}</DescriptionItem> : null}
@@ -138,6 +129,18 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           </Part>
 
         </div>
+      </div>
+      {/* actions sit at the bottom of the panel (DS footer: destructive on the left, primary on the right) */}
+      <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-divider bg-surface px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
+        {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <Button variant="text" danger startIcon={Trash2} className="mr-auto" onClick={() => m.askDelete(r)}>{L('Delete', '刪除')}</Button> : <span className="mr-auto" />}
+        <Button variant="tertiary" startIcon={Copy} onClick={() => m.startCompose('duplicate', r)}>{L('Duplicate to new message', '複製為新訊息')}</Button>
+        {r.status === 'scheduled' ? <Button variant="secondary" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</Button> : null}
+        {r.status === 'rejected' ? <Button variant="primary" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit and resubmit', '修改後重新送審')}</Button> : null}
+        {r.status === 'expired' ? <>
+          <Button variant="secondary" startIcon={CalendarClock} onClick={() => m.openReschedule(r)}>{L('Reschedule', '重新排程')}</Button>
+          <Button variant="primary" startIcon={Send} onClick={() => m.askSendNow(r)}>{L('Send now', '立即傳送')}</Button>
+        </> : null}
+      </div>
       </div>
     </>
   )

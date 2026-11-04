@@ -44,8 +44,8 @@ export const initSend = (): SendState => ({
 })
 
 // the name of the open space, for headers and breadcrumbs
-// the sender shown in the list: only Device Notifications carry a sender name
-export const listSender = (r: Row) => (r.channels.indexOf('push') >= 0 ? r.sender : '')
+// the sender shown in the list: Device Notifications (required) and Desktop OS (optional) carry a sender name; Email doesn't
+export const listSender = (r: Row) => (r.channels.indexOf('push') >= 0 || r.channels.indexOf('desktop') >= 0 ? r.sender : '')
 // what the filter panel compares, one field per filterable column ('' = no sender name / no template)
 export const filterFields = (r: Row) => ({ status: r.status, chs: rowChs(r), sender: listSender(r), tpl: r.tpl || '' })
 export const scopeLabel = () => spaceName(getApp().space)
@@ -227,6 +227,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (mode === 'own' && !c.bodyText.trim() && !c.subject.trim()) Object.assign(p, seedEmail(c, c.title, textToHtml(c.content)))
       m.setC(p)
     },
+    // fill the email from the notification text, replacing what's there
+    copyEmail() { const c = get().c; m.setC({ ...seedEmail({ ...c, subject: '', html: '', bodyText: '' }, c.title, textToHtml(c.content)) }) },
     onEmailInput(html: string, text: string) { m.setC({ html, bodyText: text.trim() ? text : '' }) },
     addFiles(files: File[]) {
       const atts = get().c.atts.slice()
@@ -335,7 +337,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.ch.desktop) why.push('no desktop agent')
       const reason = why.length ? why.join(' and ').replace(/^./, x => x.toUpperCase()) : 'Not delivered' // stored in English; shown through tx()
       const base: Partial<Row> = {
-        sender: c.ch.push ? c.sender.trim() || PMAP[ME].nt : '', tpl: c.tplId, team: c.team, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
+        sender: c.ch.push || c.ch.desktop ? c.sender.trim() : '', tpl: c.tplId, team: c.team, title: hasN ? c.title.trim() : (em as any).subject, content: hasN ? c.content.trim() : htmlToText((em as any).html),
         smsText: smsOn(c) ? c.smsText.trim() : '', channels, sms: smsOn(c), email: em,
         bypass: smsOn(c) && c.urgent ? { by: ME, at: fmtDT(now), reason: c.urgentReason.trim() } : null,
         total: rc.total, ok: 0, aud: tagsToAud(c.receivers), fresh: Date.now(), _f: null, err: null, byCh: null,

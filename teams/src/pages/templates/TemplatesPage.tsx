@@ -184,8 +184,8 @@ function TplEditor({ m }: { m: TCtl }) {
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
             {ed.tried && e.formats ? <Banner tone="error">{e.formats}</Banner> : null}
             <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Device Notifications', 'Device Notifications')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop OS', '桌面通知')}</Tag></span>}>
-              <FormField id="t-sender" label={L('Sender name', '寄件人名稱')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Shown on Device Notifications only. Leave blank to use the NT account of whoever sends.', '只顯示在 Device Notifications。不填會用發送者的 NT 帳號。')} error={show('sender')}>
-                <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('NT account of whoever sends', '發送者的 NT 帳號')} />
+              <FormField id="t-sender" label={L('Sender', '寄件人')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Needed when sending to Device Notifications; optional for Desktop OS.', '發 Device Notifications 時必填；桌面通知可不填。')} error={show('sender')}>
+                <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
               </FormField>
               <FormField id="t-title" label={L('Title', '標題')} count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>
                 <Input id="t-title" disabled={ro} value={ed.title} error={!!show('title')} onChange={ev => m.setEd({ title: ev.target.value })} placeholder={L('e.g. Fire drill at [time] today', '例如：今天 [time] 消防演習')} />

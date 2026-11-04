@@ -8,7 +8,7 @@
 | 英文原版（已停止更新） | `english/` | https://claude.ai/artifact/QNA3grD2q5vsNvfZ6JCmZX |
 | 團隊版（發送空間，主要版本） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息發送紀錄設計規格 | `bilingual/spec.html`、`bilingual/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
-| 設計方案比較頁（通道觸及、緊急發送標示、列表篩選） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
+| 設計方案比較頁（通道觸及、緊急發送標示、列表篩選、詳情的多通道內容） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
 
 密碼不放在這個儲存庫裡，請另外保管。
 

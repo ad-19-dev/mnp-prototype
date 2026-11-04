@@ -139,7 +139,7 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
 // DS: the title repeats the breadcrumb's last item (text-h3 under an md breadcrumb), bold.
 export function SpaceIntro() {
   const { space, page } = useApp(), team = teamById(space)
-  const tabs: [Page, string][] = [['send', L('Messages', '訊息')], ['groups', L('Audience groups', '收件群組')], ['templates', L('Templates', '模板')]]
+  const tabs: [Page, string][] = [['send', L('Send messages', '發送訊息')], ['groups', L('Audience groups', '收件群組')], ['templates', L('Templates', '模板')]]
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)]">
       <div className="flex flex-col gap-1">

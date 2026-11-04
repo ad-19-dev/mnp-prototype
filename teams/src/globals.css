@@ -23,3 +23,7 @@
 /* The message list centres every cell vertically (product decision 2026-11-03). The DS DataTable tops
    aligns cells in auto row height, so this overrides it for that one table. */
 .mnp-center [role="row"], .mnp-center [role="cell"], .mnp-center [role="cell"] > .items-start { align-items: center !important; }
+
+/* No "Now" shortcut in the date-time picker (product decision 2026-11-04). The DS has no prop for it;
+   the button is the one pushed left in the picker's footer. */
+[aria-label="日期選擇"] button.mr-auto { display: none; }

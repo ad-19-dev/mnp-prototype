@@ -115,8 +115,8 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
   const columns = React.useMemo(() => [
     col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => (
       <span className="flex min-w-0 flex-col">
-        {/* the sender name only exists on Device Notifications */}
-        {i.row.original.channels.indexOf('push') >= 0 ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span>}
+        {/* only Device Notifications and Desktop OS carry a sender name */}
+        {listSender(i.row.original) ? <Trunc text={listSender(i.row.original)} className="font-medium" /> : <span className="text-fg-muted">—</span>}
       </span>
     ) }),
     col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
@@ -136,10 +136,10 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
       )
     } }),
     col.display({ id: 'ch', header: L('Channels', '通道'), enableSorting: false, meta: { width: 130 }, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
-    col.accessor('status', { header: L('Status', '狀態'), meta: { width: 180 }, cell: i => <StatusTag s={i.getValue()} /> }),
+    col.accessor('status', { header: L('Status', '狀態'), enableSorting: false, meta: { width: 180 }, cell: i => <StatusTag s={i.getValue()} /> }),
     col.accessor('created', { header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // sorts by how many people it goes to
-    col.accessor('total', { id: 'recv', header: L('Delivered', '已送達'), meta: { width: 160 }, cell: i => {
+    col.accessor('total', { id: 'recv', header: L('Audience / Reach', '收件人 / 送達'), meta: { width: 160 }, cell: i => {
       const r = i.row.original, fails = (r.status === 'sent' || r.status === 'error') ? r.total - r.ok : 0
       return (
         <span className="flex w-full min-w-0 flex-col gap-1">
@@ -160,7 +160,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="min-w-60 max-w-sm flex-1">
-            <Input startIcon={Search} type="search" placeholder={L('Search messages', '搜尋訊息')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
+            <Input startIcon={Search} type="search" placeholder={L('Search title, content, sender or creator', '搜尋標題、內容、寄件人或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
           </div>
           {/* DS table toolbar: one Filter entry, icon only, pressed while a filter applies */}
           <Popover open={fOpen} onOpenChange={setFOpen}>

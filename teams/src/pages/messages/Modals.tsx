@@ -176,7 +176,7 @@ export function SaveTplDialog({ m }: { m: SendCtl }) {
   if (st) {
     const nm = st.name.trim(), dup = app.templates.some(t => tplInSpace(t) && t.name.toLowerCase() === nm.toLowerCase())
     const err = (st.tried && !nm) ? L('Enter a name.', '請輸入名稱。') : st.name.length > LIM.name ? L('Up to 50 characters.', '最多 50 字。') : (nm && dup) ? L('This name is taken.', '這個名稱已經有人用了。') : ''
-    const mode = effEmailMode(c), rows: { k: string; v: string }[] = c.ch.push ? [{ k: L('Sender name', '寄件人名稱'), v: c.sender.trim() || L('Blank: the NT account of whoever sends', '空白：用發送者的 NT 帳號') }] : []
+    const mode = effEmailMode(c), rows: { k: string; v: string }[] = (c.ch.push || c.ch.desktop) && c.sender.trim() ? [{ k: L('Sender', '寄件人'), v: c.sender.trim() }] : []
     if (hasNotif(c)) rows.push({ k: L('Notification', '通知'), v: c.title })
     if (smsOn(c)) rows.push({ k: 'SMS', v: c.smsText })
     if (c.ch.email) rows.push({ k: 'Email', v: mode === 'own' ? c.subject : L('Same as notification', '同通知內容') })

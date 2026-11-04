@@ -13,19 +13,20 @@ import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
   CircleCheck, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
-  CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
+  CAP, CH_CARDS, DESK, LIM, ORGS, PMAP, SUPERVISOR, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Tag as RTag,
   ME,
 } from '../../lib/data'
 import {
   approval, effEmailMode, hasNotif, multiPeople, noNumber, reachNote, smsCoverText, smsOn, stepOk, unresolved,
-  type Errs, type Reach,
+  type Compose, type Errs, type Reach,
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
 import { Banner, CHN, ErrText, FmtChips, FormField, IconBox, KV, Meter, PAvatar, Section, Two } from '../../components/ui'
 import { RecvInput, riKey } from '../../components/RecvInput'
 import { RichText } from '../../components/RichText'
+import { ChannelPreview, type PreviewChannel } from '../../components/ChannelPreview'
 import { PageHeader } from '../../components/shell'
 import type { SendCtl } from './ctl'
 
@@ -290,9 +291,9 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
           {hasN ? (
             <FormatBlock icon={MessageSquareText} title={L('Notification', '通知')} uses={<>{c.ch.push ? <Tag size="sm" icon={Smartphone}>{CHN.push.name}</Tag> : null}{c.ch.desktop ? <Tag size="sm" icon={Monitor}>{CHN.desktop.name}</Tag> : null}</>}>
               {tpl && !tplHasNotif(tpl) ? <Banner tone="neutral">{L('This template has no notification text.', '這個模板沒有通知內容。')}</Banner> : null}
-              {c.ch.push ? (
-                <FormField id="f-sender" label={L('Sender name', '寄件人名稱')} count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Shown on Device Notifications only. Leave blank to use your NT account (' + PMAP[ME].nt + ').', '只顯示在 Device Notifications。不填會用你的 NT 帳號（' + PMAP[ME].nt + '）。')} error={eSender}>
-                  <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={PMAP[ME].nt} />
+              {c.ch.push || c.ch.desktop ? (
+                <FormField id="f-sender" label={L('Sender', '寄件人')} required={c.ch.push} count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={c.ch.push ? L('Shown on Device Notifications and Desktop OS.', '顯示在 Device Notifications 和桌面通知。') : L('Optional. Shown on Desktop OS.', '選填，顯示在桌面通知。')} error={eSender}>
+                  <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
                 </FormField>
               ) : null}
               <FormField id="f-title" label={L('Title', '標題')} required count={c.title.length + ' / ' + LIM.title} over={c.title.length > LIM.title} error={eTitle}>
@@ -321,40 +322,17 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
 }
 
 function EmailBlock({ m, e, show }: { m: SendCtl; e: Errs; show: (k: keyof Errs, v: string, n: number) => string }) {
-  const c = m.s.c, hasN = hasNotif(c), mode = effEmailMode(c), used = c.atts.reduce((a, x) => a + x.size, 0)
+  const c = m.s.c, hasN = hasNotif(c)
   const eSub = show('subject', c.subject, LIM.subject), bodyN = c.bodyText.trim().length, eBody = show('body', c.bodyText.trim(), LIM.body)
   return (
-    <FormatBlock icon={Mail} title="Email" uses={hasN ? (
-      <SegmentedControl size="sm" value={mode || 'same'} onValueChange={v => v && m.setEmailMode(v as 'same' | 'own')} aria-label="Email">
-        <SegmentedControlItem value="same">{L('Same as notification', '同通知內容')}</SegmentedControlItem>
-        <SegmentedControlItem value="own">{L('Separate email', '另寫 Email')}</SegmentedControlItem>
-      </SegmentedControl>
-    ) : null}>
-      {mode === 'same' ? (
-        <div className="flex flex-col gap-2 border-l-2 border-divider pl-3">
-          <div className="grid grid-cols-[72px_1fr] gap-2 text-body"><span className="text-fg-secondary">{L('Subject', '主旨')}</span><span>{c.title.trim() || <span className="text-fg-muted">{L('Notification title', '通知標題')}</span>}</span></div>
-          <div className="grid grid-cols-[72px_1fr] gap-2 text-body"><span className="text-fg-secondary">{L('Text', '內文')}</span><span className="whitespace-pre-wrap">{c.content.trim() || <span className="text-fg-muted">{L('Notification text', '通知內文')}</span>}</span></div>
-          <span className="text-caption text-fg-secondary">{L('Plain text. For formatting or files, choose Separate email.', '純文字。需要格式或附件，請選「另寫 Email」。')}</span>
-        </div>
-      ) : (
-        <>
-          <FormField id="f-subject" label={L('Subject', '主旨')} required count={c.subject.length + ' / ' + LIM.subject} over={c.subject.length > LIM.subject} error={eSub}>
-            <Input id="f-subject" value={c.subject} error={!!eSub} onChange={ev => m.setC({ subject: ev.target.value })} placeholder={L('Email subject', 'Email 主旨')} />
-          </FormField>
-          <FormField id="f-body" label={L('Email text', 'Email 內文')} required count={fmtN(bodyN) + ' / ' + fmtN(LIM.body)} over={bodyN > LIM.body} error={eBody}>
-            <RichText id="f-body" seedKey={'rte-' + c.htmlKey} html={c.html} label={L('Email text', 'Email 內文')} error={!!eBody} placeholder={L('Write the email…', '輸入 Email 內文…')} onInput={(h, t) => m.onEmailInput(h, t)} />
-          </FormField>
-          <div className="flex flex-col gap-2">
-            <span className="text-body font-medium">{L('Attachments', '附件')}</span>
-            {c.atts.length ? <div className="flex flex-col gap-2">{c.atts.map(a => <FileItem key={a.id} name={a.name} description={fmtSize(a.size)} actions={<Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + a.name} onClick={() => m.removeFile(a.id)} />} />)}</div> : null}
-            <div className="flex flex-wrap items-center gap-3">
-              <FileUpload variant="button" multiple buttonLabel={L('Attach files', '附加檔案')} onUpload={files => m.addFiles(files)} />
-              <span className="text-caption text-fg-secondary">{L('Up to ' + LIM.files + ' files, 10 MB total.', '最多 ' + LIM.files + ' 個檔案，共 10 MB。')}{c.atts.length ? L(' ' + fmtSize(used) + ' used.', '已用 ' + fmtSize(used) + '。') : ''}</span>
-            </div>
-            {c.attErr ? <ErrText>{c.attErr}</ErrText> : null}
-          </div>
-        </>
-      )}
+    <FormatBlock icon={Mail} title="Email">
+      <FormField id="f-subject" label={L('Subject', '主旨')} required count={c.subject.length + ' / ' + LIM.subject} over={c.subject.length > LIM.subject} error={eSub}>
+        <Input id="f-subject" value={c.subject} error={!!eSub} onChange={ev => m.setC({ subject: ev.target.value })} placeholder={L('Email subject', 'Email 主旨')} />
+      </FormField>
+      <FormField id="f-body" label={L('Email text', 'Email 內文')} required count={fmtN(bodyN) + ' / ' + fmtN(LIM.body)} over={bodyN > LIM.body} error={eBody}>
+        <RichText id="f-body" seedKey={'rte-' + c.htmlKey} html={c.html} label={L('Email text', 'Email 內文')} error={!!eBody} placeholder={L('Write the email…', '輸入 Email 內文…')} onInput={(h, t) => m.onEmailInput(h, t)} />
+      </FormField>
+      {hasN ? <div><Button variant="link" size="sm" onClick={() => m.copyEmail()}>{L('Copy from notification', '從通知複製')}</Button></div> : null}
     </FormatBlock>
   )
 }
@@ -374,27 +352,41 @@ function RvRow({ icon, k, v, q, warn, edit }: { icon: typeof Mail; k: string; v:
   )
 }
 
+// what each audience will see, on a close-to-real device, one channel at a time
+function Preview({ c }: { c: Compose }) {
+  const chs = (['push', 'desktop', 'sms', 'email'] as PreviewChannel[]).filter(k => c.ch[k])
+  const [cur, setCur] = React.useState<PreviewChannel>(chs[0])
+  const k = chs.indexOf(cur) >= 0 ? cur : chs[0]
+  if (!k) return null
+  const msg = { sender: c.sender.trim(), title: c.title.trim(), content: c.content.trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
+  return (
+    <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-md border border-divider p-[var(--layout-space-tight)]">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-h6 font-bold">{L('Preview', '預覽')}</span>
+        {chs.length > 1 ? (
+          <SegmentedControl size="sm" value={k} onValueChange={v => v && setCur(v as PreviewChannel)} aria-label={L('Preview channel', '預覽通道')}>
+            {chs.map(x => <SegmentedControlItem key={x} value={x}>{CHN[x].name}</SegmentedControlItem>)}
+          </SegmentedControl>
+        ) : <span className="text-body text-fg-secondary">{CHN[k].name}</span>}
+      </div>
+      <div className="rounded-md bg-neutral-1 p-[var(--layout-space-loose)]"><ChannelPreview ch={k} msg={msg} zh={L('en', 'zh') === 'zh'} /></div>
+    </div>
+  )
+}
+
 function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, tried = c.tried || {}, rc = m.reach(), ap = approval(c), mode = effEmailMode(c)
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
-  const toMsg = () => m.goStep(2), notif = c.title.trim() + (c.content.trim() ? ' — ' + c.content.trim() : '')
-  const reaches = (n: number) => L('Reaches ' + fmtN(n) + ' of ' + fmtN(rc.total), '可觸及 ' + fmtN(n) + ' / ' + fmtN(rc.total) + ' 人')
-  const rows: React.ReactNode[] = [<RvRow key="t" icon={c.team ? UsersRound : UserRound} k={L('Sending space', '發送空間')} v={spaceName(c.team || 'me') + (c.team ? L(' · its members can see this message', '・成員都看得到這則訊息') : L(' · only you can see this message', '・只有你看得到這則訊息'))} />, <RvRow key="r" icon={Users} k={L('Audiences', '收件人')} v={P(rc.total, 'audience', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} edit={() => m.goStep(1)} />]
-  if (c.ch.push) rows.push(<RvRow key="p" icon={Smartphone} k={CHN.push.name} v={reaches(rc.push)} q={notif} edit={toMsg} />)
-  if (c.ch.desktop) { const cut = vwidth(c.content) > DESK.text || vwidth(c.title) > DESK.title; rows.push(<RvRow key="d" icon={Monitor} warn={cut} k={CHN.desktop.name} v={reaches(rc.desktop) + (cut ? L(' · text gets cut short', ' · 內容會被截斷') : '')} q={notif} edit={toMsg} />) }
-  if (c.ch.email) rows.push(<RvRow key="e" icon={Mail} k="Email" v={reaches(rc.email) + (mode === 'own' ? L(' · Separate email', ' · 另寫 Email') + (c.atts.length ? L(', ' + P(c.atts.length, 'file', ''), '，' + c.atts.length + ' 個附件') : '') : L(' · Same as notification', ' · 同通知內容'))} q={mode === 'own' ? c.subject : ''} edit={toMsg} />)
-  if (c.ch.sms) {
-    const parts = [rc.extP ? L(P(rc.extP, 'external phone', '', 'external phones'), rc.extP + ' 支外部電話') : '', c.ch.push && rc.smsable ? L('up to ' + rc.smsable + ' without the app', '最多 ' + rc.smsable + ' 位沒裝 App 的人') : ''].filter(Boolean)
-    rows.push(<RvRow key="s" icon={MessageSquareText} k={CHN.sms.name} v={parts.length ? L('Goes to ', '傳給') + joinL(parts) : L('No one needs it', '目前沒有人需要')} q={c.smsText} edit={toMsg} />)
-    rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('ICSD approval', 'ICSD 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after ICSD approves it', 'ICSD 核准後才會送出')} edit={() => m.goStep(1)} />)
-  }
-  const phs = placeholders([hasNotif(c) ? c.title + ' ' + c.content : '', smsOn(c) ? c.smsText : '', mode === 'own' ? c.subject + ' ' + c.bodyText : ''].join(' '))
-  if (phs.length) rows.push(<RvRow key="ph" icon={AlertTriangle} warn k={L(P(phs.length, 'placeholder', '', 'placeholders') + ' to replace', '還有 ' + phs.length + ' 個 [方括號] 沒替換')} v={joinL(phs) + L(' — audiences would see these.', '：收件人會看到這些字。')} edit={toMsg} />)
-  if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} edit={() => m.goStep(1)} />)
+  const rows: React.ReactNode[] = [
+    <RvRow key="t" icon={c.team ? UsersRound : UserRound} k={L('Sending space', '發送空間')} v={spaceName(c.team || 'me') + (c.team ? L(' · its members can see this message', '・成員都看得到這則訊息') : L(' · only you can see this message', '・只有你看得到這則訊息'))} />,
+    <RvRow key="r" icon={Users} k={L('Audiences', '收件人')} v={P(rc.total, 'audience', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} />,
+  ]
+  if (c.ch.sms) rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('ICSD approval', 'ICSD 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after ICSD approves it', 'ICSD 核准後才會送出')} />)
+  if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} />)
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
     ['now', Zap, L('Send now', '立即傳送'), ap.need ? L('Right after approval', '核准後立即傳送') : L('Starts right away', '馬上開始傳送')],
-    ['schedule', CalendarClock, L('Schedule', '排程傳送'), L('Up to 30 days ahead', '30 天內任一時間')],
+    ['schedule', CalendarClock, L('Scheduled send', '排程傳送'), L('Up to 30 days ahead', '30 天內任一時間')],
   ] as const
   return (
     <>
@@ -417,6 +409,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
       <Section title={L('Review', '確認內容')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">{rows}</div>
+          <Preview c={c} />
           {ap.need ? <Banner tone="warning" title={L('Needs approval from ' + joinL(ap.who), '需要 ' + joinL(ap.who) + ' 核准')}>{L('Nothing is sent until it’s approved.', '核准前不會送出。')}</Banner> : null}
         </div>
       </Section>
@@ -427,14 +420,15 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
 // ---------- footer and result ----------
 function FootBar({ m }: { m: SendCtl }) {
   const c = m.s.c, ap = approval(c)
-  const primary = ap.need ? L('Submit for approval', '送出審核') : ap.skipped ? L('Send without approval', '略過核准並傳送') : c.sendMode === 'schedule' ? L('Schedule', '排程傳送') : L('Send', '傳送')
+  // one label whatever the send time or approval: the review step already says what happens next
+  const primary = L('Create message', '建立訊息')
   return (
     <div className="sticky bottom-0 z-10 border-t border-divider bg-surface">
       <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
         <div className="flex flex-wrap gap-2">
           {c.step === 1 ? <Button variant="tertiary" startIcon={UserPlus} disabled={!c.receivers.length} onClick={() => m.set({ sg: { name: '', desc: '', tried: false } })}>{L('Save as group', '存成群組')}</Button> : null}
           {c.step === 2 ? <Button variant="tertiary" startIcon={LayoutTemplate} onClick={() => m.openSaveTpl()}>{L('Save as template', '存成模板')}</Button> : null}
-          {c.step >= 2 ? <Button variant="tertiary" startIcon={FlaskConical} onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
+          {c.step === 3 ? <Button variant="tertiary" startIcon={FlaskConical} onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Button variant="text" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
