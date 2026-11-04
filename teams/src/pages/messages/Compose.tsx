@@ -280,8 +280,7 @@ function TplChoice({ m }: { m: SendCtl }) {
       <div className="w-80 max-w-full">
         <Select id="f-tpl" searchable disabled={!useTpl} aria-label={L('Template', '模板')} placeholder={L('Choose a template', '選擇模板')} emptyText={L('No matching templates', '找不到符合的模板')}
           value={c.tplId || ''} onChange={v => { const t = list.find(x => x.id === v); if (t) m.askTemplate(t) }}
-          options={list.map(t => ({ value: t.id, label: t.name, description: chsOf(t).map(k => CHN[k].short).join(' · ') }))}
-          selectedItemRenderer={o => { const t = list.find(x => x.id === o.value); return <span className="flex min-w-0 items-center gap-2"><span className="truncate">{o.label}</span>{t ? <ChIcons list={chsOf(t)} /> : null}</span> }} />
+          options={list.map(t => ({ value: t.id, label: t.name, description: chsOf(t).map(k => CHN[k].short).join(' · ') }))} />
       </div>
     </div>
   )
