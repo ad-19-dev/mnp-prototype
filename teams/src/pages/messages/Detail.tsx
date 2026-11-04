@@ -9,7 +9,7 @@ import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Building2, CalendarClock, CircleAlert, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
 import {
-  ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
+  ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, membersFor, orgMembers, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Channel, type Fail, type Group, type Row, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
@@ -98,7 +98,6 @@ function ChannelRow({ m, r, k, ok, of, last }: { m: SendCtl; r: Row; k: Channel;
             <span className="text-body font-medium">{CHN[k].name}</span>
             <span className="text-caption text-fg-secondary">{line}{miss ? <span className="text-error-text">{L(' · ' + miss + ' missed', '・' + miss + ' 人未送達')}</span> : null}</span>
           </span>
-          {started && of ? <span className="w-20 shrink-0"><ProgressBar aria-label={CHN[k].name} value={Math.round(ok / of * 100)} status={miss && ok === 0 ? 'error' : 'success'} /></span> : null}
         </span>
       </AccordionTrigger>
       <AccordionContent className="px-3">
@@ -114,6 +113,46 @@ function ChannelRow({ m, r, k, ok, of, last }: { m: SendCtl; r: Row; k: Channel;
         </div>
       </AccordionContent>
     </AccordionItem>
+  )
+}
+
+// groups and orgs open to show who's in them (closed at first); single people and external contacts stay as tags
+function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
+  const sets = tags.filter(t => t.type === 'group' || t.type === 'org'), rest = tags.filter(t => t.type !== 'group' && t.type !== 'org')
+  return (
+    <div className="flex flex-col gap-[var(--layout-space-tight)]">
+      {sets.length ? (
+        <Accordion type="multiple" className="rounded-md border border-divider">
+          {sets.map((t, i) => {
+            const g = t.type === 'group' ? groups.find(x => x.id === t.id) : null, o = t.type === 'org' ? ORGS.find(x => x.code === t.id) : null
+            const people = g ? membersFor(g).map(x => PMAP[x.pid]).filter(Boolean) : orgMembers(t.id!)
+            const name = g ? g.name : o ? o.code : t.id!, sub = g ? L('Audience group', '收件群組') : o ? o.name : ''
+            return (
+              <AccordionItem key={t.key} value={t.key} className={i === sets.length - 1 ? 'border-b-0' : 'border-b border-divider'}>
+                <AccordionTrigger className="px-3">
+                  <span className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                    {g ? <BookUser className="size-4 shrink-0 text-fg-secondary" aria-hidden /> : <Building2 className="size-4 shrink-0 text-fg-secondary" aria-hidden />}
+                    <span className="flex min-w-0 flex-1 flex-col"><span className="truncate text-body font-medium">{name}</span><span className="truncate text-caption text-fg-secondary">{sub}</span></span>
+                    <span className="shrink-0 text-caption text-fg-secondary tabular-nums">{P(people.length, 'person', '人', 'people')}</span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-3">
+                  <div className="flex max-h-[280px] flex-col divide-y divide-divider overflow-auto">
+                    {people.map(p => (
+                      <div key={p.id} className="flex items-center gap-2 py-2">
+                        <PAvatar p={p} />
+                        <span className="flex min-w-0 flex-col"><span className="truncate text-body">{p.zh + ' ' + p.en}</span><span className="truncate text-caption text-fg-secondary">{p.emp + ' · ' + p.org}</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )
+          })}
+        </Accordion>
+      ) : null}
+      {rest.length ? <div className="flex flex-wrap gap-2">{rest.map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div> : null}
+    </div>
   )
 }
 
@@ -162,19 +201,18 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
               <span className="text-body"><span className="font-medium">{notStarted(r) ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'audience', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : notStarted(r) ? L(P(r.total, 'audience', ''), r.total + ' 位收件人') : L('reached', '已送達')}</span></span>
               {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
             </div>
-            {notStarted(r) ? null : <ProgressBar aria-label={L('Delivered', '已送達')} value={pct} status={r.status === 'error' ? 'error' : r.status === 'sent' ? 'success' : 'inProgress'} />}
           </div>
           </Part>
 
           {/* one row per channel: its delivery on the row, open it for what it sent and who it missed */}
           <Part title={L('By channel', '各通道')}>
-            <Accordion type="multiple" defaultValue={[chs[0]]} className="rounded-md border border-divider">
+            <Accordion type="multiple" className="rounded-md border border-divider">
               {m.chStats(r).map((x, i) => <ChannelRow key={x.k} m={m} r={r} k={x.k} ok={x.ok} of={x.of} last={i === chs.length - 1} />)}
             </Accordion>
           </Part>
 
           <Part title={L('Audiences', '收件人')}>
-            <div className="flex flex-wrap gap-2">{audToTags(r.aud).map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div>
+            <AudienceList tags={audToTags(r.aud)} groups={groups} />
           </Part>
 
         </div>
@@ -238,8 +276,6 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
         <DialogBody>
           <div className="flex flex-col gap-[var(--layout-space-tight)]">
             {r.err ? <Banner tone="error" title={tx(r.err.title)}>{tx(r.err.text)}</Banner> : null}
-            {r.channels.length > 1 ? <p className="text-body text-fg-secondary">{L('None of the channels reached them.', '所有通道都沒送達這些人。')}</p> : null}
-            {order.length > 1 ? <div className="flex flex-wrap gap-2">{order.map(k => <Tag key={k} size="md" unbounded>{tx(k)} · {fmtN(counts[k])}</Tag>)}</div> : null}
             <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols() as any} data={list} bordered height="340px" autoRowHeight getRowId={(_, i) => String(i)} />
           </div>
         </DialogBody>
