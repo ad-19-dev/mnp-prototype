@@ -2,16 +2,16 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
-  Pagination, ProgressBar, Skeleton, Tag,
+  DataTableFilterPanel, Pagination, Popover, PopoverContent, PopoverTrigger, ProgressBar, Skeleton, Tag, createEmptyFilterTree, isFilterTreeActive,
 } from '@qijenchen/design-system'
-import { FilterMenu, NO_HIDE, Tip, Trunc, PageSize } from '../../components/ui'
+import { NO_HIDE, Tip, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
+import { CalendarClock, CircleAlert, Copy, Eye, Filter, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
 import { PEOPLE, PMAP, STATUS_ORDER, fmtN, htmlToText, rowChs, type Channel, type Row } from '../../lib/data'
 import { useApp } from '../../lib/store'
-import { CHN, ChIcons, PAvatar, StatusTag, Two } from '../../components/ui'
+import { CHN, ChIcons, PAvatar, StatusTag, Two, statusLabel } from '../../components/ui'
 import { L } from '../../lib/i18n'
-import { listSender, type SendCtl } from './ctl'
+import { filterFields, listSender, type SendCtl } from './ctl'
 
 const col = createColumnHelper<Row>()
 const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' || r.status === 'rejected' || r.status === 'scheduled'
@@ -20,6 +20,28 @@ const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' 
 export function listText(r: Row) {
   if (r.channels.indexOf('push') < 0 && r.channels.indexOf('email') >= 0 && r.email && r.email.mode === 'own') return { title: r.email.subject || r.title, content: htmlToText(r.email.html) || r.content }
   return { title: r.title, content: r.content }
+}
+
+// columns for the DS filter panel only: it reads each field's type and options from here; the table keeps
+// its own cell designs. Options come from the messages in this space.
+function filterColumns(vis: Row[], m: SendCtl) {
+  const fc = createColumnHelper<ReturnType<typeof filterFields>>()
+  const uniq = (vals: string[], none: string, name: (v: string) => string) => Array.from(new Set(vals)).sort((a, b) => (a ? name(a).localeCompare(name(b)) : 1)).map(v => ({ value: v, label: v ? name(v) : none }))
+  return [
+    fc.accessor('status', { header: L('Status', '狀態'), meta: { type: 'select', options: STATUS_ORDER.filter(k => vis.some(r => r.status === k)).map(k => ({ value: k, label: statusLabel(k) })) } as any }),
+    fc.accessor('chs', { header: L('Channels', '通道'), meta: { type: 'multiSelect', options: (['push', 'sms', 'desktop', 'email'] as Channel[]).map(k => ({ value: k, label: CHN[k].name })) } as any }),
+    fc.accessor('sender', { header: L('Sender', '寄件人'), meta: { type: 'select', options: uniq(vis.map(listSender), L('No sender name', '沒有寄件人名稱'), v => v) } as any }),
+    fc.accessor('tpl', { header: L('Template', '模板'), meta: { type: 'select', options: uniq(vis.map(r => r.tpl || ''), L('No template', '沒有模板'), v => m.tplName(v)) } as any }),
+  ]
+}
+// the panel's own words in the page language (the DS defaults are Chinese)
+const panelLabels = () => L('en', 'zh') === 'zh' ? {} : {
+  title: 'Filter', resetToDefault: 'Reset', close: 'Close', where: 'Where', and: 'And', or: 'Or', conjunctionAriaLabel: 'And or Or, for the whole group',
+  fieldPlaceholder: 'Field', fieldAriaLabel: 'Filter field', operatorPlaceholder: 'Condition', operatorAriaLabel: 'Filter condition', valuePlaceholder: 'Value…',
+  singleSelectPlaceholder: 'Choose a value', multiSelectPlaceholder: 'Choose values…', multiSelectEmptyText: 'No matching values',
+  filterValueAriaLabel: (c?: string) => (c ? c + ' filter value' : 'Filter value'), deleteCondition: 'Delete', addFilter: 'Add filter', addGroup: 'Add filter group',
+  addNestedFilter: 'Add nested filter', removeEmptyGroup: 'Remove empty group',
+  operatorLabels: { is: 'is', is_not: 'is not', is_set: 'is set', is_not_set: 'is not set', has_any_of: 'has any of', has_all_of: 'has all of', has_none_of: 'has none of' },
 }
 
 // sort the whole list (not just the page in view)
@@ -84,14 +106,10 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
   // a short skeleton while a space opens, as if its messages were loading
   const [loading, setLoading] = React.useState(true)
   React.useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 700); return () => clearTimeout(t) }, [app.space])
-  const clearAll = () => m.set({ fS: [], fC: [], fSd: [], fT: [], q: '', page: 1 })
-  const stOpts = STATUS_ORDER.map(k => ({ k, n: vis.filter(r => r.status === k).length, view: <StatusTag s={k} /> })).filter(o => o.n > 0)
-  const sdOpts = Array.from(new Set(vis.map(listSender))).sort((a, b) => (a ? a.localeCompare(b) : 1)).map(k => ({ k, n: vis.filter(r => listSender(r) === k).length, view: <span className={k ? undefined : 'text-fg-secondary'}>{k || L('No sender name', '沒有寄件人名稱')}</span> }))
-  const tpOpts = Array.from(new Set(vis.map(r => r.tpl || ''))).sort((a, b) => (a ? m.tplName(a).localeCompare(m.tplName(b)) : 1)).map(k => ({ k, n: vis.filter(r => (r.tpl || '') === k).length, view: <span className={k ? undefined : 'text-fg-secondary'}>{k ? m.tplName(k) : L('No template', '沒有模板')}</span> }))
-  const chOpts = (['push', 'sms', 'desktop', 'email'] as Channel[]).map(k => {
-    const I = CHN[k].icon
-    return { k, n: vis.filter(r => rowChs(r).indexOf(k) >= 0).length, view: <span className="inline-flex items-center gap-2"><I className="size-4 text-fg-secondary" aria-hidden />{CHN[k].name}</span> }
-  })
+  const clearAll = () => m.set({ ft: createEmptyFilterTree('flat'), q: '', page: 1 })
+  const [fOpen, setFOpen] = React.useState(false)
+  const fOn = isFilterTreeActive(s.ft), fN = s.ft.mode === 'flat' ? s.ft.children.length : s.ft.children.reduce((a, g) => a + g.children.length, 0)
+  const panelCols = React.useMemo(() => filterColumns(vis, m), [vis, m, app.lang])
 
 
   const columns = React.useMemo(() => [
@@ -139,14 +157,28 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
       {intro}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="min-w-60 max-w-sm flex-1">
-          <Input startIcon={Search} type="search" placeholder={L('Search messages', '搜尋訊息')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <div className="min-w-60 max-w-sm flex-1">
+            <Input startIcon={Search} type="search" placeholder={L('Search messages', '搜尋訊息')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
+          </div>
+          {/* DS table toolbar: one Filter entry, icon only, pressed while a filter applies */}
+          <Popover open={fOpen} onOpenChange={setFOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="text" iconOnly startIcon={Filter} aria-label={L('Filter', '篩選')} pressed={fOn} className="ml-auto" />
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0">
+              <DataTableFilterPanel columns={panelCols as any} value={s.ft} onChange={ft => m.set({ ft, page: 1 })} labels={panelLabels() as any} onClose={() => setFOpen(false)} />
+            </PopoverContent>
+          </Popover>
         </div>
-        <FilterMenu label={L('Status', '狀態')} opts={stOpts} sel={s.fS} toggle={k => m.toggleIn('fS', k)} clear={() => m.set({ fS: [], page: 1 })} />
-        <FilterMenu label={L('Channel', '通道')} opts={chOpts} sel={s.fC} toggle={k => m.toggleIn('fC', k)} clear={() => m.set({ fC: [], page: 1 })} />
-        <FilterMenu label={L('Sender', '寄件人')} opts={sdOpts} sel={s.fSd} toggle={k => m.toggleIn('fSd', k)} clear={() => m.set({ fSd: [], page: 1 })} />
-        <FilterMenu label={L('Template', '模板')} opts={tpOpts} sel={s.fT} toggle={k => m.toggleIn('fT', k)} clear={() => m.set({ fT: [], page: 1 })} />
+        {fOn || s.q.trim() ? (
+          <p className="flex flex-wrap items-center gap-x-2 text-body text-fg-secondary" aria-live="polite">
+            {L('Showing ' + rows.length + ' of ' + vis.length + ' messages', '顯示 ' + vis.length + ' 則中的 ' + rows.length + ' 則')}
+            {fOn ? <span>{L('· ' + fN + (fN === 1 ? ' filter' : ' filters'), '・' + fN + ' 個篩選條件')}</span> : null}
+            <Button variant="link" size="sm" onClick={clearAll}>{L('Clear', '清除')}</Button>
+          </p>
+        ) : null}
       </div>
       {loading ? <ListSkeleton /> : (
         // every cell vertically centred (see globals.css .mnp-center)

@@ -8,6 +8,7 @@ import {
   approval, blankCompose, effEmailMode, errs, hasNotif, msgErr, multiPeople, reach, recvFlat, seedEmail, selChs, smsOn,
   stepOk, unresolved, type Compose,
 } from '../../lib/compose'
+import { createEmptyFilterTree, evaluateTree, isFilterTreeActive, type FilterTree } from '@qijenchen/design-system'
 import { flash, getApp, patchRow, setApp } from '../../lib/store'
 import { groupInSpace, rowInSpace, spaceName, spaceTeam, tplInSpace } from '../../lib/teams'
 import { scrollTop } from '../../lib/logic'
@@ -21,8 +22,8 @@ import type { RiState } from '../../components/RecvInput'
 export interface ImpState { text: string; file: string; res: Match[] | null; picks: Record<number, Record<string, boolean>>; kind: ListKind | null; done: number }
 export interface SendState {
   view: 'list' | 'compose'
-  // fSd: senders, fT: templates ('' = no template)
-  q: string; fS: Status[]; fC: Channel[]; fSd: string[]; fT: string[]; page: number
+  // ft: the conditions from the DS filter panel (status, channels, sender, template)
+  q: string; ft: FilterTree; page: number
   det: string | null; ns: string | null; cf: Confirm | null
   // reschedule a message whose approval came after its scheduled time
   rs: { id: string; at: string; tried: boolean } | null
@@ -37,7 +38,7 @@ export interface SendState {
   gp: { q: string; tab: 'all' | 'mine' | 'shared'; sel: Record<string, boolean> } | null
 }
 export const initSend = (): SendState => ({
-  view: 'list', q: '', fS: [], fC: [], fSd: [], fT: [], page: 1, det: null, ns: null, cf: null, rs: null,
+  view: 'list', q: '', ft: createEmptyFilterTree('flat'), page: 1, det: null, ns: null, cf: null, rs: null,
   c: blankCompose(), ri: { type: 'person', q: '', open: false, exp: null }, rf: '',
   imp: null, num: null, sg: null, stpl: null, tp: null, unr: false, gp: null,
 })
@@ -45,6 +46,8 @@ export const initSend = (): SendState => ({
 // the name of the open space, for headers and breadcrumbs
 // the sender shown in the list: only Device Notifications carry a sender name
 export const listSender = (r: Row) => (r.channels.indexOf('push') >= 0 ? r.sender : '')
+// what the filter panel compares, one field per filterable column ('' = no sender name / no template)
+export const filterFields = (r: Row) => ({ status: r.status, chs: rowChs(r), sender: listSender(r), tpl: r.tpl || '' })
 export const scopeLabel = () => spaceName(getApp().space)
 
 let seq = 0
@@ -71,19 +74,11 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     filtered() {
       const s = get(), q = s.q.trim().toLowerCase()
       return m.visible().filter(r => {
-        if (s.fS.length && s.fS.indexOf(r.status) < 0) return false
-        if (s.fC.length && !rowChs(r).some(k => s.fC.indexOf(k) >= 0)) return false
-        if (s.fSd.length && s.fSd.indexOf(listSender(r)) < 0) return false
-        if (s.fT.length && s.fT.indexOf(r.tpl || '') < 0) return false
+        if (isFilterTreeActive(s.ft) && !evaluateTree(s.ft, filterFields(r))) return false
         if (!q) return true
         const cr = PMAP[r.creator] || ({} as any)
         return [r.sender, m.tplName(r.tpl), r.title, r.content, r.email && r.email.subject, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
       })
-    },
-    toggleIn(key: 'fS' | 'fC' | 'fSd' | 'fT', val: string) {
-      const arr = (get()[key] as string[]).slice(), i = arr.indexOf(val)
-      if (i >= 0) arr.splice(i, 1); else arr.push(val)
-      set({ page: 1, [key]: arr } as any)
     },
     retry(id: string) {
       const r = app().rows.find(x => x.id === id)!
@@ -351,7 +346,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.mode === 'edit' && c.editId) { id = c.editId; setApp(s => ({ rows: s.rows.map(r => r.id === id ? { ...r, ...base } as Row : r) })) }
       else { id = 'n' + (++seq); setApp(s => ({ rows: [{ id, creator: ME, created: fmtDT(now), ...base } as Row].concat(s.rows) })) }
       if (review) return
-      set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', fS: [], fC: [] })
+      set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', ft: createEmptyFilterTree('flat') })
       scrollTop()
       if (schedD) { flash(L('Scheduled for ', '已排程：') + niceDT(schedD)); return }
       flash(L('Sending to ', '傳送給 ') + P(rc.total, 'audience', '位收件人'), 'ok', chText(rowChs(base as Row)))
