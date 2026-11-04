@@ -1,6 +1,6 @@
 // Messages page: the list of sent and scheduled messages, and the send flow
 import * as React from 'react'
-import { Button, createEmptyFilterTree } from '@qijenchen/design-system'
+import { Button } from '@qijenchen/design-system'
 import { Plus } from 'lucide-react'
 import { useLogic } from '../../lib/logic'
 import { ME_SPACE, inTeam } from '../../lib/teams'
@@ -21,7 +21,7 @@ export function MessagesPage() {
   // the open space may vanish (you left the team): fall back to your personal space
   React.useEffect(() => { if (app.space !== ME_SPACE && !inTeam(app.space)) setApp({ space: ME_SPACE }) }, [app.space, app.teams])
   // another space starts from its first page, unfiltered
-  React.useEffect(() => { m.set({ page: 1, q: '', ft: createEmptyFilterTree('flat'), det: null }) }, [app.space, m])
+  React.useEffect(() => { m.set({ page: 1, q: '', fs: [], fch: [], det: null }) }, [app.space, m])
   useNavHome(() => m.goList())
   // Templates › Use template lands here with a template to apply
   React.useEffect(() => {

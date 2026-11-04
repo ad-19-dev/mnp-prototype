@@ -104,9 +104,10 @@ export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="tertiary" startIcon={Filter} endIcon={ChevronDown} pressed={sel.length > 0} badge={sel.length ? <Badge count={sel.length} variant="low" /> : undefined}>{label}</Button>
+        {/* DS table toolbar: text buttons, pressed while they filter; the badge counts the values picked */}
+        <Button variant="text" endIcon={ChevronDown} pressed={sel.length > 0} badge={sel.length ? <Badge count={sel.length} variant="low" /> : undefined}>{label}</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" minWidth={260}>
+      <DropdownMenuContent align="end" minWidth={260}>
         <DropdownMenuGroup>
           <DropdownMenuLabel>{label}</DropdownMenuLabel>
           {opts.map(o => (

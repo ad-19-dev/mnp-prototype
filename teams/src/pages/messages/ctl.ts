@@ -8,7 +8,6 @@ import {
   approval, blankCompose, effEmailMode, errs, hasNotif, msgErr, multiPeople, reach, recvFlat, seedEmail, selChs, smsOn,
   stepOk, unresolved, type Compose,
 } from '../../lib/compose'
-import { createEmptyFilterTree, evaluateTree, isFilterTreeActive, type FilterTree } from '@qijenchen/design-system'
 import { flash, getApp, patchRow, setApp } from '../../lib/store'
 import { groupInSpace, rowInSpace, spaceName, spaceTeam, tplInSpace } from '../../lib/teams'
 import { scrollTop } from '../../lib/logic'
@@ -22,8 +21,8 @@ import type { RiState } from '../../components/RecvInput'
 export interface ImpState { text: string; file: string; res: Match[] | null; picks: Record<number, Record<string, boolean>>; kind: ListKind | null; done: number }
 export interface SendState {
   view: 'list' | 'compose'
-  // ft: the conditions from the DS filter panel (status, channels, sender, template)
-  q: string; ft: FilterTree; page: number
+  // fs / fch: the Status and Channels filter buttons; sender, template and creator are found by search
+  q: string; fs: Status[]; fch: Channel[]; page: number
   det: string | null; ns: string | null; cf: Confirm | null
   // reschedule a message whose approval came after its scheduled time
   rs: { id: string; at: string; tried: boolean } | null
@@ -38,7 +37,7 @@ export interface SendState {
   gp: { q: string; tab: 'all' | 'mine' | 'shared'; sel: Record<string, boolean> } | null
 }
 export const initSend = (): SendState => ({
-  view: 'list', q: '', ft: createEmptyFilterTree('flat'), page: 1, det: null, ns: null, cf: null, rs: null,
+  view: 'list', q: '', fs: [], fch: [], page: 1, det: null, ns: null, cf: null, rs: null,
   c: blankCompose(), ri: { type: 'person', q: '', open: false, exp: null }, rf: '',
   imp: null, num: null, sg: null, stpl: null, tp: null, unr: false, gp: null,
 })
@@ -74,7 +73,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     filtered() {
       const s = get(), q = s.q.trim().toLowerCase()
       return m.visible().filter(r => {
-        if (isFilterTreeActive(s.ft) && !evaluateTree(s.ft, filterFields(r))) return false
+        if (s.fs.length && s.fs.indexOf(r.status) < 0) return false
+        if (s.fch.length && !rowChs(r).some(k => s.fch.indexOf(k) >= 0)) return false
         if (!q) return true
         const cr = PMAP[r.creator] || ({} as any)
         return [r.sender, m.tplName(r.tpl), r.title, r.content, r.email && r.email.subject, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
@@ -351,7 +351,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (c.mode === 'edit' && c.editId) { id = c.editId; setApp(s => ({ rows: s.rows.map(r => r.id === id ? { ...r, ...base } as Row : r) })) }
       else { id = 'n' + (++seq); setApp(s => ({ rows: [{ id, creator: ME, created: fmtDT(now), ...base } as Row].concat(s.rows) })) }
       if (review) return
-      set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', ft: createEmptyFilterTree('flat') })
+      set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', fs: [], fch: [] })
       scrollTop()
       if (schedD) { flash(L('Scheduled for ', '已排程：') + niceDT(schedD)); return }
       flash(L('Sending to ', '傳送給 ') + P(rc.total, 'audience', '位收件人'), 'ok')
