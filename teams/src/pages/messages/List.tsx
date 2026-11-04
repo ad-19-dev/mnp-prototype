@@ -2,7 +2,7 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
-  DataTableFilterPanel, Pagination, Popover, PopoverContent, PopoverTrigger, ProgressBar, Skeleton, Tag, createEmptyFilterTree, isFilterTreeActive,
+  DataTableFilterPanel, Pagination, Popover, PopoverContent, PopoverTrigger, ProgressBar, CircularProgress, Tag, createEmptyFilterTree, isFilterTreeActive,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip, Trunc, PageSize } from '../../components/ui'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
@@ -54,17 +54,11 @@ function sortRows(rows: Row[], sorting: SortingState, m: SendCtl) {
   return s.desc ? out.reverse() : out
 }
 
-// the table's shape while it loads: header and ten rows of grey bars
-function ListSkeleton() {
-  const widths = ['w-24', 'w-20', 'w-72', 'w-16', 'w-20', 'w-20', 'w-24']
+// while a space loads: the DS loading layout, a 48px spinner with a line of text, centred in the table's frame
+function ListLoading() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-divider" aria-busy="true" aria-label={L('Loading messages', '正在載入訊息')}>
-      <div className="flex items-center gap-6 border-b border-divider bg-muted/50 px-4 py-3">{widths.map((w, i) => <Skeleton key={i} className={'h-3 ' + w} />)}</div>
-      {Array.from({ length: 10 }, (_, r) => (
-        <div key={r} className="flex items-center gap-6 border-b border-divider px-4 py-4 last:border-0">
-          {widths.map((w, i) => i === 2 ? <span key={i} className="flex w-72 flex-col gap-2"><Skeleton className="h-3.5 w-60" /><Skeleton className="h-3 w-72" /></span> : <Skeleton key={i} className={'h-3.5 ' + w} />)}
-        </div>
-      ))}
+    <div className="flex min-h-[360px] items-center justify-center rounded-md border border-divider py-12" aria-busy="true" aria-live="polite">
+      <Empty icon={<CircularProgress size={48} aria-label={L('Loading', '載入中')} />} description={L('Loading messages…', '正在載入訊息…')} />
     </div>
   )
 }
@@ -103,7 +97,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
   const sorted = React.useMemo(() => sortRows(rows, sorting, m), [rows, sorting, m])
   const pagesN = Math.max(1, Math.ceil(sorted.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
   const pageRows = sorted.slice(st, st + per)
-  // a short skeleton while a space opens, as if its messages were loading
+  // a short loading state while a space opens, as if its messages were loading
   const [loading, setLoading] = React.useState(true)
   React.useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 700); return () => clearTimeout(t) }, [app.space])
   const clearAll = () => m.set({ ft: createEmptyFilterTree('flat'), q: '', page: 1 })
@@ -180,7 +174,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
           </p>
         ) : null}
       </div>
-      {loading ? <ListSkeleton /> : (
+      {loading ? <ListLoading /> : (
         // every cell vertically centred (see globals.css .mnp-center)
         <div className="mnp-center flex min-h-0 flex-1 flex-col">
           <DataTable tableOptions={{ ...NO_HIDE, manualSorting: true, onSortingChange: (u: any) => setSorting(old => (typeof u === 'function' ? u(old) : u)) }}
