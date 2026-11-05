@@ -97,33 +97,44 @@ function ChannelRow({ m, r, k, ok, of, last }: { m: SendCtl; r: Row; k: Channel;
   )
 }
 
-// groups and orgs list one per row; the count opens a searchable member list (as in step 1 of the send flow).
-// Single people and external contacts stay as tags.
+// every audience is a row, in a fixed order: orgs, groups, people, then external contacts. Orgs and groups
+// show their size as a link that opens a searchable member list (as in step 1 of the send flow).
+const AUD_ORDER = { org: 0, group: 1, person: 2, ext: 3 } as Record<string, number>
 function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
   const [mem, setMem] = React.useState<MemberSet | null>(null)
-  const sets = tags.filter(t => t.type === 'group' || t.type === 'org'), rest = tags.filter(t => t.type !== 'group' && t.type !== 'org')
+  const list = tags.slice().sort((a, b) => AUD_ORDER[a.type] - AUD_ORDER[b.type])
+  const icon = (I: typeof Globe) => <span className="inline-flex size-6 shrink-0 items-center justify-center"><I className="size-4 text-fg-secondary" aria-hidden /></span>
   return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)]">
-      {sets.length ? (
-        <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
-          {sets.map(t => {
+    <>
+      <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+        {list.map(t => {
+          let lead: React.ReactNode, name = '', sub = '', end: React.ReactNode = null
+          if (t.type === 'group' || t.type === 'org') {
             const g = t.type === 'group' ? groups.find(x => x.id === t.id) : null, o = t.type === 'org' ? ORGS.find(x => x.code === t.id) : null
             const people = g ? membersFor(g).map(x => PMAP[x.pid]).filter(Boolean) : orgMembers(t.id!)
-            const name = g ? g.name : o ? o.code : t.id!, sub = g ? L('Audience group', '收件群組') : o ? o.name : ''
-            return (
-              <div key={t.key} className="flex items-center gap-3 px-3 py-3">
-                {g ? <BookUser className="size-4 shrink-0 text-fg-secondary" aria-hidden /> : <Building2 className="size-4 shrink-0 text-fg-secondary" aria-hidden />}
-                <span className="flex min-w-0 flex-1 flex-col"><span className="truncate text-body font-medium">{name}</span><span className="truncate text-caption text-fg-secondary">{sub}</span></span>
-                <Button variant="link" size="sm" className="!h-auto shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
-                  onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people })}>{P(people.length, 'person', '人', 'people')}</Button>
-              </div>
-            )
-          })}
-        </div>
-      ) : null}
-      {rest.length ? <div className="flex flex-wrap gap-2">{rest.map(x => <RecvTag key={x.key} t={x} groups={groups} />)}</div> : null}
+            name = g ? g.name : o ? o.code : t.id!; sub = g ? L('Audience group', '收件群組') : L('Org', '組織') + (o ? ' · ' + o.name : '')
+            lead = icon(g ? BookUser : Building2)
+            end = <Button variant="link" size="sm" className="!h-auto shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
+              onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people })}>{P(people.length, 'person', '人', 'people')}</Button>
+          } else if (t.type === 'person') {
+            const p = PMAP[t.id!]
+            lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.zh + ' ' + p.en : t.id!; sub = p ? p.emp + ' · ' + p.org : ''
+          } else {
+            const ph = isExtPhone(t)
+            lead = icon(ph ? Phone : Globe); name = t.email!
+            sub = ph ? L('External phone · SMS only', '外部電話・只收 SMS') : L('External email · Email only', '外部 Email・只收 Email')
+          }
+          return (
+            <div key={t.key} className="flex items-center gap-3 px-3 py-3">
+              {lead}
+              <span className="flex min-w-0 flex-1 flex-col"><span className="truncate text-body font-medium">{name}</span><span className="truncate text-caption text-fg-secondary">{sub}</span></span>
+              {end}
+            </div>
+          )
+        })}
+      </div>
       <MembersDialog set={mem} onClose={() => setMem(null)} />
-    </div>
+    </>
   )
 }
 
@@ -157,7 +168,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           ) : null}
           <DescriptionList orientation="horizontal" divided>
             {listSender(r) ? <DescriptionItem label={L('Sender', '寄件人')}>{r.sender}</DescriptionItem> : null}
-            <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || L('None', '無')}</DescriptionItem>
+            <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || '—'}</DescriptionItem>
             <DescriptionItem label={L('Channels', '通道')}>{chs.map(k => CHN[k].name).join(', ')}</DescriptionItem>
             {r.sms || r.review ? <DescriptionItem label={L('Approval', '核准')}>{r.bypass ? L('ICSD skipped (urgent)', '已略過 ICSD（緊急）') : r.status === 'pending' ? L('Waiting for ', '等待') + reviewer(r) : r.status === 'rejected' ? L('Rejected by ', '') + reviewer(r) + L('', '駁回') : L('Approved', '已核准')}</DescriptionItem> : null}
             <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>

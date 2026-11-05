@@ -248,7 +248,7 @@ function FilterTab() {
 
       <Section eyebrow="Toolbar" title="工具列" lead="DS action bar 的資料工具列：左邊搜尋，右邊操作。">
         <Figure label="篩選中" sub="Status = Sent、Channels = Email" shot="filtered" wideNotes notes={[
-          { n: 1, title: '篩選按鈕', body: <>DS 表格工具列的 <C>Button text</C>，文字加向下箭頭。有選值時是按下狀態（pressed），並用 <C>Badge low</C> 顯示選了幾個值。</> },
+          { n: 1, title: '篩選按鈕', body: <>有外框的 <C>Button tertiary</C>，文字加向下箭頭。有選值時是按下狀態（pressed），並用 <C>Badge low</C> 顯示選了幾個值。</> },
           { n: 2, title: '結果說明', body: <><span className="spec-q">Showing 7 of 24 messages · 2 filters</span>（顯示 24 則中的 7 則・2 個篩選條件）。只在有搜尋字或篩選時出現，<C>aria-live</C> 讓螢幕閱讀器念出結果。</> },
           { n: 3, title: '清除', body: <>連結按鈕「Clear / 清除」，一次清掉搜尋字和所有篩選。</> },
         ]} />
@@ -284,15 +284,15 @@ function DetailTab() {
           { n: 6, title: 'By channel 各通道', body: <>每個用到的通道一列，DS <C>Accordion</C>，預設全部收合。</> },
           { n: 7, title: '通道列', body: '圖示、通道名稱，第二行「532 / 560 delivered · 28 missed」，未送達人數紅字。展開看這個通道送出的內容。' },
           { n: 8, title: '未送達名單入口', body: <>這個通道有人沒收到時，內容下方一個連結 <span className="spec-q">See who didn’t get it (28)</span>（查看未送達名單（28 人）），打開這個通道的名單。不在面板裡預先列人。</> },
-          { n: 9, title: 'Audiences 收件人', body: '群組和組織一個一列：圖示、名稱、說明。個人和外部聯絡人在下面用標籤顯示。' },
-          { n: 10, title: '成員人數', body: '藍色連結「58 people」，打開可搜尋的成員名單。和發送流程第一步同一個做法。' },
+          { n: 9, title: 'Audiences 收件人', body: '每個收件人一列，順序固定：組織 → 群組 → 個人 → 外部聯絡人。組織和群組有圖示、名稱、說明；個人有頭像、中英文名、工號・組織；外部聯絡人有地址或號碼，說明「External email · Email only」或「External phone · SMS only」。' },
+          { n: 10, title: '成員人數', body: '只有組織和群組有：藍色連結「58 people」，打開可搜尋的成員名單。和發送流程第一步同一個做法。' },
         ]} />
       </Section>
 
       <Section eyebrow="Fields" title="基本資訊欄位">
         <SpecTable head={['欄位', '內容', '何時顯示']} nowrap={[0]} rows={[
           [<Copy en="Sender" zh="寄件人" />, '寄件人名稱', '有 Device Notifications 或 Desktop OS 時'],
-          [<Copy en="Template" zh="模板" />, '模板名稱，沒有用模板時「None / 無」', '一定'],
+          [<Copy en="Template" zh="模板" />, '模板名稱，沒有用模板時「—」', '一定'],
           [<Copy en="Channels" zh="通道" />, '通道全名，逗號分隔', '一定'],
           [<Copy en="Approval" zh="核准" />, <>Approved 已核准 · Waiting for ICSD 等待 ICSD · Rejected by ICSD ICSD 駁回 · ICSD skipped (urgent) 已略過 ICSD（緊急）</>, '有 SMS 或需要核准時'],
           [<Copy en="Created by" zh="建立者" />, '英文名＋中文名', '一定'],

@@ -474,6 +474,15 @@ MINE.push(
   { id: 'm151', sender: 'Grace Wu', tpl: null, title: 'Reminder: badge photo update by 11/7', content: 'Please upload a new badge photo in tWorkspace › Profile by Nov 7. Questions? Call me at 0912-337-415.', smsText: 'Upload a new badge photo by 11/7. Call 0912-337-415.', channels: ['push'], sms: true, status: 'rejected', created: '2026/10/31 15:40', sched: null, total: 9, ok: 0, creator: 'p01', team: null, aud: [['g', 'g8']], review: { by: 'icsd', at: '2026/11/01 10:05', reason: 'The SMS text includes a personal phone number. Remove it and submit again.' } },
   { id: 'm150', sender: 'Grace Wu', tpl: null, title: 'Project Atlas demo moves to Mon 11/10 09:00', content: 'The Atlas demo moves to Mon, Nov 10 at 09:00 in 5F-Ocean. Bring your laptop.', smsText: 'Atlas demo moves to Mon 11/10 09:00, 5F-Ocean.', channels: ['push'], sms: true, status: 'pending', created: '2026/11/02 16:20', sched: '2026/11/10 08:30', total: 7, ok: 0, creator: 'p01', team: null, aud: [['g', 'g9']], review: { by: 'icsd' } },
 )
+// one message that uses every kind of audience: an org, a group, two colleagues and two external vendors
+{
+  const aud: [string, string][] = [['o', 'PLT/UX'], ['g', 'g6'], ['p', 'p02'], ['p', 'p22'], ['e', 'lisa.ho@vendor-example.com'], ['e', '0988-000-222']]
+  const total = flatten(audToTags(aud), GROUPS).length + 2
+  MINE.push({ id: 'm154', sender: 'Grace Wu', tpl: null, title: 'Design review with Northwind Studio: Thu 11/6 14:00', content: 'Design review with Northwind Studio on Thu, Nov 6 at 14:00 in 5F-Ocean. Guests get badges at the B lobby.', smsText: 'Design review Thu 11/6 14:00, 5F-Ocean. Badges at B lobby.',
+    channels: ['push', 'email'], sms: true, status: 'sent', created: '2026/11/03 11:20', sched: null, total, ok: total - 2, creator: 'p01', team: null, aud,
+    email: { mode: 'own', subject: 'Design review with Northwind Studio: Thu, Nov 6, 14:00', html: textToHtml('Hi all,\n\nOur design review with Northwind Studio is on Thu, Nov 6 at 14:00 in 5F-Ocean. Guests get badges at the B lobby.\n\nGrace'), atts: [] },
+    byCh: { push: [total - 6, total - 2], email: [total - 1, total], sms: [3, 4] }, fr: [['No registered device', 'SMS fallback: number not in service']], fx: [['lisa.ho@vendor-example.com', 'Mailbox full (552)']] })
+}
 MINE.forEach(r => { if (r.sender === '') r.sender = 'gywu' })
 ROWS0.push(...MINE)
 ROWS0.sort((a, b) => b.created.localeCompare(a.created))
