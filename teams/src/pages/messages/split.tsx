@@ -129,7 +129,7 @@ function AudienceN({ x }: { x: Rec }) {
   if (x.unk) return (
     <span className="flex min-w-0 flex-col items-end text-right">
       <span className="text-body tabular-nums">–</span>
-      {x.r.status !== 'rejected' && x.r.status !== 'error' ? <span className="text-caption text-fg-secondary">{x.r.status === 'progress' ? L('Not known yet', '還不知道人數') : L('Known once sent', '送出後才知道')}</span> : null}
+      <span className="text-caption text-fg-secondary">{x.r.status === 'rejected' || x.r.status === 'error' ? L('Not sent', '未傳送') : x.r.status === 'progress' ? L('Not known yet', '還不知道人數') : L('Known once sent', '送出後才知道')}</span>
     </span>
   )
   return <span className="text-body tabular-nums">{fmtN(x.of)}</span>
@@ -148,7 +148,9 @@ function StatusCell({ m, x }: { m: SendCtl; x: Rec }) {
 
 // ---------- list ----------
 // How a message's records read as one group (design options; the prototype uses 'none'):
-//   merge: message-wide cells (template, times, creator) only on its first row; status stays on every row
+//   merge: message-wide cells (template, times, creator) only on its first row; status stays on every row.
+//          Marks, one meaning each: blank = same as the message's first row; "—" = no value (first row only);
+//          "N/A" = this channel has no such field (Email and SMS fallback have no sender name)
 //   divider: no lines inside a message, a stronger line between messages
 //   band: every other message on a tinted background
 //   bracket: a bar down the left edge joins a message's rows
@@ -222,7 +224,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => {
       const g = i.row.original
       return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
-        {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span>}</>
+        {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">{L('N/A', '不適用')}</span>}</>
     } }),
     col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 236 : 210 }, cell: i => {
       const g = i.row.original

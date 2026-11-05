@@ -84,7 +84,7 @@ node tools/lock.mjs <密碼> publish/mnp-channel-reach-options.html bilingual/op
 例如「把雙語版群組頁的 Description 改成選填」，改完請它重新加密並更新上面的網址。
 
 ### 一個通道一筆紀錄的版本
-同一份 `teams/` 程式，用 `--mode split` 建置（`SPLIT` 在 `teams/src/lib/data.ts`）。發送流程不變；訊息列表每個通道各一列，「收件人數」欄只放該通道的收件人數，失敗人數放在狀態下方；用方案 A 分組，SMS 備援固定排在 Device Notifications 正下方、以「↳」縮排（同一則訊息的模板、時間、建立者只在第一列；狀態每列各自顯示，例如 Device Notifications 已送完、SMS 還在傳送中，見 `chSt`），範例資料多了 m160–m177（只在這個版本）：你所在的每個空間（個人、Platform Ops、Fab 18、ESH、UX Team）都有七種狀態，也有通道狀態不同的訊息（一個通道送完、另一個還在傳送；或其中一個通道傳送錯誤）。列選單「查看訊息內容」打開的面板只放列上看不到的：該通道的完整內容、收件人、核准經過、同時發送的通道（各自狀態）與申請編號；寄件人、模板、時間、建立者、送達人數不再重複。編輯、刪除、重新排程、立即傳送仍然作用在整則訊息。
+同一份 `teams/` 程式，用 `--mode split` 建置（`SPLIT` 在 `teams/src/lib/data.ts`）。發送流程不變；訊息列表每個通道各一列，「收件人數」欄只放該通道的收件人數，失敗人數放在狀態下方；空格的意思各只有一種（留白＝同上、「—」＝沒有值且只在第一列、灰字「不適用」＝這個通道沒有這個欄位，例如 Email 和 SMS 的寄件人）；用方案 A 分組，SMS 備援固定排在 Device Notifications 正下方、以「↳」縮排（同一則訊息的模板、時間、建立者只在第一列；狀態每列各自顯示，例如 Device Notifications 已送完、SMS 還在傳送中，見 `chSt`），範例資料多了 m160–m177（只在這個版本）：你所在的每個空間（個人、Platform Ops、Fab 18、ESH、UX Team）都有七種狀態，也有通道狀態不同的訊息（一個通道送完、另一個還在傳送；或其中一個通道傳送錯誤）。列選單「查看訊息內容」打開的面板只放列上看不到的：該通道的完整內容、收件人、核准經過、同時發送的通道（各自狀態）與申請編號；寄件人、模板、時間、建立者、送達人數不再重複。編輯、刪除、重新排程、立即傳送仍然作用在整則訊息。
 ```
 cd teams && npx vite build --mode split --outDir split/dist --emptyOutDir && cd ..
 node tools/lock.mjs <密碼> publish/mnp-teams-per-channel.html teams/split "MNP Teams · 單一通道紀錄"
