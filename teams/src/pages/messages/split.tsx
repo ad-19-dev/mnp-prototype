@@ -27,16 +27,19 @@ import { AudienceList, ChannelText, Part, failCols, notStarted, reviewer, sendTi
 
 // ---------- records ----------
 // unk: SMS fallback whose count isn't known yet (it depends on whom Device Notifications misses)
-export interface Rec { id: string; r: Row; k: Channel; ok: number; of: number; unk?: boolean }
+// st: this channel's own status (the message's, except while it sends: a channel that has finished is Sent)
+export interface Rec { id: string; r: Row; k: Channel; ok: number; of: number; unk?: boolean; st: Status }
 const recId = (r: Row, k: Channel) => r.id + '~' + k
 export function recordsOf(m: SendCtl, rows: Row[]): Rec[] {
   const out: Rec[] = []
   rows.forEach(r => m.chStats(r).forEach(x => {
-    const rec: Rec = { id: recId(r, x.k), r, k: x.k, ok: x.ok, of: x.of }
+    const rec: Rec = { id: recId(r, x.k), r, k: x.k, ok: x.ok, of: x.of, st: r.status }
     // SMS without its own numbers: known only once Device Notifications has finished
     if (x.k === 'sms' && !(r.byCh && r.byCh.sms)) {
       if (r.status === 'sent') { rec.of = Math.max(0, r.total - r.ok); rec.ok = rec.of } else { rec.unk = true; rec.ok = 0; rec.of = 0 }
     }
+    if (r.chSt && r.chSt[x.k]) rec.st = r.chSt[x.k]!
+    else if (r.status === 'progress' && !rec.unk && x.k !== 'sms' && rec.ok >= rec.of) rec.st = 'sent'
     out.push(rec)
   }))
   return out
@@ -52,7 +55,7 @@ export function recordById(m: SendCtl, rows: Row[], id: string | null): Rec | nu
 // SMS goes only to the people Device Notifications missed (and to external phones), so before the message goes
 // out nobody knows how many it will be
 const smsUnknown = (x: Rec) => !!x.unk
-const failsOf = (x: Rec) => (!x.unk && (x.r.status === 'sent' || x.r.status === 'error') ? Math.max(0, x.of - x.ok) : 0)
+const failsOf = (x: Rec) => (!x.unk && (x.st === 'sent' || x.st === 'error') ? Math.max(0, x.of - x.ok) : 0)
 export const chName = (k: Channel) => (k === 'sms' ? L('SMS fallback', 'SMS 備援') : CHN[k].name)
 
 // the channel's own words: Desktop OS has its own text; Email its subject and body; SMS has no title
@@ -120,7 +123,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
 // the record's count: delivered / audience on this channel only
 function Reach({ m, x, size = 'list' }: { m: SendCtl; x: Rec; size?: 'list' | 'detail' }) {
   const r = x.r, fails = failsOf(x)
-  const none = x.k === 'sms' && r.status === 'sent' && !x.unk && !x.of
+  const none = x.k === 'sms' && x.st === 'sent' && !x.unk && !x.of
   return (
     <span className={'flex min-w-0 flex-col gap-1' + (size === 'list' ? ' w-full' : '')}>
       <span className="text-body tabular-nums">
@@ -129,7 +132,7 @@ function Reach({ m, x, size = 'list' }: { m: SendCtl; x: Rec; size?: 'list' | 'd
       </span>
       {smsUnknown(x) && x.r.status !== 'rejected' && x.r.status !== 'error' && size === 'list' ? <span className="text-caption text-fg-secondary">{x.r.status === 'progress' ? L('Not known yet', '還不知道人數') : L('Known once sent', '送出後才知道')}</span> : null}
       {none && size === 'list' ? <span className="text-caption text-fg-secondary">{L('No one needed it', '沒有人需要')}</span> : null}
-      {r.status === 'progress' && !x.unk ? <ProgressBar aria-label={L('Delivery progress', '傳送進度')} value={Math.round(x.ok / Math.max(1, x.of) * 100)} /> : null}
+      {x.st === 'progress' && !x.unk ? <ProgressBar aria-label={L('Delivery progress', '傳送進度')} value={Math.round(x.ok / Math.max(1, x.of) * 100)} /> : null}
       {fails && size === 'list' ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id + '|' + x.k })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
     </span>
   )
@@ -137,7 +140,7 @@ function Reach({ m, x, size = 'list' }: { m: SendCtl; x: Rec; size?: 'list' | 'd
 
 // ---------- list ----------
 // How a message's records read as one group (design options; the prototype uses 'none'):
-//   merge: message-wide cells (status, template, times, creator) only on its first row
+//   merge: message-wide cells (template, times, creator) only on its first row; status stays on every row
 //   divider: no lines inside a message, a stronger line between messages
 //   band: every other message on a tinted background
 //   bracket: a bar down the left edge joins a message's rows
@@ -162,7 +165,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const s = m.s, app = useApp(), vis = React.useMemo(() => recordsOf(m, m.visible()), [m, app.rows, app.space])
   const q = s.q.trim().toLowerCase()
   const rows = vis.filter(x => {
-    if (s.fs.length && s.fs.indexOf(x.r.status) < 0) return false
+    if (s.fs.length && s.fs.indexOf(x.st) < 0) return false
     if (s.fch.length && s.fch.indexOf(x.k) < 0) return false
     if (!q) return true
     const cr = PMAP[x.r.creator] || ({} as any), t = recText(x.r, x.k)
@@ -201,7 +204,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const clearAll = () => m.set({ fs: [], fch: [], q: '', page: 1 })
   const fOn = s.fs.length > 0 || s.fch.length > 0, fN = s.fs.length + s.fch.length
   const flip = <K,>(list: K[], k: K) => (list.indexOf(k) >= 0 ? list.filter(x => x !== k) : list.concat([k]))
-  const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.r.status === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.r.status === k).length }))
+  const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.st === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.st === k).length }))
   const chOpts = CH_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
 
   // the cells every record of a message shares: once per message when merged, on the message row with a header
@@ -241,7 +244,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
         </span>
       )
     } }),
-    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 180 }, cell: i => shared(i.row.original) ? <StatusTag s={i.row.original.r.status} /> : null }),
+    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 180 }, cell: i => { const g = i.row.original; return <StatusTag s={g.hdr ? g.r.status : g.st} /> } }),
     // this channel's audience only: the number a sender actually reached on it
     col.display({ id: 'recv', header: L('Reach / Audience', '送達 / 收件人'), enableSorting: true, meta: { width: 160 }, cell: i => i.row.original.hdr ? null : <Reach m={m} x={i.row.original} /> }),
     col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
@@ -321,7 +324,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
     <div className="flex min-h-full flex-col">
       <div className="flex flex-1 flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><StatusTag s={r.status} /><span className="font-mono text-caption text-fg-secondary">{reqIdFor(r)}</span></div>
+          <div className="flex items-center gap-2"><StatusTag s={x.st} /><span className="font-mono text-caption text-fg-secondary">{reqIdFor(r)}</span></div>
           <span className="flex items-center gap-2 text-body text-fg-secondary"><I className="size-4" aria-hidden />{chName(k)}</span>
           <h3 className="text-body-lg font-medium text-foreground">{k === 'sms' ? r.title : t.title}</h3>
         </div>
@@ -379,7 +382,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
                     <button key={y.id} type="button" onClick={() => m.set({ det: y.id })} className="flex items-center gap-3 px-3 py-3 text-left hover:bg-[var(--surface-hover,rgba(0,0,0,0.03))] focus-visible:outline-2 focus-visible:outline-ring">
                       <J className="size-4 shrink-0 text-fg-secondary" aria-hidden />
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-body font-medium">{chName(y.k)}</span>
+                        <span className="flex min-w-0 items-center gap-2"><span className="truncate text-body font-medium">{chName(y.k)}</span><StatusTag s={y.st} /></span>
                         <span className="text-caption tabular-nums text-fg-secondary">
                           {notStarted(r) ? L('Not sent yet', '尚未傳送') : y.unk ? L('Not known yet', '還不知道人數') : L(fmtN(y.ok) + ' / ' + fmtN(y.of) + ' delivered', fmtN(y.ok) + ' / ' + fmtN(y.of) + ' 已送達')}
                           {f ? <span className="text-error-text">{L(' · ' + fmtN(f) + ' failed', '・' + fmtN(f) + ' 人失敗')}</span> : null}

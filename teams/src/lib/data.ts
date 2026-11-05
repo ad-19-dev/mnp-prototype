@@ -52,6 +52,8 @@ export interface Row {
   total: number; ok: number; creator: string; aud: [string, string][]; email?: EmailBody | null
   fr?: string[][]; fo?: string; fw?: string[]; fx?: string[][]; err?: { title: string; text: string } | null
   byCh?: Partial<Record<Channel, [number, number]>> | null; fresh?: number; _f?: Fail[] | null
+  // a channel whose own status differs from the message's (e.g. Device Notifications done while SMS still sends)
+  chSt?: Partial<Record<Channel, Status>> | null
   team?: string | null
   // ICSD approval skipped because the message was urgent: who, when and why (kept for the record)
   bypass?: { by: string; at: string; reason: string } | null
@@ -489,6 +491,10 @@ MINE.push(
     email: { mode: 'own', subject: 'Design review with Northwind Studio: Thu, Nov 6, 14:00', html: textToHtml('Hi all,\n\nOur design review with Northwind Studio is on Thu, Nov 6 at 14:00 in 5F-Ocean. Guests get badges at the B lobby.\n\nGrace'), atts: [] },
     byCh: { push: [total - 6, total - 2], email: [total - 1, total], sms: [3, 4] }, fr: [['No registered device', 'SMS fallback: number not in service']], fx: [['lisa.ho@vendor-example.com', 'Mailbox full (552)']] })
 }
+// still going out: Device Notifications has finished, Email and SMS fallback are still sending
+MINE.push({ id: 'm155', sender: 'Grace Wu', tpl: null, title: 'Fire alarm test in Building B today at 15:00', content: 'The fire alarm in Building B will be tested today at 15:00 for about 10 minutes. No need to evacuate.', smsText: 'Fire alarm test in Bldg B today 15:00, about 10 min. No need to evacuate.',
+  channels: ['push', 'email'], sms: true, status: 'progress', created: '2026/11/05 14:30', sched: null, total: 21, ok: 19, creator: 'p01', team: null, aud: [['o', 'PLT/UX']], email: { mode: 'same' },
+  byCh: { push: [19, 21], email: [15, 21], sms: [1, 2] }, chSt: { push: 'sent' } })
 MINE.forEach(r => { if (r.sender === '') r.sender = 'gywu' })
 ROWS0.push(...MINE)
 ROWS0.sort((a, b) => b.created.localeCompare(a.created))

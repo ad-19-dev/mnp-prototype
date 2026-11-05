@@ -84,7 +84,7 @@ node tools/lock.mjs <密碼> publish/mnp-channel-reach-options.html bilingual/op
 例如「把雙語版群組頁的 Description 改成選填」，改完請它重新加密並更新上面的網址。
 
 ### 一個通道一筆紀錄的版本
-同一份 `teams/` 程式，用 `--mode split` 建置（`SPLIT` 在 `teams/src/lib/data.ts`）。發送流程不變；訊息列表每個通道各一列，詳情是那一個通道的內容、送達人數與失敗名單，並連到同一則訊息的其他通道。編輯、刪除、重新排程、立即傳送仍然作用在整則訊息。
+同一份 `teams/` 程式，用 `--mode split` 建置（`SPLIT` 在 `teams/src/lib/data.ts`）。發送流程不變；訊息列表每個通道各一列，用方案 A 分組（同一則訊息的模板、時間、建立者只在第一列；狀態每列各自顯示，例如 Device Notifications 已送完、SMS 還在傳送中，見 `chSt`），詳情是那一個通道的內容、送達人數與失敗名單，並連到同一則訊息的其他通道。編輯、刪除、重新排程、立即傳送仍然作用在整則訊息。
 ```
 cd teams && npx vite build --mode split --outDir split/dist --emptyOutDir && cd ..
 node tools/lock.mjs <密碼> publish/mnp-teams-per-channel.html teams/split "MNP Teams · 單一通道紀錄"
