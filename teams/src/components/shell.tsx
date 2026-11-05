@@ -1,14 +1,14 @@
 // App chrome: tWorkspace global header, MNP sidebar, and the per-page local header.
-// Layout follows the DS AppShell "primary-header" pattern (global header + sidebar + local header).
+// Layout follows the DS AppShell "primary-sidebar" pattern (full-height sidebar + page header, no global top bar).
 import * as React from 'react'
 import { createPortal } from 'react-dom'
 import {
   AccountMenu, AppShell, AppShellAside, Avatar, Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
   Button, ChromeHeader, Input, Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel,
-  SidebarHeader, SidebarMenu,
+  SidebarFooter, SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem, Tabs, TabsList, TabsTrigger,
 } from '@qijenchen/design-system'
-import { Bell, CircleHelp, Plus, Radio, Search, Settings, UserRound, UsersRound } from 'lucide-react'
+import { Megaphone, Plus, Settings, UserRound, UsersRound } from 'lucide-react'
 import { go, setApp, setLang, useApp, type Page } from '../lib/store'
 import { ME_SPACE, myTeams, spaceName, teamById } from '../lib/teams'
 import { TeamDialog } from './TeamPanels'
@@ -65,29 +65,13 @@ export function PageHeader({ crumbs, actions }: { crumbs: Crumb[]; actions?: Rea
   )
 }
 
-function GlobalHeader() {
+function LangSwitch() {
   const { lang } = useApp()
   return (
-    <ChromeHeader className="bg-surface" leadingRail={<SidebarTrigger />}>
-      <div className="flex min-w-0 items-center gap-2">
-        <Avatar size={24} shape="square" color="blue" solid alt="tWorkspace" />
-        <span className="text-body-lg font-medium">tWorkspace</span>
-        <span className="mx-1 h-4 w-px bg-divider" aria-hidden />
-        <span className="text-body-lg text-fg-secondary">MNP</span>
-      </div>
-      <div className="mx-auto hidden w-full max-w-md px-[var(--layout-space-loose)] md:block">
-        <Input size="sm" startIcon={Search} placeholder={L('Search tWorkspace', '搜尋 tWorkspace')} aria-label={L('Search tWorkspace', '搜尋 tWorkspace')} />
-      </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <SegmentedControl size="sm" value={lang} onValueChange={v => v && setLang(v as 'en' | 'zh')} aria-label={L('Language', '語言')} className="mr-1">
-          <SegmentedControlItem value="zh">中文</SegmentedControlItem>
-          <SegmentedControlItem value="en">EN</SegmentedControlItem>
-        </SegmentedControl>
-        <Button variant="text" size="sm" iconOnly startIcon={CircleHelp} aria-label={L('Help', '說明')} />
-        <Button variant="text" size="sm" iconOnly startIcon={Bell} aria-label={L('Notifications, 3 unread', '通知，3 則未讀')} overlayBadge={<span className="block size-2 rounded-full bg-notification" />} />
-        <AccountMenu user={{ name: 'Grace Wu', avatar: { color: 'blue' } }} onViewProfile={() => {}} onOpenSettings={() => {}} onSignOut={() => {}} />
-      </div>
-    </ChromeHeader>
+    <SegmentedControl size="sm" value={lang} onValueChange={v => v && setLang(v as 'en' | 'zh')} aria-label={L('Language', '語言')} className="shrink-0 group-data-[collapsible=icon]:hidden">
+      <SegmentedControlItem value="zh">中文</SegmentedControlItem>
+      <SegmentedControlItem value="en">EN</SegmentedControlItem>
+    </SegmentedControl>
   )
 }
 
@@ -96,14 +80,18 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
   useApp()
   const teams = myTeams()
   return (
-    <Sidebar collapsible="icon" viewportInsetTop="var(--chrome-header-height)">
+    <Sidebar collapsible="icon">
       <SidebarHeader>
+        {/* product mark, name, and the collapse button on the right; collapsed, only the button stays (the header
+            is one row high), so the sidebar can always be opened again */}
         <div className="flex min-w-0 items-center gap-2 group-data-[collapsible=icon]:justify-center">
-          <Avatar size={24} shape="square" color="indigo" icon={Radio} alt="MNP" />
+          {/* product mark: white megaphone on Orange 6 */}
+          <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-md group-data-[collapsible=icon]:hidden bg-[var(--color-orange-6)] text-white" role="img" aria-label="MNP"><Megaphone className="size-4" aria-hidden /></span>
           <span className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
             <span className="truncate text-body font-medium">MNP</span>
             <span className="truncate text-caption text-fg-secondary">{L('Notification platform', '通知平台')}</span>
           </span>
+          <SidebarTrigger className="ml-auto shrink-0 group-data-[collapsible=icon]:ml-0" />
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -130,6 +118,14 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      {/* DS primary-sidebar: the account sits at the bottom of the sidebar; the prototype's language switch sits with it */}
+      <SidebarFooter>
+        <div className="flex min-w-0 items-center gap-2 px-[var(--layout-space-tight)] py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+          <AccountMenu user={{ name: 'Grace Wu', avatar: { color: 'blue' } }} onViewProfile={() => {}} onOpenSettings={() => {}} onSignOut={() => {}} />
+          <span className="min-w-0 flex-1 truncate text-body group-data-[collapsible=icon]:hidden">Grace Wu</span>
+          <LangSwitch />
+        </div>
+      </SidebarFooter>
       <TeamDialog open={creating} onClose={() => setCreating(false)} />
     </Sidebar>
   )
@@ -184,9 +180,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <HeaderSlot.Provider value={slot}>
         <AsideSlot.Provider value={asideCtx}>
           <AppShell
-            layout="primary-header"
-            globalHeader={<GlobalHeader />}
+            layout="primary-sidebar"
             sidebar={<MnpSidebar onSpace={onSpace} />}
+            // no global top bar; the sidebar toggle lives in the sidebar header (see MnpSidebar)
             header={<ChromeHeader className="bg-surface"><div ref={setSlot} className="contents" /></ChromeHeader>}
             asideOpen={!!aside} onAsideOpenChange={o => { if (!o) aside?.onClose() }}
             aside={aside ? <AppShellAside title={aside.title} width={{ md: 400, xl: 480 }}><div ref={setAsideEl} /></AppShellAside> : undefined}

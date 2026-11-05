@@ -137,7 +137,7 @@ function RecvTable({ m }: { m: SendCtl }) {
     rcol.accessor('cnt', { header: L('People', '人數'), meta: { width: 100, align: 'right' }, cell: i => {
       const x = i.row.original
       return x.t.type === 'group' || x.t.type === 'org'
-        ? <Button variant="link" size="sm" className="!h-auto !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl })}>{fmtN(x.cnt)}</Button>
+        ? <Button variant="link" size="sm" className="!h-auto !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl, group: x.t.type === 'group' ? x.t.id : undefined })}>{fmtN(x.cnt)}</Button>
         : <span className="tabular-nums">{fmtN(i.getValue())}</span>
     } }),
     rcol.display({ id: 'can', header: L('Can receive', '可收到的通道'), meta: { width: 260 }, cell: i => (

@@ -29,7 +29,7 @@ const main = p.locator('#app-shell-main');
 const btn = n => p.getByRole('button', { name: n, exact: true });
 const foot = () => p.locator('[data-compose] .sticky').last();
 // the main area plus the local header above it (breadcrumb and approval tags)
-const page = async () => { const mb = await main.boundingBox(); return { x: mb.x, y: 48, width: mb.width, height: mb.y + mb.height - 48 } };
+const page = async () => { const mb = await main.boundingBox(), y = Math.max(0, mb.y - 48); return { x: mb.x, y, width: mb.width, height: mb.y + mb.height - y } };
 async function tall(fn) { const h = await p.evaluate(() => document.querySelector('[data-compose]')?.scrollHeight || 1000); await p.setViewportSize({ width: 1400, height: Math.max(1000, h + 120) }); await wait(300); await fn(); await p.setViewportSize({ width: 1400, height: 1000 }); await wait(200) }
 async function addAud(type, q, opt) {
   await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(200)
@@ -184,7 +184,7 @@ await step('urgent', async () => {
   await p.locator('#f-sender').fill('ESH Emergency'); await p.locator('#f-title').fill('Typhoon alert: work from home tomorrow'); await p.locator('#f-content').fill('Non-fab staff work from home on Oct 22.'); await p.locator('#f-sms').fill('Typhoon: non-fab staff WFH 10/22.');
   await btn('Next').click(); await wait(600); await btn('Create message').click(); await wait(500);
   await shot('dlg-urgent', p.getByRole('dialog'));
-  await shot('urgent-head', { x: (await main.boundingBox()).x, y: 48, width: (await main.boundingBox()).width, height: 48 });
+  { const mb = await main.boundingBox(); await shot('urgent-head', { x: mb.x, y: Math.max(0, mb.y - 48), width: mb.width, height: 48 }) }
 });
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
 console.log(errs.join('\n') || 'no errors'); await b.close();

@@ -533,3 +533,15 @@ export function chFailList(r: Row, k: Channel, n: number): Fail[] {
   chFailCache[key] = out
   return out
 }
+
+// How a person was added to an audience group: by NT account, email, mobile number or employee ID. Contractors
+// are always their own address or number. Sample data: picked from the person, so it stays the same.
+export type AddedAs = { type: 'nt' | 'email' | 'phone' | 'emp'; value: string }
+export function addedAs(groupId: string, p: Person): AddedAs {
+  if (p.extKind) return { type: p.extKind === 'phone' ? 'phone' : 'email', value: p.value || '' }
+  const h = hsh(groupId + p.id) % 10
+  if (h < 6 || !p.nt) return { type: 'nt', value: p.nt }
+  if (h < 8) return { type: 'email', value: p.nt + '@' + DOMAIN }
+  if (h === 8 && (p.co || p.pp)) return { type: 'phone', value: (p.co || p.pp).replace(/^(\d{4})(\d{3})(\d{3})$/, '$1-$2-$3') }
+  return { type: 'emp', value: p.emp }
+}

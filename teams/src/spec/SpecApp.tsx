@@ -75,7 +75,7 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
 
       <Section eyebrow="Anatomy" title="頁面結構" lead="以共享發送空間 Platform Ops 為例（1680 × 940）。紅色數字對應右側說明。">
         <Figure label="訊息列表" sub="共享發送空間 · 預設狀態" shot="page" notes={[
-          { n: 1, title: '發送空間', body: <>側欄分「個人發送空間」和「共享發送空間」。個人空間只有自己建立的訊息；共享空間是團隊成員建立的全部訊息。切換空間時，搜尋、篩選、分頁都重設，列表重新載入。</> },
+          { n: 1, title: '發送空間', body: <>側欄分「個人發送空間」和「共享發送空間」。個人空間只有自己建立的訊息；共享空間是團隊成員建立的全部訊息。切換空間時，搜尋、篩選、分頁都重設，列表重新載入。側欄頂部是 MNP 圖示（Orange 6 底、白色大聲公）和名稱，右邊是收合按鈕；收合後只留收合按鈕和各空間的圖示。沒有全站頂部列，語言切換和帳號在側欄底部。</> },
           { n: 2, title: '新訊息', body: <>頁首右側的主要按鈕 <C>Button primary</C>，開啟發送流程。共享空間在右邊多一顆團隊設定齒輪。</> },
           { n: 3, title: '空間標題與說明', body: <>標題 <C>text-h4 bold</C>；說明一行，次要文字色。</> },
           { n: 4, title: '分頁', body: <>Send messages、Audience groups、Templates 三個平行的檢視，用 DS <C>Tabs</C>。本規格只談 Send messages。</> },
@@ -297,7 +297,7 @@ function DetailTab() {
           [<Copy en="Approval" zh="核准" />, <>Approved 已核准 · Waiting for ICSD 等待 ICSD · Rejected by ICSD ICSD 駁回 · ICSD skipped (urgent) 已略過 ICSD（緊急）</>, '有 SMS 或需要核准時'],
           [<Copy en="Created by" zh="建立者" />, '英文名＋中文名', '一定'],
           [<Copy en="Created" zh="建立時間" />, 'YYYY/MM/DD HH:MM', '一定'],
-          [<Copy en="Send time" zh="傳送時間" />, '排程時間，或「Right away / 立即傳送」', '一定'],
+          [<Copy en="Send time" zh="傳送時間" />, '一律顯示確切時間：有排程就是排程時間；立即傳送是核准時間或建立時間；還在等核准或已駁回、沒有排程時是「—」', '一定'],
         ]} />
       </Section>
 
@@ -342,20 +342,20 @@ function DialogsTab() {
     <>
       <Section eyebrow="Dialogs" title="三種名單對話框" lead="都用 DS Dialog＋DataTable（有外框、固定高度、內容多時在表格內捲動），標題寫清楚是誰的名單、幾個人。">
         <Figure label="傳送失敗名單" sub="從列表或詳情的「N failed」打開 · 寬 760" shot="dlg-failed" max={760} notes={[
-          { title: '標題', body: <><span className="spec-q">9 of 560 failed</span>（9 / 560 人失敗），下面一行是訊息標題。</> },
+          { title: '標題', body: <><span className="spec-q">Failed audience members</span>（傳送失敗的收件人），副標「All channels · 9 of 560」（所有通道 · 9 / 560 人）。</> },
           { title: '錯誤說明', body: '傳送錯誤時，表格上方多一個紅色橫幅說明系統錯誤。' },
           { title: '欄位', body: '收件人（頭像、姓名、工號・NT 帳號；外部聯絡人顯示地址或電話）260｜組織 110｜原因 280（第二行是 SMS 備援的原因）。' },
           { title: '按鈕', body: <>右下主要按鈕：已送出時 <span className="spec-q">Resend to 9</span>（重寄給 9 人），會開一則新訊息、收件人帶入這些人；傳送錯誤時 <span className="spec-q">Retry</span>（重新傳送），同一則訊息再送一次。</> },
         ]} />
         <Figure label="單一通道未送達名單" sub="從詳情通道列的「See who didn’t get it」打開 · 寬 860" shot="dlg-channel" max={860} notes={[
-          { title: '標題', body: <><span className="spec-q">28 of 560 didn’t get Device Notifications</span>（28 / 560 人沒收到 Device Notifications）。沒有副標。</> },
+          { title: '標題', body: <>和傳送失敗名單同一個標題 <span className="spec-q">Failed audience members</span>，副標寫通道和人數「Device Notifications · 28 of 560」。</> },
           { title: '欄位', body: '收件人｜組織｜原因，原因是這個通道的原因。' },
           { title: '沒有按鈕', body: '這些人可能已經從別的通道收到，所以這裡只用來查看，重寄從「傳送失敗名單」做。' },
         ]} />
         <Figure label="群組成員名單" sub="從發送流程第一步的人數、或詳情收件人的人數打開 · 寬 640" shot="dlg-members" max={640} notes={[
           { title: '標題', body: <>群組或組織名稱，副標「Org · 58 people / 組織 · 58 人」。</> },
-          { title: '搜尋', body: <>表格上方 sm 搜尋框，提示字 <Copy en="Search name, NT or employee ID" zh="搜尋姓名、NT 帳號或工號" /></> },
-          { title: '欄位', body: '姓名（頭像、中英文名、NT 帳號）260｜工號 120｜組織 120。' },
+          { title: '搜尋', body: <>表格上方 sm 搜尋框。群組：<Copy en="Search name, NT, email or mobile" zh="搜尋姓名、NT 帳號、Email 或手機" />；組織：<Copy en="Search name, NT or employee ID" zh="搜尋姓名、NT 帳號或工號" /></> },
+          { title: '欄位', body: '不列組織。群組：姓名（頭像、中英文名；外部顯示地址或號碼）280｜Added by 加入方式（當初用來加入的 NT 帳號、Email、手機或工號，下方小字標類型）260。組織：姓名｜工號 130｜NT 帳號 130。' },
           { title: '找不到時', body: <>表格內的空狀態：<Copy en="No matching members · Try another name, NT account or employee ID." zh="找不到符合的成員・換個姓名、NT 帳號或工號試試。" /></> },
           { title: '為什麼用對話框', body: '群組常有 58 到 312 人：對話框可以搜尋，鍵盤和觸控都能用，也不會把面板或表格撐得很長（見設計方案比較的「群組成員」）。' },
         ]} />

@@ -78,7 +78,7 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
 
       <Section eyebrow="Frame" title="頁面框架" lead="三個步驟共用同一個框架：頁首、步驟列、內容、固定在底部的按鈕列。內容最寬 1120px，置中。">
         <Figure label="步驟 1（空白）" sub="個人發送空間 · 1680 × 1000" shot="s1-empty" notes={[
-          { n: 1, title: '頁首麵包屑', body: <>「發送空間名稱 › New message」。點空間名稱等於取消，會先確認要不要離開。需要核准時，右側出現核准標籤（見「通道與核准」）。</> },
+          { n: 1, title: '頁首麵包屑', body: <>頁面最上方就是頁首（沒有全站頂部列）：「發送空間名稱 › New message」。點空間名稱等於取消，會先確認要不要離開。需要核准時，右側出現核准標籤（見「通道與核准」）。</> },
           { n: 2, title: '步驟列', body: <>DS <C>Steps</C> horizontal。目前步驟是實心數字；完成的步驟打勾。可以點已完成的步驟回去，也可以點下一步（等同按 Next）；跳到更後面要先通過前面的檢查。手機寬度改成「圓形數字＋步驟名稱＋第 N 步，共 3 步」。</> },
           { n: 3, title: '收件人類型', body: '見「收件人」。' },
           { n: 4, title: '搜尋輸入框', body: '見「收件人」。' },
@@ -327,7 +327,7 @@ function DialogsTab() {
         <G name="dlg-import" t="批次匯入 1/2：貼上名單" d={<>先選資料類型（NT accounts、Employee IDs、Names、Emails、Mobile numbers、MVPN、Org codes），再貼上（逗號或換行分隔）或上傳 .csv / .txt，也可以「Try a sample」。按「Find matches」比對。</>} />
         <G name="dlg-import2" t="批次匯入 2/2：確認比對結果" d={<>上方「N ready」「N not found」。Ready to add 列出原始值 → 比對到的人；同名多人時出現「Who do you mean?」讓使用者選。Not found 可以「Copy」，加入後會留在名單框裡修正。按「Add N audiences」加入，「Edit list」回上一步。</>} />
         <G name="dlg-numbers" t="選擇 SMS 號碼" d={<>副標「These people have 2 numbers. Pick one for SMS.」每人一列，選公司或個人手機；可以一次全選公司手機。從「Choose number」或「Choose」打開；有人沒選就按 Next 也會打開。</>} />
-        <G name="dlg-members" t="群組成員" d={<>從收件人表格的人數打開。標題是群組或組織名稱，可以用姓名、NT 帳號或工號搜尋。</>} />
+        <G name="dlg-members" t="群組成員" d={<>從收件人表格的人數打開。標題是群組或組織名稱。群組列出姓名和「Added by」（當初用 NT 帳號、Email、手機或工號加入）；組織列出姓名、工號、NT 帳號。不列組織欄。可以搜尋。</>} />
         <G name="dlg-unreach" t="收不到的人" d={<>從觸及人數的「See who」打開。標題「N people won’t get this」，每人一列附原因（No device、No desktop agent…）。下方按鈕可以直接加 SMS 備援或 Email。</>} />
         <G name="dlg-savegroup" t="存成群組" d={<>名稱（必填，同空間不能重複）和說明（選填）。只存員工，不含外部聯絡人。</>} />
         <G name="dlg-savetpl" t="存成模板" d={<>只有「Template name」（必填，50 字，同空間不能重複）。不加說明文字和內容總覽。錯誤：「Enter a name.」「This name is taken.」</>} />

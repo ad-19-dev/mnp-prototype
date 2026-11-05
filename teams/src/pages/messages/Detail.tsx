@@ -115,7 +115,7 @@ function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
             name = g ? g.name : o ? o.code : t.id!; sub = g ? L('Audience group', '收件群組') : L('Org', '組織') + (o ? ' · ' + o.name : '')
             lead = icon(g ? BookUser : Building2)
             end = <Button variant="link" size="sm" className="!h-auto shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
-              onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people })}>{P(people.length, 'person', '人', 'people')}</Button>
+              onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people, group: g ? g.id : undefined })}>{P(people.length, 'person', '人', 'people')}</Button>
           } else if (t.type === 'person') {
             const p = PMAP[t.id!]
             lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.zh + ' ' + p.en : t.id!; sub = p ? p.emp + ' · ' + p.org : ''
@@ -136,6 +136,14 @@ function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
       <MembersDialog set={mem} onClose={() => setMem(null)} />
     </>
   )
+}
+
+// the actual send time: the schedule, or when it went out (right after approval, or when it was created);
+// a message that still waits for approval with no schedule has no time yet
+function sendTime(r: Row) {
+  if (r.sched) return r.sched
+  if (r.status === 'pending' || r.status === 'rejected') return '—'
+  return r.review && r.review.at ? r.review.at : r.created
 }
 
 export function DetailSheet({ m }: { m: SendCtl }) {
@@ -173,7 +181,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
             {r.sms || r.review ? <DescriptionItem label={L('Approval', '核准')}>{r.bypass ? L('ICSD skipped (urgent)', '已略過 ICSD（緊急）') : r.status === 'pending' ? L('Waiting for ', '等待') + reviewer(r) : r.status === 'rejected' ? L('Rejected by ', '') + reviewer(r) + L('', '駁回') : L('Approved', '已核准')}</DescriptionItem> : null}
             <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>
             <DescriptionItem label={L('Created', '建立時間')}>{r.created}</DescriptionItem>
-            <DescriptionItem label={L('Send time', '傳送時間')}>{r.sched || L('Right away', '立即傳送')}</DescriptionItem>
+            <DescriptionItem label={L('Send time', '傳送時間')}>{sendTime(r)}</DescriptionItem>
           </DescriptionList>
           </div>
 
@@ -235,7 +243,8 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
       <>
         <DialogHeader>
           <div className="flex flex-col gap-0.5">
-            <DialogTitle>{L(fmtN(n) + ' of ' + fmtN(st ? st.of : 0) + ' didn’t get ' + CHN[nch].name, fmtN(n) + ' / ' + fmtN(st ? st.of : 0) + ' 人沒收到 ' + CHN[nch].name)}</DialogTitle>
+            <DialogTitle>{L('Failed audience members', '傳送失敗的收件人')}</DialogTitle>
+            <DialogDescription className="text-body text-fg-secondary">{CHN[nch].name + ' · ' + L(fmtN(n) + ' of ' + fmtN(st ? st.of : 0), fmtN(n) + ' / ' + fmtN(st ? st.of : 0) + ' 人')}</DialogDescription>
           </div>
         </DialogHeader>
         <DialogBody>
@@ -250,8 +259,8 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
       <>
         <DialogHeader>
           <div className="flex flex-col gap-0.5">
-            <DialogTitle>{L(fmtN(list.length) + ' of ' + fmtN(r.total) + ' failed', fmtN(list.length) + ' / ' + fmtN(r.total) + ' 人失敗')}</DialogTitle>
-            <DialogDescription className="text-body text-fg-secondary">{r.title}</DialogDescription>
+            <DialogTitle>{L('Failed audience members', '傳送失敗的收件人')}</DialogTitle>
+            <DialogDescription className="text-body text-fg-secondary">{L('All channels · ' + fmtN(list.length) + ' of ' + fmtN(r.total), '所有通道 · ' + fmtN(list.length) + ' / ' + fmtN(r.total) + ' 人')}</DialogDescription>
           </div>
         </DialogHeader>
         <DialogBody>
