@@ -5,6 +5,7 @@
 import * as React from 'react'
 import { StatusTag } from '../../components/ui'
 import { Shot } from '../parts'
+import { SPECS, SpecBody } from './specs'
 
 const PROTO = 'https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv'
 const SPEC = 'https://claude.ai/artifact/5Cp4EoipMcFczPk314XxRK'
@@ -62,11 +63,24 @@ const OUTCOMES: OutcomeDef[] = [
 ]
 
 // ---------- shared pieces ----------
-function BranchCard({ b, compact }: { b: BranchDef; compact?: boolean }) {
-  const shots = b.shots || []
+// the node whose spec is open: a step id, "<step id>/<card title>", or an outcome id
+const Sel = React.createContext<{ key: string | null; pick: (k: string) => void } | null>(null)
+const SpecButton = ({ k }: { k: string }) => {
+  const ctx = React.useContext(Sel)
+  if (!ctx || !SPECS[k]) return null
+  return <button type="button" className="flow-spec-btn" aria-pressed={ctx.key === k} onClick={e => { e.stopPropagation(); ctx.pick(k) }}>規格</button>
+}
+// a card or node opens its spec when clicked anywhere but its screenshot
+const pickProps = (k: string, ctx: React.ContextType<typeof Sel>) => (ctx && SPECS[k] ? {
+  'data-picked': ctx.key === k ? '' : undefined,
+  onClick: (e: React.MouseEvent) => { if (!(e.target as HTMLElement).closest('.spec-shot, a, button')) ctx.pick(k) },
+} : {})
+
+function BranchCard({ b, compact, k, inlineSpec }: { b: BranchDef; compact?: boolean; k: string; inlineSpec?: boolean }) {
+  const shots = b.shots || [], ctx = React.useContext(Sel)
   return (
-    <article className={'flow-branch' + (shots.length > 1 && !compact ? ' is-wide' : '')} data-kind={b.kind}>
-      <header><span className={'flow-kind is-' + b.kind}>{KIND[b.kind]}</span><b>{b.title}</b></header>
+    <article className={'flow-branch' + (shots.length > 1 && !compact ? ' is-wide' : '')} data-kind={b.kind} {...(inlineSpec ? {} : pickProps(k, ctx))}>
+      <header><span className={'flow-kind is-' + b.kind}>{KIND[b.kind]}</span><b>{b.title}</b>{inlineSpec ? null : <SpecButton k={k} />}</header>
       <span className="flow-when">{b.when}</span>
       {shots.length ? (
         <div className={shots.length > 1 ? 'flow-pair' : undefined}>
@@ -74,6 +88,7 @@ function BranchCard({ b, compact }: { b: BranchDef; compact?: boolean }) {
         </div>
       ) : null}
       {b.then ? <span className="flow-then">{b.then}</span> : null}
+      {inlineSpec && SPECS[k] ? <details className="flow-spec-inline"><summary>設計規格</summary><SpecBody spec={SPECS[k]} /></details> : null}
     </article>
   )
 }
@@ -88,6 +103,8 @@ function FlowCanvas() {
   const [paths, setPaths] = React.useState<{ d: string; kind: 'main' | 'branch' | 'done' | 'start'; label?: string; note?: string; lx?: number; ly?: number }[]>([])
   const [size, setSize] = React.useState({ w: 0, h: 0 })
   const drag = React.useRef<{ px: number; py: number; x: number; y: number; moved: boolean } | null>(null)
+  const [sel, setSel] = React.useState<string | null>(null)
+  const selCtx = React.useMemo(() => ({ key: sel, pick: (k: string) => setSel(c => (c === k ? null : k)) }), [sel])
 
   // fit a region of the board (in board units) into the viewport
   const fitTo = React.useCallback((r?: { x: number; y: number; w: number; h: number }) => {
@@ -177,12 +194,14 @@ function FlowCanvas() {
   }
   const onUp = () => { const d = drag.current; drag.current = null; if (d?.moved) { const stop = (ev: Event) => { ev.stopPropagation(); ev.preventDefault() }; window.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 0) } }
   const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && sel) { setSel(null); e.preventDefault(); return }
     if (e.key === '+' || e.key === '=') zoomAt(1.2); else if (e.key === '-') zoomAt(1 / 1.2); else if (e.key === '0') fitTo()
     else if (e.key.startsWith('Arrow')) { const step = 80, k = e.key; setView(v => ({ ...v, x: v.x + (k === 'ArrowLeft' ? step : k === 'ArrowRight' ? -step : 0), y: v.y + (k === 'ArrowUp' ? step : k === 'ArrowDown' ? -step : 0) })) } else return
     e.preventDefault()
   }
 
   return (
+    <Sel.Provider value={selCtx}>
     <div className="flow-board-wrap">
       <div className="flow-tools" role="toolbar" aria-label="流程圖檢視">
         <span className="flow-tools-label">跳到</span>
@@ -209,22 +228,22 @@ function FlowCanvas() {
           ))}
           {STAGES.map(st => (
             <div key={st.id} className={'flow-col' + (st.branches.length > 6 ? ' is-wide' : '')} data-col={st.id}>
-              <div className="flow-node" data-main={st.id}>
-                <span className="flow-step">{st.step}</span>
+              <div className="flow-node" data-main={st.id} {...pickProps(st.id, selCtx)}>
+                <span className="flow-step">{st.step}<SpecButton k={st.id} /></span>
                 <h2>{st.title}</h2>
                 <p>{st.desc}</p>
                 <div className="spec-canvas"><Shot name={st.main} alt={st.step + '：' + st.title} pins={false} /></div>
               </div>
               <div className="flow-group" data-group={st.id}>
                 <h3>從這一步可以</h3>
-                <div className="flow-group-grid">{st.branches.map((b, i) => <BranchCard key={i} b={b} compact />)}</div>
+                <div className="flow-group-grid">{st.branches.map((b, i) => <BranchCard key={i} b={b} compact k={st.id + '/' + b.title} />)}</div>
               </div>
             </div>
           ))}
           <div className="flow-col flow-col-done" data-col="done">
             {OUTCOMES.map(o => (
-              <div key={o.id} className="flow-node is-done" data-out={o.id}>
-                <span className="flow-step">結果 · {o.label}</span>
+              <div key={o.id} className="flow-node is-done" data-out={o.id} {...pickProps(o.id, selCtx)}>
+                <span className="flow-step">結果 · {o.label}<SpecButton k={o.id} /></span>
                 <h2>{o.title}</h2>
                 <p>{o.when}</p>
                 <div className="spec-canvas"><Shot name={o.shot} alt={'結果：' + o.label} pins={false} /></div>
@@ -234,10 +253,34 @@ function FlowCanvas() {
           </div>
         </div>
       </div>
+      {sel ? <SpecPanel k={sel} onClose={() => setSel(null)} /> : null}
     </div>
+    </Sel.Provider>
   )
 }
 
+// the spec of the picked node, beside the board
+function SpecPanel({ k, onClose }: { k: string; onClose: () => void }) {
+  const st = STAGES.find(x => x.id === k), [sid, title] = k.split('/'), br = title ? STAGES.find(x => x.id === sid)?.branches.find(x => x.title === title) : undefined
+  const out = OUTCOMES.find(x => x.id === k), spec = SPECS[k]
+  const name = st ? st.title : br ? br.title : out ? out.label : k
+  const where = st ? st.step : br ? (STAGES.find(x => x.id === sid)?.step || '') + ' · ' + KIND[br.kind] : out ? '結果' : ''
+  const shot = st ? st.main : br?.shots?.[0] || out?.shot
+  const ref = React.useRef<HTMLElement>(null)
+  React.useEffect(() => { ref.current?.focus() }, [k])
+  return (
+    <aside ref={ref} className="flow-panel" tabIndex={-1} aria-label={'設計規格：' + name} onKeyDown={e => { if (e.key === 'Escape') onClose() }}>
+      <header>
+        <div className="flex min-w-0 flex-col"><span className="flow-step">{where}</span><b>{name}</b></div>
+        <button type="button" onClick={onClose} aria-label="關閉設計規格">✕</button>
+      </header>
+      <div className="flow-panel-body">
+        {shot ? <div className="spec-canvas"><Shot name={shot} alt={name} pins={false} /></div> : null}
+        <SpecBody spec={spec} />
+      </div>
+    </aside>
+  )
+}
 // ---------- list view (top to bottom) ----------
 function FlowList() {
   return (
@@ -250,8 +293,9 @@ function FlowList() {
               <h2>{st.title}</h2>
               <p>{st.desc}</p>
               <div className="spec-canvas"><Shot name={st.main} alt={st.step + '：' + st.title} pins={false} /></div>
+              {SPECS[st.id] ? <details className="flow-spec-inline"><summary>設計規格</summary><SpecBody spec={SPECS[st.id]} /></details> : null}
             </div>
-            <div className="flow-branches"><h3>從這一步可以</h3>{st.branches.map((b, i) => <BranchCard key={i} b={b} />)}</div>
+            <div className="flow-branches"><h3>從這一步可以</h3>{st.branches.map((b, i) => <BranchCard key={i} b={b} k={st.id + '/' + b.title} inlineSpec />)}</div>
           </section>
           {st.next ? <div className="flow-next" role="note"><div><b>{st.next.action}</b>{st.next.note ? <span>{st.next.note}</span> : null}</div></div> : null}
         </React.Fragment>
@@ -259,7 +303,7 @@ function FlowList() {
       <section className="spec-section">
         <header><span className="flow-step">結果</span><h2 className="spec-h2">建立之後</h2></header>
         <div className="flow-outcomes">
-          {OUTCOMES.map(o => <BranchCard key={o.id} b={{ kind: 'done', title: o.label, when: o.when, shots: [o.shot], then: o.then }} />)}
+          {OUTCOMES.map(o => <BranchCard key={o.id} k={o.id} inlineSpec b={{ kind: 'done', title: o.label, when: o.when, shots: [o.shot], then: o.then }} />)}
         </div>
       </section>
     </main>

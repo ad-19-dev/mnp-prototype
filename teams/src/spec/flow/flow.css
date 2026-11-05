@@ -124,3 +124,36 @@
 .flow-mode { display: inline-flex; border: 1px solid var(--spec-line); border-radius: 8px; overflow: hidden; }
 .flow-mode button { border: 0; background: var(--spec-surface); padding: 5px 14px; font: 500 13px/20px var(--spec-font); color: var(--spec-muted); cursor: pointer; }
 .flow-mode button[aria-selected="true"] { background: var(--spec-ink); color: var(--spec-surface); }
+
+/* ---------- design spec: a panel beside the board (chart view), or folded under each card (list view) ---------- */
+.flow-board-wrap { position: relative; }
+.flow-node[data-main], .flow-node[data-out], .flow-group .flow-branch { cursor: pointer; }
+.flow-node[data-picked], .flow-branch[data-picked] { outline: 4px solid var(--spec-pin); outline-offset: 4px; }
+.flow-spec-btn { margin-left: auto; border: 1px solid var(--spec-line); background: var(--spec-surface); color: var(--spec-pin); border-radius: 999px; padding: 1px 10px;
+  font: 600 12px/18px var(--spec-font); cursor: pointer; }
+.flow-node .flow-spec-btn { font-size: 16px; line-height: 24px; padding: 2px 14px; margin-left: 12px; }
+.flow-spec-btn[aria-pressed="true"] { background: var(--spec-pin); color: #fff; border-color: var(--spec-pin); }
+.flow-spec-btn:focus-visible, .flow-panel header button:focus-visible { outline: 2px solid var(--spec-pin); outline-offset: 2px; }
+.flow-node .flow-step { display: flex; align-items: center; }
+
+.flow-panel { position: absolute; top: 49px; right: 0; bottom: 0; width: min(440px, 100%); display: flex; flex-direction: column; background: var(--spec-surface);
+  border-left: 1px solid var(--spec-line); box-shadow: -8px 0 24px rgb(16 24 40 / 0.08); z-index: 5; outline: none; padding-right: env(safe-area-inset-right, 0px); }
+.flow-panel header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--spec-line); }
+.flow-panel header b { font: 600 18px/26px var(--spec-font); }
+.flow-panel header button { border: 1px solid var(--spec-line); background: var(--spec-surface); border-radius: 6px; padding: 2px 10px; font: inherit; cursor: pointer; }
+.flow-panel-body { flex: 1; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.flow-panel-body .spec-canvas { padding: 10px; }
+
+.flow-spec { display: flex; flex-direction: column; gap: 14px; font: 400 14px/22px var(--spec-font); }
+.flow-spec h4 { margin: 0 0 6px; font: 600 12px/16px var(--spec-font); letter-spacing: 0.06em; color: var(--spec-muted); }
+.flow-spec ul { margin: 0; padding-left: 18px; list-style: disc; display: flex; flex-direction: column; gap: 4px; }
+.flow-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.flow-chips code { font: 500 12px/18px var(--spec-mono); background: var(--spec-canvas); padding: 1px 6px; border-radius: 4px; }
+.flow-spec dl { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.flow-spec dt { font-weight: 500; }
+.flow-spec dd { margin: 0; color: var(--spec-muted); }
+.flow-spec-link { color: var(--flow-branch); font-weight: 500; text-decoration: none; }
+.flow-spec-link:hover { text-decoration: underline; }
+.flow-spec-inline { border-top: 1px solid var(--spec-line); padding-top: 8px; }
+.flow-spec-inline summary { cursor: pointer; font: 600 13px/20px var(--spec-font); color: var(--spec-pin); }
+.flow-spec-inline[open] summary { margin-bottom: 10px; }
