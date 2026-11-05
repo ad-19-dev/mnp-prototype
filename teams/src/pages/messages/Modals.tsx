@@ -43,7 +43,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
   if (!imp.res) {
     const n = splitTokens(imp.text).length, k = imp.kind
     return (
-      <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')} sub={L('Choose what your list holds, then paste it or upload a file. You’ll review matches before adding.', '先選擇名單的資料類型，再貼上名單或上傳檔案，加入前會先讓你確認。')}
+      <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
         foot={<><Button variant="tertiary" onClick={close}>{imp.done ? L('Close', '關閉') : L('Cancel', '取消')}</Button><Button variant="primary" startIcon={Wand2} disabled={!n || !k} onClick={() => m.identify()}>{L('Find matches', '比對名單')}</Button></>}>
         {imp.done ? <Banner tone="success" title={L('Added ' + P(imp.done, 'audience', ''), '已加入 ' + imp.done + ' 位收件人')}>{L('The entries below weren’t found. Fix them and match again, or close.', '下面是找不到的項目，修正後再比對一次，或直接關閉。')}</Banner> : null}
         <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />
@@ -66,7 +66,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
   })
   const addN = sets.ready.length + pickedN
   return (
-    <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')} sub={L('Check the matches, then add them.', '確認比對結果後加入。')}
+    <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
       foot={<><Button variant="tertiary" startIcon={ChevronLeft} onClick={() => m.setImp({ res: null, picks: {} })}>{L('Edit list', '修改名單')}</Button>{!addN && sets.miss.length ? <Button variant="primary" onClick={() => m.impFixMissing()}>{L('Fix entries not found', '修正找不到的項目')}</Button> : <Button variant="primary" disabled={!addN} onClick={() => m.impAdd()}>{addN ? L('Add ', '加入 ') + P(addN, 'audience', '人') : L('Nothing to add', '沒有可加入的人')}</Button>}</>}>
       <div className="flex flex-wrap gap-2">
         <Tag size="md" color="green">{L(sets.ready.length + ' ready', sets.ready.length + ' 筆可加入')}</Tag>
@@ -124,7 +124,7 @@ export function NumbersDialog({ m }: { m: SendCtl }) {
   const people = num ? multiPeople(m.s.c) : [], d = num ? num.draft : {}
   const chosen = people.filter(p => d['p:' + p.id]).length
   return (
-    <Shell open={!!num} onClose={close} width={720} title={L('Choose SMS numbers', '選擇 SMS 號碼')} sub={L('These people have 2 numbers. Pick one for SMS.', '這些人有兩支電話，請選一支收 SMS。')}
+    <Shell open={!!num} onClose={close} width={720} title={L('Choose SMS numbers', '選擇 SMS 號碼')}
       foot={<><span className="mr-auto text-body text-fg-secondary">{L(chosen + ' of ' + people.length + ' chosen', '已選 ' + chosen + ' / ' + people.length)}</span><Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" onClick={() => m.confirmNum()}>{L('Save', '儲存')}</Button></>}>
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="secondary" onClick={() => m.numAllCo()}>{L('Use company mobile for all', '全部使用公務手機')}</Button>
@@ -192,7 +192,7 @@ export function TplPickerDialog({ m }: { m: SendCtl }) {
   // this space's templates
   const list = app.templates.filter(t => tplInSpace(t)).filter(t => !q || [t.name, t.title, t.content, t.email && t.email.subject].join(' ').toLowerCase().indexOf(q) >= 0)
   return (
-    <Shell open={!!tp} onClose={close} width={720} title={L('Choose a template', '選擇模板')} sub={L('Replaces the text only. Audiences and channels stay.', '只會替換文字，收件人和通道不變。')} foot={<Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button>}>
+    <Shell open={!!tp} onClose={close} width={720} title={L('Choose a template', '選擇模板')} foot={<Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button>}>
       <Input startIcon={Search} type="search" autoFocus placeholder={L('Search templates', '搜尋模板')} aria-label={L('Search templates', '搜尋模板')} value={tp ? tp.q : ''} onChange={ev => m.set({ tp: { q: ev.target.value } })} />
       <div className="flex max-h-[420px] flex-col gap-2 overflow-auto">
         {list.map(t => {
@@ -219,7 +219,7 @@ export function UnreachDialog({ m }: { m: SendCtl }) {
   const c = s.c, rc = m.reach()
   const why = () => { const w: string[] = []; if (c.ch.push) w.push(c.ch.sms ? L('no device or phone', '沒有裝置或電話') : L('no device', '沒有裝置')); if (c.ch.desktop) w.push(L('no desktop agent', '沒有桌面程式')); return w.join(L(', ', '、')).replace(/^./, x => x.toUpperCase()) }
   return (
-    <Shell open={open} onClose={close} width={720} title={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} sub={L('None of your channels reach them.', '你選的通道都送不到他們。')}
+    <Shell open={open} onClose={close} width={720} title={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')}
       foot={<><Button variant="tertiary" onClick={close}>{L('Close', '關閉')}</Button>{rc.viaSms ? <Button variant="secondary" startIcon={Plus} onClick={() => { m.pickChannel('sms'); close() }}>{L('Turn on SMS fallback', '開啟 SMS 備援')}</Button> : null}{rc.viaEmail ? <Button variant="primary" startIcon={Plus} onClick={() => { m.pickChannel('email'); close() }}>{L('Add Email', '加入 Email')}</Button> : null}</>}>
       <ListBox max={380}>
         {rc.unr.map(p => <ListRow key={p.id}><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={p.emp + ' · ' + p.org} strong className="flex-1" /><span className="text-caption text-fg-secondary">{why()}</span></ListRow>)}

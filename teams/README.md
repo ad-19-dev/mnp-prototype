@@ -25,5 +25,7 @@
 | 群組成員 | 第一步加入群組或組織後，點「人數」開對話框，可搜尋成員（方案 C）；選群組的選單不再展開成員 |
 | Toast | 只有一行標題，不加描述（DS 預設 4 秒自動關閉） |
 | 頁首 | 第一列麵包屑（目前頁面粗體）與新增按鈕，第二列是空間的分頁（DS ChromeHeader tabsSlot）；內容區只留空間說明。側欄頂部只有粗體 MNP 和最右側的收合按鈕 |
+| ICSD 核准 | 暫時拿掉（`teams/src/lib/data.ts` 的 `ICSD = false`）：不顯示 ICSD 核准、緊急發送與相關標示，核准只剩寄給外部收件人時的主管核准；改回 `true` 就恢復 |
+| SMS 備援 | 詳情的各通道裡排在 Device Notifications 正下方、縮排；Device Notifications 的失敗名單標出「Delivered via SMS」 |
 
 執行方式與雙語版相同：`npm install --legacy-peer-deps` 後 `npm run dev`。

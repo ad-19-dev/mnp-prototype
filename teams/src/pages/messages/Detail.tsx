@@ -7,9 +7,9 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CalendarClock, CircleAlert, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
+import { Building2, CornerDownRight, CalendarClock, CircleAlert, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
 import {
-  ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, membersFor, orgMembers, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
+  ICSD, ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, membersFor, orgMembers, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Channel, type Fail, type Group, type Row, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
@@ -43,7 +43,8 @@ function statText(x: { k: string; ok: number; of: number }) {
 }
 function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-h6 font-bold text-foreground">{children}</h3> }
 // who reviews the message, as people say it
-const reviewer = (r: Row) => (r.review?.by === 'mgr' ? L('your supervisor', '主管') : r.review?.by === 'both' ? L('your supervisor and ICSD', '主管和 ICSD ') : 'ICSD')
+// with ICSD switched off every approval is the supervisor's
+const reviewer = (r: Row) => (!ICSD || r.review?.by === 'mgr' ? L('your supervisor', '主管') : r.review?.by === 'both' ? L('your supervisor and ICSD', '主管和 ICSD ') : 'ICSD')
 const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' || r.status === 'rejected' || r.status === 'scheduled'
 
 // a titled part of the details: heading to content is tight; parts sit twice the loose gap apart (see DetailBody)
@@ -70,27 +71,43 @@ function ChannelText({ r, k }: { r: Row; k: Channel }) {
   return <div className={box}>{d.sender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}<strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</div>
 }
 
-function ChannelRow({ m, r, k, ok, of, last }: { m: SendCtl; r: Row; k: Channel; ok: number; of: number; last: boolean }) {
-  const started = !notStarted(r), miss = started && r.status !== 'progress' ? of - ok : 0
-  const I = CHN[k].icon
-  const line = !started ? (k === 'sms' ? L('Only for people without the app', '只送給沒裝 App 的人') : L('Not sent yet', '尚未傳送'))
-    : k === 'sms' && !of ? L('Not needed', '不需要')
+// SMS is the fallback for Device Notifications: its row sits right under it, indented, and says who it was for.
+// Device Notifications counts the people it missed as failed, and says how many of them got the SMS instead.
+// channels in the order people get them: SMS right after Device Notifications, since it's its fallback
+function byChannel(m: SendCtl, r: Row) {
+  const all = m.chStats(r), sms = all.find(x => x.k === 'sms'), rest = all.filter(x => x.k !== 'sms')
+  const i = rest.findIndex(x => x.k === 'push')
+  if (sms && i >= 0) rest.splice(i + 1, 0, sms)
+  return rest
+}
+
+function ChannelRow({ m, r, k, ok, of, sms, last }: { m: SendCtl; r: Row; k: Channel; ok: number; of: number; sms?: number; last: boolean }) {
+  const started = !notStarted(r), fail = started && r.status !== 'progress' ? of - ok : 0, fb = k === 'sms'
+  const I = fb ? CornerDownRight : CHN[k].icon, name = fb ? L('SMS fallback', 'SMS 備援') : CHN[k].name
+  const line = fb
+    ? (!started ? L('For people Device Notifications doesn’t reach', '給 Device Notifications 送不到的人')
+      : !of ? L('Not needed: Device Notifications reached everyone', '不需要：Device Notifications 都送到了')
+      : L('Sent to ' + P(of, 'person', '', 'people') + ' Device Notifications missed · ' + fmtN(ok) + ' delivered', '送給 Device Notifications 沒送到的 ' + fmtN(of) + ' 人・' + fmtN(ok) + ' 人已送達'))
+    : !started ? L('Not sent yet', '尚未傳送')
     : L(fmtN(ok) + ' / ' + fmtN(of) + ' delivered', fmtN(ok) + ' / ' + fmtN(of) + ' 已送達')
   return (
     <AccordionItem value={k} className={last ? 'border-b-0' : 'border-b border-divider'}>
-      <AccordionTrigger className="px-3">
+      <AccordionTrigger className={fb ? 'pl-9 pr-3' : 'px-3'}>
         <span className="flex min-w-0 flex-1 items-center gap-3 text-left">
           <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body font-medium">{CHN[k].name}</span>
-            <span className="text-caption text-fg-secondary">{line}{miss ? <span className="text-error-text">{L(' · ' + miss + ' missed', '・' + miss + ' 人未送達')}</span> : null}</span>
+            <span className="text-body font-medium">{name}</span>
+            <span className="text-caption text-fg-secondary">{line}
+              {fail ? <span className="text-error-text">{L(' · ' + fmtN(fail) + ' failed', '・' + fmtN(fail) + ' 人失敗')}</span> : null}
+              {!fb && sms && started ? <span className="text-success-text">{L(' · ' + fmtN(sms) + ' delivered via SMS', '・' + fmtN(sms) + ' 人改由 SMS 送達')}</span> : null}
+            </span>
           </span>
         </span>
       </AccordionTrigger>
-      <AccordionContent className="px-3">
+      <AccordionContent className={fb ? 'pl-9 pr-3' : 'px-3'}>
         <div className="flex flex-col gap-[var(--layout-space-loose)] pb-1">
           <ChannelText r={r} k={k} />
-          {miss ? <div><Button variant="link" size="sm" className="!h-auto !p-0" onClick={() => m.set({ ns: r.id + '|' + k })}>{L('See who didn’t get it (' + fmtN(miss) + ')', '查看未送達名單（' + fmtN(miss) + ' 人）')}</Button></div> : null}
+          {fail ? <div><Button variant="link" size="sm" className="!h-auto !p-0" onClick={() => m.set({ ns: r.id + '|' + k })}>{L('See failed audience members (' + fmtN(fail) + ')', '查看傳送失敗的收件人（' + fmtN(fail) + ' 人）')}</Button></div> : null}
         </div>
       </AccordionContent>
     </AccordionItem>
@@ -169,7 +186,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           {r.status === 'pending' ? <Banner tone="info" title={L('Waiting for approval from ' + reviewer(r), '等待' + reviewer(r) + '核准')}>{r.sched ? L('Sends at ' + r.sched + ' if it’s approved by then.', '核准後會在 ' + r.sched + ' 送出。') : L('Sends as soon as it’s approved.', '核准後立即送出。')}</Banner> : null}
           {r.status === 'expired' ? <Banner tone="warning" title={L('Approved after its scheduled time', '核准時已過排程時間')}>{L(reviewer(r) + ' approved it on ' + (r.review?.at || '') + ', after the scheduled ' + r.sched + ', so it wasn’t sent. Send it now, pick a new time, or delete it.', reviewer(r) + '於 ' + (r.review?.at || '') + ' 核准，已超過原訂的 ' + r.sched + '，所以沒有送出。可以立即傳送、重新排程或刪除。')}</Banner> : null}
           {r.status === 'rejected' ? <Banner tone="error" title={L('Rejected by ' + reviewer(r), reviewer(r) + '駁回')}>{L((r.review?.at ? r.review.at + '. ' : '') + 'Reason: ' + (r.review?.reason || ''), (r.review?.at ? r.review.at + '。' : '') + '原因：' + tx(r.review?.reason || ''))}</Banner> : null}
-          {r.bypass ? (
+          {ICSD && r.bypass ? (
             <Banner tone="warning" title={L('Sent without ICSD approval (urgent)', '未經 ICSD 核准送出（緊急）')}>
               {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
             </Banner>
@@ -178,17 +195,18 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
             {listSender(r) ? <DescriptionItem label={L('Sender', '寄件人')}>{r.sender}</DescriptionItem> : null}
             <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || '—'}</DescriptionItem>
             <DescriptionItem label={L('Channels', '通道')}>{chs.map(k => CHN[k].name).join(', ')}</DescriptionItem>
-            {r.sms || r.review ? <DescriptionItem label={L('Approval', '核准')}>{r.bypass ? L('ICSD skipped (urgent)', '已略過 ICSD（緊急）') : r.status === 'pending' ? L('Waiting for ', '等待') + reviewer(r) : r.status === 'rejected' ? L('Rejected by ', '') + reviewer(r) + L('', '駁回') : L('Approved', '已核准')}</DescriptionItem> : null}
+            {(ICSD && r.sms) || r.review ? <DescriptionItem label={L('Approval', '核准')}>{ICSD && r.bypass ? L('ICSD skipped (urgent)', '已略過 ICSD（緊急）') : r.status === 'pending' ? L('Waiting for ', '等待') + reviewer(r) : r.status === 'rejected' ? L('Rejected by ', '') + reviewer(r) + L('', '駁回') : L('Approved', '已核准')}</DescriptionItem> : null}
             <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>
             <DescriptionItem label={L('Created', '建立時間')}>{r.created}</DescriptionItem>
             <DescriptionItem label={L('Send time', '傳送時間')}>{sendTime(r)}</DescriptionItem>
           </DescriptionList>
           </div>
 
-          <Part title={L('Delivery', '送達狀況')}>
+          {/* same name and numbers as the list's Reach / Audience column */}
+          <Part title={L('Reach / Audience', '送達 / 收件人')}>
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-body"><span className="font-medium">{notStarted(r) ? L('Not started', '尚未開始') : fmtN(r.ok) + ' / ' + fmtN(r.total)}</span> <span className="text-fg-secondary">{r.status === 'scheduled' ? L(P(r.total, 'audience', '') + ' on ' + r.sched, r.sched + ' 傳送給 ' + r.total + ' 人') : notStarted(r) ? L(P(r.total, 'audience', ''), r.total + ' 位收件人') : L('reached', '已送達')}</span></span>
+              <span className="text-body tabular-nums"><span className="font-medium">{notStarted(r) ? '–' : fmtN(r.ok)}</span><span className="text-fg-secondary"> / {fmtN(r.total)}{notStarted(r) ? (r.status === 'scheduled' ? L(' · sends ' + r.sched, '・' + r.sched + ' 傳送') : L(' · not sent yet', '・尚未傳送')) : ''}</span></span>
               {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
             </div>
           </div>
@@ -197,7 +215,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
           {/* one row per channel: its delivery on the row, open it for what it sent and who it missed */}
           <Part title={L('By channel', '各通道')}>
             <Accordion type="multiple" className="rounded-md border border-divider">
-              {m.chStats(r).map((x, i) => <ChannelRow key={x.k} m={m} r={r} k={x.k} ok={x.ok} of={x.of} last={i === chs.length - 1} />)}
+              {byChannel(m, r).map((x, i, all) => <ChannelRow key={x.k} m={m} r={r} k={x.k} ok={x.ok} of={x.of} sms={x.k === 'push' ? all.find(y => y.k === 'sms')?.ok : undefined} last={i === all.length - 1} />)}
             </Accordion>
           </Part>
 
@@ -227,7 +245,12 @@ const fcol = createColumnHelper<Fail>()
 const failCols = (byCh?: boolean) => [
   fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 260 }, cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
   fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),
-  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: byCh ? 230 : 280 }, cell: i => <Two a={tx(i.row.original.reason)} b={tx(i.row.original.fallback)} /> }),
+  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 300 }, cell: i => { const f = i.row.original; return (
+    <span className="flex min-w-0 flex-col items-start gap-1">
+      <Two a={tx(f.reason)} b={tx(f.fallback)} />
+      {f.via === 'sms' ? <Tag size="sm" color="green">{L('Delivered via SMS', '已由 SMS 送達')}</Tag> : null}
+    </span>
+  ) } }),
   // on one channel's list: did another channel still reach them?
   ...(byCh ? [fcol.display({ id: 'via', header: L('Other channels', '其他通道'), meta: { width: 170 }, cell: i => { const v = i.row.original.via; return v ? <span>{L('Got it by ', '已由') + CHN[v].short + L('', ' 收到')}</span> : <span className="font-medium text-error-text">{L('Not reached', '未收到')}</span> } })] : []),
 ]
@@ -248,7 +271,7 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
           </div>
         </DialogHeader>
         <DialogBody>
-          <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols() as any} data={list} bordered height="380px" autoRowHeight getRowId={(_, i) => String(i)} />
+          <DataTable tableOptions={NO_HIDE} columns={failCols() as any} data={list} bordered height="380px" autoRowHeight getRowId={(_, i) => String(i)} />
         </DialogBody>
       </>
     )
@@ -266,7 +289,7 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
         <DialogBody>
           <div className="flex flex-col gap-[var(--layout-space-tight)]">
             {r.err ? <Banner tone="error" title={tx(r.err.title)}>{tx(r.err.text)}</Banner> : null}
-            <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={failCols() as any} data={list} bordered height="340px" autoRowHeight getRowId={(_, i) => String(i)} />
+            <DataTable tableOptions={NO_HIDE} columns={failCols() as any} data={list} bordered height="340px" autoRowHeight getRowId={(_, i) => String(i)} />
           </div>
         </DialogBody>
         <DialogFooter>
@@ -294,7 +317,7 @@ export function RescheduleDialog({ m }: { m: SendCtl }) {
           <DialogHeader>
             <div className="flex flex-col gap-0.5">
               <DialogTitle>{L('Reschedule', '重新排程')}</DialogTitle>
-              <DialogDescription className="text-body text-fg-secondary">{L('It’s already approved, so it won’t go back for review.', '這則訊息已經核准，改時間不需要重新送審。')}</DialogDescription>
+              <DialogDescription className="sr-only">{L('Reschedule', '重新排程')}</DialogDescription>
             </div>
           </DialogHeader>
           <DialogBody>

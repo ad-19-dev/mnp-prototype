@@ -1,6 +1,6 @@
 // Send flow state and rules: receivers, reach per channel, approvals and validation.
 import {
-  CAP, CH_ORDER, LIM, ORGS, PMAP, SUPERVISOR, addMin, flatten, fromIso, fmtN, htmlToText, isExtPhone, joinList, plural,
+  CAP, CH_ORDER, ICSD, LIM, ORGS, PMAP, SUPERVISOR, addMin, flatten, fromIso, fmtN, htmlToText, isExtPhone, joinList, plural,
   tplHasEmail, tplHasNotif, type Channel, type Group, type Person, type Tag, type Template,
 } from './data'
 import { L, P, joinL } from './i18n'
@@ -86,7 +86,7 @@ export function reach(c: Compose, groups: Group[]) {
 // ICSD reviews every SMS, unless the sender skips it as urgent; your supervisor approves anything going
 // outside the company, and that can't be skipped
 export function approval(c: Compose): Approval {
-  const skipped = !!c.ch.sms && c.urgent, icsd = !!c.ch.sms && !c.urgent
+  const skipped = ICSD && !!c.ch.sms && c.urgent, icsd = ICSD && !!c.ch.sms && !c.urgent
   const ext = c.receivers.filter(t => t.type === 'ext' && (isExtPhone(t) ? c.ch.sms : c.ch.email)).length, mgr = ext > 0
   const who: string[] = []
   if (mgr) who.push(L('your supervisor', '你的主管'))
@@ -146,7 +146,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
     else if (d < addMin(now, 10)) e.sched = L('Pick a time at least 10 minutes from now.', '請選 10 分鐘以後的時間。')
     else if (d > addMin(now, 30 * 24 * 60)) e.sched = L('Pick a time within 30 days.', '最多只能排 30 天內。')
   }
-  if (c.ch.sms && c.urgent) {
+  if (ICSD && c.ch.sms && c.urgent) {
     if (!c.urgentReason.trim()) e.urgent = L('Say why this can’t wait for ICSD.', '請說明為什麼不能等 ICSD 核准。')
     else if (c.urgentReason.length > 200) e.urgent = tooLong(200)
   }

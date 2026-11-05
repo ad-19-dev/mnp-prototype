@@ -4,6 +4,9 @@
 export const DOMAIN = 'tsmc.com'
 export const EMAIL_RE = /^[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+$/
 export const CAP = 500
+// ICSD approval of SMS (and skipping it as urgent) is switched off for now (2026/11/05): approval is only the
+// supervisor's, for external audiences. Set to true to bring the ICSD flow back everywhere.
+export const ICSD = false
 export const ME = 'p01'
 export const SUPERVISOR = 'Jimmy Chen 陳志明'
 
@@ -525,11 +528,14 @@ export function chFailList(r: Row, k: Channel, n: number): Fail[] {
     // the person's recorded reason when it belongs to this channel, otherwise a typical one for it
     const sms = (f.fallback || '').replace(/^SMS fallback: /, '').replace(/^./, x => x.toUpperCase())
     const own = k === 'sms' ? sms : f.reason, why = f.ext || CH_WHY[k].indexOf(own) >= 0 ? own : CH_WHY[k][out.length % CH_WHY[k].length]
-    out.push({ p: f.p, ext: f.ext, reason: why, fallback: '', via: null })
+    // on Device Notifications with SMS fallback on, these people's SMS failed too: say why
+    out.push({ p: f.p, ext: f.ext, reason: why, fallback: k === 'push' && r.sms ? f.fallback || 'SMS fallback: no phone number on file' : '', via: null })
   })
   // another channel that reached the rest; SMS only goes to people Device Notifications missed
   const other = rowChs(r).find(x => x !== k && x !== 'sms' && !(k === 'sms' && x === 'push')) || null
-  for (let i = 0; out.length < n; i++) out.push({ p: genPerson(r.id + '-' + k + '-' + i, r.fo), reason: CH_WHY[k][i % CH_WHY[k].length], fallback: '', via: other })
+  // with SMS fallback on, the people Device Notifications missed first get it by SMS
+  let bySms = k === 'push' && r.sms ? ((r.byCh && r.byCh.sms) ? r.byCh.sms[0] : 0) : 0
+  for (let i = 0; out.length < n; i++) out.push({ p: genPerson(r.id + '-' + k + '-' + i, r.fo), reason: CH_WHY[k][i % CH_WHY[k].length], fallback: '', via: bySms-- > 0 ? 'sms' : other })
   chFailCache[key] = out
   return out
 }

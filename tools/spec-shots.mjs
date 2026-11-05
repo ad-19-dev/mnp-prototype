@@ -17,6 +17,8 @@ async function shot(name, target, list = []) {
     const bottom = await el.evaluate(n => Math.max(...Array.from(n.querySelectorAll('section, dl, .sticky')).map(x => x.getBoundingClientRect().bottom)))
     box = { ...box, height: Math.min(box.height, bottom - box.y + 24) }
   }
+  // toasts float over whatever is underneath; keep them out of the pictures
+  await p.evaluate(() => document.querySelectorAll('[data-sonner-toaster]').forEach(n => { n.style.display = 'none' }));
   const out = [];
   for (const [n, loc, at = 'tl'] of list) {
     try {
@@ -49,7 +51,7 @@ await step('page', async () => {
     [5, p.getByPlaceholder(/Search title/), 'tl'],
     [6, main.getByRole('button', { name: /^Status/ }), 'tl'],
     [7, main.locator('[role="columnheader"]').first(), 'tl'],
-    [8, main.getByRole('button', { name: /failed$/ }).first(), 'tl'],
+    [8, main.getByRole('button', { name: /^\d+ failed$/ }).first(), 'tl'],
     [9, main.getByRole('button', { name: /^Actions for/ }).first(), 'c'],
     [10, main.getByRole('navigation').last(), 'tl'],
   ]);
@@ -87,13 +89,6 @@ await step('rowmenu', async () => {
   await p.screenshot({ path: `${OUT}/rowmenu.jpg`, type: 'jpeg', quality: 80, clip }); marks.rowmenu = { w: Math.round(clip.width), h: Math.round(clip.height), marks: [] };
   await p.keyboard.press('Escape'); await wait(300);
 });
-await step('urgent', async () => {
-  await space('ESH Emergency');
-  const tb = await main.locator('[role="grid"], [role="table"]').first().boundingBox(), tg = await main.getByText('Urgent', { exact: true }).first().boundingBox();
-  const clip = { x: tb.x, y: tb.y, width: tb.width, height: tg.y + tg.height + 26 - tb.y };
-  await p.screenshot({ path: `${OUT}/urgent.jpg`, type: 'jpeg', quality: 80, clip });
-  marks.urgent = { w: Math.round(clip.width), h: Math.round(clip.height), marks: [{ n: 1, x: +((tg.x - clip.x) / clip.width * 100).toFixed(2), y: +((tg.y - clip.y) / clip.height * 100).toFixed(2) }] };
-});
 await step('empty', async () => {
   await p.getByRole('button', { name: 'New team' }).click(); await wait(400);
   await p.locator('#nt-name').fill('Test team'); await p.getByRole('button', { name: 'Create team' }).click(); await wait(1400);
@@ -110,18 +105,32 @@ await step('d-sent', async () => {
     [1, a.getByText('Sent', { exact: true }).first(), 'tl'],
     [2, a.locator('h3').first(), 'tl'],
     [3, a.locator('dl').first(), 'tl'],
-    [4, a.getByText('Delivery', { exact: true }), 'tl'],
-    [5, a.getByRole('button', { name: /failed$/ }), 'r'],
+    [4, a.getByText('Reach / Audience', { exact: true }), 'tl'],
+    [5, a.getByRole('button', { name: /^\d+ failed$/ }), 'r'],
     [6, a.getByText('By channel', { exact: true }), 'tl'],
     [7, a.getByRole('button', { name: /^Device Notifications/ }), 'tl'],
-    [8, a.getByRole('button', { name: /See who didn/ }), 'tl'],
+    [8, a.getByRole('button', { name: /See failed audience members/ }), 'tl'],
     [9, a.getByText('Audiences', { exact: true }), 'tl'],
     [10, a.getByRole('button', { name: /^See the \d+ members/ }).first(), 'r'],
   ]);
 });
-await step('dlg-failed', async () => { await aside().getByRole('button', { name: /failed$/ }).click(); await wait(600); await shot('dlg-failed', p.getByRole('dialog')); await p.keyboard.press('Escape'); await wait(300) });
-await step('dlg-channel', async () => { await aside().getByRole('button', { name: /See who didn/ }).click(); await wait(600); await shot('dlg-channel', p.getByRole('dialog')); await p.keyboard.press('Escape'); await wait(300) });
+await step('dlg-failed', async () => { await aside().getByRole('button', { name: /^\d+ failed$/ }).click(); await wait(600); await shot('dlg-failed', p.getByRole('dialog')); await p.keyboard.press('Escape'); await wait(300) });
+await step('dlg-channel', async () => { await aside().getByRole('button', { name: /See failed audience members/ }).click(); await wait(600); await shot('dlg-channel', p.getByRole('dialog')); await p.keyboard.press('Escape'); await wait(300) });
 await step('dlg-members', async () => { await aside().getByRole('button', { name: /^See the \d+ members/ }).first().click(); await wait(600); await shot('dlg-members', p.getByRole('dialog')); await p.keyboard.press('Escape'); await wait(300) });
+// SMS fallback: Device Notifications and its fallback opened, then the Device Notifications failed list scrolled
+// to the people who got the SMS instead
+await step('d-sms', async () => {
+  await closeAside(); await open('Fab 18 Communications', 'Fire drill at 10:00 today');
+  const a = aside();
+  await a.getByRole('button', { name: /^Device Notifications/ }).click(); await wait(300);
+  await a.getByRole('button', { name: /^SMS fallback/ }).click(); await wait(400);
+  await shot('d-sms', a, [[1, a.getByRole('button', { name: /^Device Notifications/ }), 'tl'], [2, a.getByText(/delivered via SMS/).first(), 'tl'], [3, a.getByRole('button', { name: /^SMS fallback/ }), 'tl']]);
+  await a.getByRole('button', { name: /See failed audience members/ }).first().click(); await wait(600);
+  // scroll every scrollable box in the table to the bottom (the people the SMS reached are listed last)
+  await p.getByRole('dialog').evaluate(d => d.querySelectorAll('*').forEach(n => { if (n.scrollHeight > n.clientHeight + 4) n.scrollTop = n.scrollHeight }));
+  await wait(300); await shot('dlg-sms', p.getByRole('dialog'));
+  await p.keyboard.press('Escape'); await wait(300);
+});
 for (const [nm, sp, t] of [['d-pending', 'Platform Ops', 'Vendor maintenance window'], ['d-expired', 'Platform Ops', 'tWorkspace maintenance: Fri 10/31'], ['d-scheduled', 'Platform Ops', 'Search service maintenance'], ['d-error', 'Platform Ops', 'Weekly release digest: W42'], ['d-urgent', 'ESH Emergency', 'Typhoon update'], ['d-rejected', 'My sending space', 'Reminder: badge photo']]) {
   await step(nm, async () => { await closeAside(); await open(sp, t); await shot(nm, aside()) });
 }

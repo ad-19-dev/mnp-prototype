@@ -105,7 +105,7 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
       <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
         {open ? (
           <DialogContent maxWidth={560} height="hug">
-            <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{team ? L('Team settings', '團隊設定') : L('New team', '建立團隊')}</DialogTitle><DialogDescription className="text-body text-fg-secondary">{L('Members share this team’s messages, audience groups and templates, and can add or remove people.', '成員共用這個團隊的訊息、收件群組和模板，也都能加入或移除成員。')}</DialogDescription></div></DialogHeader>
+            <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{team ? L('Team settings', '團隊設定') : L('New team', '建立團隊')}</DialogTitle><DialogDescription className="sr-only">{team ? L('Team settings', '團隊設定') : L('New team', '建立團隊')}</DialogDescription></div></DialogHeader>
             <DialogBody>
               <div className="flex flex-col gap-[var(--layout-space-loose)]">
                 <FormField id="nt-name" label={L('Name', '名稱')} required count={name.length + ' / 50'} over={name.length > 50} error={err}>
