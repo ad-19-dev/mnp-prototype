@@ -10,7 +10,7 @@ import {
   Pagination, ProgressBar, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronRight, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
 import {
   CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
@@ -29,9 +29,11 @@ import { AudienceList, ChannelText, Part, failCols, notStarted, reviewer } from 
 // st: this channel's own status (the message's, except while it sends: a channel that has finished is Sent)
 export interface Rec { id: string; r: Row; k: Channel; ok: number; of: number; unk?: boolean; st: Status }
 const recId = (r: Row, k: Channel) => r.id + '~' + k
+// a message's records in order: SMS fallback right under Device Notifications, the channel it backs up
+export const REC_ORDER: Channel[] = ['push', 'sms', 'desktop', 'email']
 export function recordsOf(m: SendCtl, rows: Row[]): Rec[] {
   const out: Rec[] = []
-  rows.forEach(r => m.chStats(r).forEach(x => {
+  rows.forEach(r => m.chStats(r).slice().sort((a, b) => REC_ORDER.indexOf(a.k) - REC_ORDER.indexOf(b.k)).forEach(x => {
     const rec: Rec = { id: recId(r, x.k), r, k: x.k, ok: x.ok, of: x.of, st: r.status }
     // SMS without its own numbers: known only once Device Notifications has finished
     if (x.k === 'sms' && !(r.byCh && r.byCh.sms)) {
@@ -67,10 +69,12 @@ export function recText(r: Row, k: Channel) {
 // only Device Notifications and Desktop OS carry a sender name
 const recSender = (r: Row, k: Channel) => (k === 'push' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
 
-function ChCell({ k }: { k: Channel }) {
+// under: an SMS fallback row right under its Device Notifications row, indented with ↳ to show it hangs off it
+function ChCell({ k, under }: { k: Channel; under?: boolean }) {
   const I = CHN[k].icon
   return (
     <span className="flex min-w-0 items-center gap-2">
+      {under ? <CornerDownRight className="size-4 shrink-0 text-fg-muted" aria-label={L('Fallback for Device Notifications:', 'Device Notifications 的備援：')} /> : null}
       <Tag size="sm" color={k === 'sms' ? 'amber' : 'neutral'} icon={I} aria-hidden className="shrink-0 [&_[data-tag-text]]:hidden" />
       <Trunc text={chName(k)} />
     </span>
@@ -178,7 +182,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const msgs = React.useMemo(() => {
     const order: string[] = [], by: Record<string, Rec[]> = {}
     sorted.forEach(x => { if (!by[x.r.id]) { by[x.r.id] = []; order.push(x.r.id) } by[x.r.id].push(x) })
-    return order.map(id => by[id].slice().sort((a, b) => CH_ORDER.indexOf(a.k) - CH_ORDER.indexOf(b.k)))
+    return order.map(id => by[id].slice().sort((a, b) => REC_ORDER.indexOf(a.k) - REC_ORDER.indexOf(b.k)))
   }, [sorted])
   const unitN = grouped ? msgs.length : sorted.length
   const pagesN = Math.max(1, Math.ceil(unitN / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
@@ -223,7 +227,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
           <ChIcons list={rowChs(g.r)} />
         </span>
       )
-      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} /></span>
+      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} under={g.k === 'sms' && (g.pos === 'mid' || g.pos === 'last')} /></span>
     } }),
     col.display({ id: 'title', header: L('Title / Content', '標題 / 內容'), meta: { width: 380 }, cell: i => {
       const x = i.row.original, t = recText(x.r, x.k), text = t.content.replace(/\s+/g, ' ')
