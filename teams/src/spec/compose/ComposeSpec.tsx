@@ -8,12 +8,14 @@ import { C, Copy, Figure, Notes, Section, Shot, SpecTable } from '../parts'
 
 const PROTO = 'https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv'
 const LOG_SPEC = 'https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW'
-const TABS = [
+export const SPEC_TABS = [
   ['overview', '總覽與流程'], ['audiences', '1 · 收件人'], ['channels', '1 · 通道與核准'], ['message', '2 · 訊息內容'],
   ['review', '3 · 確認送出'], ['after', '送出之後'], ['dialogs', '對話框'], ['rules', '驗證與字數'], ['edge', '邊界情境'],
 ] as const
-type TabKey = typeof TABS[number][0]
-const isTab = (h: string): h is TabKey => TABS.some(t => t[0] === h)
+const TABS = SPEC_TABS
+export type TabKey = typeof SPEC_TABS[number][0]
+export const isSpecTab = (h: string): h is TabKey => SPEC_TABS.some(t => t[0] === h)
+const isTab = isSpecTab
 
 export default function ComposeSpec() {
   const [tab, setTab] = React.useState<TabKey>(() => { const h = location.hash.slice(1); return isTab(h) ? h : 'overview' })
@@ -39,17 +41,24 @@ export default function ComposeSpec() {
           </Tabs>
         </div>
       </div>
-      <main className="spec-wrap spec-main" key={tab}>
-        {tab === 'overview' ? <Overview go={go} /> : null}
-        {tab === 'audiences' ? <AudiencesTab /> : null}
-        {tab === 'channels' ? <ChannelsTab /> : null}
-        {tab === 'message' ? <MessageTab /> : null}
-        {tab === 'review' ? <ReviewTab /> : null}
-        {tab === 'after' ? <AfterTab /> : null}
-        {tab === 'dialogs' ? <DialogsTab /> : null}
-        {tab === 'rules' ? <RulesTab /> : null}
-        {tab === 'edge' ? <EdgeTab /> : null}
-      </main>
+      <main className="spec-wrap spec-main" key={tab}><SpecTabBody tab={tab} go={go} /></main>
+    </>
+  )
+}
+
+// one tab's content; the UI flow document shows the same tabs after its own
+export function SpecTabBody({ tab, go }: { tab: TabKey; go: (k: TabKey) => void }) {
+  return (
+    <>
+      {tab === 'overview' ? <Overview go={go} /> : null}
+      {tab === 'audiences' ? <AudiencesTab /> : null}
+      {tab === 'channels' ? <ChannelsTab /> : null}
+      {tab === 'message' ? <MessageTab /> : null}
+      {tab === 'review' ? <ReviewTab /> : null}
+      {tab === 'after' ? <AfterTab /> : null}
+      {tab === 'dialogs' ? <DialogsTab /> : null}
+      {tab === 'rules' ? <RulesTab /> : null}
+      {tab === 'edge' ? <EdgeTab /> : null}
     </>
   )
 }

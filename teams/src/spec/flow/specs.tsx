@@ -78,7 +78,10 @@ export const SPECS: Record<string, SpecDef> = {
 }
 
 // the panel body (also used inline in the list view)
+// inside the combined document the link opens the full spec's tab in place, instead of the separate spec page
+export const OpenSpec = React.createContext<((tab: SpecTab) => void) | null>(null)
 export function SpecBody({ spec }: { spec: SpecDef }) {
+  const onOpen = React.useContext(OpenSpec)
   return (
     <div className="flow-spec">
       {spec.comps?.length ? <section><h4>使用元件</h4><div className="flow-chips">{spec.comps.map(c => <code key={c}>{c}</code>)}</div></section> : null}
@@ -88,7 +91,9 @@ export function SpecBody({ spec }: { spec: SpecDef }) {
           <dl>{spec.copy.map(([en, zh], i) => <div key={i}><dt>{en}</dt><dd>{zh}</dd></div>)}</dl>
         </section>
       ) : null}
-      <a className="flow-spec-link" href={SPEC_URL + '#' + spec.tab} target="_blank" rel="noreferrer">在發送訊息規格看完整內容：{TAB_NAME[spec.tab]} ↗</a>
+      {onOpen
+        ? <button type="button" className="flow-spec-link" onClick={() => onOpen(spec.tab)}>看完整規格：{TAB_NAME[spec.tab]} →</button>
+        : <a className="flow-spec-link" href={SPEC_URL + '#' + spec.tab} target="_blank" rel="noreferrer">在發送訊息規格看完整內容：{TAB_NAME[spec.tab]} ↗</a>}
     </div>
   )
 }

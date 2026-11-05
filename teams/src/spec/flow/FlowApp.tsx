@@ -5,10 +5,12 @@
 import * as React from 'react'
 import { StatusTag } from '../../components/ui'
 import { Shot } from '../parts'
-import { SPECS, SpecBody } from './specs'
+import { Tabs, TabsList, TabsTrigger } from '@qijenchen/design-system'
+import { SPECS, SpecBody, OpenSpec } from './specs'
+import { SPEC_TABS, SpecTabBody, isSpecTab, type TabKey } from '../compose/ComposeSpec'
 
 const PROTO = 'https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv'
-const SPEC = 'https://claude.ai/artifact/5Cp4EoipMcFczPk314XxRK'
+const LOG_SPEC = 'https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW'
 
 // ---------- the flow, as data ----------
 type Kind = 'dialog' | 'action' | 'error' | 'done'
@@ -311,41 +313,66 @@ function FlowList() {
 }
 
 // ---------- page ----------
+// one document: the UI flow first, then every tab of the send-flow spec (the same content as the separate spec page)
 type Mode = 'canvas' | 'list'
-// a phone opens on the list (the whole chart is too small to read there); a link can still ask for either view
-const fromHash = (): Mode => (location.hash === '#list' ? 'list' : location.hash === '#flow' ? 'canvas' : window.innerWidth < 760 ? 'list' : 'canvas')
+type PageView = Mode | TabKey
+// a phone opens on the list (the whole chart is too small to read there); a link can still ask for any view
+const fromHash = (): PageView => {
+  const h = location.hash.slice(1)
+  return h === 'list' ? 'list' : h === 'flow' ? 'canvas' : isSpecTab(h) ? h : window.innerWidth < 760 ? 'list' : 'canvas'
+}
+const isFlow = (v: PageView): v is Mode => v === 'canvas' || v === 'list'
 
 export default function FlowApp() {
-  const [mode, setMode] = React.useState<Mode>(fromHash)
-  React.useEffect(() => { const f = () => setMode(fromHash()); window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f) }, [])
-  const go = (m: Mode) => { setMode(m); try { history.replaceState(null, '', m === 'list' ? '#list' : '#flow') } catch { /* sandboxed */ } }
+  const [view, setView] = React.useState<PageView>(fromHash)
+  const lastMode = React.useRef<Mode>(isFlow(view) ? view : window.innerWidth < 760 ? 'list' : 'canvas')
+  React.useEffect(() => { const f = () => setView(fromHash()); window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f) }, [])
+  const go = (v: PageView) => {
+    if (isFlow(v)) lastMode.current = v
+    setView(v)
+    try { history.replaceState(null, '', '#' + (v === 'canvas' ? 'flow' : v)) } catch { /* sandboxed */ }
+    window.scrollTo(0, 0)
+  }
+  const flow = isFlow(view)
   return (
-    <div className={'flow-page is-' + mode}>
+    <OpenSpec.Provider value={go}>
+    <div className={'flow-page is-' + (flow ? view : 'spec')}>
       <div className="spec-top">
-        <div className="spec-wrap flex flex-wrap items-end justify-between gap-3 py-3">
-          <div className="flex min-w-0 flex-col gap-1">
-            <span className="spec-eyebrow">MNP · New message</span>
-            <h1 className="spec-h1">發送訊息 UI Flow</h1>
-            <span className="text-caption text-fg-secondary">
-              2026/11/05 · 團隊版 · 細節規則見 <a className="text-primary hover:underline" href={SPEC} target="_blank" rel="noreferrer">發送訊息設計規格</a> · 實際操作見 <a className="text-primary hover:underline" href={PROTO} target="_blank" rel="noreferrer">MNP Teams prototype</a>（需密碼）
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flow-legend" aria-label="圖例">
-              <span><i className="flow-key" style={{ background: 'var(--flow-main)' }} />主流程</span>
-              <span><i className="flow-key" style={{ background: 'var(--flow-branch)' }} />對話框</span>
-              <span><i className="flow-key" style={{ background: 'var(--spec-muted)' }} />其他操作</span>
-              <span><i className="flow-key" style={{ background: 'var(--flow-error)' }} />驗證錯誤</span>
-              <span><i className="flow-key" style={{ background: 'var(--flow-done)' }} />結果</span>
+        <div className="spec-wrap flex flex-col gap-2 pt-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="spec-eyebrow">MNP · New message</span>
+              <h1 className="spec-h1">發送訊息 UI Flow 與設計規格</h1>
+              <span className="text-caption text-fg-secondary">
+                2026/11/05 · 團隊版 · 畫面取自 <a className="text-primary hover:underline" href={PROTO} target="_blank" rel="noreferrer">MNP Teams prototype</a>（需密碼）· 送出後的列表與詳情見 <a className="text-primary hover:underline" href={LOG_SPEC} target="_blank" rel="noreferrer">訊息紀錄設計規格</a>
+              </span>
             </div>
-            <div className="flow-mode" role="tablist" aria-label="檢視方式">
-              <button type="button" role="tab" aria-selected={mode === 'canvas'} onClick={() => go('canvas')}>流程圖</button>
-              <button type="button" role="tab" aria-selected={mode === 'list'} onClick={() => go('list')}>清單</button>
-            </div>
+            {flow ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flow-legend" aria-label="圖例">
+                  <span><i className="flow-key" style={{ background: 'var(--flow-main)' }} />主流程</span>
+                  <span><i className="flow-key" style={{ background: 'var(--flow-branch)' }} />對話框</span>
+                  <span><i className="flow-key" style={{ background: 'var(--spec-muted)' }} />其他操作</span>
+                  <span><i className="flow-key" style={{ background: 'var(--flow-error)' }} />驗證錯誤</span>
+                  <span><i className="flow-key" style={{ background: 'var(--flow-done)' }} />結果</span>
+                </div>
+                <div className="flow-mode" role="tablist" aria-label="檢視方式">
+                  <button type="button" role="tab" aria-selected={view === 'canvas'} onClick={() => go('canvas')}>流程圖</button>
+                  <button type="button" role="tab" aria-selected={view === 'list'} onClick={() => go('list')}>清單</button>
+                </div>
+              </div>
+            ) : null}
           </div>
+          <Tabs value={flow ? 'flow' : view} onValueChange={v => go(v === 'flow' ? lastMode.current : v as TabKey)}>
+            <TabsList overflow="scroll">
+              <TabsTrigger value="flow">UI Flow</TabsTrigger>
+              {SPEC_TABS.map(([k, t]) => <TabsTrigger key={k} value={k}>{t}</TabsTrigger>)}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
-      {mode === 'canvas' ? <FlowCanvas /> : <FlowList />}
+      {view === 'canvas' ? <FlowCanvas /> : view === 'list' ? <FlowList /> : <main className="spec-wrap spec-main" key={view}><SpecTabBody tab={view} go={go} /></main>}
     </div>
+    </OpenSpec.Provider>
   )
 }
