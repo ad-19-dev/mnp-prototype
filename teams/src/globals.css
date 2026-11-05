@@ -27,3 +27,7 @@
 /* No "Now" shortcut in the date-time picker (product decision 2026-11-04). The DS has no prop for it;
    the button is the one pushed left in the picker's footer. */
 [aria-label="日期選擇"] button.mr-auto { display: none; }
+
+/* Numbers sit flush right (product decision 2026-11-05), and so does their header. The DS aligns a column's
+   cells with meta.align but not its header label, so the send flow's People header is aligned here. */
+[role="columnheader"][data-column-id="cnt"] > div:first-child { justify-content: flex-end; }

@@ -130,7 +130,7 @@ export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }
             const people = g ? membersFor(g).map(x => PMAP[x.pid]).filter(Boolean) : orgMembers(t.id!)
             name = g ? g.name : o ? o.code : t.id!; sub = g ? L('Audience group', '收件群組') : L('Org', '組織') + (o ? ' · ' + o.name : '')
             lead = icon(g ? BookUser : Building2)
-            end = <Button variant="link" size="sm" className="!h-auto shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
+            end = <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
               onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people, group: g ? g.id : undefined })}>{P(people.length, 'person', '人', 'people')}</Button>
           } else if (t.type === 'person') {
             const p = PMAP[t.id!]
