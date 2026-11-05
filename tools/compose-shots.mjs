@@ -4,7 +4,7 @@ import { chromium } from '/opt/node-tools/node_modules/playwright/index.mjs';
 import { writeFileSync } from 'node:fs';
 const OUT = process.argv[2];
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-const ctx = await b.newContext({ viewport: { width: 1680, height: 1000 }, deviceScaleFactor: 2 });
+const ctx = await b.newContext({ viewport: { width: 1400, height: 1000 }, deviceScaleFactor: 2 });
 const p = await ctx.newPage(); p.setDefaultTimeout(8000);
 const errs = []; p.on('pageerror', e => errs.push(e.message));
 const marks = {}, wait = ms => p.waitForTimeout(ms);
@@ -30,7 +30,7 @@ const btn = n => p.getByRole('button', { name: n, exact: true });
 const foot = () => p.locator('[data-compose] .sticky').last();
 // the main area plus the local header above it (breadcrumb and approval tags)
 const page = async () => { const mb = await main.boundingBox(); return { x: mb.x, y: 48, width: mb.width, height: mb.y + mb.height - 48 } };
-async function tall(fn) { const h = await p.evaluate(() => document.querySelector('[data-compose]')?.scrollHeight || 1000); await p.setViewportSize({ width: 1680, height: Math.max(1000, h + 120) }); await wait(300); await fn(); await p.setViewportSize({ width: 1680, height: 1000 }); await wait(200) }
+async function tall(fn) { const h = await p.evaluate(() => document.querySelector('[data-compose]')?.scrollHeight || 1000); await p.setViewportSize({ width: 1400, height: Math.max(1000, h + 120) }); await wait(300); await fn(); await p.setViewportSize({ width: 1400, height: 1000 }); await wait(200) }
 async function addAud(type, q, opt) {
   await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(200)
   await p.getByRole('option', { name: type, exact: true }).click(); await wait(200)

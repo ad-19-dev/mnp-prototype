@@ -120,7 +120,7 @@ function AudiencesTab() {
   return (
     <>
       <Section eyebrow="Step 1" title="收件人" lead="先選類型再搜尋，加入的收件人列在下方表格。最多 500 人（展開群組與組織、去重後）。">
-        <div className="spec-gallery">
+        <div className="spec-gallery wide">
           <figure><figcaption><b>收件人類型</b><span>DS Select，寬 128。切換後輸入框清空、自動聚焦，提示字跟著換。</span></figcaption><div className="spec-canvas"><Shot name="s1-types" alt="類型選單" /></div></figure>
           <figure><figcaption><b>搜尋人員</b><span>輸入就列出符合的人；按 Enter 加入第一筆。</span></figcaption><div className="spec-canvas"><Shot name="s1-search" alt="搜尋人員" /></div></figure>
           <figure><figcaption><b>群組</b><span>還沒輸入時列出「Your groups」（這個空間可用的群組），加入後選單保持打開，可以連續加。</span></figcaption><div className="spec-canvas"><Shot name="s1-group" alt="群組選單" /></div></figure>
@@ -232,7 +232,7 @@ function MessageTab() {
             { title: '方括號', body: <>模板裡的 [what]、[date] 是要替換的地方，送出前使用者自己改。</> },
           ]} />
         </div>
-        <Figure label="套用模板後" sub="Personal reminder" shot="s2-filled" max={900} notes={[
+        <Figure label="套用模板後" sub="Personal reminder" shot="s2-filled" notes={[
           { n: 1, title: '模板欄位', body: '顯示目前套用的模板名稱，可以換別的。' },
           { n: 2, title: 'Desktop OS 的文字', body: '和 Device Notifications 一樣先帶入，超過 40 / 120 字時欄位會標紅，使用者縮短。' },
         ]} />
@@ -260,7 +260,7 @@ function ReviewTab() {
       </Section>
 
       <Section eyebrow="Preview" title="各通道預覽" lead="切換上方的分段控制看每個通道。">
-        <div className="spec-gallery">
+        <div className="spec-gallery wide">
           <figure><figcaption><b>Desktop OS</b><span>用 Desktop OS 自己的寄件人、標題和內文；內文最多顯示 3 行。</span></figcaption><div className="spec-canvas"><Shot name="prev-desktop" alt="Desktop OS 預覽" /></div></figure>
           <figure><figcaption><b>Device Notifications (SMS)</b><span>訊息泡泡，只有 SMS 內容。</span></figcaption><div className="spec-canvas"><Shot name="prev-sms" alt="SMS 預覽" /></div></figure>
           <figure><figcaption><b>Email</b><span>主旨、寄件者「MNP &lt;no-reply@tsmc.com&gt;」，下方 Email 內文（保留格式，最高 260 後捲動）。</span></figcaption><div className="spec-canvas"><Shot name="prev-email" alt="Email 預覽" /></div></figure>
@@ -269,7 +269,7 @@ function ReviewTab() {
       </Section>
 
       <Section eyebrow="Schedule" title="排程傳送">
-        <Figure label="選了 Scheduled send" shot="s3-sched" max={900} wideNotes notes={[
+        <Figure label="選了 Scheduled send" shot="s3-sched" wideNotes notes={[
           { n: 1, title: '日期和時間', body: <>DS <C>DatePicker</C>（含時間、可直接輸入），寬最多 384，格式「YYYY/MM/DD HH:MM」，預設明天 09:00。沒有「此刻」按鈕。下方提示「Sends &lt;時間&gt;」，需要核准時「Sends &lt;時間&gt; if approved by then」。</> },
         ]} />
         <SpecTable head={['錯誤', '文案']} rows={[
@@ -287,7 +287,7 @@ function AfterTab() {
   return (
     <>
       <Section eyebrow="Result" title="需要核准：結果頁" lead="按 Create message 後，需要 ICSD 或主管核准的訊息不會直接回到列表，而是先看到這一頁，讓使用者知道接下來會發生什麼。">
-        <Figure label="Sent for approval" sub="ICSD 核准、排程傳送" shot="result" max={1100} notes={[
+        <Figure label="Sent for approval" sub="ICSD 核准、排程傳送" shot="result" notes={[
           { title: '圖示與標題', body: <>黃色圓底盾牌、<C>text-h3</C>「Sent for approval / 已送出審核」。</> },
           { title: '說明', body: <>只要 ICSD：「ICSD will review it. We’ll notify you when it’s approved.」只要主管：「Your supervisor will review it. …」兩者：「Your supervisor reviews it first, then ICSD. We’ll notify you at each step.」</> },
           { title: '摘要', body: 'Request ID、Approver、Channels、Submitted、Sends（排程：「<時間>, if it’s approved by then」；立即：「As soon as it’s approved」）、Audiences。' },
@@ -346,7 +346,7 @@ function RulesTab() {
           { title: '按 Create message', body: '三個步驟全部再檢查一次；有錯就跳回那一步。還有人沒選 SMS 號碼時先打開選號碼對話框。' },
           { title: '錯誤樣式', body: <>欄位紅框＋下方紅字（DS <C>FormField</C> error）；不屬於單一欄位的錯誤（例如沒有收件人）用紅字一行放在區塊下方。</> },
         ]} />
-        <div className="spec-gallery">
+        <div className="spec-gallery wide">
           <figure><figcaption><b>步驟 1 沒填就按 Next</b><span>「Add at least one audience.」「Pick at least one channel.」</span></figcaption><div className="spec-canvas"><Shot name="s1-errors" alt="步驟 1 錯誤" /></div></figure>
           <figure><figcaption><b>步驟 2 沒填就按 Next</b><span>每個必填欄位都標出來。</span></figcaption><div className="spec-canvas"><Shot name="s2-errors" alt="步驟 2 錯誤" /></div></figure>
         </div>

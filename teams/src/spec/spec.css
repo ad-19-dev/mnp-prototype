@@ -18,7 +18,7 @@ body { font-family: var(--spec-font); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--spec-surface); }
 
 .spec-top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--spec-surface); border-bottom: 1px solid var(--spec-line); }
-.spec-wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.spec-wrap { max-width: 1440px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .spec-main { padding-block: 32px 64px; display: flex; flex-direction: column; gap: 48px; }
 
 .spec-eyebrow { font: 600 12px/16px var(--spec-font); letter-spacing: 0.06em; text-transform: uppercase; color: var(--spec-pin); }
@@ -79,11 +79,24 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* a screenshot with numbered pins placed on the part they explain (positions measured from the real page) */
-.spec-shot { position: relative; margin: 0 auto; width: 100%; }
+.spec-shot { position: relative; margin: 0 auto; width: 100%; display: block; padding: 0; border: 0; background: none; cursor: zoom-in; font: inherit; color: inherit; text-align: left; }
+.spec-shot:focus-visible { outline: 2px solid var(--spec-pin); outline-offset: 4px; border-radius: 8px; }
+.spec-shot .spec-zoom { position: absolute; right: 8px; bottom: 8px; padding: 2px 8px; border-radius: 999px; background: rgb(27 34 48 / 0.72); color: #fff; font: 500 12px/20px var(--spec-font); opacity: 0; transition: opacity .15s; }
+.spec-shot:hover .spec-zoom, .spec-shot:focus-visible .spec-zoom { opacity: 1; }
+.spec-shot.is-full { cursor: default; max-width: none; margin: 0; }
+.spec-lightbox { width: min(96vw, 100%); max-width: none; height: 94vh; max-height: none; padding: 0; border: 0; border-radius: 12px; background: var(--spec-canvas); overflow: hidden; }
+.spec-lightbox[open] { display: flex; flex-direction: column; }
+.spec-lightbox::backdrop { background: rgb(16 24 40 / 0.6); }
+.spec-lightbox-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; background: var(--spec-surface); border-bottom: 1px solid var(--spec-line); font: 400 14px/20px var(--spec-font); }
+.spec-lightbox-bar button { border: 1px solid var(--spec-line); border-radius: 6px; background: var(--spec-surface); padding: 4px 12px; font: inherit; cursor: pointer; }
+.spec-lightbox-body { flex: 1; overflow: auto; padding: 24px; }
+.spec-lightbox-body .spec-shot { margin: 0 auto; }
+.spec-notes.cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px 24px; }
 .spec-shot img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--spec-line); background: var(--spec-surface);
   box-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px rgb(16 24 40 / 0.06); }
 .spec-shot .spec-pin { position: absolute; transform: translate(-50%, -50%); width: 22px; height: 22px; border-radius: 11px; font-size: 12px; }
-.spec-gallery { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-items: start; }
+.spec-gallery { display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); align-items: start; }
+.spec-gallery.wide { grid-template-columns: minmax(0, 1fr); }
 .spec-gallery figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .spec-gallery figcaption { display: flex; flex-direction: column; gap: 2px; }
 .spec-gallery figcaption b { font: 600 14px/20px var(--spec-font); }

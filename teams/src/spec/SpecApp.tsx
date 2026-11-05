@@ -369,7 +369,7 @@ function StatesTab() {
   return (
     <>
       <Section eyebrow="States" title="載入、空狀態" lead="都畫在表格的位置上，用 DS Empty。">
-        <div className="spec-gallery">
+        <div className="spec-gallery wide">
           <figure><figcaption><b>載入中</b><span>進入或切換發送空間時。DS CircularProgress 48px 加一行字，置中，不加外框。</span></figcaption><div className="spec-canvas"><Shot name="loading" alt="載入中" /></div></figure>
           <figure><figcaption><b>還沒有訊息</b><span>這個空間一則訊息都沒有。表格保留表頭，空狀態在表格內。</span></figcaption><div className="spec-canvas"><Shot name="empty" alt="還沒有訊息" /></div></figure>
           <figure><figcaption><b>找不到結果</b><span>有訊息，但搜尋或篩選後沒有符合的。附「清除篩選」按鈕。</span></figcaption><div className="spec-canvas"><Shot name="nomatch" alt="找不到結果" /></div></figure>

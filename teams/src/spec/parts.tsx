@@ -13,23 +13,33 @@ export function Pin({ n }: { n: number }) {
   return <span className="spec-pin" aria-label={'標註 ' + n}>{n}</span>
 }
 
-// a screenshot from the prototype; `max` caps its width on the page (it shrinks with the column)
+// a screenshot from the prototype; `max` caps its width on the page (it shrinks with the column).
+// Click it to see it at full size in an overlay (Esc or the close button to go back).
 export function Shot({ name, max, alt }: { name: string; max?: number; alt: string }) {
   const { imgs, marks } = React.useContext(Src), m = marks[name]
   const src = Object.keys(imgs).find(k => k.endsWith('/' + name + '.jpg'))
+  const dlg = React.useRef<HTMLDialogElement>(null)
   if (!m || !src) return <div className="spec-callout">缺少截圖：{name}</div>
+  const pins = m.marks.map(x => <span key={x.n} className="spec-pin" style={{ left: x.x + '%', top: x.y + '%' }} aria-hidden>{x.n}</span>)
   return (
-    <div className="spec-shot" style={{ maxWidth: max || m.w }}>
-      <img src={imgs[src]} width={m.w} height={m.h} alt={alt} loading="lazy" />
-      {m.marks.map(x => <span key={x.n} className="spec-pin" style={{ left: x.x + '%', top: x.y + '%' }} aria-hidden>{x.n}</span>)}
-    </div>
+    <>
+      <button type="button" className="spec-shot" style={{ maxWidth: max || m.w }} onClick={() => dlg.current?.showModal()} aria-label={'放大查看：' + alt}>
+        <img src={imgs[src]} width={m.w} height={m.h} alt={alt} loading="lazy" />
+        {pins}
+        <span className="spec-zoom" aria-hidden>點一下放大</span>
+      </button>
+      <dialog ref={dlg} className="spec-lightbox" aria-label={alt} onClick={e => { if (e.target === dlg.current) dlg.current?.close() }}>
+        <div className="spec-lightbox-bar"><b>{alt}</b><button type="button" onClick={() => dlg.current?.close()}>關閉 ✕</button></div>
+        <div className="spec-lightbox-body"><div className="spec-shot is-full" style={{ width: m.w }}><img src={imgs[src]} width={m.w} height={m.h} alt="" />{pins}</div></div>
+      </dialog>
+    </>
   )
 }
 
 export interface Note { n?: number; title: string; body: React.ReactNode }
-export function Notes({ items }: { items: Note[] }) {
+export function Notes({ items, cols }: { items: Note[]; cols?: boolean }) {
   return (
-    <ol className="spec-notes">
+    <ol className={'spec-notes' + (cols ? ' cols' : '')}>
       {items.map((x, i) => (
         <li key={i} style={x.n ? undefined : { gridTemplateColumns: 'minmax(0, 1fr)' }}>{x.n ? <Pin n={x.n} /> : null}<div><b>{x.title}</b><p>{x.body}</p></div></li>
       ))}
@@ -37,14 +47,16 @@ export function Notes({ items }: { items: Note[] }) {
   )
 }
 
-// a screenshot with its notes beside it (wide) or under it (narrow)
+// a screenshot with its notes beside it, or under it in columns when the screenshot is wide
+// (side by side would shrink a wide screen to half its size)
 export function Figure({ label, sub, shot, max, notes, wideNotes }: { label: string; sub?: string; shot: string; max?: number; notes?: Note[]; wideNotes?: boolean }) {
+  const m = React.useContext(Src).marks[shot], below = wideNotes || (m && Math.min(max || m.w, m.w) > 700)
   return (
     <figure className="spec-frame">
       <figcaption><b>{label}</b>{sub ? <span>{sub}</span> : null}</figcaption>
-      <div className={'spec-row' + (notes && !wideNotes ? ' side' : '')}>
+      <div className={'spec-row' + (notes && !below ? ' side' : '')}>
         <div className="spec-canvas"><Shot name={shot} max={max} alt={label} /></div>
-        {notes ? <Notes items={notes} /> : null}
+        {notes ? <Notes items={notes} cols={below} /> : null}
       </div>
     </figure>
   )
