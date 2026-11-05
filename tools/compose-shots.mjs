@@ -98,12 +98,19 @@ await step('s1-filled', async () => {
     [6, main.getByText(/2 phone numbers/).first(), 'tl'],
     [7, main.getByRole('checkbox', { name: 'Device Notifications', exact: true }), 'c'],
     [8, main.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }), 'tl'],
-    [9, main.getByText(/external audiences\. Your supervisor/), 'tl'],
-    [10, main.getByText(/people get it/).first(), 'tl'],
+    [9, main.getByText('The SMS needs approval before it’s sent'), 'tl'],
+    [10, main.getByText(/external audiences\. Your supervisor/), 'tl'],
+    [11, main.getByText(/people get it/).first(), 'tl'],
   ]));
 });
 await step('dlg-numbers', async () => { await main.getByRole('button', { name: 'Choose', exact: true }).click(); await wait(500); await shot('dlg-numbers', p.getByRole('dialog')); await p.getByRole('dialog').getByRole('radio').first().click().catch(() => {}); await wait(200); await p.getByRole('dialog').getByRole('button').last().click(); await wait(400) });
 await step('dlg-members', async () => { await main.getByRole('button', { name: /^See the \d+ members/ }).first().click(); await wait(500); await shot('dlg-members', p.getByRole('dialog')); await p.keyboard.press('Escape'); await wait(300) });
+await step('s1-urgent', async () => {
+  await main.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(300);
+  const sec = main.getByText('SMS approval will be skipped').locator('xpath=ancestor::div[contains(@class,"rounded-lg")][1]');
+  await shot('s1-urgent', sec, [[1, main.getByRole('checkbox', { name: /It’s urgent/ }), 'tl'], [2, p.locator('#f-urgent'), 'tl'], [3, main.getByText(/still has to approve/), 'tl']], 12);
+  await main.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(200);
+});
 await step('dlg-savegroup', async () => { await btn('Save as group').click(); await wait(500); await shot('dlg-savegroup', p.getByRole('dialog')); await p.keyboard.press('Escape'); await wait(300) });
 await step('s1-unreach', async () => {
   await leave(); await newMsg();
@@ -122,7 +129,7 @@ await step('dlg-leave', async () => { await btn('Cancel').click(); await wait(40
 
 // ---------- step 2 ----------
 await step('s2', async () => {
-  await newMsg(); await addAud('Person', 'chen'); await addAud('Email', 'lisa.ho@vendor-example.com');
+  await newMsg(); await addAud('Person', 'chen');
   for (const n of ['Device Notifications', 'Desktop OS', 'Email']) await p.getByRole('checkbox', { name: n, exact: true }).click();
   await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(300);
   await btn('Next').click(); await wait(600);
@@ -152,9 +159,9 @@ await step('s3', async () => {
   await btn('Next').click(); await wait(700);
   await tall(async () => shot('s3-now', await page(), [
     [1, p.getByRole('radio', { name: /Send now/ }), 'tl'], [2, p.getByRole('radio', { name: /Scheduled send/ }), 'tl'],
-    [3, main.getByText('Audiences', { exact: true }).last(), 'tl'],
-    [4, main.getByText('Preview', { exact: true }), 'tl'], [5, main.getByRole('radiogroup', { name: 'Preview channel' }), 'tl'],
-    [6, main.getByText(/^Needs approval from/), 'tl'], [7, btn('Send me a test'), 'tl'], [8, btn('Create message'), 'tr'],
+    [3, main.getByText('Audiences', { exact: true }).last(), 'tl'], [4, main.getByText('SMS approval', { exact: true }), 'tl'],
+    [5, main.getByText('Preview', { exact: true }), 'tl'], [6, main.getByRole('radiogroup', { name: 'Preview channel' }), 'tl'],
+    [7, main.getByText(/^Needs approval from/), 'tl'], [8, btn('Send me a test'), 'tl'], [9, btn('Create message'), 'tr'],
   ]));
 });
 for (const [k, n] of [['desktop', 'Desktop OS'], ['sms', 'Device Notifications (SMS)'], ['email', 'Email']]) {
@@ -170,5 +177,16 @@ await step('s3-sched', async () => {
 });
 await step('result', async () => { await btn('Create message').click(); await wait(800); await shot('result', await page()) });
 
+// ---------- urgent ----------
+await step('urgent', async () => {
+  await btn('Back to messages').click(); await wait(800); await newMsg(); await addAud('Person', 'chen');
+  await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(200);
+  await main.getByRole('checkbox', { name: /It’s urgent/ }).click(); await p.locator('#f-urgent').fill('Typhoon warning issued at 07:30. Staff must know before they commute.');
+  await btn('Next').click(); await wait(500);
+  await p.locator('#f-sender').fill('ESH Emergency'); await p.locator('#f-title').fill('Typhoon alert: work from home tomorrow'); await p.locator('#f-content').fill('Non-fab staff work from home on Oct 22.'); await p.locator('#f-sms').fill('Typhoon: non-fab staff WFH 10/22.');
+  await btn('Next').click(); await wait(600); await btn('Create message').click(); await wait(500);
+  await shot('dlg-urgent', p.getByRole('dialog'));
+  { const mb = await main.boundingBox(); await shot('urgent-head', { x: mb.x, y: Math.max(0, mb.y - 48), width: mb.width, height: 48 }) }
+});
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
 console.log(errs.join('\n') || 'no errors'); await b.close();

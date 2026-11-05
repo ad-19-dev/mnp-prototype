@@ -46,8 +46,8 @@ export function ComposeView({ m }: { m: SendCtl }) {
         actions={c.result ? null : (
           <>
             {ap.mgr ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs supervisor approval', '需主管核准')}</Tag> : null}
-            {ap.icsd ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs ICSD approval', '需 ICSD 核准')}</Tag> : null}
-            {ap.skipped ? <Tag size="md" color="red" unbounded icon={ShieldAlert}>{L('Skipping ICSD approval (urgent)', '略過 ICSD 核准（緊急）')}</Tag> : null}
+            {ap.icsd ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs SMS approval', '需 SMS 核准')}</Tag> : null}
+            {ap.skipped ? <Tag size="md" color="red" unbounded icon={ShieldAlert}>{L('Skipping SMS approval (urgent)', '略過 SMS 核准（緊急）')}</Tag> : null}
           </>
         )}
       />
@@ -219,14 +219,14 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <Checkbox
                 checked={c.ch.sms} onCheckedChange={() => m.pickChannel('sms')}
-                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Needs ICSD approval', '需 ICSD 核准')}</Tag> : null}</span>}
+                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Needs SMS approval', '需 SMS 核准')}</Tag> : null}</span>}
                 description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。')}
               />
               {ICSD && c.ch.sms ? (
                 <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
-                  <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('ICSD approval will be skipped', '將略過 ICSD 核准') : L('ICSD approves this message before it’s sent', 'ICSD 核准後才會送出')}</span>
+                  <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('SMS approval will be skipped', '將略過 SMS 核准') : L('The SMS needs approval before it’s sent', 'SMS 核准後才會送出')}</span>
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
-                    label={L('It’s urgent: send without waiting for ICSD', '這是緊急訊息，不等 ICSD 核准直接傳送')}
+                    label={L('It’s urgent: send without waiting for SMS approval', '這是緊急訊息，不等 SMS 核准直接傳送')}
                     description={L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。')} />
                   {c.urgent ? (
                     <FormField id="f-urgent" label={L('Reason', '原因')} required count={c.urgentReason.length + ' / 200'} over={c.urgentReason.length > 200} error={tried[1] || c.urgentReason.length > 200 ? e.urgent : ''}>
@@ -406,7 +406,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const rows: React.ReactNode[] = [
     <RvRow key="r" icon={Users} k={L('Audiences', '收件人')} v={P(rc.total, 'audience', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} />,
   ]
-  if (ICSD && c.ch.sms) rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('ICSD approval', 'ICSD 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after ICSD approves it', 'ICSD 核准後才會送出')} />)
+  if (ICSD && c.ch.sms) rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('SMS approval', 'SMS 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after the SMS reviewer approves it', 'SMS 審核人員核准後才會送出')} />)
   if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} />)
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
@@ -471,14 +471,14 @@ function ResultView({ m }: { m: SendCtl }) {
   const r = m.s.c.result!, ap = r.ap, both = ap.mgr && ap.icsd
   const rows = [
     { k: L('Request ID', '申請編號'), v: r.reqId },
-    { k: L('Approver', '審核人'), v: both ? SUPERVISOR + L(', then ICSD', '，再由 ICSD') : ap.icsd ? 'ICSD' : SUPERVISOR },
+    { k: L('Approver', '審核人'), v: both ? SUPERVISOR + L(', then the SMS reviewer', '，再由 SMS 審核人員') : ap.icsd ? L('SMS reviewer', 'SMS 審核人員') : SUPERVISOR },
     { k: L('Channels', '通道'), v: r.chs.map(k => CHN[k].name).join(L(', ', '、')) },
     { k: L('Submitted', '送出時間'), v: r.when },
     { k: L('Sends', '傳送時間'), v: r.sends },
     { k: L('Audiences', '收件人'), v: fmtN(r.total) },
   ]
-  const text = both ? L('Your supervisor reviews it first, then ICSD. We’ll notify you at each step.', '先由主管審核，再由 ICSD 審核，每一步都會通知你。')
-    : ap.icsd ? L('ICSD will review it. We’ll notify you when it’s approved.', 'ICSD 審核後會通知你。')
+  const text = both ? L('Your supervisor reviews it first, then the SMS reviewer. We’ll notify you at each step.', '先由主管審核，再由 SMS 審核人員審核，每一步都會通知你。')
+    : ap.icsd ? L('The SMS reviewer will review it. We’ll notify you when it’s approved.', 'SMS 審核人員審核後會通知你。')
     : L('Your supervisor will review it. We’ll notify you when it’s approved.', '主管審核後會通知你。')
   return (
     <div className="mx-auto flex w-full max-w-[640px] flex-col items-center gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)] pt-12 text-center">

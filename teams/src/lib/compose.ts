@@ -90,7 +90,7 @@ export function approval(c: Compose): Approval {
   const ext = c.receivers.filter(t => t.type === 'ext' && (isExtPhone(t) ? c.ch.sms : c.ch.email)).length, mgr = ext > 0
   const who: string[] = []
   if (mgr) who.push(L('your supervisor', '你的主管'))
-  if (icsd) who.push('ICSD')
+  if (icsd) who.push(L('the SMS reviewer', 'SMS 審核人員'))
   return { icsd, skipped, mgr, ext, need: icsd || mgr, who }
 }
 
@@ -147,7 +147,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
     else if (d > addMin(now, 30 * 24 * 60)) e.sched = L('Pick a time within 30 days.', '最多只能排 30 天內。')
   }
   if (ICSD && c.ch.sms && c.urgent) {
-    if (!c.urgentReason.trim()) e.urgent = L('Say why this can’t wait for ICSD.', '請說明為什麼不能等 ICSD 核准。')
+    if (!c.urgentReason.trim()) e.urgent = L('Say why this can’t wait for SMS approval.', '請說明為什麼不能等 SMS 核准。')
     else if (c.urgentReason.length > 200) e.urgent = tooLong(200)
   }
   return e

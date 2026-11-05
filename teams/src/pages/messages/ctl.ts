@@ -308,8 +308,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       // skipping ICSD is confirmed separately: it can't be undone and it's logged on the message
       if (ap.skipped && !confirmed) {
         const me = PMAP[ME]
-        set({ cf: { title: L('Send without ICSD approval?', '要略過 ICSD 核准直接送出嗎？'), text: L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。'),
-          rows: [{ k: L('Reason', '原因'), v: c.urgentReason.trim() }, { k: L('Logged as', '記錄為'), v: me.en + ' ' + me.zh + ' · ' + fmtDT(new Date()) }, { k: L('Notified', '通知對象'), v: L('ICSD and your supervisor, ' + SUPERVISOR, 'ICSD 和你的主管 ' + SUPERVISOR) }],
+        set({ cf: { title: L('Send without SMS approval?', '要略過 SMS 核准直接送出嗎？'), text: L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。'),
+          rows: [{ k: L('Reason', '原因'), v: c.urgentReason.trim() }, { k: L('Logged as', '記錄為'), v: me.en + ' ' + me.zh + ' · ' + fmtDT(new Date()) }, { k: L('Notified', '通知對象'), v: L('The SMS reviewer and your supervisor, ' + SUPERVISOR, 'SMS 審核人員和你的主管 ' + SUPERVISOR) }],
           icon: ShieldAlert, tone: 'warn', cancel: L('Go back', '返回'), ok: L('Skip approval and send', '略過核准並送出'), danger: true, run: () => { set({ cf: null }); m.submit(true) } } })
         return
       }

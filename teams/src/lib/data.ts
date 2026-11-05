@@ -4,9 +4,9 @@
 export const DOMAIN = 'tsmc.com'
 export const EMAIL_RE = /^[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+$/
 export const CAP = 500
-// ICSD approval of SMS (and skipping it as urgent) is switched off for now (2026/11/05): approval is only the
-// supervisor's, for external audiences. Set to true to bring the ICSD flow back everywhere.
-export const ICSD = false
+// SMS approval (an SMS reviewer approves every SMS; urgent messages may skip it, on record). On. The UI never names
+// the reviewing team; it says "SMS approval" and "the SMS reviewer".
+export const ICSD = true
 export const ME = 'p01'
 export const SUPERVISOR = 'Jimmy Chen 陳志明'
 

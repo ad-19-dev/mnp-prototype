@@ -89,6 +89,13 @@ await step('rowmenu', async () => {
   await p.screenshot({ path: `${OUT}/rowmenu.jpg`, type: 'jpeg', quality: 80, clip }); marks.rowmenu = { w: Math.round(clip.width), h: Math.round(clip.height), marks: [] };
   await p.keyboard.press('Escape'); await wait(300);
 });
+await step('urgent', async () => {
+  await space('ESH Emergency');
+  const tb = await main.locator('[role="grid"], [role="table"]').first().boundingBox(), tg = await main.getByText('Urgent', { exact: true }).first().boundingBox();
+  const clip = { x: tb.x, y: tb.y, width: tb.width, height: tg.y + tg.height + 26 - tb.y };
+  await p.screenshot({ path: `${OUT}/urgent.jpg`, type: 'jpeg', quality: 80, clip });
+  marks.urgent = { w: Math.round(clip.width), h: Math.round(clip.height), marks: [{ n: 1, x: +((tg.x - clip.x) / clip.width * 100).toFixed(2), y: +((tg.y - clip.y) / clip.height * 100).toFixed(2) }] };
+});
 await step('empty', async () => {
   await p.getByRole('button', { name: 'New team' }).click(); await wait(400);
   await p.locator('#nt-name').fill('Test team'); await p.getByRole('button', { name: 'Create team' }).click(); await wait(1400);

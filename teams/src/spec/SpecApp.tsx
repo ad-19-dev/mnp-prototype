@@ -57,7 +57,7 @@ export default function SpecApp() {
 // ---------- overview ----------
 function Overview({ go }: { go: (k: TabKey) => void }) {
   const cards: [TabKey, string, string][] = [
-    ['status', '狀態', '7 種狀態的意思、怎麼變、在列表和詳情各長什麼樣子'],
+    ['status', '狀態', '7 種狀態的意思、怎麼變、在列表和詳情各長什麼樣子，以及緊急發送的標示'],
     ['list', '訊息列表', '欄位順序、寬度、內容與排序，列選單，分頁'],
     ['filter', '搜尋與篩選', '哪些用篩選按鈕、哪些用搜尋，以及結果提示'],
     ['detail', '訊息詳情', '右側面板的區塊順序、各通道送達、收件人，以及每種狀態的版本'],
@@ -115,7 +115,7 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
 
 // ---------- status ----------
 const STATUS: { s: Status; mean: string; enter: string; reach: React.ReactNode; menu: string; banner: string; foot: string }[] = [
-  { s: 'pending', mean: '等待主管核准（寄給外部收件人時需要）。', enter: '建立時需要核准', reach: <Reach ok={null} of={562} />, menu: '查看詳情、複製為新訊息', banner: '藍色：等待主管核准、核准後何時送出', foot: '無' },
+  { s: 'pending', mean: '等待核准。含 SMS 要等 SMS 審核人員核准；寄給外部收件人要等主管核准；兩者都有時主管先、SMS 審核人員 後。', enter: '建立時需要核准', reach: <Reach ok={null} of={562} />, menu: '查看詳情、複製為新訊息', banner: '藍色：等待誰核准、核准後何時送出', foot: '無' },
   { s: 'expired', mean: '核准的時間晚於排程時間，所以沒有送出。', enter: '核准時已過排程時間', reach: <Reach ok={null} of={560} />, menu: '查看詳情、立即傳送、重新排程、複製、刪除', banner: '黃色：誰在何時核准、原訂時間、可以怎麼做', foot: '刪除｜重新排程、立即傳送' },
   { s: 'rejected', mean: '審核人駁回，附原因。', enter: '核准人駁回', reach: <Reach ok={null} of={9} />, menu: '查看詳情、修改後重新送審、複製、刪除', banner: '紅色：誰駁回、何時、原因', foot: '刪除｜修改後重新送審' },
   { s: 'scheduled', mean: '已核准或不需核准，等排程時間到。', enter: '選了排程傳送', reach: <Reach ok={null} of={560} />, menu: '查看詳情、編輯、複製、刪除', banner: '無', foot: '刪除｜編輯' },
@@ -155,6 +155,17 @@ function StatusTab() {
       </Section>
 
 
+      <Section eyebrow="Urgent" title="緊急發送（略過 SMS 核准）" lead="含 SMS 的訊息可以用「緊急」為由略過 SMS 核准直接送出。這件事要留紀錄，所以列表和詳情都要看得出來。">
+        <Figure label="列表上的標示" sub="ESH Emergency 空間" shot="urgent" wideNotes notes={[
+          { n: 1, title: '緊急標籤', body: <>標題前面的 <C>Tag sm amber</C> 加 <C>Siren</C> 圖示，文字「Urgent / 緊急」。滑鼠移上顯示「Urgent: sent without SMS approval / 緊急發送：略過 SMS 核准」。用文字而不是只用顏色，色盲也看得懂。</> },
+        ]} />
+        <SpecTable head={['位置', '呈現']} rows={[
+          ['詳情橫幅', <>黃色 <C>Banner warning</C>，標題「Sent without SMS approval (urgent) / 未經 SMS 核准送出（緊急）」，內文「&lt;誰&gt; skipped approval on &lt;時間&gt;. Reason: &lt;原因&gt;」。</>],
+          ['詳情的 Approval 欄位', <Copy en="SMS approval skipped (urgent)" zh="已略過 SMS 核准（緊急）" />],
+          ['外部收件人的主管核准', '不能略過；緊急只略過 SMS 核准。'],
+        ]} />
+      </Section>
+
       <Section eyebrow="Components" title="元件設定">
         <SpecTable head={['元素', '元件', '設定']} nowrap={[0, 1]} rows={[
           ['狀態標籤', <C>Tag</C>, <>size <C>sm</C>，有圖示。待核准 amber＋沙漏、排程已過期 deep-orange＋日曆叉、已駁回 red＋叉、已排程 neutral＋日曆、傳送中 blue＋紙飛機、已送出 green＋勾、傳送錯誤 red＋三角警示</>],
@@ -177,7 +188,7 @@ function ListTab() {
         <SpecTable head={['#', '欄位', '寬度', '內容', '沒有值時', '排序']} nowrap={[0, 1, 2, 5]} rows={[
           ['1', <Copy en="Sender" zh="寄件人" />, '170，釘選左側', '寄件人名稱，medium。只有 Device Notifications 和 Desktop OS 帶寄件人名稱。', '「—」（例如只有 Email）', sortable],
           ['2', <Copy en="Channels" zh="通道" />, '130', <span className="flex flex-col gap-1">通道圖示標籤，例如 <ChIcons list={['push', 'desktop', 'sms']} /></span>, '—', no],
-          ['3', <Copy en="Title / Content" zh="標題 / 內容" />, '400', <>第一行標題，主色連結，點了打開詳情；第二行內文第一行，<C>text-caption</C> 次要色。兩行都超出時截斷，滑鼠移上看全文。有多種內容時顯示順序：Device Notifications → Email（自己的主旨）→ Desktop OS</>, '—', no],
+          ['3', <Copy en="Title / Content" zh="標題 / 內容" />, '400', <>第一行標題，主色連結，點了打開詳情；第二行內文第一行，<C>text-caption</C> 次要色。兩行都超出時截斷，滑鼠移上看全文。有多種內容時顯示順序：Device Notifications → Email（自己的主旨）→ Desktop OS。緊急發送時標題前有 <Tag size="sm" color="amber" icon={Siren}>Urgent</Tag></>, '—', no],
           ['4', <Copy en="Status" zh="狀態" />, '180', '狀態標籤，見「狀態」', '—', no],
           ['5', <Copy en="Template" zh="模板" />, '150', '模板名稱，截斷', '「—」', sortable],
           ['6', <Copy en="Reach / Audience" zh="送達 / 收件人" />, '160', '「送達 / 收件人數」；還沒送出時送達用「–」；傳送中加進度條；有人失敗時加紅色「N failed」。依收件人數排序。', '—', sortable],
@@ -284,7 +295,7 @@ function DetailTab() {
           [<Copy en="Sender" zh="寄件人" />, '寄件人名稱', '有 Device Notifications 或 Desktop OS 時'],
           [<Copy en="Template" zh="模板" />, '模板名稱，沒有用模板時「—」', '一定'],
           [<Copy en="Channels" zh="通道" />, '通道全名，逗號分隔', '一定'],
-          [<Copy en="Approval" zh="核准" />, <>Approved 已核准 · Waiting for your supervisor 等待主管 · Rejected by your supervisor 主管駁回</>, '需要核准的訊息（有外部收件人）'],
+          [<Copy en="Approval" zh="核准" />, <>Approved 已核准 · Waiting for the SMS reviewer 等待 SMS 審核人員 · Rejected by the SMS reviewer SMS 審核人員駁回 · SMS approval skipped (urgent) 已略過 SMS 核准（緊急）</>, '有 SMS 或需要核准時'],
           [<Copy en="Created by" zh="建立者" />, '英文名＋中文名', '一定'],
           [<Copy en="Created" zh="建立時間" />, 'YYYY/MM/DD HH:MM', '一定'],
           [<Copy en="Send time" zh="傳送時間" />, '一律顯示確切時間：有排程就是排程時間；立即傳送是核准時間或建立時間；還在等核准或已駁回、沒有排程時是「—」', '一定'],
@@ -329,8 +340,8 @@ function DetailTab() {
             ['d-pending', '待核准', '藍色橫幅「Waiting for approval from your supervisor」＋何時送出。沒有按鈕列。'],
             ['d-scheduled', '已排程', '沒有橫幅。按鈕列：刪除｜編輯（secondary）。'],
             ['d-expired', '排程已過期', '黃色橫幅說明核准時間晚於排程。按鈕列：刪除｜重新排程（secondary）、立即傳送（primary）。'],
-            ['d-rejected', '已駁回', '紅色橫幅「Rejected by your supervisor」＋時間與原因。按鈕列：刪除｜修改後重新送審（primary）。'],
-            ['d-urgent', '傳送中', '沒有橫幅、沒有按鈕列；送達數字隨傳送更新，各通道的失敗人數要等送完才出現。'],
+            ['d-rejected', '已駁回', '紅色橫幅「Rejected by the SMS reviewer」＋時間與原因。按鈕列：刪除｜修改後重新送審（primary）。'],
+            ['d-urgent', '傳送中（緊急發送）', '黃色橫幅「Sent without SMS approval (urgent)」＋誰、何時、原因。沒有按鈕列。'],
             ['d-error', '傳送錯誤', '紅色失敗人數。重新傳送在列選單和失敗名單裡，面板沒有按鈕列。'],
           ].map(([k, t, d]) => (
             <figure key={k}><figcaption><b>{t}</b><span>{d}</span></figcaption><div className="spec-canvas"><Shot name={k} alt={t} /></div></figure>
@@ -419,7 +430,7 @@ function EdgeTab() {
         ['還有通道在送', '維持傳送中，不顯示失敗人數。', '列表有進度條；送完才出現「N failed」'],
         ['沒有人收到，或系統錯誤', '傳送錯誤，可重新傳送。', '失敗名單上方有錯誤說明'],
         ['核准時已過排程時間', '排程已過期，不會自動送出。', '可立即傳送、重新排程（不用重新送審）或刪除'],
-        ['核准', 'ICSD 核准與緊急發送暫時拿掉（2026/11/05）；目前只有寄給外部收件人時需要主管核准。', '待核准、已駁回、排程已過期的審核人都是主管'],
+        ['緊急發送', '只略過 SMS 核准；寄給外部收件人的主管核准不能略過。', '列表「Urgent」標籤；詳情黃色橫幅記錄誰、何時、原因'],
         ['外部 Email、外部電話', '外部 Email 只收 Email；外部電話只收 SMS。', '在失敗名單顯示地址或號碼，組織為「—」'],
         ['只有 Email 的訊息', '沒有寄件人名稱。', 'Sender 欄「—」，詳情不顯示 Sender'],
         ['個人發送空間', '只有自己建立的訊息。', '沒有 Created by 欄'],

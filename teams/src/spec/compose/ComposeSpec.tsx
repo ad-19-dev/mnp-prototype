@@ -63,13 +63,14 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
     <>
       <Section eyebrow="Flow" title="完整流程" lead="點「+ New message」後是三個步驟，每一步只處理一件事；最後依「要不要核准」和「什麼時候送」走到四種結果之一。">
         <div className="spec-flow2">
-          <div className="line"><Step>訊息列表 · <b>+ New message</b></Step>→<Step>1 · Audiences &amp; channels</Step><Act>選收件人、選通道、需要時設定 SMS 號碼</Act>→<Step>2 · Message</Step><Act>選新訊息或模板，填各通道內容</Act>→<Step>3 · Review &amp; send</Step><Act>選傳送時間、看預覽、可寄測試</Act>→<Step><b>Create message</b></Step></div>
+          <div className="line"><Step>訊息列表 · <b>+ New message</b></Step>→<Step>1 · Audiences &amp; channels</Step><Act>選收件人、選通道、需要時設定 SMS 號碼與緊急發送</Act>→<Step>2 · Message</Step><Act>選新訊息或模板，填各通道內容</Act>→<Step>3 · Review &amp; send</Step><Act>選傳送時間、看預覽、可寄測試</Act>→<Step><b>Create message</b></Step></div>
           <div className="line"><Act>不需核准、立即傳送</Act>→<Step>回到列表 · <StatusTag s="progress" /></Step><Act>toast「Sending to N audiences」</Act></div>
           <div className="line"><Act>不需核准、排程傳送</Act>→<Step>回到列表 · <StatusTag s="scheduled" /></Step><Act>toast「Scheduled for &lt;時間&gt;」</Act></div>
-          <div className="line"><Act>有外部收件人，需要主管核准</Act>→<Step>「Sent for approval」結果頁</Step>→<Step>列表 · <StatusTag s="pending" /></Step></div>
+          <div className="line"><Act>需要 SMS 或主管核准</Act>→<Step>「Sent for approval」結果頁</Step>→<Step>列表 · <StatusTag s="pending" /></Step></div>
+          <div className="line"><Act>勾選緊急略過 SMS 核准</Act>→<Step>確認對話框「Send without SMS approval?」</Step>→<Act>沒有外部收件人：直接送出；有外部收件人：仍走主管核准</Act></div>
         </div>
         <div className="spec-cards">
-          {([['audiences', '1 · 收件人', '加人、群組、組織、外部聯絡人，批次匯入，查看群組成員'], ['channels', '1 · 通道與核准', '三個通道、SMS 備援、主管核准、觸及人數'], ['message', '2 · 訊息內容', '新訊息或模板，四種內容區塊，存成模板'], ['review', '3 · 確認送出', '傳送時間、確認內容、各通道預覽、寄測試'], ['after', '送出之後', '結果頁、toast、訊息在列表的狀態'], ['rules', '驗證與字數', '每個欄位的必填、上限與錯誤文案']] as [TabKey, string, string][]).map(([k, t, d]) => (
+          {([['audiences', '1 · 收件人', '加人、群組、組織、外部聯絡人，批次匯入，查看群組成員'], ['channels', '1 · 通道與核准', '三個通道、SMS 備援、SMS 與主管核准、緊急發送、觸及人數'], ['message', '2 · 訊息內容', '新訊息或模板，四種內容區塊，存成模板'], ['review', '3 · 確認送出', '傳送時間、確認內容、各通道預覽、寄測試'], ['after', '送出之後', '結果頁、toast、訊息在列表的狀態'], ['rules', '驗證與字數', '每個欄位的必填、上限與錯誤文案']] as [TabKey, string, string][]).map(([k, t, d]) => (
             <button key={k} type="button" className="spec-card" onClick={() => go(k)}><b>{t}</b><span>{d}</span></button>
           ))}
         </div>
@@ -147,7 +148,7 @@ function AudiencesTab() {
           { n: 4, title: 'Can receive 可收到的通道', body: <>每個通道一個小標籤：圖示＋可收到的人數（群組、組織才顯示數字），滑鼠移上顯示「通道：n / 總數」。沒有人可以收到時刪除線、淡色。</> },
           { n: 5, title: '選擇號碼', body: <>開了 SMS 備援、這位員工有公司和個人兩支手機時，名字旁邊出現「Choose number」。</> },
           { n: 6, title: '號碼提示', body: <>黃色 <C>Banner</C>「1 person has 2 phone numbers. Pick one for SMS.」＋「Choose」。全部選好後變藍色「SMS numbers set for N people.」＋「Review」。</> },
-          { title: '7–10 通道、SMS 備援、主管核准、觸及人數', body: '見下一個分頁「1 · 通道與核准」。' },
+          { title: '7–11 通道、SMS 備援、SMS 核准、主管核准、觸及人數', body: '見下一個分頁「1 · 通道與核准」。' },
         ]} />
         <SpecTable head={['項目', '規則']} rows={[
           ['移除', <>每列右側釘選的「×」；超過 6 列時上方有紅字「Remove all」，會先確認 <Copy en="Remove all audiences? · Channels and text stay the same." zh="移除所有收件人？ · 通道和內容不受影響。" /></>],
@@ -170,7 +171,7 @@ function ChannelsTab() {
           [<span className="flex items-center gap-2"><ChIcons list={['push']} />Device Notifications</span>, <Copy en="Push to the app on company phones." zh="推播到公司手機的 App。" />, '有註冊裝置的員工', '關掉時 SMS 備援一起關掉'],
           [<span className="flex items-center gap-2"><ChIcons list={['desktop']} />Desktop OS</span>, <Copy en="Pop-up on company Windows PCs." zh="在公司 Windows 電腦跳出通知。" />, '有安裝桌面程式的員工', '—'],
           [<span className="flex items-center gap-2"><ChIcons list={['email']} />Email</span>, <Copy en="Company mailbox, with formatting and files." zh="寄到公司信箱，可加格式和附件。" />, '所有員工＋外部 Email', '外部 Email 必須開 Email'],
-          [<span className="flex items-center gap-2"><ChIcons list={['sms']} />Device Notifications (SMS)</span>, <Copy en="Send an SMS to anyone the push doesn’t reach." zh="推播沒送到的人，改發 SMS。" />, '推播送不到且有手機的員工＋外部電話', <>只在勾了 Device Notifications 後出現；外部電話必須開</>],
+          [<span className="flex items-center gap-2"><ChIcons list={['sms']} />Device Notifications (SMS)</span>, <Copy en="Send an SMS to anyone the push doesn’t reach." zh="推播沒送到的人，改發 SMS。" />, '推播送不到且有手機的員工＋外部電話', <>只在勾了 Device Notifications 後出現；標籤 <Tag size="sm" color="amber">Needs SMS approval</Tag>；外部電話必須開</>],
         ]} />
         <Notes items={[
           { title: '選中的卡片', body: <>主色外框、淡主色底，圖示變藍。</> },
@@ -186,10 +187,16 @@ function ChannelsTab() {
         ]} />
       </Section>
 
-      <Section eyebrow="Approval" title="核准" lead="目前只有一種核准：寄給外部收件人時，要主管核准。ICSD 核准與緊急發送暫時拿掉（2026/11/05），之後要加回時再補規格。">
+      <Section eyebrow="Approval" title="核准" lead="兩種核准互不取代：含 SMS 要 SMS 核准；有外部收件人要主管核准。兩者都要時先主管、後 SMS 審核人員。">
         <SpecTable head={['情況', '頁首標籤', '通道區', '步驟 3']} rows={[
+          ['開了 SMS 備援', <Tag size="md" color="amber" icon={ShieldCheck}>Needs SMS approval</Tag>, <>SMS 下方的框：「The SMS needs approval before it’s sent」＋緊急勾選框</>, <>Review「SMS approval · Sent after the SMS reviewer approves it」；黃色橫幅「Needs approval from SMS 審核人員」</>],
           ['有外部 Email（且開 Email）或外部電話（且開 SMS）', <Tag size="md" color="amber" icon={ShieldCheck}>Needs supervisor approval</Tag>, <>黃色橫幅「Includes N external audiences. Your supervisor, &lt;姓名&gt;, must approve.」</>, <>黃色橫幅「Needs approval from your supervisor」</>],
-          ['開了 SMS 備援', '—', '不需要核准', '—'],
+          ['勾了緊急', <Tag size="md" color="red" icon={ShieldAlert}>Skipping SMS approval (urgent)</Tag>, '見下方', <>Review「SMS approval · Skipped as urgent. Reason: …」（黃色警示）</>],
+        ]} />
+        <Figure label="緊急發送" sub="勾選「It’s urgent」後" shot="s1-urgent" wideNotes notes={[
+          { n: 1, title: '緊急勾選框', body: <><Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />，說明 <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" />。勾選後框的標題改成「SMS approval will be skipped」。</> },
+          { n: 2, title: '原因（必填）', body: <>2 行 Textarea，最多 200 字，提示字「e.g. Typhoon warning issued at 07:30; staff must know before commuting.」。沒填按 Next 會顯示「Say why this can’t wait for SMS approval.」</> },
+          { n: 3, title: '仍需主管核准', body: <>有外部收件人時，灰色橫幅「Your supervisor still has to approve it, because it goes outside the company.」</> },
         ]} />
       </Section>
     </>
@@ -239,15 +246,16 @@ function ReviewTab() {
   return (
     <>
       <Section eyebrow="Step 3" title="確認送出" lead="選傳送時間，確認收件人和核准，看每個通道收到的樣子，最後按「Create message」。">
-        <Figure label="步驟 3" sub="有外部收件人（需要主管核准）、立即傳送" shot="s3-now" notes={[
+        <Figure label="步驟 3" sub="需要 SMS 核准、立即傳送" shot="s3-now" notes={[
           { n: 1, title: 'Send now', body: <>DS <C>RadioGroup</C> 卡片，預設。說明：不需核准時「Starts right away」，需要核准時「Right after approval」。</> },
           { n: 2, title: 'Scheduled send', body: <>說明「Up to 30 days ahead」。選了之後出現日期時間欄位（見下方）。區塊副標「Taipei time (GMT+8)」。</> },
-          { n: 3, title: 'Audiences', body: <>「N audiences」，有外部時加「, incl. N external」。若有人收不到，下面多一列黃色「N people won’t get this · None of your channels reach them.」</> },
-          { n: 4, title: 'Preview', body: '有外框的區塊，標題「Preview」。用 DS 樣式畫的簡單卡片，不畫擬真裝置。' },
-          { n: 5, title: '預覽切換', body: <>DS <C>SegmentedControl</C> sm，列出選了的通道；只有一個通道時改成文字。</> },
-          { n: 6, title: '核准提醒', body: <>需要核准時黃色橫幅「Needs approval from your supervisor」＋「Nothing is sent until it’s approved.」</> },
-          { n: 7, title: 'Send me a test', body: <>寄一份給自己：手機、電腦、信箱（依選的通道，不含 SMS），toast「Test sent」。內容沒填完時提示「Finish the message first」。</> },
-          { n: 8, title: 'Create message', body: <>不論傳送時間或是否核准，文字都是「Create message / 建立訊息」。圖示依情況：需要核准是盾牌、排程是日曆、立即傳送是紙飛機。</> },
+          { n: 3, title: 'Audiences', body: <>「N audiences」，有外部時加「, incl. N external」。</> },
+          { n: 4, title: 'SMS approval', body: <>只在開了 SMS 時出現：「Sent after the SMS reviewer approves it」，或緊急時黃色「Skipped as urgent. Reason: …」。另外，若有人收不到，會多一列黃色「N people won’t get this · None of your channels reach them.」</> },
+          { n: 5, title: 'Preview', body: '有外框的區塊，標題「Preview」。用 DS 樣式畫的簡單卡片，不畫擬真裝置。' },
+          { n: 6, title: '預覽切換', body: <>DS <C>SegmentedControl</C> sm，列出選了的通道；只有一個通道時改成文字。</> },
+          { n: 7, title: '核准提醒', body: <>需要核准時黃色橫幅「Needs approval from the SMS reviewer / your supervisor / your supervisor and the SMS reviewer」＋「Nothing is sent until it’s approved.」</> },
+          { n: 8, title: 'Send me a test', body: <>寄一份給自己：手機、電腦、信箱（依選的通道，不含 SMS），toast「Test sent」。內容沒填完時提示「Finish the message first」。</> },
+          { n: 9, title: 'Create message', body: <>不論傳送時間或是否核准，文字都是「Create message / 建立訊息」。圖示依情況：需要核准是盾牌、緊急是警示盾牌、排程是日曆、立即傳送是紙飛機。</> },
         ]} />
       </Section>
 
@@ -278,10 +286,10 @@ function ReviewTab() {
 function AfterTab() {
   return (
     <>
-      <Section eyebrow="Result" title="需要核准：結果頁" lead="按 Create message 後，需要主管核准的訊息不會直接回到列表，而是先看到這一頁，讓使用者知道接下來會發生什麼。">
-        <Figure label="Sent for approval" sub="主管核准、立即傳送" shot="result" notes={[
+      <Section eyebrow="Result" title="需要核准：結果頁" lead="按 Create message 後，需要 SMS 或主管核准的訊息不會直接回到列表，而是先看到這一頁，讓使用者知道接下來會發生什麼。">
+        <Figure label="Sent for approval" sub="SMS 核准、排程傳送" shot="result" notes={[
           { title: '圖示與標題', body: <>黃色圓底盾牌、<C>text-h3</C>「Sent for approval / 已送出審核」。</> },
-          { title: '說明', body: <>「Your supervisor will review it. We’ll notify you when it’s approved.」（主管審核後會通知你。）</> },
+          { title: '說明', body: <>只要 SMS 核准：「The SMS reviewer will review it. We’ll notify you when it’s approved.」只要主管：「Your supervisor will review it. …」兩者：「Your supervisor reviews it first, then the SMS reviewer. We’ll notify you at each step.」</> },
           { title: '摘要', body: 'Request ID、Approver、Channels、Submitted、Sends（排程：「<時間>, if it’s approved by then」；立即：「As soon as it’s approved」）、Audiences。' },
           { title: '按鈕', body: <>「New message」（tertiary，再發一則）、「Back to messages」（primary）。</> },
           { title: '在列表', body: <>這則訊息是 <StatusTag s="pending" />。之後的變化見訊息紀錄規格的「狀態」。</> },
@@ -295,6 +303,17 @@ function AfterTab() {
         ]} />
       </Section>
 
+      <Section eyebrow="Urgent" title="緊急發送的確認" lead="略過 SMS 核准不能復原而且會留紀錄，所以按 Create message 後一定先確認。">
+        <div className="spec-row side">
+          <div className="spec-canvas"><Shot name="dlg-urgent" max={480} alt="略過 SMS 核准確認" /></div>
+          <Notes items={[
+            { title: '標題與說明', body: <><Copy en="Send without SMS approval?" zh="要略過 SMS 核准直接送出嗎？" />，說明同步驟 1。</> },
+            { title: '紀錄內容', body: 'Reason（步驟 1 填的原因）、Logged as（建立者姓名・時間）、Notified（SMS 審核人員和主管）。' },
+            { title: '按鈕', body: <>「Go back」、紅色「Skip approval and send」。</> },
+            { title: '送出後', body: <>沒有外部收件人：直接傳送，列表標題前有 <Tag size="sm" color="amber">Urgent</Tag>。有外部收件人：仍走主管核准的結果頁。</> },
+          ]} />
+        </div>
+      </Section>
     </>
   )
 }
@@ -339,6 +358,7 @@ function RulesTab() {
           ['1', '通道', '至少一個', '—', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />],
           ['1', '外部 Email', '需開 Email', '—', <Copy en="N external emails can only get Email. Turn on Email or remove them." zh="N 個外部 Email 只能收 Email。請開啟 Email，或移除它們。" />],
           ['1', '外部電話', '需開 SMS', '—', <Copy en="N external phones can only get SMS. Turn on SMS fallback or remove them." zh="N 支外部電話只能收 SMS。請開啟 SMS 備援，或移除它們。" />],
+          ['1', '緊急原因', '勾緊急時', '200', <Copy en="Say why this can’t wait for SMS approval." zh="請說明為什麼不能等 SMS 核准。" />],
           ['2', 'Device Notifications · Sender', '是', '20', <Copy en="Enter a sender name." zh="請輸入寄件人名稱。" />],
           ['2', 'Device Notifications · Title', '是', '50', <Copy en="Enter a title." zh="請輸入標題。" />],
           ['2', 'Device Notifications · Text', '是', '300', <Copy en="Enter the text." zh="請輸入內文。" />],
@@ -363,9 +383,9 @@ function EdgeTab() {
       <SpecTable head={['情境', '規則']} rows={[
         ['同一人在多個群組或組織', '只算一人、只收一次；500 人上限算去重後的人數。'],
         ['員工的電話或 Email 被當成外部輸入', '會辨識成那位員工，不算外部、不需主管核准。'],
-        ['外部收件人', '外部 Email 只收 Email、外部電話只收 SMS；有任何一個就需要主管核准。'],
+        ['外部收件人', '外部 Email 只收 Email、外部電話只收 SMS；有任何一個就需要主管核准，緊急也不能略過。'],
         ['群組裡有外包人員', '算外部收件人。'],
-        ['關掉 Device Notifications', 'SMS 備援一起關掉。'],
+        ['關掉 Device Notifications', 'SMS 備援一起關掉，SMS 核准與緊急設定也一起消失。'],
         ['只勾 Email', '沒有寄件人名稱；如果已經寫過通知文字，會自動帶進 Email 主旨與內文。'],
         ['員工有兩支手機、開了 SMS', '一定要選一支，否則不能進下一步。'],
         ['員工沒有手機、開了 SMS', '不擋，只提示他收不到 SMS。'],
