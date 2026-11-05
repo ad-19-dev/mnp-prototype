@@ -10,11 +10,12 @@ const errs = []; p.on('pageerror', e => errs.push(e.message));
 const marks = {}, wait = ms => p.waitForTimeout(ms);
 const step = async (name, fn) => { try { await fn() } catch (e) { errs.push(name + ': ' + e.message.split('\n')[0]) } };
 // clip: a locator, a box, or null for the whole window; list: [n, locator, anchor] with anchor tl | tr | r | c
-async function shot(name, target, list = [], pad = 0) {
+async function shot(name, target, list = [], pad = 0, keepToast = false) {
   let box = target === null ? { x: 0, y: 0, ...p.viewportSize() } : target.x !== undefined ? target : await target.first().boundingBox();
   if (pad) box = { x: box.x - pad, y: box.y - pad, width: box.width + pad * 2, height: box.height + pad * 2 };
   // toasts float over whatever is underneath; keep them out of the pictures
-  await p.evaluate(() => document.querySelectorAll('[data-sonner-toaster]').forEach(n => { n.style.display = 'none' }));
+  if (!keepToast) await p.evaluate(() => document.querySelectorAll('[data-sonner-toaster]').forEach(n => { n.style.display = 'none' }));
+  else await p.evaluate(() => document.querySelectorAll('[data-sonner-toaster]').forEach(n => { n.style.display = '' }));
   const out = [];
   for (const [n, loc, at = 'tl'] of list) {
     try {
@@ -45,6 +46,9 @@ const leave = async () => { await btn('Cancel').click(); await wait(300); await 
 
 await p.goto('http://localhost:4176/'); await wait(1500);
 await p.getByText('EN', { exact: true }).click(); await wait(300);
+
+// ---------- entry ----------
+await step('list-entry', async () => { await wait(800); await shot('list-entry', null, [[1, btn('New message'), 'tl']]) });
 
 // ---------- step 1 ----------
 await step('s1-empty', async () => {
@@ -188,5 +192,17 @@ await step('urgent', async () => {
   await shot('dlg-urgent', p.getByRole('dialog'));
   { const mb = await main.boundingBox(); await shot('urgent-head', { x: mb.x, y: Math.max(0, mb.y - 48), width: mb.width, height: 48 }) }
 });
+// ---------- outcomes without approval ----------
+async function quickSend(schedule) {
+  await p.goto('http://localhost:4176/'); await wait(1500); await p.getByText('EN', { exact: true }).click(); await wait(300);
+  await newMsg(); await addAud('Person', 'chen'); await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
+  await btn('Next').click(); await wait(500);
+  await p.locator('#f-sender').fill('Platform Ops'); await p.locator('#f-title').fill('Team lunch moves to 12:30 today'); await p.locator('#f-content').fill('Lunch moves to 12:30 today, same place.');
+  await btn('Next').click(); await wait(600);
+  if (schedule) { await p.getByRole('radio', { name: /Scheduled send/ }).click(); await wait(300) }
+  await btn('Create message').click(); await wait(1300);
+}
+await step('after-send', async () => { await quickSend(false); await shot('after-send', null, [], 0, true) });
+await step('after-sched', async () => { await quickSend(true); await shot('after-sched', null, [], 0, true) });
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
 console.log(errs.join('\n') || 'no errors'); await b.close();

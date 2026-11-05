@@ -15,7 +15,7 @@ export function Pin({ n }: { n: number }) {
 
 // a screenshot from the prototype; `max` caps its width on the page (it shrinks with the column).
 // Click it to see it at full size in an overlay (Esc or the close button to go back).
-export function Shot({ name, max, alt }: { name: string; max?: number; alt: string }) {
+export function Shot({ name, max, alt, pins: showPins = true }: { name: string; max?: number; alt: string; pins?: boolean }) {
   const { imgs, marks } = React.useContext(Src), m = marks[name]
   const src = Object.keys(imgs).find(k => k.endsWith('/' + name + '.jpg'))
   const dlg = React.useRef<HTMLDialogElement>(null)
@@ -25,7 +25,7 @@ export function Shot({ name, max, alt }: { name: string; max?: number; alt: stri
     <>
       <button type="button" className="spec-shot" style={{ maxWidth: max || m.w }} onClick={() => dlg.current?.showModal()} aria-label={'放大查看：' + alt}>
         <img src={imgs[src]} width={m.w} height={m.h} alt={alt} loading="lazy" />
-        {pins}
+        {showPins ? pins : null}
         <span className="spec-zoom" aria-hidden>點一下放大</span>
       </button>
       <dialog ref={dlg} className="spec-lightbox" aria-label={alt} onClick={e => { if (e.target === dlg.current) dlg.current?.close() }}>

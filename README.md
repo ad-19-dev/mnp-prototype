@@ -9,6 +9,7 @@
 | 團隊版（發送空間，主要版本） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息紀錄設計規格（團隊版） | `teams/spec.html`、`teams/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
 | 發送訊息設計規格（團隊版） | `teams/compose-spec.html`、`teams/src/spec/compose/` | https://claude.ai/artifact/5Cp4EoipMcFczPk314XxRK |
+| 發送訊息 UI Flow（團隊版） | `teams/compose-flow.html`、`teams/src/spec/flow/` | https://claude.ai/artifact/C2XATaxJsCWLQQdeihP2x7 |
 | 設計方案比較頁（通道觸及、緊急發送標示、列表篩選、詳情的多通道內容、群組成員） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
 
 密碼不放在這個儲存庫裡，請另外保管。
@@ -54,6 +55,13 @@ node tools/lock.mjs <密碼> publish/mnp-message-log-spec.html teams/spec "MNP �
 ```
 cd teams && npx vite build -c vite.compose-spec.config.ts && cd ..
 node tools/lock.mjs <密碼> publish/mnp-send-flow-spec.html teams/compose-spec "MNP 發送訊息規格"
+```
+
+UI Flow 和發送訊息規格共用同一批截圖：
+
+```
+cd teams && npx vite build -c vite.compose-flow.config.ts && cd ..
+node tools/lock.mjs <密碼> publish/mnp-send-ui-flow.html teams/compose-flow "MNP 發送 UI Flow"
 ```
 
 舊版規格（雙語版）的原始碼還留在 `bilingual/spec.html`、`bilingual/src/spec/`，已不再使用。
