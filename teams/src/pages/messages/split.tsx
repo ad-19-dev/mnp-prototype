@@ -7,7 +7,7 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
-  Pagination, ProgressBar, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
@@ -22,7 +22,7 @@ import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
 import { ListLoading } from './List'
 import './split.css'
-import { AudienceList, ChannelText, Part, failCols, notStarted, reviewer } from './Detail'
+import { AudienceList, ChannelText, Part, failCols, reviewer } from './Detail'
 
 // ---------- records ----------
 // unk: SMS fallback whose count isn't known yet (it depends on whom Device Notifications misses)
@@ -55,7 +55,6 @@ export function recordById(m: SendCtl, rows: Row[], id: string | null): Rec | nu
 }
 // SMS goes only to the people Device Notifications missed (and to external phones), so before the message goes
 // out nobody knows how many it will be
-const smsUnknown = (x: Rec) => !!x.unk
 const failsOf = (x: Rec) => (!x.unk && (x.st === 'sent' || x.st === 'error') ? Math.max(0, x.of - x.ok) : 0)
 export const chName = (k: Channel) => (k === 'sms' ? L('SMS fallback', 'SMS 備援') : CHN[k].name)
 
@@ -124,19 +123,25 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
 }
 
 // the record's count: delivered / audience on this channel only
-function Reach({ m, x, size = 'list' }: { m: SendCtl; x: Rec; size?: 'list' | 'detail' }) {
-  const r = x.r, fails = failsOf(x)
-  const none = x.k === 'sms' && x.st === 'sent' && !x.unk && !x.of
+// Audience: how many people this channel goes to, nothing more (decided with PM 2026-11-05). SMS fallback's
+// number is known only once Device Notifications has gone out.
+function AudienceN({ x }: { x: Rec }) {
+  if (x.unk) return (
+    <span className="flex min-w-0 flex-col items-end text-right">
+      <span className="text-body tabular-nums">–</span>
+      {x.r.status !== 'rejected' && x.r.status !== 'error' ? <span className="text-caption text-fg-secondary">{x.r.status === 'progress' ? L('Not known yet', '還不知道人數') : L('Known once sent', '送出後才知道')}</span> : null}
+    </span>
+  )
+  return <span className="text-body tabular-nums">{fmtN(x.of)}</span>
+}
+
+// Status, with who it failed for right under it: "Sent · 2 failed" reads as one outcome
+function StatusCell({ m, x }: { m: SendCtl; x: Rec }) {
+  const fails = failsOf(x)
   return (
-    <span className={'flex min-w-0 flex-col gap-1' + (size === 'list' ? ' w-full' : '')}>
-      <span className="text-body tabular-nums">
-        <span className="font-medium">{notStarted(r) || x.unk ? '–' : fmtN(x.ok)}</span>
-        <span className="text-fg-secondary"> / {smsUnknown(x) ? '–' : fmtN(x.of)}</span>
-      </span>
-      {smsUnknown(x) && x.r.status !== 'rejected' && x.r.status !== 'error' && size === 'list' ? <span className="text-caption text-fg-secondary">{x.r.status === 'progress' ? L('Not known yet', '還不知道人數') : L('Known once sent', '送出後才知道')}</span> : null}
-      {none && size === 'list' ? <span className="text-caption text-fg-secondary">{L('No one needed it', '沒有人需要')}</span> : null}
-      {x.st === 'progress' && !x.unk ? <ProgressBar aria-label={L('Delivery progress', '傳送進度')} value={Math.round(x.ok / Math.max(1, x.of) * 100)} /> : null}
-      {fails && size === 'list' ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id + '|' + x.k })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
+    <span className="flex min-w-0 flex-col items-start gap-1">
+      <StatusTag s={x.st} />
+      {fails ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !min-w-0 !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: x.r.id + '|' + x.k })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
     </span>
   )
 }
@@ -157,7 +162,7 @@ const col = createColumnHelper<GRow>()
 function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
   if (!s) return list
-  const key = (x: Rec): string | number => s.id === 'sender' ? recSender(x.r, x.k).toLowerCase() : s.id === 'tpl' ? m.tplName(x.r.tpl).toLowerCase() : s.id === 'recv' ? x.of
+  const key = (x: Rec): string | number => s.id === 'sender' ? recSender(x.r, x.k).toLowerCase() : s.id === 'tpl' ? m.tplName(x.r.tpl).toLowerCase() : s.id === 'aud' ? x.of
     : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? x.r.sched || '' : ''
   const out = list.slice().sort((a, b) => { const p = key(a), q = key(b); return p < q ? -1 : p > q ? 1 : 0 })
   return s.desc ? out.reverse() : out
@@ -247,9 +252,9 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
         </span>
       )
     } }),
-    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 180 }, cell: i => { const g = i.row.original; return <StatusTag s={g.hdr ? g.r.status : g.st} /> } }),
-    // this channel's audience only: the number a sender actually reached on it
-    col.display({ id: 'recv', header: L('Reach / Audience', '送達 / 收件人'), enableSorting: true, meta: { width: 160 }, cell: i => i.row.original.hdr ? null : <Reach m={m} x={i.row.original} /> }),
+    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 180 }, cell: i => { const g = i.row.original; return g.hdr ? <StatusTag s={g.r.status} /> : <StatusCell m={m} x={g} /> } }),
+    // this channel's audience only (how many it goes to); failures sit under the status
+    col.display({ id: 'aud', header: L('Audience', '收件人數'), enableSorting: true, meta: { width: 140, align: 'right' }, cell: i => i.row.original.hdr ? null : <AudienceN x={i.row.original} /> }),
     col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     col.accessor(x => x.r.sched, { id: 'sched', header: L('Scheduled', '排程時間'), meta: { width: 130 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),

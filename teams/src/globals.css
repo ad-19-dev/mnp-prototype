@@ -29,5 +29,5 @@
 [aria-label="日期選擇"] button.mr-auto { display: none; }
 
 /* Numbers sit flush right (product decision 2026-11-05), and so does their header. The DS aligns a column's
-   cells with meta.align but not its header label, so the send flow's People header is aligned here. */
-[role="columnheader"][data-column-id="cnt"] > div:first-child { justify-content: flex-end; }
+   cells with meta.align but not its header label, so the send flow's People header (and the per-channel list's Audience header) is aligned here. */
+[role="columnheader"]:is([data-column-id="cnt"], [data-column-id="aud"]) > div:first-child { justify-content: flex-end; }
