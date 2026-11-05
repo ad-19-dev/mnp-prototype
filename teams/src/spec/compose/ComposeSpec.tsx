@@ -47,10 +47,11 @@ export default function ComposeSpec() {
 }
 
 // one tab's content; the UI flow document shows the same tabs after its own
-export function SpecTabBody({ tab, go }: { tab: TabKey; go: (k: TabKey) => void }) {
+// inFlow: inside the UI flow the overview's own flow summary is left out (the board already is the flow)
+export function SpecTabBody({ tab, go, inFlow }: { tab: TabKey; go: (k: TabKey) => void; inFlow?: boolean }) {
   return (
     <>
-      {tab === 'overview' ? <Overview go={go} /> : null}
+      {tab === 'overview' ? <Overview go={go} inFlow={inFlow} /> : null}
       {tab === 'audiences' ? <AudiencesTab /> : null}
       {tab === 'channels' ? <ChannelsTab /> : null}
       {tab === 'message' ? <MessageTab /> : null}
@@ -67,10 +68,10 @@ const Step = ({ children }: { children: React.ReactNode }) => <span className="s
 const Act = ({ children }: { children: React.ReactNode }) => <span className="act">{children}</span>
 
 // ---------- overview ----------
-function Overview({ go }: { go: (k: TabKey) => void }) {
+function Overview({ go, inFlow }: { go: (k: TabKey) => void; inFlow?: boolean }) {
   return (
     <>
-      <Section eyebrow="Flow" title="完整流程" lead="點「+ New message」後是三個步驟，每一步只處理一件事；最後依「要不要核准」和「什麼時候送」走到四種結果之一。">
+      {inFlow ? null : <Section eyebrow="Flow" title="完整流程" lead="點「+ New message」後是三個步驟，每一步只處理一件事；最後依「要不要核准」和「什麼時候送」走到四種結果之一。">
         <div className="spec-flow2">
           <div className="line"><Step>訊息列表 · <b>+ New message</b></Step>→<Step>1 · Audiences &amp; channels</Step><Act>選收件人、選通道、需要時設定 SMS 號碼與緊急發送</Act>→<Step>2 · Message</Step><Act>選新訊息或模板，填各通道內容</Act>→<Step>3 · Review &amp; send</Step><Act>選傳送時間、看預覽、可寄測試</Act>→<Step><b>Create message</b></Step></div>
           <div className="line"><Act>不需核准、立即傳送</Act>→<Step>回到列表 · <StatusTag s="progress" /></Step><Act>toast「Sending to N audiences」</Act></div>
@@ -83,7 +84,7 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
             <button key={k} type="button" className="spec-card" onClick={() => go(k)}><b>{t}</b><span>{d}</span></button>
           ))}
         </div>
-      </Section>
+      </Section>}
 
       <Section eyebrow="Frame" title="頁面框架" lead="三個步驟共用同一個框架：頁首、步驟列、內容、固定在底部的按鈕列。內容最寬 1120px，置中。">
         <Figure label="步驟 1（空白）" sub="個人發送空間 · 1680 × 1000" shot="s1-empty" notes={[

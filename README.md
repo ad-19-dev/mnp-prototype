@@ -9,7 +9,7 @@
 | 團隊版（發送空間，主要版本） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息紀錄設計規格（團隊版） | `teams/spec.html`、`teams/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
 | 發送訊息設計規格（團隊版） | `teams/compose-spec.html`、`teams/src/spec/compose/` | https://claude.ai/artifact/5Cp4EoipMcFczPk314XxRK |
-| 發送訊息 UI Flow 與設計規格（團隊版，UI Flow 加上完整規格的所有分頁） | `teams/compose-flow.html`、`teams/src/spec/flow/` | https://claude.ai/artifact/C2XATaxJsCWLQQdeihP2x7 |
+| 發送訊息 UI Flow 與設計規格（團隊版，每一步下方攤開那一步的完整規格） | `teams/compose-flow.html`、`teams/src/spec/flow/` | https://claude.ai/artifact/C2XATaxJsCWLQQdeihP2x7 |
 | 設計方案比較頁（通道觸及、緊急發送標示、列表篩選、詳情的多通道內容、群組成員） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
 
 密碼不放在這個儲存庫裡，請另外保管。
@@ -57,7 +57,7 @@ cd teams && npx vite build -c vite.compose-spec.config.ts && cd ..
 node tools/lock.mjs <密碼> publish/mnp-send-flow-spec.html teams/compose-spec "MNP 發送訊息規格"
 ```
 
-UI Flow 這份文件第一個分頁是流程圖，後面的分頁直接沿用發送訊息規格的內容（`SpecTabBody`，來自 `teams/src/spec/compose/ComposeSpec.tsx`），截圖也共用；改規格時兩份文件都要重新建置：
+UI Flow 的流程圖（與清單）在每一步下方直接放那一步的完整規格，內容來自發送訊息規格（`SpecTabBody`，`teams/src/spec/compose/ComposeSpec.tsx`），對應關係在 `teams/src/spec/flow/FlowApp.tsx` 的 `SHEETS`；截圖也共用。改規格時兩份文件都要重新建置：
 
 ```
 cd teams && npx vite build -c vite.compose-flow.config.ts && cd ..
