@@ -19,6 +19,8 @@ import { L } from '../lib/i18n'
 
 // Pages render their header into the AppShell header slot through this context
 const HeaderSlot = React.createContext<HTMLElement | null>(null)
+// A space's tabs sit in the page header's second row (DS ChromeHeader tabsSlot); pages without tabs leave it empty
+const TabsSlot = React.createContext<((n: React.ReactNode) => void) | null>(null)
 // Clicking the current nav item asks the page to go back to its list
 type HomeFn = () => void
 const HomeRegistry = React.createContext<React.MutableRefObject<HomeFn | null> | null>(null)
@@ -56,7 +58,7 @@ export function PageHeader({ crumbs, actions }: { crumbs: Crumb[]; actions?: Rea
               <BreadcrumbLink asChild><button type="button" onClick={c.onClick}>{c.label}</button></BreadcrumbLink>
             </BreadcrumbItem>
           ))}
-          <BreadcrumbItem key="current"><BreadcrumbPage>{last.label}</BreadcrumbPage></BreadcrumbItem>
+          <BreadcrumbItem key="current"><BreadcrumbPage className="font-bold">{last.label}</BreadcrumbPage></BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
@@ -82,16 +84,10 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {/* product mark, name, and the collapse button on the right; collapsed, only the button stays (the header
-            is one row high), so the sidebar can always be opened again */}
-        <div className="flex min-w-0 items-center gap-2 group-data-[collapsible=icon]:justify-center">
-          {/* product mark: white megaphone on Orange 6 */}
-          <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-md group-data-[collapsible=icon]:hidden bg-[var(--color-orange-6)] text-white" role="img" aria-label="MNP"><Megaphone className="size-4" aria-hidden /></span>
-          <span className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-body font-medium">MNP</span>
-            <span className="truncate text-caption text-fg-secondary">{L('Notification platform', '通知平台')}</span>
-          </span>
-          <SidebarTrigger className="ml-auto shrink-0 group-data-[collapsible=icon]:ml-0" />
+        {/* the product name, and the collapse button at the far right; collapsed, only the button stays */}
+        <div className="flex w-full min-w-0 items-center gap-2 group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:justify-center">
+          <span className="min-w-0 flex-1 truncate text-body-lg font-bold group-data-[collapsible=icon]:hidden">MNP</span>
+          <SidebarTrigger className="shrink-0" />
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -134,21 +130,21 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
 // Top of every space: its name and description, then tabs for its messages, audience groups and templates.
 // DS: the title repeats the breadcrumb's last item (text-h3 under an md breadcrumb), bold.
 export function SpaceIntro() {
-  const { space, page } = useApp(), team = teamById(space)
+  const { space, page, lang } = useApp(), team = teamById(space), setTabs = React.useContext(TabsSlot)
   const tabs: [Page, string][] = [['send', L('Send messages', '發送訊息')], ['groups', L('Audience groups', '收件群組')], ['templates', L('Templates', '模板')]]
-  return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)]">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-h3 font-bold text-foreground">{spaceName(space)}</h1>
-        <p className="text-body text-fg-secondary">{team ? team.desc : L('Private space for your personal templates, audience groups, and sending history created only within this space.', '你的私人空間，存放只在這裡建立的個人模板、收件群組和發送紀錄。')}</p>
-      </div>
+  // the tabs live in the page header, under the breadcrumb and the New message button
+  React.useEffect(() => {
+    setTabs?.(
       <Tabs value={page} onValueChange={v => go(v as Page)}>
         <TabsList aria-label={spaceName(space)}>
           {tabs.map(([k, label]) => <TabsTrigger key={k} value={k}>{label}</TabsTrigger>)}
         </TabsList>
-      </Tabs>
-    </div>
-  )
+      </Tabs>,
+    )
+  }, [setTabs, page, space, lang])
+  React.useEffect(() => () => setTabs?.(null), [setTabs])
+  // the space's name is already in the header, so the body only says what the space is for
+  return <p className="text-body text-fg-secondary">{team ? team.desc : L('Private space for your personal templates, audience groups, and sending history created only within this space.', '你的私人空間，存放只在這裡建立的個人模板、收件群組和發送紀錄。')}</p>
 }
 
 // Team settings sits right of the page's primary action, in a team's space only
@@ -166,6 +162,7 @@ export function SpaceSettings() {
 export function Shell({ children }: { children: React.ReactNode }) {
   const { space } = useApp()
   const [slot, setSlot] = React.useState<HTMLElement | null>(null)
+  const [tabs, setTabs] = React.useState<React.ReactNode>(null)
   const [aside, setAside] = React.useState<AsideCfg | null>(null), [asideEl, setAsideEl] = React.useState<HTMLElement | null>(null)
   const asideCtx = React.useMemo(() => ({ el: asideEl, set: setAside }), [asideEl])
   const home = React.useRef<HomeFn | null>(null)
@@ -178,18 +175,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <SidebarProvider activeId={'sp:' + space} onActiveChange={() => {}}>
       <HomeRegistry.Provider value={home}>
         <HeaderSlot.Provider value={slot}>
+        <TabsSlot.Provider value={setTabs}>
         <AsideSlot.Provider value={asideCtx}>
           <AppShell
             layout="primary-sidebar"
             sidebar={<MnpSidebar onSpace={onSpace} />}
             // no global top bar; the sidebar toggle lives in the sidebar header (see MnpSidebar)
-            header={<ChromeHeader className="bg-surface"><div ref={setSlot} className="contents" /></ChromeHeader>}
+            header={<ChromeHeader className="bg-surface" tabsSlot={tabs || undefined}><div ref={setSlot} className="contents" /></ChromeHeader>}
             asideOpen={!!aside} onAsideOpenChange={o => { if (!o) aside?.onClose() }}
             aside={aside ? <AppShellAside title={aside.title} width={{ md: 400, xl: 480 }}><div ref={setAsideEl} /></AppShellAside> : undefined}
           >
             {children}
           </AppShell>
         </AsideSlot.Provider>
+        </TabsSlot.Provider>
         </HeaderSlot.Provider>
       </HomeRegistry.Provider>
     </SidebarProvider>

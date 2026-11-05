@@ -44,7 +44,7 @@ await step('page', async () => {
   await shot('page', null, [
     [1, p.getByRole('button', { name: 'Platform Ops', exact: true }).first(), 'r'],
     [2, p.getByRole('button', { name: 'New message' }), 'tl'],
-    [3, main.locator('h1, h2').first(), 'tl'],
+    [3, main.locator('p').first(), 'tl'],
     [4, p.getByRole('tab', { name: 'Send messages' }), 'tl'],
     [5, p.getByPlaceholder(/Search title/), 'tl'],
     [6, main.getByRole('button', { name: /^Status/ }), 'tl'],

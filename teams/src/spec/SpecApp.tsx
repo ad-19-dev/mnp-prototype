@@ -75,10 +75,10 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
 
       <Section eyebrow="Anatomy" title="頁面結構" lead="以共享發送空間 Platform Ops 為例（1680 × 940）。紅色數字對應右側說明。">
         <Figure label="訊息列表" sub="共享發送空間 · 預設狀態" shot="page" notes={[
-          { n: 1, title: '發送空間', body: <>側欄分「個人發送空間」和「共享發送空間」。個人空間只有自己建立的訊息；共享空間是團隊成員建立的全部訊息。切換空間時，搜尋、篩選、分頁都重設，列表重新載入。側欄頂部是 MNP 圖示（Orange 6 底、白色大聲公）和名稱，右邊是收合按鈕；收合後只留收合按鈕和各空間的圖示。沒有全站頂部列，語言切換和帳號在側欄底部。</> },
-          { n: 2, title: '新訊息', body: <>頁首右側的主要按鈕 <C>Button primary</C>，開啟發送流程。共享空間在右邊多一顆團隊設定齒輪。</> },
-          { n: 3, title: '空間標題與說明', body: <>標題 <C>text-h4 bold</C>；說明一行，次要文字色。</> },
-          { n: 4, title: '分頁', body: <>Send messages、Audience groups、Templates 三個平行的檢視，用 DS <C>Tabs</C>。本規格只談 Send messages。</> },
+          { n: 1, title: '發送空間', body: <>側欄分「個人發送空間」和「共享發送空間」。個人空間只有自己建立的訊息；共享空間是團隊成員建立的全部訊息。切換空間時，搜尋、篩選、分頁都重設，列表重新載入。側欄頂部是粗體「MNP」（<C>text-body-lg</C> bold），最右側是收合按鈕；收合後只留收合按鈕和各空間的圖示。沒有全站頂部列，帳號和語言切換在側欄底部。</> },
+          { n: 2, title: '頁首與新訊息', body: <>頁首第一列：左邊是麵包屑，目前頁面粗體（例如「Platform Ops」）；右邊是主要按鈕 <C>Button primary</C>「New message」，共享空間在右邊多一顆團隊設定齒輪。</> },
+          { n: 3, title: '空間說明', body: <>空間名稱已經在頁首，內容區只留一行說明，次要文字色。</> },
+          { n: 4, title: '分頁', body: <>Send messages、Audience groups、Templates 三個平行的檢視，放在頁首第二列（DS <C>ChromeHeader</C> 的 <C>tabsSlot</C>，size sm），分頁底線和頁首分隔線是同一條。本規格只談 Send messages。</> },
           { n: 5, title: '搜尋', body: <>工具列左側。找標題、內容、寄件人、模板和建立者。詳見「搜尋與篩選」。</> },
           { n: 6, title: '篩選按鈕', body: <>工具列右側：Status 和 Channels 兩顆。詳見「搜尋與篩選」。</> },
           { n: 7, title: '表格', body: <>DS <C>DataTable</C>，有外框。Sender 欄釘在左側、操作欄釘在右側，中間可以左右捲動。詳見「訊息列表」。</> },
@@ -104,7 +104,7 @@ function Overview({ go }: { go: (k: TabKey) => void }) {
           ['搜尋框與篩選按鈕之間', <>至少 <C>--layout-space-loose</C>；篩選按鈕彼此 <C>gap-2</C></>],
           ['詳情面板：大區塊之間', <><C>calc(var(--layout-space-loose) * 2)</C></>],
           ['詳情面板：區塊標題到內容', <><C>--layout-space-tight</C></>],
-          ['空間標題', <><C>text-h4</C> bold</>],
+          ['頁首目前頁面（麵包屑）', <>bold</>],
           ['詳情區塊標題（Delivery、By channel、Audiences）', <><C>text-h6</C> bold</>],
           ['表格內文、詳情內文', <><C>text-body</C>；第二行說明 <C>text-caption</C> 次要色</>],
         ]} />
