@@ -1,10 +1,13 @@
 /// <reference types="vite/client" />
 // Spec page building blocks: redline pins, screenshots with pins, numbered notes, plain tables
 import * as React from 'react'
-import marksJson from './shots/marks.json'
 
-const IMGS = import.meta.glob('./shots/*.jpg', { eager: true, import: 'default' }) as Record<string, string>
-const MARKS = marksJson as Record<string, { w: number; h: number; marks: { n: number; x: number; y: number }[] }>
+// each spec page hands in its own screenshots (so a page bundles only its own images) through ShotSource
+export type Marks = Record<string, { w: number; h: number; marks: { n: number; x: number; y: number }[] }>
+const Src = React.createContext<{ imgs: Record<string, string>; marks: Marks }>({ imgs: {}, marks: {} })
+export function ShotSource({ imgs, marks, children }: { imgs: Record<string, string>; marks: Marks; children: React.ReactNode }) {
+  return <Src.Provider value={{ imgs, marks }}>{children}</Src.Provider>
+}
 
 export function Pin({ n }: { n: number }) {
   return <span className="spec-pin" aria-label={'標註 ' + n}>{n}</span>
@@ -12,10 +15,12 @@ export function Pin({ n }: { n: number }) {
 
 // a screenshot from the prototype; `max` caps its width on the page (it shrinks with the column)
 export function Shot({ name, max, alt }: { name: string; max?: number; alt: string }) {
-  const m = MARKS[name]
+  const { imgs, marks } = React.useContext(Src), m = marks[name]
+  const src = Object.keys(imgs).find(k => k.endsWith('/' + name + '.jpg'))
+  if (!m || !src) return <div className="spec-callout">缺少截圖：{name}</div>
   return (
     <div className="spec-shot" style={{ maxWidth: max || m.w }}>
-      <img src={IMGS['./shots/' + name + '.jpg']} width={m.w} height={m.h} alt={alt} loading="lazy" />
+      <img src={imgs[src]} width={m.w} height={m.h} alt={alt} loading="lazy" />
       {m.marks.map(x => <span key={x.n} className="spec-pin" style={{ left: x.x + '%', top: x.y + '%' }} aria-hidden>{x.n}</span>)}
     </div>
   )
