@@ -23,7 +23,7 @@ export function listText(r: Row) {
 }
 
 // sort the whole list (not just the page in view)
-function sortRows(rows: Row[], sorting: SortingState, m: SendCtl) {
+export function sortRows(rows: Row[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
   if (!s) return rows
   const key = (r: Row): string | number => s.id === 'sender' ? listSender(r).toLowerCase() : s.id === 'tpl' ? m.tplName(r.tpl).toLowerCase() : s.id === 'status' ? STATUS_ORDER.indexOf(r.status)
@@ -33,7 +33,7 @@ function sortRows(rows: Row[], sorting: SortingState, m: SendCtl) {
 }
 
 // while a space loads: the DS loading layout, a 48px spinner with a line of text, centred where the table will be
-function ListLoading() {
+export function ListLoading() {
   return (
     <div className="flex min-h-[360px] items-center justify-center py-12" aria-busy="true" aria-live="polite">
       <Empty icon={<CircularProgress size={48} aria-label={L('Loading', '載入中')} />} description={L('Loading messages…', '正在載入訊息…')} />

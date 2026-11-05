@@ -41,19 +41,19 @@ function statText(x: { k: string; ok: number; of: number }) {
   if (x.k === 'sms') return x.of ? L(fmtN(x.ok) + ' of ' + fmtN(x.of) + ' delivered', fmtN(x.ok) + ' / ' + fmtN(x.of) + ' 已送達') : L('Not needed', '不需要')
   return L(fmtN(x.ok) + ' of ' + fmtN(x.of) + ' delivered', fmtN(x.ok) + ' / ' + fmtN(x.of) + ' 已送達')
 }
-function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-h6 font-bold text-foreground">{children}</h3> }
+export function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-h6 font-bold text-foreground">{children}</h3> }
 // who reviews the message, as people say it
 // with ICSD switched off every approval is the supervisor's
-const reviewer = (r: Row) => (!ICSD || r.review?.by === 'mgr' ? L('your supervisor', '主管') : r.review?.by === 'both' ? L('your supervisor and the SMS reviewer', '主管和 SMS 審核人員') : L('the SMS reviewer', 'SMS 審核人員'))
-const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' || r.status === 'rejected' || r.status === 'scheduled'
+export const reviewer = (r: Row) => (!ICSD || r.review?.by === 'mgr' ? L('your supervisor', '主管') : r.review?.by === 'both' ? L('your supervisor and the SMS reviewer', '主管和 SMS 審核人員') : L('the SMS reviewer', 'SMS 審核人員'))
+export const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' || r.status === 'rejected' || r.status === 'scheduled'
 
 // a titled part of the details: heading to content is tight; parts sit twice the loose gap apart (see DetailBody)
-function Part({ title, children }: { title: string; children: React.ReactNode }) {
+export function Part({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="flex flex-col gap-[var(--layout-space-tight)]"><H3>{title}</H3>{children}</section>
 }
 
 // what one channel sent, as text (the previews belong to the send flow)
-function ChannelText({ r, k }: { r: Row; k: Channel }) {
+export function ChannelText({ r, k }: { r: Row; k: Channel }) {
   const box = 'whitespace-pre-wrap rounded-md border border-divider p-3 text-body'
   if (k === 'sms') return <div className={box}>{r.smsText}</div>
   if (k === 'email') {
@@ -116,7 +116,7 @@ function ChannelRow({ m, r, k, ok, of, sms, last }: { m: SendCtl; r: Row; k: Cha
 // every audience is a row, in a fixed order: orgs, groups, people, then external contacts. Orgs and groups
 // show their size as a link that opens a searchable member list (as in step 1 of the send flow).
 const AUD_ORDER = { org: 0, group: 1, person: 2, ext: 3 } as Record<string, number>
-function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
+export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
   const [mem, setMem] = React.useState<MemberSet | null>(null)
   const list = tags.slice().sort((a, b) => AUD_ORDER[a.type] - AUD_ORDER[b.type])
   const icon = (I: typeof Globe) => <span className="inline-flex size-6 shrink-0 items-center justify-center"><I className="size-4 text-fg-secondary" aria-hidden /></span>
@@ -156,7 +156,7 @@ function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
 
 // the actual send time: the schedule, or when it went out (right after approval, or when it was created);
 // a message that still waits for approval with no schedule has no time yet
-function sendTime(r: Row) {
+export function sendTime(r: Row) {
   if (r.sched) return r.sched
   if (r.status === 'pending' || r.status === 'rejected') return '—'
   return r.review && r.review.at ? r.review.at : r.created
@@ -241,7 +241,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 }
 
 const fcol = createColumnHelper<Fail>()
-const failCols = (byCh?: boolean) => [
+export const failCols = (byCh?: boolean) => [
   fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 260 }, cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
   fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),
   fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 300 }, cell: i => { const f = i.row.original; return (

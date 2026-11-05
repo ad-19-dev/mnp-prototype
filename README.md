@@ -9,6 +9,7 @@
 | 團隊版（發送空間，主要版本） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息紀錄設計規格（團隊版） | `teams/spec.html`、`teams/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
 | 發送訊息設計規格（團隊版） | `teams/compose-spec.html`、`teams/src/spec/compose/` | https://claude.ai/artifact/5Cp4EoipMcFczPk314XxRK |
+| 團隊版・一個通道一筆紀錄（PM 提案的另一個版本，只有訊息列表與詳情不同） | `teams/`（`--mode split`，`teams/src/pages/messages/split.tsx`） | https://claude.ai/artifact/Kq6FnvbagCvdtmoPXiRD91 |
 | 發送訊息 UI Flow 與設計規格（團隊版，每一步下方攤開那一步的完整規格） | `teams/compose-flow.html`、`teams/src/spec/flow/` | https://claude.ai/artifact/C2XATaxJsCWLQQdeihP2x7 |
 | 設計方案比較頁（通道觸及、緊急發送標示、列表篩選、詳情的多通道內容、群組成員） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
 
@@ -80,3 +81,10 @@ node tools/lock.mjs <密碼> publish/mnp-channel-reach-options.html bilingual/op
 
 開新的 Claude Code 工作階段時選這個儲存庫，告訴 Claude 要改什麼，
 例如「把雙語版群組頁的 Description 改成選填」，改完請它重新加密並更新上面的網址。
+
+### 一個通道一筆紀錄的版本
+同一份 `teams/` 程式，用 `--mode split` 建置（`SPLIT` 在 `teams/src/lib/data.ts`）。發送流程不變；訊息列表每個通道各一列，詳情是那一個通道的內容、送達人數與失敗名單，並連到同一則訊息的其他通道。編輯、刪除、重新排程、立即傳送仍然作用在整則訊息。
+```
+cd teams && npx vite build --mode split --outDir split/dist --emptyOutDir && cd ..
+node tools/lock.mjs <密碼> publish/mnp-teams-per-channel.html teams/split "MNP Teams · 單一通道紀錄"
+```

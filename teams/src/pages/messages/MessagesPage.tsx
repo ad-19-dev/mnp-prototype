@@ -12,6 +12,8 @@ import { initSend, makeSendCtl } from './ctl'
 import { L } from '../../lib/i18n'
 import { SendList } from './List'
 import { DetailSheet, NotSentDialog, RescheduleDialog } from './Detail'
+import { SplitDetailSheet, SplitFailDialog, SplitList } from './split'
+import { SPLIT } from '../../lib/data'
 import { ComposeView } from './Compose'
 import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog, UnreachDialog } from './Modals'
 
@@ -41,11 +43,11 @@ export function MessagesPage() {
             <Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>
             <SpaceSettings />
           </>} />
-          <SendList m={m} intro={<SpaceIntro />} />
+          {SPLIT ? <SplitList m={m} intro={<SpaceIntro />} /> : <SendList m={m} intro={<SpaceIntro />} />}
         </>
       )}
-      <DetailSheet m={m} />
-      <NotSentDialog m={m} />
+      {SPLIT ? <SplitDetailSheet m={m} /> : <DetailSheet m={m} />}
+      {SPLIT ? <SplitFailDialog m={m} /> : <NotSentDialog m={m} />}
       <RescheduleDialog m={m} />
       <ImportDialog m={m} />
       <NumbersDialog m={m} />

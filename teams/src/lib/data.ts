@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // Sample data and domain rules for MNP, carried over from the v2 prototype.
 // Everything here is plain data and pure functions; React state lives in store.ts.
 
@@ -7,6 +8,8 @@ export const CAP = 500
 // SMS approval (an SMS reviewer approves every SMS; urgent messages may skip it, on record). On. The UI never names
 // the reviewing team; it says "SMS approval" and "the SMS reviewer".
 export const ICSD = true
+// "one record per channel" version (build with `--mode split`): the list shows a row per channel of a message
+export const SPLIT = import.meta.env.MODE === 'split'
 export const ME = 'p01'
 export const SUPERVISOR = 'Jimmy Chen 陳志明'
 
