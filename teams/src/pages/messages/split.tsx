@@ -8,7 +8,6 @@ import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
   Pagination, ProgressBar, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-  DescriptionItem, DescriptionList,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { CalendarClock, ChevronRight, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
@@ -23,7 +22,7 @@ import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
 import { ListLoading } from './List'
 import './split.css'
-import { AudienceList, ChannelText, Part, failCols, notStarted, reviewer, sendTime } from './Detail'
+import { AudienceList, ChannelText, Part, failCols, notStarted, reviewer } from './Detail'
 
 // ---------- records ----------
 // unk: SMS fallback whose count isn't known yet (it depends on whom Device Notifications misses)
@@ -100,7 +99,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
         <Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + recText(r, x.k).title} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={232}>
-        <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
+        <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View message', '查看訊息內容')}</DropdownMenuItem>
         {lite ? null : <>
         {r.status === 'expired' ? <>
           <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, r)}>{L('Send now', '立即傳送') + all}</DropdownMenuItem>
@@ -310,92 +309,68 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
 // the audiences that apply to this channel: external phones only get SMS, external emails only Email
 const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
 
+// What the panel adds to the row it opens from: the channel's full content (title included, so no heading repeats it), whom it went to, the approval story
+// and the message's other channels. What the row already shows (sender, template, created, scheduled, creator,
+// delivered / audience, failed) isn't repeated.
 export function SplitDetailSheet({ m }: { m: SendCtl }) {
   const app = useApp(), x = recordById(m, app.rows, m.s.det)
   if (!x) return null
-  return <ShellAside title={L('Message details', '訊息詳情')} onClose={() => m.set({ det: null })}><SplitDetail m={m} x={x} /></ShellAside>
+  return <ShellAside title={L('Message content', '訊息內容')} onClose={() => m.set({ det: null })}><SplitDetail m={m} x={x} /></ShellAside>
 }
 
 function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
-  const app = useApp(), r = x.r, k = x.k, cr = PMAP[r.creator] || PEOPLE[0], t = recText(r, k), fails = failsOf(x)
+  const app = useApp(), r = x.r, k = x.k
   const sibs = recordsOf(m, [r]).filter(y => y.k !== k), I = CHN[k].icon
-  const tags = tagsFor(r, k)
+  const tags = tagsFor(r, k), went = r.status === 'sent' || r.status === 'progress' || r.status === 'error'
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex flex-1 flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2"><StatusTag s={x.st} /><span className="font-mono text-caption text-fg-secondary">{reqIdFor(r)}</span></div>
-          <span className="flex items-center gap-2 text-body text-fg-secondary"><I className="size-4" aria-hidden />{chName(k)}</span>
-          <h3 className="text-body-lg font-medium text-foreground">{k === 'sms' ? r.title : t.title}</h3>
-        </div>
-        <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)] pb-[var(--layout-space-loose)]">
-          <div className="flex flex-col gap-[var(--layout-space-loose)]">
-            {r.status === 'pending' ? <Banner tone="info" title={L('Waiting for approval from ' + reviewer(r), '等待' + reviewer(r) + '核准')}>{(r.sched ? L('Sends at ' + r.sched + ' if it’s approved by then.', '核准後會在 ' + r.sched + ' 送出。') : L('Sends as soon as it’s approved.', '核准後立即送出。')) + (sibs.length ? L(' Every channel of this message waits for the approval.', '這則訊息的所有通道都會等核准後一起送出。') : '')}</Banner> : null}
-            {r.status === 'expired' ? <Banner tone="warning" title={L('Approved after its scheduled time', '核准時已過排程時間')}>{L(reviewer(r) + ' approved it on ' + (r.review?.at || '') + ', after the scheduled ' + r.sched + ', so it wasn’t sent. Send it now, pick a new time, or delete it.', reviewer(r) + '於 ' + (r.review?.at || '') + ' 核准，已超過原訂的 ' + r.sched + '，所以沒有送出。可以立即傳送、重新排程或刪除。') + allNote(r)}</Banner> : null}
-            {r.status === 'rejected' ? <Banner tone="error" title={L('Rejected by ' + reviewer(r), reviewer(r) + '駁回')}>{L((r.review?.at ? r.review.at + '. ' : '') + 'Reason: ' + (r.review?.reason || ''), (r.review?.at ? r.review.at + '。' : '') + '原因：' + tx(r.review?.reason || ''))}</Banner> : null}
-            {ICSD && r.bypass ? (
-              <Banner tone="warning" title={L('Sent without SMS approval (urgent)', '未經 SMS 核准送出（緊急）')}>
-                {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
-              </Banner>
-            ) : null}
-            <DescriptionList orientation="horizontal" divided>
-              <DescriptionItem label={L('Channel', '通道')}>{chName(k)}</DescriptionItem>
-              {recSender(r, k) ? <DescriptionItem label={L('Sender', '寄件人')}>{recSender(r, k)}</DescriptionItem> : null}
-              <DescriptionItem label={L('Template', '模板')}>{m.tplName(r.tpl) || '—'}</DescriptionItem>
-              {(ICSD && r.sms) || r.review ? <DescriptionItem label={L('Approval', '核准')}>{ICSD && r.bypass ? L('SMS approval skipped (urgent)', '已略過 SMS 核准（緊急）') : r.status === 'pending' ? L('Waiting for ', '等待') + reviewer(r) : r.status === 'rejected' ? L('Rejected by ', '') + reviewer(r) + L('', '駁回') : L('Approved', '已核准')}</DescriptionItem> : null}
-              <DescriptionItem label={L('Created by', '建立者')}>{cr.en + ' ' + cr.zh}</DescriptionItem>
-              <DescriptionItem label={L('Created', '建立時間')}>{r.created}</DescriptionItem>
-              <DescriptionItem label={L('Send time', '傳送時間')}>{sendTime(r)}</DescriptionItem>
-            </DescriptionList>
+      <div className="flex flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
+        <div className="flex flex-col gap-[var(--layout-space-loose)]">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2"><StatusTag s={x.st} /><span className="flex items-center gap-1.5 text-body text-fg-secondary"><I className="size-4" aria-hidden />{chName(k)}</span></div>
+            {/* the approval, once it's done: the only "when" the row can't show */}
+            {went && r.review && r.review.at ? <span className="text-caption text-fg-secondary">{r.sched ? L('Approved by ' + reviewer(r) + ' on ' + r.review.at + ', sent at its scheduled time', reviewer(r) + '於 ' + r.review.at + ' 核准，依排程時間送出') : L('Approved by ' + reviewer(r) + ' on ' + r.review.at + ', sent right after', reviewer(r) + '於 ' + r.review.at + ' 核准後立即送出')}</span> : null}
           </div>
-
-          <Part title={L('Reach / Audience', '送達 / 收件人')}>
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Reach m={m} x={x} size="detail" />
-                {fails ? <Button variant="link" size="sm" startIcon={CircleAlert} className="!text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: r.id + '|' + k })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
-              </div>
-              {k === 'sms' ? <span className="text-caption text-fg-secondary">{smsUnknown(x)
-                ? (r.status === 'progress' ? L('SMS goes only to the people Device Notifications can’t reach, and to external phones. The number is known once Device Notifications finishes.', 'SMS 只寄給 Device Notifications 送不到的人，以及外部電話。等 Device Notifications 送完才知道人數。') : L('SMS goes only to the people Device Notifications can’t reach, and to external phones. The number is known once the message goes out.', 'SMS 只寄給 Device Notifications 送不到的人，以及外部電話。送出後才知道人數。'))
-                : !x.of ? L('Device Notifications reached everyone, so no SMS was needed.', 'Device Notifications 都送到了，所以不需要寄 SMS。')
-                : L('Sent to the people Device Notifications couldn’t reach, and to external phones.', '寄給 Device Notifications 送不到的人，以及外部電話。')}</span> : null}
-              {k === 'push' && r.sms && !notStarted(r) && fails ? <span className="text-caption text-fg-secondary">{L('The people it missed got SMS fallback; see the SMS fallback record.', '沒送到的人會改收 SMS 備援，請看 SMS 備援那筆紀錄。')}</span> : null}
-            </div>
-          </Part>
-
-          <Part title={L('Content', '內容')}>
-            <ChannelText r={r} k={k} />
-          </Part>
-
-          <Part title={L('Audiences', '收件人')}>
-            {k === 'sms' ? <span className="text-caption text-fg-secondary">{L('The same audiences as Device Notifications; SMS reaches only the people it missed.', '和 Device Notifications 相同的收件人；SMS 只寄給其中沒送到的人。')}</span> : null}
-            {tags.length ? <AudienceList tags={tags} groups={app.groups} /> : <span className="text-body text-fg-secondary">—</span>}
-          </Part>
-
-          {/* the other records the same message made: one click away, each with its own status and count */}
-          {sibs.length ? (
-            <Part title={L('Sent with this message', '同一則訊息的其他通道')}>
-              <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
-                {sibs.map(y => {
-                  const J = CHN[y.k].icon, f = failsOf(y)
-                  return (
-                    <button key={y.id} type="button" onClick={() => m.set({ det: y.id })} className="flex items-center gap-3 px-3 py-3 text-left hover:bg-[var(--surface-hover,rgba(0,0,0,0.03))] focus-visible:outline-2 focus-visible:outline-ring">
-                      <J className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="flex min-w-0 items-center gap-2"><span className="truncate text-body font-medium">{chName(y.k)}</span><StatusTag s={y.st} /></span>
-                        <span className="text-caption tabular-nums text-fg-secondary">
-                          {notStarted(r) ? L('Not sent yet', '尚未傳送') : y.unk ? L('Not known yet', '還不知道人數') : L(fmtN(y.ok) + ' / ' + fmtN(y.of) + ' delivered', fmtN(y.ok) + ' / ' + fmtN(y.of) + ' 已送達')}
-                          {f ? <span className="text-error-text">{L(' · ' + fmtN(f) + ' failed', '・' + fmtN(f) + ' 人失敗')}</span> : null}
-                        </span>
-                      </span>
-                      <ChevronRight className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-                    </button>
-                  )
-                })}
-              </div>
-            </Part>
+          {r.status === 'pending' ? <Banner tone="info" title={L('Waiting for approval from ' + reviewer(r), '等待' + reviewer(r) + '核准')}>{(r.sched ? L('Sends at ' + r.sched + ' if it’s approved by then.', '核准後會在 ' + r.sched + ' 送出。') : L('Sends as soon as it’s approved.', '核准後立即送出。')) + (sibs.length ? L(' Every channel of this message waits for the approval.', '這則訊息的所有通道都會等核准後一起送出。') : '')}</Banner> : null}
+          {r.status === 'expired' ? <Banner tone="warning" title={L('Approved after its scheduled time', '核准時已過排程時間')}>{L(reviewer(r) + ' approved it on ' + (r.review?.at || '') + ', after the scheduled ' + r.sched + ', so it wasn’t sent. Send it now, pick a new time, or delete it.', reviewer(r) + '於 ' + (r.review?.at || '') + ' 核准，已超過原訂的 ' + r.sched + '，所以沒有送出。可以立即傳送、重新排程或刪除。') + allNote(r)}</Banner> : null}
+          {r.status === 'rejected' ? <Banner tone="error" title={L('Rejected by ' + reviewer(r), reviewer(r) + '駁回')}>{L((r.review?.at ? r.review.at + '. ' : '') + 'Reason: ' + (r.review?.reason || ''), (r.review?.at ? r.review.at + '。' : '') + '原因：' + tx(r.review?.reason || ''))}</Banner> : null}
+          {ICSD && r.bypass ? (
+            <Banner tone="warning" title={L('Sent without SMS approval (urgent)', '未經 SMS 核准送出（緊急）')}>
+              {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
+            </Banner>
           ) : null}
         </div>
+
+        <Part title={L('Content', '內容')}>
+          <ChannelText r={r} k={k} />
+        </Part>
+
+        <Part title={L('Audiences', '收件人')}>
+          {k === 'sms' ? <span className="text-caption text-fg-secondary">{L('The same audiences as Device Notifications; SMS goes only to the people it can’t reach, and to external phones.', '和 Device Notifications 相同的收件人；SMS 只寄給其中送不到的人，以及外部電話。')}</span> : null}
+          {tags.length ? <AudienceList tags={tags} groups={app.groups} /> : <span className="text-body text-fg-secondary">—</span>}
+        </Part>
+
+        {/* the message's other channels, one click away; their numbers are on their own rows */}
+        {sibs.length ? (
+          <Part title={L('Also sent on', '同時發送的通道')}>
+            <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+              {sibs.map(y => {
+                const J = CHN[y.k].icon
+                return (
+                  <button key={y.id} type="button" onClick={() => m.set({ det: y.id })} aria-label={L('View ' + chName(y.k), '查看' + chName(y.k))} className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-neutral-hover focus-visible:outline-2 focus-visible:outline-ring">
+                    <J className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate text-body font-medium">{chName(y.k)}</span>
+                    <StatusTag s={y.st} />
+                    <ChevronRight className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+                  </button>
+                )
+              })}
+            </div>
+          </Part>
+        ) : null}
+
+        {/* for support: the ID people quote when they ask about a message */}
+        <span className="mt-auto text-caption text-fg-secondary">{L('Request ID ', '申請編號 ')}<span className="font-mono">{reqIdFor(r)}</span></span>
       </div>
       {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <div className="sticky bottom-0 flex flex-col gap-2 border-t border-divider bg-surface px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
         {sibs.length ? <span className="text-caption text-fg-secondary">{L('These actions change the whole message, on all ' + (sibs.length + 1) + ' channels.', '這些操作會改到整則訊息，' + (sibs.length + 1) + ' 個通道都會一起變更。')}</span> : null}
