@@ -64,3 +64,63 @@
 .flow-outcomes { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); align-items: start; }
 .flow-anytime { display: grid; gap: 16px; align-items: start; }
 @media (min-width: 900px) { .flow-anytime { grid-template-columns: minmax(0, 1fr) minmax(0, 420px); } }
+
+/* ---------- canvas view: one board you pan and zoom ----------
+   Columns left to right (entry, three steps, outcomes); each column is its step's main screen with its branch
+   group underneath. Wires and their labels are drawn in board units, so zooming keeps them in place. */
+.flow-page.is-canvas { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.flow-page.is-canvas .spec-top { position: static; }
+.flow-board-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.flow-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--spec-surface); border-bottom: 1px solid var(--spec-line); font: 400 13px/20px var(--spec-font); }
+.flow-tools button { border: 1px solid var(--spec-line); background: var(--spec-surface); color: var(--spec-ink); border-radius: 6px; padding: 3px 10px; font: inherit; cursor: pointer; min-width: 32px; }
+.flow-tools button:hover { border-color: #b9c0cc; background: var(--flow-soft); }
+.flow-tools button:focus-visible, .flow-mode button:focus-visible { outline: 2px solid var(--spec-pin); outline-offset: 2px; }
+.flow-tools-label { color: var(--spec-muted); }
+.flow-tools-gap { flex: 1; }
+.flow-zoom { min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; color: var(--spec-muted); }
+.flow-tools-hint { color: var(--spec-muted); font-size: 12px; margin-left: 8px; }
+@media (max-width: 760px) { .flow-tools-hint { display: none; } }
+
+.flow-port { flex: 1; min-height: 0; position: relative; overflow: hidden; cursor: grab; touch-action: none; outline: none;
+  background-color: var(--spec-canvas); background-image: radial-gradient(var(--spec-line) 1px, transparent 1px); background-size: 18px 18px; }
+.flow-port:active { cursor: grabbing; }
+.flow-port:focus-visible { box-shadow: inset 0 0 0 2px var(--spec-pin); }
+.flow-board { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: flex; align-items: flex-start; gap: 360px; padding: 80px; width: max-content; }
+.flow-wires { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.wire { fill: none; stroke-width: 3; }
+.wire.is-main { stroke: var(--flow-main); }
+.wire.is-branch { stroke: var(--flow-branch); stroke-dasharray: 8 6; stroke-width: 2.5; }
+.wire.is-done { stroke: var(--flow-done); }
+.flow-label { position: absolute; transform: translate(-50%, -100%); margin-top: -10px; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap;
+  padding: 6px 12px; border-radius: 8px; background: var(--spec-surface); border: 1px solid var(--spec-line); box-shadow: 0 1px 2px rgb(16 24 40 / 0.06); pointer-events: none; }
+.flow-label b { font: 600 26px/32px var(--spec-font); }
+.flow-label span { font: 400 18px/24px var(--spec-font); color: var(--spec-muted); }
+/* an outcome's label sits at the end of its curve, just left of the outcome; the step's own label at the start of the fan */
+.flow-label.is-start { transform: translate(0, -100%); margin-top: 0; align-items: flex-start; }
+.flow-label.is-done { transform: translate(-100%, -50%); margin-top: 0; border-color: color-mix(in srgb, var(--flow-done) 45%, var(--spec-line)); }
+.flow-label.is-done b { color: var(--flow-done); font-size: 22px; line-height: 28px; }
+
+.flow-col { display: flex; flex-direction: column; align-items: stretch; gap: 120px; width: 720px; flex-shrink: 0; }
+.flow-col-done { gap: 48px; width: 640px; margin-left: 220px; }
+.flow-col.is-wide { width: 1080px; }
+.flow-col.is-wide .flow-group-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.flow-node { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: 2px solid var(--flow-main); border-radius: 14px; background: var(--spec-surface);
+  box-shadow: 0 2px 4px rgb(16 24 40 / 0.06), 0 12px 32px rgb(16 24 40 / 0.08); }
+.flow-node.is-done { border-color: var(--flow-done); }
+.flow-node h2 { margin: 0; font: 700 40px/48px var(--spec-font); }
+.flow-node p { margin: 0; font: 400 18px/28px var(--spec-font); color: var(--spec-muted); }
+.flow-node .flow-step { font-size: 18px; line-height: 24px; }
+.flow-node .flow-then { font-size: 15px; line-height: 22px; }
+.flow-node .spec-canvas { padding: 12px; }
+.flow-group { display: flex; flex-direction: column; gap: 14px; padding: 20px; border: 2px dashed color-mix(in srgb, var(--flow-branch) 55%, var(--spec-line)); border-radius: 14px; background: color-mix(in srgb, var(--spec-surface) 70%, transparent); }
+.flow-group > h3 { margin: 0; font: 600 22px/28px var(--spec-font); color: var(--flow-branch); }
+.flow-group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.flow-group .flow-branch { padding: 14px; }
+.flow-group .flow-branch header b { font-size: 16px; }
+.flow-group .flow-when, .flow-group .flow-then { font-size: 14px; line-height: 21px; }
+.flow-branch[data-kind="error"] { border-color: color-mix(in srgb, var(--flow-error) 45%, var(--spec-line)); }
+
+.flow-mode { display: inline-flex; border: 1px solid var(--spec-line); border-radius: 8px; overflow: hidden; }
+.flow-mode button { border: 0; background: var(--spec-surface); padding: 5px 14px; font: 500 13px/20px var(--spec-font); color: var(--spec-muted); cursor: pointer; }
+.flow-mode button[aria-selected="true"] { background: var(--spec-ink); color: var(--spec-surface); }
