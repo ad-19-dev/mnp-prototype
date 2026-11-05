@@ -17,11 +17,12 @@ import {
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { useApp } from '../../lib/store'
-import { Banner, CHN, FilterMenu, NO_HIDE, PAvatar, PageSize, StatusTag, Tip, Trunc, Two } from '../../components/ui'
+import { Banner, CHN, ChIcons, FilterMenu, NO_HIDE, PAvatar, PageSize, StatusTag, Tip, Trunc, Two } from '../../components/ui'
 import { ShellAside } from '../../components/shell'
 import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
 import { ListLoading } from './List'
+import './split.css'
 import { AudienceList, ChannelText, Part, failCols, notStarted, reviewer, sendTime } from './Detail'
 
 // ---------- records ----------
@@ -85,7 +86,8 @@ function askSendNow(m: SendCtl, r: Row) {
   m.set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It goes out right away instead of at ' + r.sched + '. It’s already approved.', '會立刻送出，不再等原訂的 ' + r.sched + '。這則訊息已經核准。') + allNote(r), icon: Send, tone: 'info', cancel: L('Not now', '先不要'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
 }
 
-function RecMenu({ m, x }: { m: SendCtl; x: Rec }) {
+// lite: a channel row under its message row, where the message row holds the whole-message actions
+function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
   const r = x.r, many = rowChs(r).length > 1
   // "(all channels)" on the actions that change the whole message, so nobody expects them to touch one row
   const all = many ? L(' (all channels)', '（所有通道）') : ''
@@ -95,7 +97,8 @@ function RecMenu({ m, x }: { m: SendCtl; x: Rec }) {
         <Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + recText(r, x.k).title} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={232}>
-        <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
+        <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
+        {lite ? null : <>
         {r.status === 'expired' ? <>
           <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, r)}>{L('Send now', '立即傳送') + all}</DropdownMenuItem>
           <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r)}>{L('Reschedule', '重新排程') + all}</DropdownMenuItem>
@@ -108,6 +111,7 @@ function RecMenu({ m, x }: { m: SendCtl; x: Rec }) {
           <DropdownMenuSeparator />
           <DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => askDelete(m, r)}>{L('Delete', '刪除') + all}</DropdownMenuItem>
         </> : null}
+        </>}
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -132,7 +136,18 @@ function Reach({ m, x, size = 'list' }: { m: SendCtl; x: Rec; size?: 'list' | 'd
 }
 
 // ---------- list ----------
-const col = createColumnHelper<Rec>()
+// How a message's records read as one group (design options; the prototype uses 'none'):
+//   merge: message-wide cells (status, template, times, creator) only on its first row
+//   divider: no lines inside a message, a stronger line between messages
+//   band: every other message on a tinted background
+//   bracket: a bar down the left edge joins a message's rows
+//   header: a row for the message (title, status, times, whole-message actions), its channels under it
+//   fold: the same header row, folded by default; open it to see the channels
+export type GroupStyle = 'none' | 'merge' | 'divider' | 'band' | 'bracket' | 'header' | 'fold'
+// a table row: one record, or (header / fold) the message's own row
+interface GRow extends Rec { hdr?: boolean; pos: 'solo' | 'first' | 'mid' | 'last'; band: 0 | 1; n: number; open?: boolean }
+const Mk = ({ g }: { g: GRow }) => <i hidden data-gpos={g.pos} data-band={g.band} data-hdr={g.hdr ? '' : undefined} />
+const col = createColumnHelper<GRow>()
 function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
   if (!s) return list
@@ -142,7 +157,7 @@ function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   return s.desc ? out.reverse() : out
 }
 
-export function SplitList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) {
+export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: React.ReactNode; group?: GroupStyle }) {
   const [per, setPer] = React.useState(20)
   const s = m.s, app = useApp(), vis = React.useMemo(() => recordsOf(m, m.visible()), [m, app.rows, app.space])
   const q = s.q.trim().toLowerCase()
@@ -155,8 +170,32 @@ export function SplitList({ m, intro }: { m: SendCtl; intro?: React.ReactNode })
   })
   const [sorting, setSorting] = React.useState<SortingState>([])
   const sorted = React.useMemo(() => sortRecs(rows, sorting, m), [rows, sorting, m])
-  const pagesN = Math.max(1, Math.ceil(sorted.length / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
-  const pageRows = sorted.slice(st, st + per)
+  // grouped: a message's records stay together (in the place of its first one) and a page holds whole messages
+  const grouped = group !== 'none', hdrs = group === 'header' || group === 'fold'
+  const [opened, setOpened] = React.useState<Record<string, boolean>>({})
+  const msgs = React.useMemo(() => {
+    const order: string[] = [], by: Record<string, Rec[]> = {}
+    sorted.forEach(x => { if (!by[x.r.id]) { by[x.r.id] = []; order.push(x.r.id) } by[x.r.id].push(x) })
+    return order.map(id => by[id].slice().sort((a, b) => CH_ORDER.indexOf(a.k) - CH_ORDER.indexOf(b.k)))
+  }, [sorted])
+  const unitN = grouped ? msgs.length : sorted.length
+  const pagesN = Math.max(1, Math.ceil(unitN / per)), page = Math.min(s.page, pagesN), st = (page - 1) * per
+  const pageRows: GRow[] = React.useMemo(() => {
+    if (!grouped) return sorted.slice(st, st + per).map(x => ({ ...x, pos: 'solo' as const, band: 0 as const, n: 1 }))
+    const out: GRow[] = []
+    msgs.slice(st, st + per).forEach((g, gi) => {
+      const band = (gi % 2) as 0 | 1, open = group === 'header' || !!opened[g[0].r.id]
+      // a message with one channel needs no message row
+      const hr = hdrs && g.length > 1
+      if (hr) out.push({ ...g[0], id: g[0].r.id + '~msg', hdr: true, pos: open ? 'first' : 'solo', band, n: g.length, open })
+      if (hr && !open) return
+      g.forEach((x, i) => {
+        const at = hr ? i + 1 : i, len = hr ? g.length + 1 : g.length
+        out.push({ ...x, band, n: g.length, pos: len === 1 ? 'solo' : at === 0 ? 'first' : at === len - 1 ? 'last' : 'mid' })
+      })
+    })
+    return out
+  }, [grouped, hdrs, group, msgs, sorted, st, per, opened])
   const [loading, setLoading] = React.useState(true)
   React.useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 700); return () => clearTimeout(t) }, [app.space])
   const clearAll = () => m.set({ fs: [], fch: [], q: '', page: 1 })
@@ -165,30 +204,51 @@ export function SplitList({ m, intro }: { m: SendCtl; intro?: React.ReactNode })
   const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.r.status === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.r.status === k).length }))
   const chOpts = CH_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
 
+  // the cells every record of a message shares: once per message when merged, on the message row with a header
+  const shared = (g: GRow) => (hdrs ? !!g.hdr || g.n === 1 : group === 'merge' ? g.pos === 'solo' || g.pos === 'first' : true)
   const columns = React.useMemo(() => [
     // order: Sender, Channel, Title / Content, Status, Reach / Audience, Template, Created, Scheduled, Created by
-    col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span> }),
-    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: 210 }, cell: i => <ChCell k={i.row.original.k} /> }),
+    col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => {
+      const g = i.row.original
+      return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
+        {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span>}</>
+    } }),
+    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 236 : 210 }, cell: i => {
+      const g = i.row.original
+      if (g.hdr) return (
+        <span className="flex min-w-0 items-center gap-2"><Mk g={g} />
+          {group === 'fold' ? <Button variant="text" size="xs" iconOnly startIcon={ChevronRight} className={g.open ? '[&_svg]:rotate-90' : ''} aria-expanded={g.open} aria-label={(g.open ? L('Hide channels of ', '收合通道：') : L('Show channels of ', '展開通道：')) + g.r.title} onClick={() => setOpened(o => ({ ...o, [g.r.id]: !o[g.r.id] }))} /> : null}
+          <ChIcons list={rowChs(g.r)} />
+        </span>
+      )
+      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} /></span>
+    } }),
     col.display({ id: 'title', header: L('Title / Content', '標題 / 內容'), meta: { width: 380 }, cell: i => {
       const x = i.row.original, t = recText(x.r, x.k), text = t.content.replace(/\s+/g, ' ')
+      if (x.hdr) return (
+        <span className="flex min-w-0 flex-col">
+          <Trunc text={x.r.title} className="font-bold" />
+          <span className="text-caption text-fg-secondary">{L(x.n + (x.n === 1 ? ' channel' : ' channels'), x.n + ' 個通道')}{group === 'fold' && !x.open ? L(' · open to see each one', '・展開看各通道') : ''}</span>
+        </span>
+      )
       return (
         <span className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
             {ICSD && x.r.bypass ? <Tip text={L('Urgent: sent without SMS approval', '緊急發送：略過 SMS 核准')}><span tabIndex={0} className="inline-flex shrink-0 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="amber" icon={Siren}>{L('Urgent', '緊急')}</Tag></span></Tip> : null}
             <Trunc text={t.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: x.id })} />
           </span>
-          {text ? <Trunc text={text} className="text-caption text-fg-secondary" /> : <span className="text-caption text-fg-muted">{L('SMS text only', '只有簡訊內文')}</span>}
+          {text ? <Trunc text={text} className="text-caption text-fg-secondary" /> : null}
         </span>
       )
     } }),
-    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 180 }, cell: i => <StatusTag s={i.row.original.r.status} /> }),
+    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 180 }, cell: i => shared(i.row.original) ? <StatusTag s={i.row.original.r.status} /> : null }),
     // this channel's audience only: the number a sender actually reached on it
-    col.display({ id: 'recv', header: L('Reach / Audience', '送達 / 收件人'), enableSorting: true, meta: { width: 160 }, cell: i => <Reach m={m} x={i.row.original} /> }),
-    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
-    col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    col.accessor(x => x.r.sched, { id: 'sched', header: L('Scheduled', '排程時間'), meta: { width: 130 }, cell: i => { const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    ...(app.space === 'me' ? [] : [col.accessor(x => x.r.creator, { id: 'creator', header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
-  ], [m, app.lang, app.teams, app.space])
+    col.display({ id: 'recv', header: L('Reach / Audience', '送達 / 收件人'), enableSorting: true, meta: { width: 160 }, cell: i => i.row.original.hdr ? null : <Reach m={m} x={i.row.original} /> }),
+    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
+    col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    col.accessor(x => x.r.sched, { id: 'sched', header: L('Scheduled', '排程時間'), meta: { width: 130 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    ...(app.space === 'me' ? [] : [col.accessor(x => x.r.creator, { id: 'creator', header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { if (!shared(i.row.original)) return null; const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
+  ], [m, app.lang, app.teams, app.space, group, hdrs])
 
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
@@ -212,7 +272,7 @@ export function SplitList({ m, intro }: { m: SendCtl; intro?: React.ReactNode })
         ) : null}
       </div>
       {loading ? <ListLoading /> : (
-        <div className="mnp-center flex min-h-0 flex-1 flex-col">
+        <div className={'mnp-center flex min-h-0 flex-1 flex-col mnp-g-' + group}>
           <DataTable tableOptions={{ ...NO_HIDE, manualSorting: true, onSortingChange: (u: any) => setSorting(old => (typeof u === 'function' ? u(old) : u)) }}
             columns={columns as any}
             data={pageRows}
@@ -221,7 +281,7 @@ export function SplitList({ m, intro }: { m: SendCtl; intro?: React.ReactNode })
             autoRowHeight
             getRowId={x => x.id}
             pinnedLeftColumns={['sender']}
-            rowActions={(x: Rec) => <RecMenu m={m} x={x} />}
+            rowActions={(x: GRow) => <><Mk g={x} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
             emptyState={vis.length
               ? <Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />
               : <Empty icon={Send} title={L('No messages yet', '還沒有訊息')} description={L('Click “+ New message” to send your first notification.', '點「＋ 新訊息」發送第一則通知。')} />}
@@ -230,9 +290,11 @@ export function SplitList({ m, intro }: { m: SendCtl; intro?: React.ReactNode })
       )}
       {rows.length && !loading ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-body text-fg-secondary">{L((st + 1) + '–' + Math.min(rows.length, st + per) + ' of ' + rows.length, '第 ' + (st + 1) + '–' + Math.min(rows.length, st + per) + ' 筆，共 ' + rows.length + ' 筆')}</span>
+          <span className="text-body text-fg-secondary">{grouped
+            ? L((st + 1) + '–' + Math.min(unitN, st + per) + ' of ' + unitN + ' messages (' + rows.length + ' records)', '第 ' + (st + 1) + '–' + Math.min(unitN, st + per) + ' 則，共 ' + unitN + ' 則（' + rows.length + ' 筆）')
+            : L((st + 1) + '–' + Math.min(rows.length, st + per) + ' of ' + rows.length, '第 ' + (st + 1) + '–' + Math.min(rows.length, st + per) + ' 筆，共 ' + rows.length + ' 筆')}</span>
           <div className="flex items-center gap-3">
-            <Pagination total={rows.length} pageSize={per} page={page} onPageChange={p => m.set({ page: p })} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+            <Pagination total={unitN} pageSize={per} page={page} onPageChange={p => m.set({ page: p })} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
             <PageSize value={per} onChange={n => { setPer(n); m.set({ page: 1 }) }} />
           </div>
         </div>

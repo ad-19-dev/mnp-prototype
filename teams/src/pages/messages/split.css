@@ -1,0 +1,24 @@
+/* Grouping options for the one-record-per-channel list (see GroupStyle in split.tsx). Each row carries a hidden
+   marker (data-gpos: solo / first / mid / last; data-band: 0 / 1; data-hdr on a message row), so these rules can
+   style whole rows of the DS DataTable, in its pinned column too. */
+
+/* no line between the rows of one message */
+:is(.mnp-g-merge, .mnp-g-divider, .mnp-g-band, .mnp-g-bracket, .mnp-g-header, .mnp-g-fold)
+  [role="row"]:is(:has([data-gpos="first"]), :has([data-gpos="mid"])) { border-bottom-color: transparent; }
+
+/* divider: a stronger line where the next message starts */
+.mnp-g-divider [role="row"]:is(:has([data-gpos="last"]), :has([data-gpos="solo"])) { border-bottom: 2px solid var(--color-border); }
+
+/* band: every other message tinted */
+.mnp-g-band [role="row"]:has([data-band="1"]) { background: color-mix(in srgb, var(--color-surface-strong) 40%, var(--color-surface)); }
+.mnp-g-band [role="row"][data-hovered] { background: var(--color-neutral-hover); }
+
+/* bracket: a bar down the left edge from a message's first row to its last */
+.mnp-bracket { position: absolute; left: 6px; width: 3px; background: color-mix(in srgb, var(--color-primary) 55%, transparent); }
+.mnp-bracket.is-first { top: 14px; bottom: 0; border-radius: 3px 3px 0 0; }
+.mnp-bracket.is-mid { top: 0; bottom: 0; }
+.mnp-bracket.is-last { top: 0; bottom: 14px; border-radius: 0 0 3px 3px; }
+
+/* header / fold: the message row on a light tint; its channels sit under it */
+:is(.mnp-g-header, .mnp-g-fold) [role="row"]:has([data-hdr]) { background: color-mix(in srgb, var(--color-surface-strong) 40%, var(--color-surface)); }
+:is(.mnp-g-header, .mnp-g-fold) [role="row"]:has([data-hdr])[data-hovered] { background: color-mix(in srgb, var(--color-surface-strong) 60%, var(--color-surface)); }

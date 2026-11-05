@@ -9,6 +9,7 @@
 | 團隊版（發送空間，主要版本） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息紀錄設計規格（團隊版） | `teams/spec.html`、`teams/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
 | 發送訊息設計規格（團隊版） | `teams/compose-spec.html`、`teams/src/spec/compose/` | https://claude.ai/artifact/5Cp4EoipMcFczPk314XxRK |
+| 單一通道紀錄版：訊息分組方案比較（六個可操作的列表） | `teams/group-options.html`、`teams/src/spec/groupopts/` | https://claude.ai/artifact/W91AFfvcdUMssNLCr7AaHi |
 | 團隊版・一個通道一筆紀錄（PM 提案的另一個版本，只有訊息列表與詳情不同） | `teams/`（`--mode split`，`teams/src/pages/messages/split.tsx`） | https://claude.ai/artifact/Kq6FnvbagCvdtmoPXiRD91 |
 | 發送訊息 UI Flow 與設計規格（團隊版，每一步下方攤開那一步的完整規格） | `teams/compose-flow.html`、`teams/src/spec/flow/` | https://claude.ai/artifact/C2XATaxJsCWLQQdeihP2x7 |
 | 設計方案比較頁（通道觸及、緊急發送標示、列表篩選、詳情的多通道內容、群組成員） | `bilingual/options.html`、`bilingual/src/options/` | https://claude.ai/artifact/K42hKimpiZhicXxdie2RQy |
@@ -87,4 +88,10 @@ node tools/lock.mjs <密碼> publish/mnp-channel-reach-options.html bilingual/op
 ```
 cd teams && npx vite build --mode split --outDir split/dist --emptyOutDir && cd ..
 node tools/lock.mjs <密碼> publish/mnp-teams-per-channel.html teams/split "MNP Teams · 單一通道紀錄"
+```
+
+分組方案比較頁直接用 `SplitList` 的 `group` 參數（`teams/src/pages/messages/split.tsx` 的 `GroupStyle`，樣式在 `split.css`）；prototype 本身用 `none`。
+```
+cd teams && npx vite build -c vite.group-options.config.ts && cd ..
+node tools/lock.mjs <密碼> publish/mnp-group-options.html teams/group-options "MNP 訊息分組方案"
 ```
