@@ -309,9 +309,9 @@ function DetailTab() {
           ['傳送中', <Copy en="241 / 292" zh="241 / 292" />, <Copy en="241 / 292 delivered" zh="241 / 292 已送達" />],
           ['已送出、傳送錯誤', <Copy en="551 / 560 · 9 failed" zh="551 / 560 · 9 人失敗" />, <Copy en="532 / 560 delivered · 28 failed" zh="532 / 560 已送達・28 人失敗" />],
           ['Device Notifications，開了 SMS 備援', '—', <Copy en="400 / 412 delivered · 12 failed · 5 delivered via SMS" zh="400 / 412 已送達・12 人失敗・5 人改由 SMS 送達" />],
-          ['SMS 備援（排在 Device Notifications 下面、縮排）', '—', <Copy en="Sent to 12 people Device Notifications missed · 5 delivered · 7 failed" zh="送給 Device Notifications 沒送到的 12 人・5 人已送達・7 人失敗" />],
-          ['SMS 備援，還沒送出', '—', <Copy en="For people Device Notifications doesn’t reach" zh="給 Device Notifications 送不到的人" />],
-          ['SMS 備援，沒有人需要', '—', <Copy en="Not needed: Device Notifications reached everyone" zh="不需要：Device Notifications 都送到了" />],
+          ['SMS 備援（排在 Device Notifications 下面、縮排）', '—', <span className="flex flex-col gap-1"><Copy en="5 / 12 delivered · 7 failed" zh="5 / 12 已送達・7 人失敗" /><span className="text-caption text-fg-secondary">12 是 Device Notifications 沒送到的人</span></span>],
+          ['SMS 備援，還沒送出', '—', <Copy en="Not sent yet" zh="尚未傳送" />],
+          ['SMS 備援，沒有人需要（推播都送到了）', '—', <Copy en="Not needed" zh="不需要" />],
         ]} />
         <SpecTable head={['通道', '展開後的內容']} nowrap={[0]} rows={[
           ['Device Notifications', '寄件人（次要色小字）、標題（medium）、內文，放在有外框的區塊裡'],
@@ -321,11 +321,11 @@ function DetailTab() {
         ]} />
       </Section>
 
-      <Section eyebrow="SMS fallback" title="SMS 備援" lead="SMS 不是另一個通道，而是 Device Notifications 送不到時的補發。所以它排在 Device Notifications 正下方、縮排，並寫清楚是送給誰；改由 SMS 收到的人，在 Device Notifications 的失敗名單裡標成「Delivered via SMS」。">
+      <Section eyebrow="SMS fallback" title="SMS 備援" lead="SMS 不是另一個通道，而是 Device Notifications 送不到時的補發。所以它排在 Device Notifications 正下方、縮排，數字的分母就是推播沒送到的人；改由 SMS 收到的人，在 Device Notifications 的失敗名單裡標成「Delivered via SMS」。">
         <Figure label="開了 SMS 備援的訊息" sub="Fab 18 Communications · Fire drill at 10:00 today" shot="d-sms" max={480} notes={[
           { n: 1, title: 'Device Notifications', body: '「400 / 412 delivered · 12 failed」，後面加綠字「· 5 delivered via SMS」：12 個沒收到推播的人裡，有 5 個改由 SMS 收到。' },
           { n: 2, title: '改由 SMS 送達', body: '綠字（success-text），讓人一眼看出失敗的推播有被補上。整則訊息的失敗只算兩個都沒收到的 7 人。' },
-          { n: 3, title: 'SMS fallback 列', body: <>名稱「SMS fallback / SMS 備援」，用轉折箭頭 <C>CornerDownRight</C> 並縮排，表示它接在 Device Notifications 後面。第二行「Sent to 12 people Device Notifications missed · 5 delivered · 7 failed」。展開看 SMS 內容和 SMS 的失敗名單。</> },
+          { n: 3, title: 'SMS fallback 列', body: <>名稱「SMS fallback / SMS 備援」，用轉折箭頭 <C>CornerDownRight</C> 並縮排，表示它接在 Device Notifications 後面。第二行和其他通道同格式「5 / 12 delivered · 7 failed」，分母 12 就是 Device Notifications 沒送到的人（位置已經說明它是補發，不另外寫）。展開看 SMS 內容和 SMS 的失敗名單。</> },
         ]} />
         <Figure label="Device Notifications 的失敗名單" sub="捲到下方：改由 SMS 收到的人" shot="dlg-sms" max={860} notes={[
           { title: '兩種人', body: <>SMS 也失敗的人：原因下方小字寫 SMS 的原因（例如「SMS fallback: number not in service」）。SMS 送到的人：原因下方綠色 <Tag size="sm" color="green">Delivered via SMS</Tag>。</> },

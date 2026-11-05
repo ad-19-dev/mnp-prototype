@@ -84,11 +84,10 @@ function byChannel(m: SendCtl, r: Row) {
 function ChannelRow({ m, r, k, ok, of, sms, last }: { m: SendCtl; r: Row; k: Channel; ok: number; of: number; sms?: number; last: boolean }) {
   const started = !notStarted(r), fail = started && r.status !== 'progress' ? of - ok : 0, fb = k === 'sms'
   const I = fb ? CornerDownRight : CHN[k].icon, name = fb ? L('SMS fallback', 'SMS 備援') : CHN[k].name
-  const line = fb
-    ? (!started ? L('For people Device Notifications doesn’t reach', '給 Device Notifications 送不到的人')
-      : !of ? L('Not needed: Device Notifications reached everyone', '不需要：Device Notifications 都送到了')
-      : L('Sent to ' + P(of, 'person', '', 'people') + ' Device Notifications missed · ' + fmtN(ok) + ' delivered', '送給 Device Notifications 沒送到的 ' + fmtN(of) + ' 人・' + fmtN(ok) + ' 人已送達'))
-    : !started ? L('Not sent yet', '尚未傳送')
+  // the same format on every row; SMS fallback's count is the people Device Notifications missed (its place,
+  // indented under Device Notifications, says so)
+  const line = !started ? L('Not sent yet', '尚未傳送')
+    : fb && !of ? L('Not needed', '不需要')
     : L(fmtN(ok) + ' / ' + fmtN(of) + ' delivered', fmtN(ok) + ' / ' + fmtN(of) + ' 已送達')
   return (
     <AccordionItem value={k} className={last ? 'border-b-0' : 'border-b border-divider'}>
