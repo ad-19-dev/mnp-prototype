@@ -188,6 +188,72 @@ await dlgShot('dlg-delete', 'out of office', /^Delete/);
 await dlgShot('dlg-sendnow', 'UX sync moves', /^Send now/);
 await dlgShot('dlg-reschedule', 'UX sync moves', /^Reschedule/);
 
+
+// ---- one list row (or the message's rows) per status
+await step('status-rows', async () => {
+  await space('My sending sp').catch(() => {});
+});
+await step('rows', async () => {
+  const pairs = [['st-pending', 'Atlas demo moves'], ['st-expired', 'UX sync moves'], ['st-rejected', 'Reminder: badge photo'], ['st-scheduled', 'out of office'], ['st-progress', 'Fire alarm'], ['st-sent', 'Design review'], ['st-error', 'On-call swap'], ['st-mixed', 'Team lunch on Fri']];
+  for (const [name, text] of pairs) {
+    // search for the message so its rows are at the top of the list, in view
+    await main.getByPlaceholder(/Search title/).fill(text); await wait(500);
+    const rs = main.locator('[role="row"]').filter({ hasText: text });
+    const n = await rs.count();
+    await shot(name, n > 1 ? [rs.nth(0), rs.nth(n - 1)] : [rs.nth(0)], [], 10);
+  }
+  await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
+});
+// ---- one detail per status
+const detail = async (name, text, title, list = []) => {
+  await step(name, async () => {
+    await row(text, 0).getByText(title).first().click(); await wait(800);
+    await panel(name, list); await closeAside();
+  });
+};
+await detail('detail-expired', 'UX sync moves', 'UX sync moves to Tue');
+await detail('detail-rejected', 'Reminder: badge photo', 'Reminder: badge photo');
+await detail('detail-scheduled', 'out of office', 'out of office 10/27');
+await detail('detail-progress', 'Fire alarm', 'Fire alarm test in Building B');
+await detail('detail-error', 'On-call swap', 'On-call swap');
+await detail('detail-sent-fb', 'Design review', 'Design review with Northwind Studio: Thu 11/6');
+// ---- members dialog (from a group or org in the audiences)
+await step('dlg-members', async () => {
+  await row('Design review', 0).getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
+  await aside().getByRole('button', { name: /members of PLT\/UX/ }).click(); await wait(700);
+  await shot('dlg-members', p.getByRole('dialog'), [
+    [1, p.getByRole('dialog').getByRole('heading').first(), 'tl'],
+    [2, p.getByRole('dialog').getByPlaceholder(/Search/), 'tl'],
+    [3, p.getByRole('dialog').locator('[role="columnheader"]').first(), 'tl'],
+  ], 12);
+  await p.keyboard.press('Escape'); await wait(300);
+  await aside().getByRole('button', { name: /members of Design System Guild/ }).click(); await wait(700);
+  await shot('dlg-members-group', p.getByRole('dialog'), [], 12);
+  await p.keyboard.press('Escape'); await wait(300);
+  await closeAside();
+});
+// ---- failed-members dialog: without SMS fallback, and a message that failed as a whole
+await step('dlg-fail-email', async () => {
+  const rs = main.locator('[role="row"]').filter({ hasText: 'Design review' });
+  await rs.nth(1).getByRole('button', { name: /failed/ }).click().catch(async () => { await main.getByRole('button', { name: /^1 failed$/ }).nth(1).click() }); await wait(800);
+  await shot('dlg-fail-email', p.getByRole('dialog'), [], 12);
+  await p.keyboard.press('Escape'); await wait(300);
+});
+await step('dlg-fail-error', async () => {
+  await main.getByRole('button', { name: /^4 failed$/ }).last().click(); await wait(800);
+  await shot('dlg-fail-error', p.getByRole('dialog'), [], 12);
+  await p.keyboard.press('Escape'); await wait(300);
+});
+// ---- reschedule with a time in the past
+await step('dlg-reschedule-error', async () => {
+  await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: /^Reschedule/ }).click(); await wait(600);
+  const d = p.getByRole('dialog');
+  await d.getByPlaceholder('YYYY/MM/DD HH:MM').fill('2026/11/01 09:00'); await wait(200);
+  await d.getByRole('button', { name: 'Reschedule' }).click(); await wait(500);
+  await shot('dlg-reschedule-error', d, [], 12);
+  await p.keyboard.press('Escape'); await wait(300);
+});
+
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
 console.log(errs.length ? 'errors:\n' + errs.join('\n') : 'no errors');
 await b.close();

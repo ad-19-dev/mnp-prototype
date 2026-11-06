@@ -7,7 +7,7 @@ import { StatusTag } from '../../components/ui'
 import { C, Copy, Figure, Notes, Section, Shot, SpecTable } from '../parts'
 
 const PROTO = 'https://claude.ai/artifact/Kq6FnvbagCvdtmoPXiRD91'
-const TABS = [['flow', 'UI Flow'], ['overview', '總覽'], ['list', '列表'], ['rules', '狀態與合併規則'], ['detail', '訊息內容面板'], ['actions', '操作與對話框'], ['data', '範例資料']] as const
+const TABS = [['flow', 'UI Flow'], ['overview', '總覽'], ['list', '列表'], ['rules', '狀態與合併規則'], ['status', '各狀態的列與面板'], ['detail', '訊息內容面板'], ['blocks', '面板區塊規格'], ['actions', '列選單'], ['modals', '對話框規格'], ['data', '範例資料']] as const
 type TabKey = typeof TABS[number][0]
 const isTab = (h: string): h is TabKey => TABS.some(t => t[0] === h)
 
@@ -38,7 +38,10 @@ export default function SplitSpec() {
         {tab === 'overview' ? <Overview /> : null}
         {tab === 'list' ? <ListTab /> : null}
         {tab === 'rules' ? <Rules /> : null}
+        {tab === 'status' ? <StatusTab /> : null}
         {tab === 'detail' ? <Detail /> : null}
+        {tab === 'blocks' ? <Blocks /> : null}
+        {tab === 'modals' ? <Modals /> : null}
         {tab === 'actions' ? <Actions /> : null}
         {tab === 'data' ? <Data /> : null}
       </main>
@@ -163,7 +166,7 @@ function ListTab() {
           { n: 3, title: '狀態', body: '寬 180。每一筆各自的狀態，見「狀態與合併規則」。' },
           { n: 4, title: '收件人數', body: <>寬 140，數字齊右（表頭也齊右）。只放這個通道要寄給多少人，不放已送達。<C>Device Notifications (SMS)</C> 的數字是 Device Notifications 的收件人數。可排序。</> },
           { n: 5, title: '{n} 人失敗', body: <>紅色連結，放在狀態標籤下方，點了開失敗名單。有 SMS 備援的，只算 SMS 也沒送到的人。</> },
-          { n: 6, title: '列選單', body: '見「操作與對話框」。' },
+          { n: 6, title: '列選單', body: '見「列選單」與「對話框規格」。' },
           { n: 7, title: '狀態篩選', body: '多選，只列出目前這個空間有的狀態，每個旁邊有數量。' },
           { n: 8, title: '通道篩選', body: <>多選，四種通道：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊有紀錄數。</> },
         ]} />
@@ -301,17 +304,210 @@ function Actions() {
         </div>
         <Notes items={[{ title: '名稱', body: <>原本的「View details / 查看詳情」改成 <Copy en="View message" zh="查看訊息內容" />，因為面板只放內容與收件人。</> }]} />
       </Section>
-      <Section eyebrow="Dialogs" title="對話框">
-        <Figure label="失敗的收件人" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
-          { n: 1, title: '標題與說明', body: <><Copy en="Failed audience members" zh="傳送失敗的收件人" /> 說明行：通道名稱 · 失敗人數 / 收件人數。</> },
-          { n: 2, title: '原因', body: '推播失敗的原因；有 SMS 備援的，第二行是 SMS 失敗的原因。不顯示「其他通道有沒有收到」。' },
-          { n: 3, title: '重寄', body: <><C>Resend to n on 通道</C>：進發送流程，收件人換成這些人，通道照這一筆（Device Notifications (SMS) 會帶 SMS 備援）。傳送錯誤的訊息按鈕是 <C>Retry</C>。</> },
+    </>
+  )
+}
+
+
+// ---------- every status: its list rows and its panel ----------
+function StatusSpec({ id, s, tagDesc, rows, shots, panel, pn }: { id: string; s: Parameters<typeof StatusTag>[0]['s']; tagDesc: string; rows: [React.ReactNode, React.ReactNode][]; shots: string[]; panel: string; pn: string }) {
+  return (
+    <Section eyebrow="Status" title={id}>
+      <header className="flex flex-wrap items-center gap-3"><StatusTag s={s} /><span className="spec-lead">{tagDesc}</span></header>
+      <div className="spec-gallery wide">
+        {shots.map(n => <figure key={n}><figcaption><b>列表上</b></figcaption><div className="spec-canvas"><Shot name={n} alt={id + ' 的列'} /></div></figure>)}
+      </div>
+      <div className="spec-row side">
+        <div className="spec-canvas"><Shot name={panel} max={380} alt={id + ' 的面板'} /></div>
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <SpecTable head={['項目', '規格']} nowrap={[0]} rows={rows} />
+          <p className="spec-lead">{pn}</p>
+        </div>
+      </div>
+    </Section>
+  )
+}
+
+function StatusTab() {
+  const menuAll = '選單項目見「列選單」'
+  return (
+    <>
+      <Section eyebrow="Status" title="七種狀態" lead="每種狀態一節：狀態標籤（顏色與圖示都是設計系統 Tag）、列表上的那一列、每個欄位在這個狀態怎麼顯示，以及打開面板看到什麼。圖都是真實 prototype 的截圖。標籤：Tag 尺寸 sm，圖示加文字。">
+        <SpecTable head={['狀態', '標籤', '顏色', '圖示']} nowrap={[0, 1]} rows={[
+          [<StatusTag s="pending" />, <Copy en="Pending approval" zh="待核准" />, 'amber', 'Hourglass'],
+          [<StatusTag s="expired" />, <Copy en="Scheduled expired" zh="排程已過期" />, 'deep-orange', 'CalendarX2'],
+          [<StatusTag s="rejected" />, <Copy en="Rejected" zh="已駁回" />, 'red', 'CircleX'],
+          [<StatusTag s="scheduled" />, <Copy en="Scheduled" zh="已排程" />, 'neutral', 'Calendar'],
+          [<StatusTag s="progress" />, <Copy en="In progress" zh="傳送中" />, 'blue', 'Send'],
+          [<StatusTag s="sent" />, <Copy en="Sent" zh="已送出" />, 'green', 'CheckCircle2'],
+          [<StatusTag s="error" />, <Copy en="Error" zh="傳送錯誤" />, 'red', 'AlertTriangle'],
+        ]} />
+      </Section>
+      <StatusSpec id="待核准" s="pending" tagDesc="送出後等核准（SMS 審核人員、主管，或兩者）。所有通道一起等。" shots={['st-pending']} panel="detail-pending" rows={[
+        ['收件人數', '照常顯示每個通道的人數'],
+        ['失敗人數', '不顯示'],
+        ['傳送時間', '有排程是排程時間；立即傳送是建立時間（核准後才會真的送出）'],
+        ['列選單', 'View message、Duplicate to new message'],
+        ['面板', '狀態 Pending approval；Approval center 連結；內容與收件人。有 SMS 備援的，SMS 區塊寫「Number known once Device Notifications finishes」'],
+      ]} pn="核准的原因、進度與核准人都在 Approval center，面板不再顯示提示卡片。" />
+      <StatusSpec id="排程已過期" s="expired" tagDesc="核准時已經超過排程的時間，所以沒有送出。可以立即傳送、重新排程或刪除。" shots={['st-expired']} panel="detail-expired" rows={[
+        ['收件人數', '照常顯示'],
+        ['失敗人數', '不顯示'],
+        ['傳送時間', '原訂的排程時間'],
+        ['列選單', 'View message、Send now（all channels）、Reschedule（all channels）、Duplicate、Delete（all channels）'],
+        ['面板', '狀態 Scheduled expired；Approval center 連結；內容與收件人'],
+      ]} pn="立即傳送與重新排程都套用到整則訊息，確認對話框會寫出受影響的通道。" />
+      <StatusSpec id="已駁回" s="rejected" tagDesc="核准人駁回，訊息不會送出。" shots={['st-rejected']} panel="detail-rejected" rows={[
+        ['收件人數', '照常顯示'],
+        ['失敗人數', '不顯示'],
+        ['傳送時間', '建立時間'],
+        ['列選單', 'View message、Edit and resubmit、Duplicate、Delete（all channels）'],
+        ['面板', '狀態 Rejected；Approval center 連結（駁回原因在那邊）；內容與收件人'],
+      ]} pn="駁回原因不在面板顯示，由 Approval center 提供。" />
+      <StatusSpec id="已排程" s="scheduled" tagDesc="核准完成（或不需要核准），等排程時間到。" shots={['st-scheduled']} panel="detail-scheduled" rows={[
+        ['收件人數', '照常顯示'],
+        ['失敗人數', '不顯示'],
+        ['傳送時間', '排程時間'],
+        ['列選單', 'View message、Edit message、Duplicate、Delete（all channels）'],
+        ['面板', '狀態 Scheduled；內容與收件人；沒有 Approval center 連結（不需要核准的訊息）'],
+      ]} pn="Device Notifications 與 Email 是同一則訊息的兩筆紀錄，狀態一樣，編輯時一起改。" />
+      <StatusSpec id="傳送中" s="progress" tagDesc="已經開始送；各通道各自進行，標籤是這一筆整體的狀態。" shots={['st-progress']} panel="detail-progress" rows={[
+        ['收件人數', '各通道人數'],
+        ['失敗人數', '送完才顯示'],
+        ['傳送時間', '建立時間或排程時間'],
+        ['列選單', 'View message、Duplicate to new message'],
+        ['面板', '狀態 In progress；Email 這種單一通道只有一個內容區塊；有 SMS 備援的，兩個區塊各有自己的狀態'],
+      ]} pn="有 SMS 備援時，Device Notifications 先送完、SMS 還在送，這一筆整體仍顯示 In progress。" />
+      <StatusSpec id="已送出" s="sent" tagDesc="這一筆已送完。可能有人沒收到，在狀態下方顯示失敗人數。" shots={['st-sent']} panel="detail-sent-fb" rows={[
+        ['收件人數', '各通道人數'],
+        ['失敗人數', <>狀態下方紅色連結「n failed」；沒有人失敗就不顯示。有 SMS 備援的，只算推播與 SMS 都沒送到的</>],
+        ['傳送時間', '建立時間或排程時間'],
+        ['列選單', 'View message、Duplicate to new message'],
+        ['面板', '狀態 Sent；有 SMS 備援的，兩區塊各寫「n / m delivered」'],
+      ]} pn="點「n failed」開失敗名單（見「對話框規格」）。" />
+      <StatusSpec id="傳送錯誤" s="error" tagDesc="整個通道沒有送出（例如平台中斷、郵件伺服器退件）。" shots={['st-error', 'st-mixed']} panel="detail-error" rows={[
+        ['收件人數', '各通道人數'],
+        ['失敗人數', '全部都失敗，顯示「n failed」；有 SMS 備援而其中一個傳送錯誤時，整體標籤是 Error'],
+        ['傳送時間', '建立時間'],
+        ['列選單', 'View message、Retry（all channels）、Duplicate'],
+        ['面板', '狀態 Error；內容與收件人'],
+      ]} pn="下方第二組是同一則訊息裡一個通道送出、另一個通道錯誤：每一筆各自顯示自己的狀態。" />
+    </>
+  )
+}
+
+// ---------- panel blocks ----------
+function Blocks() {
+  return (
+    <>
+      <Section eyebrow="Panel" title="面板的版面" lead="面板開在列表右側（設計系統 Aside），標題「Message content / 訊息內容」，右上角關閉，內容可捲動。區塊由上到下，區塊之間的距離是一般間距的兩倍，區塊內的標題與內容貼近。">
+        <Figure label="Device Notifications (SMS)" sub="所有區塊都出現的樣子" shot="detail-fb" max={440} notes={[
+          { n: 1, title: '標題列', body: <>標題 <C>Message content</C>；右上角關閉鈕（Esc 也能關）。</> },
+          { n: 2, title: '頂部：狀態與通道', body: '狀態標籤（這一筆整體的狀態）加通道圖示與名稱；有核准的訊息，下面一行 Approval center 連結。' },
+          { n: 3, title: '內容區塊', body: '區塊標題「Content」。有 SMS 備援時，裡面是兩個子區塊。' },
+          { n: 4, title: 'SMS 備援子區塊', body: '子標題、狀態、送達人數、簡訊內文、說明、申請理由。' },
+          { n: 5, title: '收件人區塊', body: '區塊標題「Audiences」，一張列表卡。' },
+        ]} />
+      </Section>
+      <Section eyebrow="Block 1" title="頂部：狀態、通道、Approval center 連結">
+        <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
+          ['狀態標籤', '這一筆整體的狀態，樣式同列表。'],
+          ['通道', '圖示加名稱，次要文字色。Device Notifications (SMS) 用手機圖示加名稱。'],
+          ['Approval center 連結', <>連結按鈕（sm），前面外連圖示，文字 <Copy en="See review progress in the Approval center" zh="到 Approval center 查看審核進度" />。出現條件：Device Notifications (SMS)，或這則訊息有核准紀錄。點了前往內部的 Approval center（prototype 只跳提示）。</>],
+          ['不放的東西', '標題（內文已有）、審核提示卡片、寄件人、模板、時間、建立者。'],
+        ]} />
+      </Section>
+      <Section eyebrow="Block 2" title="內容：各通道的格式" lead="內容框是白底、細框線、圓角、內距 12 的一塊，文字保留換行。">
+        <div className="spec-gallery">
+          <figure><figcaption><b>Email</b><span>「Subject:」一行（標籤中等粗細），下面是有格式的內文框（粗體、清單、連結），附件用檔案項目列出名稱與大小。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email 內容" max={420} /></div></figure>
+          <figure><figcaption><b>Device Notifications、Desktop OS</b><span>內容框：第一行寄件人（小字、次要色），第二行標題（中等粗細），其後內文。Desktop OS 若有自己的文字就用自己的。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="推播內容" max={420} /></div></figure>
+        </div>
+        <SpecTable head={['格式', '內容']} nowrap={[0]} rows={[
+          ['Device Notifications', '寄件人、標題、內文'],
+          ['SMS 備援', '簡訊內文（沒有標題）'],
+          ['Desktop OS', '寄件人、標題、內文（可以和 Device Notifications 不同）'],
+          ['Email', '主旨、內文（有格式）、附件；模式為「同上」時用標題與內文'],
+        ]} />
+      </Section>
+      <Section eyebrow="Block 3" title="Device Notifications 與 SMS 備援子區塊" lead="只有 Device Notifications (SMS) 才有。沒勾 SMS 備援的紀錄，內容區塊直接就是一個內容框，沒有子標題。">
+        <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
+          ['子標題列', '一行：子標題（中等粗細）、狀態標籤、送達人數，可換行。'],
+          ['送達人數', <>只有送完（已送出或傳送錯誤）才顯示 <Copy en="133 / 142 delivered" zh="133 / 142 已送達" />。</>],
+          ['SMS 人數未定', <>Device Notifications 還沒送完時，SMS 不知道要寄給幾個人，寫 <Copy en="Number known once Device Notifications finishes" zh="等 Device Notifications 送完才知道人數" />。</>],
+          ['說明', '「Sent to the people Device Notifications couldn’t reach, and to external phones.」小字、次要色。'],
+          ['申請 SMS 的理由', '標籤小字「Why SMS was requested」，下面是理由全文（保留換行）。目前發送流程還沒有收集，範例資料是先填好的。'],
+        ]} />
+      </Section>
+      <Section eyebrow="Block 4" title="收件人" lead="這個通道實際寄得到的收件人，一人（組）一列，排序固定：組織、群組、個人、外部聯絡人。">
+        <Figure label="混合的收件人" sub="組織、群組、個人、外部" shot="detail-mixed" max={420} notes={[
+          { n: 1, title: '列的結構', body: '前面圖示或頭像、名稱（中等粗細）、下方一行說明（次要小字）；組織與群組在右側有人數連結，點了開成員對話框。' },
+        ]} />
+        <SpecTable head={['類型', '圖示', '名稱', '說明', '右側']} nowrap={[0]} rows={[
+          ['組織', '大樓', '組織代碼', 'Org · 組織名稱', <>人數連結 <C>21 people</C></>],
+          ['群組', '通訊錄', '群組名稱', 'Audience group', '人數連結'],
+          ['個人', '頭像', '中文名 英文名', '工號 · 組織', '—'],
+          ['外部 Email', '地球', '電子郵件', 'External email · Email only', '—'],
+          ['外部電話', '電話', '電話號碼', 'External phone · SMS only', '—'],
+        ]} />
+        <Notes items={[{ title: '依通道過濾', body: '外部 Email 只出現在 Email 那一筆；外部電話只出現在 Device Notifications (SMS)。' }]} />
+      </Section>
+    </>
+  )
+}
+
+// ---------- every modal ----------
+function Modals() {
+  return (
+    <>
+      <Section eyebrow="Overview" title="對話框一覽" lead="全部使用設計系統的 Dialog：標題、可選的說明、內容、右下角按鈕（取消在左、主要動作在右）。點遮罩、按 Esc 或右上角關閉鈕都等於取消。">
+        <SpecTable head={['對話框', '從哪裡開', '寬度', '主要動作']} nowrap={[0]} rows={[
+          ['失敗的收件人', '狀態下方「n failed」', '760', 'Resend to n on 通道（有失敗的訊息）；Retry（傳送錯誤）'],
+          ['刪除', '列選單 Delete', '480', 'Delete（紅色）'],
+          ['立即傳送', '列選單 Send now', '480', 'Send now'],
+          ['重新排程', '列選單 Reschedule', '480', 'Reschedule'],
+          ['成員', '面板中群組或組織的人數連結', '640', '（無，只有關閉）'],
+        ]} />
+      </Section>
+      <Section eyebrow="Failed" title="失敗的收件人">
+        <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
+          { n: 1, title: '標題與說明', body: <><Copy en="Failed audience members" zh="傳送失敗的收件人" />；說明：通道名稱 · 失敗人數 / 收件人數。</> },
+          { n: 2, title: '表格', body: '高 380，欄：Audience 260（頭像、姓名、工號 · NT）、Org 110、Reason 300（兩行：推播失敗原因、SMS 失敗原因）。外部聯絡人用地球圖示。' },
+          { n: 3, title: '重寄', body: <><C>Resend to n on 通道</C>，進發送流程，收件人換成這些人，通道照這一筆。</> },
         ]} />
         <div className="spec-gallery">
-          <figure><figcaption><b>刪除</b><span>寫明會影響幾個通道，確認後整則訊息的紀錄一起移除。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delete" alt="刪除" max={520} /></div></figure>
-          <figure><figcaption><b>立即傳送</b><span>排程已過期的訊息；整則訊息一起送出。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
-          <figure><figcaption><b>重新排程</b><span>只改時間，不用重新核准；整則訊息一起改。</span></figcaption><div className="spec-canvas"><Shot name="dlg-reschedule" alt="重新排程" max={520} /></div></figure>
+          <figure><figcaption><b>沒有 SMS 備援（Email）</b><span>Reason 只有一行。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 失敗名單" /></div></figure>
+          <figure><figcaption><b>傳送錯誤的訊息</b><span>上方多一張錯誤提示卡（原因與建議），按鈕改成 Retry，重新送出整則訊息。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
+      </Section>
+      <Section eyebrow="Confirm" title="刪除與立即傳送" lead="確認對話框：寬 480，標題、一段說明、兩個按鈕。說明寫明會影響哪些通道。">
+        <div className="spec-gallery">
+          <figure><figcaption><b>刪除</b><span>按鈕 Keep（取消）與 Delete（紅色主要）。訊息有兩個以上通道時，列出每個通道，並說明這些紀錄會一起移除。無法復原。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delete" alt="刪除" max={520} /></div></figure>
+          <figure><figcaption><b>立即傳送</b><span>只有排程已過期的訊息。按鈕 Not now 與 Send now。說明：馬上送出、不等原訂時間，已經核准；多通道時列出通道。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
+        </div>
+        <SpecTable head={['對話框', '標題', '取消', '確認']} nowrap={[0]} rows={[
+          ['刪除', <Copy en="Delete this message?" zh="要刪除這則訊息嗎？" />, <Copy en="Keep" zh="保留" />, <Copy en="Delete" zh="刪除" />],
+          ['立即傳送', <Copy en="Send it now?" zh="要立即傳送嗎？" />, <Copy en="Not now" zh="先不要" />, <Copy en="Send now" zh="立即傳送" />],
+        ]} />
+      </Section>
+      <Section eyebrow="Reschedule" title="重新排程">
+        <div className="spec-gallery">
+          <figure><figcaption><b>預設</b><span>日期時間欄位必填，預設是隔天 09:00，下面是提示：「Sends … / Taipei time (GMT+8), up to 30 days ahead」。</span></figcaption><div className="spec-canvas"><Shot name="dlg-reschedule" alt="重新排程" max={520} /></div></figure>
+          <figure><figcaption><b>驗證錯誤</b><span>按下 Reschedule 才檢查；錯誤顯示在欄位下方，欄位變紅框。</span></figcaption><div className="spec-canvas"><Shot name="dlg-reschedule-error" alt="重新排程錯誤" max={520} /></div></figure>
+        </div>
+        <SpecTable head={['情況', '錯誤文案']} nowrap={[0]} rows={[
+          ['沒有選日期時間', <Copy en="Pick a date and time." zh="請選擇日期和時間。" />],
+          ['早於現在 + 10 分鐘', <Copy en="Pick a time at least 10 minutes from now." zh="請選 10 分鐘以後的時間。" />],
+          ['超過 30 天', <Copy en="Pick a time within 30 days." zh="最多只能排 30 天內。" />],
+        ]} />
+        <Notes items={[{ title: '不用重新核准', body: '核准仍然有效，只改時間；整則訊息的所有通道一起改。完成後提示一行「Rescheduled for …」。' }]} />
+      </Section>
+      <Section eyebrow="Members" title="成員">
+        <Figure label="組織成員" sub="寬 640" shot="dlg-members" max={640} notes={[
+          { n: 1, title: '標題與說明', body: '標題是組織或群組名稱；說明：類型 · 人數。' },
+          { n: 2, title: '搜尋', body: '小尺寸搜尋框，寬 72；組織搜姓名、NT 帳號、工號；群組另外搜 Email 與電話。找不到時顯示空狀態「No matching members」。' },
+          { n: 3, title: '表格', body: '組織：Name 280、Employee ID 130、NT account 130。群組：Name 280、Added by 260（加入方式與類型）。' },
+        ]} />
+        <div className="spec-gallery"><figure><figcaption><b>群組成員</b><span>多一欄「Added by」，說明這個人是用 NT 帳號、Email、手機號碼或工號加進群組的。</span></figcaption><div className="spec-canvas"><Shot name="dlg-members-group" alt="群組成員" max={640} /></div></figure></div>
       </Section>
     </>
   )

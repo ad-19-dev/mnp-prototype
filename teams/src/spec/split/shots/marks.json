@@ -228,5 +228,116 @@
   "w": 504,
   "h": 274,
   "marks": []
+ },
+ "st-pending": {
+  "w": 1330,
+  "h": 74,
+  "marks": []
+ },
+ "st-expired": {
+  "w": 1330,
+  "h": 74,
+  "marks": []
+ },
+ "st-rejected": {
+  "w": 1330,
+  "h": 74,
+  "marks": []
+ },
+ "st-scheduled": {
+  "w": 1330,
+  "h": 128,
+  "marks": []
+ },
+ "st-progress": {
+  "w": 1330,
+  "h": 128,
+  "marks": []
+ },
+ "st-sent": {
+  "w": 1330,
+  "h": 139,
+  "marks": []
+ },
+ "st-error": {
+  "w": 1330,
+  "h": 139,
+  "marks": []
+ },
+ "st-mixed": {
+  "w": 1330,
+  "h": 134,
+  "marks": []
+ },
+ "detail-expired": {
+  "w": 480,
+  "h": 649,
+  "marks": []
+ },
+ "detail-rejected": {
+  "w": 480,
+  "h": 670,
+  "marks": []
+ },
+ "detail-scheduled": {
+  "w": 480,
+  "h": 406,
+  "marks": []
+ },
+ "detail-progress": {
+  "w": 480,
+  "h": 671,
+  "marks": []
+ },
+ "detail-error": {
+  "w": 480,
+  "h": 591,
+  "marks": []
+ },
+ "detail-sent-fb": {
+  "w": 480,
+  "h": 876,
+  "marks": []
+ },
+ "dlg-members": {
+  "w": 664,
+  "h": 582,
+  "marks": [
+   {
+    "n": 1,
+    "x": 4.37,
+    "y": 4.3
+   },
+   {
+    "n": 2,
+    "x": 9.94,
+    "y": 17.61
+   },
+   {
+    "n": 3,
+    "x": 4.52,
+    "y": 24.14
+   }
+  ]
+ },
+ "dlg-members-group": {
+  "w": 664,
+  "h": 582,
+  "marks": []
+ },
+ "dlg-fail-email": {
+  "w": 784,
+  "h": 313,
+  "marks": []
+ },
+ "dlg-fail-error": {
+  "w": 784,
+  "h": 558,
+  "marks": []
+ },
+ "dlg-reschedule-error": {
+  "w": 504,
+  "h": 274,
+  "marks": []
  }
 }
