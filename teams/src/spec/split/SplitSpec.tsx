@@ -161,8 +161,8 @@ function ListTab() {
     <>
       <Section eyebrow="Page" title="列表" lead="一列一個通道的紀錄。頁首、搜尋與篩選、表格、分頁，與原本的訊息列表相同；差別在於資料單位是「紀錄」而不是「訊息」。">
         <Figure label="個人發送空間" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
-          { n: 1, title: '通道', body: <>只顯示圖示，滑過會顯示通道名稱；Device Notifications (SMS) 顯示兩個圖示（手機、簡訊）。篩選 <C>Channel</C>。</> },
-          { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開面板）加一行內文，截斷。Email 顯示主旨與內文；Desktop OS 顯示桌面通知自己的文字；Device Notifications (SMS) 顯示 Device Notifications 的文字（SMS 文字在面板裡）。緊急送出的有「Urgent」標籤。標題與內文被截斷時不顯示滑過提示（長內文、圖片、表格放不進提示框）。</> },
+          { n: 1, title: '通道', body: <>只顯示圖示，滑過會顯示通道名稱；Device Notifications (SMS) 顯示兩個圖示（手機、簡訊），都是一般的灰色。篩選 <C>Channel</C>。</> },
+          { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開面板）加一行內文，截斷。Email 顯示主旨與內文；Desktop OS 顯示桌面通知自己的文字；Device Notifications (SMS) 顯示 Device Notifications 的文字（SMS 文字在面板裡）。緊急送出的有「Urgent」標籤（純文字，沒有圖示）。標題與內文被截斷時不顯示滑過提示（長內文、圖片、表格放不進提示框）。</> },
           { n: 3, title: '狀態', body: '每一筆各自的狀態，見「狀態與合併規則」。' },
           { n: 4, title: '收件人數', body: <>數字齊右（表頭也齊右）。只放這個通道要寄給多少人，不放已送達。<C>Device Notifications (SMS)</C> 的數字是 Device Notifications 的收件人數。可排序。</> },
           { n: 5, title: '{n} 人失敗', body: <>紅色連結，放在狀態標籤下方，點了開失敗名單。有 SMS 備援的，只算 SMS 也沒送到的人。</> },
@@ -416,7 +416,7 @@ function Blocks() {
       <Section eyebrow="Block 1" title="頂部：通道與審核">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['通道', '圖示加名稱（中等粗細）。Device Notifications (SMS) 用手機圖示加名稱。面板頂部不放狀態，狀態看列表。'],
-          ['緊急原因', '緊急送出（略過 SMS 核准）的才有：標籤小字「Urgent reason / 緊急原因」，下面是原因全文，放在 Approval center 連結正上方。一般訊息只有連結。'],
+          ['緊急原因', '緊急送出（略過 SMS 核准）的訊息才有，這則訊息的每一筆紀錄（含 Email）都顯示：標籤小字「Urgent reason / 緊急原因」，下面是原因全文，放在 Approval center 連結正上方。一般訊息只有連結。'],
           ['Approval center 連結', <>連結按鈕（sm），前面外連圖示，文字 <Copy en="View in Approval center" zh="到 Approval center 查看" />。出現條件：Device Notifications (SMS)，或這則訊息有核准紀錄。點了前往內部的 Approval center（prototype 只跳提示）。</>],
           ['不放的東西', '標題（內文已有）、審核提示卡片、寄件人、模板、時間、建立者。'],
         ]} />
@@ -525,6 +525,7 @@ function Data() {
         ['混合收件人', '個人「Design review with Northwind Studio」；Platform Ops「tWorkspace 5.2 is live」；Fab 18「Water shutdown」；ESH「Chemical delivery」；UX Team「Usability study invitation」（組織、群組、個人、外部聯絡人）'],
         ['有 SMS 備援與失敗人數', '個人「Design review…」：Device Notifications 失敗 4 人，SMS 補寄後仍有 1 人失敗'],
         ['待核准、已駁回、排程過期', '個人「Project Atlas demo」、「Reminder: badge photo update」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
+        ['緊急送出（七種狀態）', '個人空間「Parking lot A closed…」（待核准）、「Badge reader outage…」（排程已過期）、「Fire drill moved…」（已駁回）、「Network maintenance tonight…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out of service…」（已送出）、「Power dip in Building C…」（傳送錯誤）；點開面板都看得到寄件人當初填的緊急原因。'],
         ['傳送錯誤', '個人「On-call swap」；Fab 18「Shift handover…」；UX Team「Reminder: send design review topics」'],
       ]} />
     </Section>

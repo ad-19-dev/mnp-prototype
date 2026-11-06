@@ -10,7 +10,7 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Trash2 } from 'lucide-react'
 import {
   CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
@@ -91,7 +91,7 @@ function ChCell({ k }: { k: Channel }) {
     <Tip text={chName(k)}>
       <span tabIndex={0} aria-label={chName(k)} className="inline-flex items-center gap-1 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
         <Tag size="sm" color="neutral" icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
-        {k === 'sms' ? <Tag size="sm" color="amber" icon={CHN.sms.icon} aria-hidden className="[&_[data-tag-text]]:hidden" /> : null}
+        {k === 'sms' ? <Tag size="sm" color="neutral" icon={CHN.sms.icon} aria-hidden className="[&_[data-tag-text]]:hidden" /> : null}
       </span>
     </Tip>
   )
@@ -264,7 +264,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       return (
         <span className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
-            {ICSD && x.r.bypass ? <Tip text={L('Urgent: sent without SMS approval', '緊急發送：略過 SMS 核准')}><span tabIndex={0} className="inline-flex shrink-0 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="amber" icon={Siren}>{L('Urgent', '緊急')}</Tag></span></Tip> : null}
+            {ICSD && x.r.bypass ? <Tip text={L('Urgent: sent without SMS approval', '緊急發送：略過 SMS 核准')}><span tabIndex={0} className="inline-flex shrink-0 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="amber">{L('Urgent', '緊急')}</Tag></span></Tip> : null}
             <Trunc tip={false} text={t.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: x.id })} />
           </span>
           {text ? <Trunc tip={false} text={text} className="text-caption text-fg-secondary" /> : null}
@@ -364,7 +364,7 @@ function Item({ value, title, part, children }: { value: string; title: string; 
 
 function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
   const app = useApp(), r = x.r, k = x.k, I = CHN[k === 'sms' ? 'push' : k].icon
-  const tags = tagsFor(r, k), approval = (ICSD && k === 'sms') || !!r.review
+  const tags = tagsFor(r, k), urgent = ICSD && !!r.bypass, approval = (ICSD && k === 'sms') || !!r.review || urgent
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
@@ -373,7 +373,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
           <span className="flex items-center gap-2 text-body font-medium"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span>
           {approval ? (
             <div className="flex flex-col gap-1.5">
-              {ICSD && r.bypass && k === 'sms' ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Urgent reason', '緊急原因')}</span><span className="whitespace-pre-wrap text-body">{r.bypass.reason}</span></div> : null}
+              {urgent && r.bypass ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Urgent reason', '緊急原因')}</span><span className="whitespace-pre-wrap text-body">{r.bypass.reason}</span></div> : null}
               <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('View in Approval center', '到 Approval center 查看')}</Button>
             </div>
           ) : null}

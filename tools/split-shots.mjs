@@ -45,6 +45,9 @@ const space = async n => { await p.getByRole('button', { name: n, exact: true })
 const row = (text, nth = 0) => main.locator('[role="row"]').filter({ hasText: text }).nth(nth);
 // the row actions sit in their own column outside the row, so find them by their label
 const openRowMenu = async text => { await main.getByRole('button', { name: new RegExp('^Actions for .*' + text) }).first().click(); await wait(350) };
+// bring a message to the top of the list (the list is longer than the window)
+const find = async text => { await main.getByPlaceholder(/Search title/).fill(text); await wait(500) };
+const unfind = async () => { await main.getByPlaceholder(/Search title/).fill(''); await wait(400) };
 const closeAside = async () => { await aside().getByRole('button', { name: 'Close' }).first().click().catch(() => {}); await wait(300) };
 // a detail panel, cut just below its last section
 // open: unfold the content accordion first (it is folded by default)
@@ -75,6 +78,7 @@ await step('list', async () => {
   ]);
 });
 await step('group', async () => {
+  await find('Design review');
   const a = row('Design review', 0), c = row('Design review', 1);
   await shot('group', [a, c], [
     [1, a.locator('[role="cell"]').nth(0), 'tl'],
@@ -83,14 +87,19 @@ await step('group', async () => {
     [4, a.locator('[role="cell"]').nth(4), 'tl'],
     [5, c.locator('[role="cell"]').nth(5), 'tl'],
   ], 10);
+  await unfind();
 });
 await step('rows-progress', async () => {
+  await find('Fire alarm');
   const a = row('Fire alarm', 0), c = row('Fire alarm', 1);
   await shot('rows-progress', [a, c], [], 10);
+  await unfind();
 });
 await step('rows-nofb', async () => {
+  await find('Team lunch on Fri');
   const a = row('Team lunch on Fri', 0), c = row('Team lunch on Fri', 1);
   await shot('rows-nofb', [a, c], [], 10);
+  await unfind();
 });
 await step('status-menu', async () => {
   await main.getByRole('button', { name: /^Status/ }).first().click(); await wait(400);
@@ -120,11 +129,13 @@ await step('empty', async () => {
 // ---- row menus
 const menuShot = async (name, text, nth = 0) => {
   await step(name, async () => {
+    await find(text);
     await openRowMenu(text);
     const r = row(text, nth), rb = await r.boundingBox(), mb = await p.getByRole('menu').boundingBox();
     const x = Math.min(rb.x, mb.x - 700), y = rb.y - 8;
     await shot(name, { x: Math.max(0, x), y, width: Math.max(rb.x + rb.width, mb.x + mb.width) - Math.max(0, x) + 8, height: Math.max(mb.y + mb.height, rb.y + rb.height) - y + 12 });
     await p.keyboard.press('Escape'); await wait(250);
+    await unfind();
   });
 };
 await menuShot('menu-sent', 'Team lunch moves to 12:30');
@@ -213,8 +224,11 @@ await step('rows', async () => {
 // ---- one detail per status
 const detail = async (name, text, title, list = []) => {
   await step(name, async () => {
+    // search first so the message is at the top of the list, in view
+    await main.getByPlaceholder(/Search title/).fill(text); await wait(500);
     await row(text, 0).getByText(title).first().click(); await wait(800);
     await panel(name, list); await closeAside();
+    await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
   });
 };
 await detail('detail-expired', 'UX sync moves', 'UX sync moves to Tue');
@@ -257,9 +271,11 @@ await step('dlg-fail-email', async () => {
   await p.keyboard.press('Escape'); await wait(300);
 });
 await step('dlg-fail-error', async () => {
-  await main.getByRole('button', { name: /^4 failed$/ }).last().click(); await wait(800);
+  await main.getByPlaceholder(/Search title/).fill('On-call swap'); await wait(500);
+  await main.getByRole('button', { name: /^4 failed$/ }).first().click(); await wait(800);
   await shot('dlg-fail-error', p.getByRole('dialog'), [], 12);
   await p.keyboard.press('Escape'); await wait(300);
+  await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
 });
 // ---- reschedule with a time in the past
 await step('dlg-reschedule-error', async () => {
