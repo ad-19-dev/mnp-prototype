@@ -10,12 +10,12 @@ import {
   Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
 import {
   CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
-import { useApp } from '../../lib/store'
+import { flash, useApp } from '../../lib/store'
 import { Banner, CHN, ChIcons, FilterMenu, NO_HIDE, PAvatar, PageSize, StatusTag, Tip, Trunc, Two } from '../../components/ui'
 import { ShellAside } from '../../components/shell'
 import { L, tx } from '../../lib/i18n'
@@ -25,24 +25,40 @@ import './split.css'
 import { AudienceList, ChannelText, Part, failCols, reviewer } from './Detail'
 
 // ---------- records ----------
-// unk: SMS fallback whose count isn't known yet (it depends on whom Device Notifications misses)
-// st: this channel's own status (the message's, except while it sends: a channel that has finished is Sent)
-export interface Rec { id: string; r: Row; k: Channel; ok: number; of: number; unk?: boolean; st: Status }
+// One record per channel of a message. SMS fallback isn't a record of its own: a message sent with it is one
+// "Device Notifications (SMS)" record (k = 'sms'), a message without it a "Device Notifications" record (k = 'push').
+// Either way the record holds the Device Notifications numbers (ok / of / unk / pst) and, when SMS fallback was on,
+// the fallback's own (fb). st is the one status the list shows for the record.
+export interface Part { ok: number; of: number; unk?: boolean; st: Status }
+// pst: Device Notifications' own status (st also counts the fallback)
+export interface Rec extends Part { id: string; r: Row; k: Channel; fb?: Part; pst: Status }
 const recId = (r: Row, k: Channel) => r.id + '~' + k
-// a message's records in order: SMS fallback right under Device Notifications, the channel it backs up
+// the channels as records, in order: Device Notifications (with or without SMS), Desktop OS, Email
 export const REC_ORDER: Channel[] = ['push', 'sms', 'desktop', 'email']
+export const recKinds = (r: Row): Channel[] => REC_ORDER.filter(k => (k === 'push' ? r.channels.indexOf('push') >= 0 && !r.sms : k === 'sms' ? !!r.sms : r.channels.indexOf(k) >= 0))
 export function recordsOf(m: SendCtl, rows: Row[]): Rec[] {
   const out: Rec[] = []
-  rows.forEach(r => m.chStats(r).slice().sort((a, b) => REC_ORDER.indexOf(a.k) - REC_ORDER.indexOf(b.k)).forEach(x => {
-    const rec: Rec = { id: recId(r, x.k), r, k: x.k, ok: x.ok, of: x.of, st: r.status }
-    // SMS without its own numbers: known only once Device Notifications has finished
-    if (x.k === 'sms' && !(r.byCh && r.byCh.sms)) {
-      if (r.status === 'sent') { rec.of = Math.max(0, r.total - r.ok); rec.ok = rec.of } else { rec.unk = true; rec.ok = 0; rec.of = 0 }
+  rows.forEach(r => {
+    const part = (k: Channel): Part | null => {
+      const x = m.chStats(r).find(y => y.k === k)
+      if (!x) return null
+      const p: Part = { ok: x.ok, of: x.of, st: r.status }
+      // SMS without its own numbers: known only once Device Notifications has finished
+      if (k === 'sms' && !(r.byCh && r.byCh.sms)) {
+        if (r.status === 'sent') { p.of = Math.max(0, r.total - r.ok); p.ok = p.of } else { p.unk = true; p.ok = 0; p.of = 0 }
+      }
+      if (r.chSt && r.chSt[k]) p.st = r.chSt[k]!
+      else if (r.status === 'progress' && !p.unk && k !== 'sms' && p.ok >= p.of) p.st = 'sent'
+      return p
     }
-    if (r.chSt && r.chSt[x.k]) rec.st = r.chSt[x.k]!
-    else if (r.status === 'progress' && !rec.unk && x.k !== 'sms' && rec.ok >= rec.of) rec.st = 'sent'
-    out.push(rec)
-  }))
+    recKinds(r).forEach(k => {
+      const main = part(k === 'sms' ? 'push' : k) || { ok: 0, of: 0, st: r.status } as Part, fb = k === 'sms' ? part('sms') || undefined : undefined
+      const all = fb ? [main, fb] : [main]
+      // one status for the record: still sending if either part is, failed if either failed, else Device Notifications' own
+      const st: Status = all.some(x => x.st === 'progress') ? 'progress' : all.some(x => x.st === 'error') ? 'error' : main.st
+      out.push({ id: recId(r, k), r, k, ok: main.ok, of: main.of, unk: main.unk, st, fb, pst: main.st })
+    })
+  })
   return out
 }
 // a record from its id ("m154~email"); a bare message id opens its first channel
@@ -53,38 +69,39 @@ export function recordById(m: SendCtl, rows: Row[], id: string | null): Rec | nu
   const all = recordsOf(m, [r])
   return all.find(x => x.k === k) || all[0] || null
 }
-// SMS goes only to the people Device Notifications missed (and to external phones), so before the message goes
-// out nobody knows how many it will be
-const failsOf = (x: Rec) => (!x.unk && (x.st === 'sent' || x.st === 'error') ? Math.max(0, x.of - x.ok) : 0)
-export const chName = (k: Channel) => (k === 'sms' ? L('SMS fallback', 'SMS 備援') : CHN[k].name)
+// People it failed for: with SMS fallback, only those SMS didn't reach either (it goes to everyone Device Notifications missed)
+const done = (st: Status) => st === 'sent' || st === 'error'
+const failsOf = (x: Rec) => (x.fb ? (!x.fb.unk && done(x.st) ? Math.max(0, x.fb.of - x.fb.ok) : 0) : !x.unk && done(x.st) ? Math.max(0, x.of - x.ok) : 0)
+export const chName = (k: Channel) => CHN[k].name
 
 // the channel's own words: Desktop OS has its own text; Email its subject and body; SMS has no title
 export function recText(r: Row, k: Channel) {
-  if (k === 'sms') return { title: r.smsText || r.content, content: '' }
+  // "Device Notifications (SMS)" shows the Device Notifications text; the SMS text is in its details
   if (k === 'email' && r.email && r.email.mode === 'own') return { title: r.email.subject || r.title, content: htmlToText(r.email.html) || r.content }
   if (k === 'desktop' && r.desk) return { title: r.desk.title, content: r.desk.content }
   return { title: r.title, content: r.content }
 }
 // only Device Notifications and Desktop OS carry a sender name
-const recSender = (r: Row, k: Channel) => (k === 'push' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
+const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
 
-// under: an SMS fallback row right under its Device Notifications row, indented with ↳ to show it hangs off it
-function ChCell({ k, under }: { k: Channel; under?: boolean }) {
-  const I = CHN[k].icon
+function ChCell({ k }: { k: Channel }) {
+  const I = CHN[k === 'sms' ? 'push' : k].icon
   return (
     <span className="flex min-w-0 items-center gap-2">
-      {under ? <CornerDownRight className="size-4 shrink-0 text-fg-muted" aria-label={L('Fallback for Device Notifications:', 'Device Notifications 的備援：')} /> : null}
-      <Tag size="sm" color={k === 'sms' ? 'amber' : 'neutral'} icon={I} aria-hidden className="shrink-0 [&_[data-tag-text]]:hidden" />
+      <span className="inline-flex shrink-0 items-center gap-1">
+        <Tag size="sm" color="neutral" icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
+        {k === 'sms' ? <Tag size="sm" color="amber" icon={CHN.sms.icon} aria-hidden className="[&_[data-tag-text]]:hidden" /> : null}
+      </span>
       <Trunc text={chName(k)} />
     </span>
   )
 }
 
 // ---------- whole-message actions, worded for every channel ----------
-const chList = (r: Row) => rowChs(r).map(chName).join(L(', ', '、'))
-const allNote = (r: Row) => (rowChs(r).length > 1 ? L(' This applies to all ' + rowChs(r).length + ' channels: ' + chList(r) + '.', '會套用到全部 ' + rowChs(r).length + ' 個通道：' + chList(r) + '。') : '')
+const chList = (r: Row) => recKinds(r).map(chName).join(L(', ', '、'))
+const allNote = (r: Row) => (recKinds(r).length > 1 ? L(' This applies to all ' + recKinds(r).length + ' channels: ' + chList(r) + '.', '會套用到全部 ' + recKinds(r).length + ' 個通道：' + chList(r) + '。') : '')
 function askDelete(m: SendCtl, r: Row) {
-  const n = rowChs(r).length
+  const n = recKinds(r).length
   m.set({ cf: { title: L('Delete this message?', '要刪除這則訊息嗎？'), text: L('“' + r.title + '” won’t be sent' + (n > 1 ? ' on any of its ' + n + ' channels (' + chList(r) + ')' : '') + ', and ' + (n > 1 ? 'its ' + n + ' records are' : 'it’s') + ' removed from the list. This can’t be undone.', '「' + r.title + '」' + (n > 1 ? '的 ' + n + ' 個通道（' + chList(r) + '）都' : '') + '不會送出，' + (n > 1 ? '這 ' + n + ' 筆紀錄' : '') + '也會從列表移除，無法復原。'), icon: Trash2, tone: 'err', cancel: L('Keep', '保留'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteRow(r.id) } })
 }
 function askSendNow(m: SendCtl, r: Row) {
@@ -93,7 +110,7 @@ function askSendNow(m: SendCtl, r: Row) {
 
 // lite: a channel row under its message row, where the message row holds the whole-message actions
 function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
-  const r = x.r, many = rowChs(r).length > 1
+  const r = x.r, many = recKinds(r).length > 1
   // "(all channels)" on the actions that change the whole message, so nobody expects them to touch one row
   const all = many ? L(' (all channels)', '（所有通道）') : ''
   return (
@@ -165,7 +182,7 @@ function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
   if (!s) return list
   const key = (x: Rec): string | number => s.id === 'sender' ? recSender(x.r, x.k).toLowerCase() : s.id === 'tpl' ? m.tplName(x.r.tpl).toLowerCase() : s.id === 'aud' ? x.of
-    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? x.r.sched || '' : ''
+    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? x.r.sched || x.r.created : ''
   const out = list.slice().sort((a, b) => { const p = key(a), q = key(b); return p < q ? -1 : p > q ? 1 : 0 })
   return s.desc ? out.reverse() : out
 }
@@ -215,7 +232,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const fOn = s.fs.length > 0 || s.fch.length > 0, fN = s.fs.length + s.fch.length
   const flip = <K,>(list: K[], k: K) => (list.indexOf(k) >= 0 ? list.filter(x => x !== k) : list.concat([k]))
   const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.st === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.st === k).length }))
-  const chOpts = CH_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
+  const chOpts = REC_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k === 'sms' ? 'push' : k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
 
   // the cells every record of a message shares: once per message when merged, on the message row with a header
   const shared = (g: GRow) => (hdrs ? !!g.hdr || g.n === 1 : group === 'merge' ? g.pos === 'solo' || g.pos === 'first' : true)
@@ -234,7 +251,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
           <ChIcons list={rowChs(g.r)} />
         </span>
       )
-      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} under={g.k === 'sms' && (g.pos === 'mid' || g.pos === 'last')} /></span>
+      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} /></span>
     } }),
     col.display({ id: 'title', header: L('Title / Content', '標題 / 內容'), meta: { width: 380 }, cell: i => {
       const x = i.row.original, t = recText(x.r, x.k), text = t.content.replace(/\s+/g, ' ')
@@ -259,7 +276,8 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.display({ id: 'aud', header: L('Audience', '收件人數'), enableSorting: true, meta: { width: 140, align: 'right' }, cell: i => i.row.original.hdr ? null : <AudienceN x={i.row.original} /> }),
     col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    col.accessor(x => x.r.sched, { id: 'sched', header: L('Scheduled', '排程時間'), meta: { width: 130 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    // send now goes out at its created time, so it never shows a dash here
+    col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 130 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     ...(app.space === 'me' ? [] : [col.accessor(x => x.r.creator, { id: 'creator', header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { if (!shared(i.row.original)) return null; const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs])
 
@@ -317,96 +335,79 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
 }
 
 // ---------- details of one record ----------
-// the audiences that apply to this channel: external phones only get SMS, external emails only Email
+// the audiences that apply to this record: external phones only get SMS (so only on "Device Notifications (SMS)"), external emails only Email
 const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
 
-// What the panel adds to the row it opens from: the channel's full content (title included, so no heading repeats it), whom it went to, the approval story
-// and the message's other channels. What the row already shows (sender, template, created, scheduled, creator,
-// delivered / audience, failed) isn't repeated.
+// What the panel adds to the row it opens from: the channel's full content, whom it went to, and where the
+// approval stands (a link to the Approval center). With SMS fallback the panel has two blocks, Device
+// Notifications and SMS fallback, each with its own send status. What the row shows (sender, template, times,
+// creator, audience count) isn't repeated, and there are no actions here: those are in the row's menu.
 export function SplitDetailSheet({ m }: { m: SendCtl }) {
   const app = useApp(), x = recordById(m, app.rows, m.s.det)
   if (!x) return null
   return <ShellAside title={L('Message content', '訊息內容')} onClose={() => m.set({ det: null })}><SplitDetail m={m} x={x} /></ShellAside>
 }
 
-function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
-  const app = useApp(), r = x.r, k = x.k
-  const sibs = recordsOf(m, [r]).filter(y => y.k !== k), I = CHN[k].icon
-  const tags = tagsFor(r, k), went = r.status === 'sent' || r.status === 'progress' || r.status === 'error'
+// one block of the content: a heading, the send status with its numbers, and what was sent
+function Block({ title, part, children, head }: { title: string; part?: Part & { fails?: number }; children: React.ReactNode; head?: boolean }) {
   return (
-    <div className="flex min-h-full flex-col">
-      <div className="flex flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
-        <div className="flex flex-col gap-[var(--layout-space-loose)]">
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2"><StatusTag s={x.st} /><span className="flex items-center gap-1.5 text-body text-fg-secondary"><I className="size-4" aria-hidden />{chName(k)}</span></div>
-            {/* the approval, once it's done: the only "when" the row can't show */}
-            {went && r.review && r.review.at ? <span className="text-caption text-fg-secondary">{r.sched ? L('Approved by ' + reviewer(r) + ' on ' + r.review.at + ', sent at its scheduled time', reviewer(r) + '於 ' + r.review.at + ' 核准，依排程時間送出') : L('Approved by ' + reviewer(r) + ' on ' + r.review.at + ', sent right after', reviewer(r) + '於 ' + r.review.at + ' 核准後立即送出')}</span> : null}
-          </div>
-          {r.status === 'pending' ? <Banner tone="info" title={L('Waiting for approval from ' + reviewer(r), '等待' + reviewer(r) + '核准')}>{(r.sched ? L('Sends at ' + r.sched + ' if it’s approved by then.', '核准後會在 ' + r.sched + ' 送出。') : L('Sends as soon as it’s approved.', '核准後立即送出。')) + (sibs.length ? L(' Every channel of this message waits for the approval.', '這則訊息的所有通道都會等核准後一起送出。') : '')}</Banner> : null}
-          {r.status === 'expired' ? <Banner tone="warning" title={L('Approved after its scheduled time', '核准時已過排程時間')}>{L(reviewer(r) + ' approved it on ' + (r.review?.at || '') + ', after the scheduled ' + r.sched + ', so it wasn’t sent. Send it now, pick a new time, or delete it.', reviewer(r) + '於 ' + (r.review?.at || '') + ' 核准，已超過原訂的 ' + r.sched + '，所以沒有送出。可以立即傳送、重新排程或刪除。') + allNote(r)}</Banner> : null}
-          {r.status === 'rejected' ? <Banner tone="error" title={L('Rejected by ' + reviewer(r), reviewer(r) + '駁回')}>{L((r.review?.at ? r.review.at + '. ' : '') + 'Reason: ' + (r.review?.reason || ''), (r.review?.at ? r.review.at + '。' : '') + '原因：' + tx(r.review?.reason || ''))}</Banner> : null}
-          {ICSD && r.bypass ? (
-            <Banner tone="warning" title={L('Sent without SMS approval (urgent)', '未經 SMS 核准送出（緊急）')}>
-              {L((PMAP[r.bypass.by] || PEOPLE[0]).en + ' skipped approval on ' + r.bypass.at + '. Reason: ' + r.bypass.reason, (PMAP[r.bypass.by] || PEOPLE[0]).en + ' 於 ' + r.bypass.at + ' 略過核准。原因：' + r.bypass.reason)}
-            </Banner>
-          ) : null}
+    <div className="flex flex-col gap-2">
+      {head ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <b className="text-body font-medium text-foreground">{title}</b>
+          {part ? <StatusTag s={part.st} /> : null}
+          {part && !part.unk && done(part.st) ? <span className="text-caption tabular-nums text-fg-secondary">{L(fmtN(part.ok) + ' / ' + fmtN(part.of) + ' delivered', fmtN(part.ok) + ' / ' + fmtN(part.of) + ' 已送達')}</span> : null}
+          {part && part.unk ? <span className="text-caption text-fg-secondary">{L('Number known once Device Notifications finishes', '等 Device Notifications 送完才知道人數')}</span> : null}
         </div>
-
-        <Part title={L('Content', '內容')}>
-          <ChannelText r={r} k={k} />
-        </Part>
-
-        <Part title={L('Audiences', '收件人')}>
-          {k === 'sms' ? <span className="text-caption text-fg-secondary">{L('The same audiences as Device Notifications; SMS goes only to the people it can’t reach, and to external phones.', '和 Device Notifications 相同的收件人；SMS 只寄給其中送不到的人，以及外部電話。')}</span> : null}
-          {tags.length ? <AudienceList tags={tags} groups={app.groups} /> : <span className="text-body text-fg-secondary">—</span>}
-        </Part>
-
-        {/* the message's other channels, one click away; their numbers are on their own rows */}
-        {sibs.length ? (
-          <Part title={L('Also sent on', '同時發送的通道')}>
-            <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
-              {sibs.map(y => {
-                const J = CHN[y.k].icon
-                return (
-                  <button key={y.id} type="button" onClick={() => m.set({ det: y.id })} aria-label={L('View ' + chName(y.k), '查看' + chName(y.k))} className="flex items-center gap-3 px-3 py-2.5 text-left hover:bg-neutral-hover focus-visible:outline-2 focus-visible:outline-ring">
-                    <J className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate text-body font-medium">{chName(y.k)}</span>
-                    <StatusTag s={y.st} />
-                    <ChevronRight className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-                  </button>
-                )
-              })}
-            </div>
-          </Part>
-        ) : null}
-
-        {/* for support: the ID people quote when they ask about a message */}
-        <span className="mt-auto text-caption text-fg-secondary">{L('Request ID ', '申請編號 ')}<span className="font-mono">{reqIdFor(r)}</span></span>
-      </div>
-      {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <div className="sticky bottom-0 flex flex-col gap-2 border-t border-divider bg-surface px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
-        {sibs.length ? <span className="text-caption text-fg-secondary">{L('These actions change the whole message, on all ' + (sibs.length + 1) + ' channels.', '這些操作會改到整則訊息，' + (sibs.length + 1) + ' 個通道都會一起變更。')}</span> : null}
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button variant="text" danger startIcon={Trash2} className="mr-auto" onClick={() => askDelete(m, r)}>{L('Delete', '刪除')}</Button>
-          {r.status === 'scheduled' ? <Button variant="secondary" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit message', '編輯訊息')}</Button> : null}
-          {r.status === 'rejected' ? <Button variant="primary" startIcon={Pencil} onClick={() => m.startCompose('edit', r)}>{L('Edit and resubmit', '修改後重新送審')}</Button> : null}
-          {r.status === 'expired' ? <>
-            <Button variant="secondary" startIcon={CalendarClock} onClick={() => m.openReschedule(r)}>{L('Reschedule', '重新排程')}</Button>
-            <Button variant="primary" startIcon={Send} onClick={() => askSendNow(m, r)}>{L('Send now', '立即傳送')}</Button>
-          </> : null}
-        </div>
-      </div> : null}
+      ) : null}
+      {children}
     </div>
   )
 }
 
+function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
+  const app = useApp(), r = x.r, k = x.k, I = CHN[k === 'sms' ? 'push' : k].icon
+  const tags = tagsFor(r, k), approval = (ICSD && k === 'sms') || !!r.review
+  return (
+    <div className="flex min-h-full flex-col">
+      <div className="flex flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
+        <div className="flex flex-col gap-[var(--layout-space-tight)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusTag s={x.st} />
+            <span className="flex items-center gap-1.5 text-body text-fg-secondary"><I className="size-4" aria-hidden />{chName(k)}</span>
+          </div>
+          {/* the review's progress, reasons and approvers live in the Approval center, not here */}
+          {approval ? <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('See review progress in the Approval center', '到 Approval center 查看審核進度')}</Button> : null}
+        </div>
+
+        <Part title={L('Content', '內容')}>
+          {x.fb ? (
+            <div className="flex flex-col gap-[var(--layout-space-loose)]">
+              <Block head title={CHN.push.name} part={{ ok: x.ok, of: x.of, unk: x.unk, st: x.pst }}><ChannelText r={r} k="push" /></Block>
+              <Block head title={L('SMS fallback', 'SMS 備援')} part={x.fb}>
+                <ChannelText r={r} k="sms" />
+                <span className="text-caption text-fg-secondary">{L('Sent to the people Device Notifications couldn’t reach, and to external phones.', '寄給 Device Notifications 送不到的人，以及外部電話。')}</span>
+              </Block>
+            </div>
+          ) : <ChannelText r={r} k={k} />}
+        </Part>
+
+        <Part title={L('Audiences', '收件人')}>
+          {tags.length ? <AudienceList tags={tags} groups={app.groups} /> : <span className="text-body text-fg-secondary">—</span>}
+        </Part>
+      </div>
+    </div>
+  )
+}
 // ---------- who one record missed ----------
-// one channel's list only: no "did another channel reach them" column, and no SMS result on the
-// Device Notifications list (that's the SMS fallback record's job). Resend goes out on this channel again.
+// One record's list: the people it didn't reach. With SMS fallback that's the people neither Device Notifications nor SMS
+// reached, each with both reasons. Resend goes out on this record's channels again.
 export function SplitFailDialog({ m }: { m: SendCtl }) {
   const app = useApp(), [nid, nch] = (m.s.ns || '').split('|') as [string, Channel | undefined]
-  const r = nid ? app.rows.find(x => x.id === nid) : null, k: Channel = nch || (r ? rowChs(r)[0] : 'push')
-  const st = r ? m.chStats(r).find(x => x.k === k) : null, n = st ? Math.max(0, st.of - st.ok) : 0
-  const list = r ? chFailList(r, k, n).map(f => ({ ...f, fallback: '', via: null })) : []
+  const r = nid ? app.rows.find(x => x.id === nid) : null
+  const rec = r ? recordsOf(m, [r]).find(x => x.k === nch) || recordsOf(m, [r])[0] : null
+  const k: Channel = rec ? rec.k : 'push', n = rec ? failsOf(rec) : 0
+  const list = r ? chFailList(r, k === 'sms' ? 'push' : k, n).map(f => ({ ...f, via: null })) : []
   const close = () => m.set({ ns: null })
   const resend = () => {
     if (!r) return
@@ -414,7 +415,6 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
     const tags: RTag[] = list.map(f => f.ext ? { key: 'e:' + f.ext, type: 'ext' as const, email: f.ext } : { key: 'p:' + f.p!.id, type: 'person' as const, id: f.p!.id })
     close()
     m.startCompose('resend', r, tags)
-    // only this channel (SMS fallback still needs Device Notifications)
     m.setC({ ch: { push: k === 'push' || k === 'sms', desktop: k === 'desktop', email: k === 'email', sms: k === 'sms' } }, true)
   }
   return (
@@ -424,7 +424,7 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
           <DialogHeader>
             <div className="flex flex-col gap-0.5">
               <DialogTitle>{L('Failed audience members', '傳送失敗的收件人')}</DialogTitle>
-              <DialogDescription className="text-body text-fg-secondary">{chName(k) + ' · ' + L(fmtN(n) + ' of ' + fmtN(st ? st.of : 0), fmtN(n) + ' / ' + fmtN(st ? st.of : 0) + ' 人')}</DialogDescription>
+              <DialogDescription className="text-body text-fg-secondary">{chName(k) + ' · ' + L(fmtN(n) + ' of ' + fmtN(rec ? rec.of : 0), fmtN(n) + ' / ' + fmtN(rec ? rec.of : 0) + ' 人')}</DialogDescription>
             </div>
           </DialogHeader>
           <DialogBody>

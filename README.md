@@ -9,6 +9,7 @@
 | 團隊版（發送空間，主要版本） | `teams/` | https://claude.ai/artifact/3wDkTsa8LZcfDikRr1RhWv |
 | 訊息紀錄設計規格（團隊版） | `teams/spec.html`、`teams/src/spec/` | https://claude.ai/artifact/DJqKQRYHc7zduwfKU9T3FW |
 | 發送訊息設計規格（團隊版） | `teams/compose-spec.html`、`teams/src/spec/compose/` | https://claude.ai/artifact/5Cp4EoipMcFczPk314XxRK |
+| 單一通道紀錄版 UI Flow 與設計規格（列表、狀態規則、訊息內容面板、操作與對話框） | `teams/split-spec.html`、`teams/src/spec/split/`、`tools/split-shots.mjs` | https://claude.ai/artifact/7mVq135xnDXPMmZJ6rj4mc |
 | 單一通道紀錄版：訊息分組方案比較（六個可操作的列表） | `teams/group-options.html`、`teams/src/spec/groupopts/` | https://claude.ai/artifact/W91AFfvcdUMssNLCr7AaHi |
 | 團隊版・一個通道一筆紀錄（PM 提案的另一個版本，只有訊息列表與詳情不同） | `teams/`（`--mode split`，`teams/src/pages/messages/split.tsx`） | https://claude.ai/artifact/Kq6FnvbagCvdtmoPXiRD91 |
 | 發送訊息 UI Flow 與設計規格（團隊版，每一步下方攤開那一步的完整規格） | `teams/compose-flow.html`、`teams/src/spec/flow/` | https://claude.ai/artifact/C2XATaxJsCWLQQdeihP2x7 |
@@ -95,3 +96,10 @@ node tools/lock.mjs <密碼> publish/mnp-teams-per-channel.html teams/split "MNP
 cd teams && npx vite build -c vite.group-options.config.ts && cd ..
 node tools/lock.mjs <密碼> publish/mnp-group-options.html teams/group-options "MNP 訊息分組方案"
 ```
+
+單一通道紀錄版的規格：先建置 split 版並在 :4190 預覽（`python3 -m http.server 4190 -d teams/split/dist`），再 `node tools/split-shots.mjs teams/src/spec/split/shots` 重拍截圖，最後
+```
+cd teams && npx vite build -c vite.split-spec.config.ts && cd ..
+node tools/lock.mjs <密碼> publish/mnp-split-spec.html teams/split-spec "MNP 單一通道紀錄 UI Flow 與設計規格"
+```
+通道的分類是四種：Device Notifications、Device Notifications (SMS)（勾了 SMS 備援）、Desktop OS、Email；SMS 備援不是獨立的一筆。
