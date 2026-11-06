@@ -133,63 +133,63 @@
  },
  "detail-fb": {
   "w": 480,
-  "h": 590,
+  "h": 702,
   "marks": [
    {
     "n": 1,
     "x": 3.54,
-    "y": 1.95
+    "y": 1.64
    },
    {
     "n": 2,
     "x": 3.54,
-    "y": 15.76
+    "y": 28.69
    },
    {
     "n": 3,
     "x": 6.25,
-    "y": 29.9
+    "y": 41.12
    },
    {
     "n": 4,
     "x": 6.25,
-    "y": 39.05
+    "y": 48.81
    },
    {
     "n": 5,
     "x": 3.54,
-    "y": 48.2
+    "y": 56.49
    }
   ]
  },
  "detail-fb-open": {
   "w": 480,
-  "h": 808,
+  "h": 920,
   "marks": []
  },
  "detail-email": {
   "w": 480,
-  "h": 766,
+  "h": 852,
   "marks": []
  },
  "detail-push": {
   "w": 480,
-  "h": 736,
+  "h": 821,
   "marks": []
  },
  "detail-pending": {
   "w": 480,
-  "h": 405,
+  "h": 518,
   "marks": []
  },
  "detail-mixed": {
   "w": 480,
-  "h": 652,
+  "h": 764,
   "marks": [
    {
     "n": 1,
     "x": 3.54,
-    "y": 14.27
+    "y": 26.38
    }
   ]
  },
@@ -276,42 +276,42 @@
  },
  "detail-expired": {
   "w": 480,
-  "h": 405,
+  "h": 518,
   "marks": []
  },
  "detail-rejected": {
   "w": 480,
-  "h": 405,
+  "h": 518,
   "marks": []
  },
  "detail-scheduled": {
   "w": 480,
-  "h": 319,
+  "h": 404,
   "marks": []
  },
  "detail-progress": {
   "w": 480,
-  "h": 405,
+  "h": 518,
   "marks": []
  },
  "detail-error": {
   "w": 480,
-  "h": 504,
+  "h": 589,
   "marks": []
  },
  "detail-sent-fb": {
   "w": 480,
-  "h": 652,
+  "h": 764,
   "marks": []
  },
  "detail-sms-notneeded": {
   "w": 480,
-  "h": 405,
+  "h": 518,
   "marks": []
  },
  "detail-urgent": {
   "w": 480,
-  "h": 656,
+  "h": 779,
   "marks": []
  },
  "dlg-members": {
