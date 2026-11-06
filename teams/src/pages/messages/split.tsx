@@ -84,16 +84,16 @@ export function recText(r: Row, k: Channel) {
 // only Device Notifications and Desktop OS carry a sender name
 const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
 
+// the channel as icons only; its name is in the tooltip and the accessible label
 function ChCell({ k }: { k: Channel }) {
   const I = CHN[k === 'sms' ? 'push' : k].icon
   return (
-    <span className="flex min-w-0 items-center gap-2">
-      <span className="inline-flex shrink-0 items-center gap-1">
+    <Tip text={chName(k)}>
+      <span tabIndex={0} aria-label={chName(k)} className="inline-flex items-center gap-1 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
         <Tag size="sm" color="neutral" icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
         {k === 'sms' ? <Tag size="sm" color="amber" icon={CHN.sms.icon} aria-hidden className="[&_[data-tag-text]]:hidden" /> : null}
       </span>
-      <span className="whitespace-nowrap">{chName(k)}</span>
-    </span>
+    </Tip>
   )
 }
 
@@ -242,8 +242,8 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
         {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : null}</>
     } }),
-    // the one column that must never truncate: room for two icons and "Device Notifications (SMS)" (the message row of the grouped options adds a chevron)
-    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 304 : 272 }, cell: i => {
+    // icons only: room for two icons (the message row of the grouped options adds a chevron)
+    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 128 : 96 }, cell: i => {
       const g = i.row.original
       if (g.hdr) return (
         <span className="flex min-w-0 items-center gap-2"><Mk g={g} />

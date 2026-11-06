@@ -161,7 +161,7 @@ function ListTab() {
     <>
       <Section eyebrow="Page" title="列表" lead="一列一個通道的紀錄。頁首、搜尋與篩選、表格、分頁，與原本的訊息列表相同；差別在於資料單位是「紀錄」而不是「訊息」。">
         <Figure label="個人發送空間" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
-          { n: 1, title: '通道', body: <>圖示加名稱；Device Notifications (SMS) 顯示兩個圖示（手機、簡訊）。篩選 <C>Channel</C>。</> },
+          { n: 1, title: '通道', body: <>只顯示圖示，滑過會顯示通道名稱；Device Notifications (SMS) 顯示兩個圖示（手機、簡訊）。篩選 <C>Channel</C>。</> },
           { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開面板）加一行內文，截斷。Email 顯示主旨與內文；Desktop OS 顯示桌面通知自己的文字；Device Notifications (SMS) 顯示 Device Notifications 的文字（SMS 文字在面板裡）。緊急送出的有「Urgent」標籤。</> },
           { n: 3, title: '狀態', body: '每一筆各自的狀態，見「狀態與合併規則」。' },
           { n: 4, title: '收件人數', body: <>數字齊右（表頭也齊右）。只放這個通道要寄給多少人，不放已送達。<C>Device Notifications (SMS)</C> 的數字是 Device Notifications 的收件人數。可排序。</> },
@@ -171,10 +171,10 @@ function ListTab() {
           { n: 8, title: '通道篩選', body: <>多選，四種通道：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊有紀錄數。</> },
         ]} />
       </Section>
-      <Section eyebrow="Columns" title="欄位" lead="設計系統沒有欄寬 token，欄寬由我們定：一律是 4 的倍數，依內容夠用就好（人數、日期都不放寬）。「標題 / 內容」的寬度是最小寬度，會吸收多出來的空間；「通道」不能被截斷，要放得下兩個圖示加「Device Notifications (SMS)」。">
+      <Section eyebrow="Columns" title="欄位" lead="設計系統沒有欄寬 token，欄寬由我們定：一律是 4 的倍數，依內容夠用就好（人數、日期、通道圖示都不放寬）。「標題 / 內容」的寬度是最小寬度，會吸收多出來的空間。">
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
           [<Copy en="Sender" zh="寄件人" />, '140', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；Email 留白。不凍結。', '可'],
-          [<Copy en="Channel" zh="通道" />, '272（不截斷）', '圖示加名稱；名稱永遠完整顯示，寬度要放得下兩個圖示加「Device Notifications (SMS)」', '—'],
+          [<Copy en="Channel" zh="通道" />, '96', '只顯示圖示，名稱在滑過的提示與螢幕閱讀器標籤裡；Device Notifications (SMS) 是手機加簡訊兩個圖示', '—'],
           [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320，其餘空間由這欄吸收', '該通道的標題與內文', '—'],
           [<Copy en="Status" zh="狀態" />, '168', '狀態標籤，失敗人數在下方', '—'],
           [<Copy en="Audience" zh="收件人數" />, '88', '只有人數，齊右', '可'],
