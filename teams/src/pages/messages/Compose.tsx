@@ -318,7 +318,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
           </FormatBlock>
         ) : null}
         {smsOn(c) ? (
-          <FormatBlock title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
+          <FormatBlock title="SMS" desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
             <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
               <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} placeholder={L('Short version', '簡短版本')} />
             </FormField>
@@ -376,7 +376,7 @@ function RvRow({ icon, k, v, q, warn, edit }: { icon: typeof Mail; k: string; v:
 }
 
 // what each audience will see, on a close-to-real device, one channel at a time
-function Preview({ c }: { c: Compose }) {
+function Preview({ c, counts }: { c: Compose; counts: Partial<Record<PreviewChannel, number>> }) {
   const chs = (['push', 'desktop', 'sms', 'email'] as PreviewChannel[]).filter(k => c.ch[k])
   const [cur, setCur] = React.useState<PreviewChannel>(chs[0])
   const k = chs.indexOf(cur) >= 0 ? cur : chs[0]
@@ -392,6 +392,7 @@ function Preview({ c }: { c: Compose }) {
           </SegmentedControl>
         ) : <span className="text-body text-fg-secondary">{CHN[k].name}</span>}
       </div>
+      <span className="text-body text-fg-secondary">{L('Audience: ', '收件人：') + P(counts[k] || 0, 'person', '人', 'people')}</span>
       <div className="rounded-md bg-neutral-1 p-[var(--layout-space-loose)]"><ChannelPreview ch={k} msg={msg} zh={L('en', 'zh') === 'zh'} /></div>
     </div>
   )
@@ -400,13 +401,9 @@ function Preview({ c }: { c: Compose }) {
 function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, tried = c.tried || {}, rc = m.reach(), ap = approval(c), mode = effEmailMode(c)
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
-  // the audience per channel, as the details panel and the list show it (SMS fallback is part of Device Notifications)
-  const chRows: [Channel, number][] = []
-  if (c.ch.push) chRows.push([c.ch.sms ? 'sms' : 'push', rc.push + (c.ch.sms ? rc.smsable + rc.extP : 0)])
-  if (c.ch.desktop) chRows.push(['desktop', rc.desktop])
-  if (c.ch.email) chRows.push(['email', rc.email])
-  const rows: React.ReactNode[] = chRows.map(([k, n]) => <RvRow key={'ch' + k} icon={CHN[k === 'sms' ? 'push' : k].icon} k={CHN[k].name} v={P(n, 'person', '人', 'people')} />)
-  if (ICSD && c.ch.sms) rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('SMS approval', 'SMS 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after the SMS reviewer approves it', 'SMS 審核人員核准後才會送出')} />)
+  const rows: React.ReactNode[] = []
+  // the audience of each channel sits with its preview
+  const counts: Partial<Record<PreviewChannel, number>> = { push: rc.push, sms: rc.smsable + rc.extP, desktop: rc.desktop, email: rc.email }
   if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} />)
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
@@ -434,8 +431,8 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
       </Section>
       <Section title={L('Review', '確認內容')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
-          <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">{rows}</div>
-          <Preview c={c} />
+          {rows.length ? <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">{rows}</div> : null}
+          <Preview c={c} counts={counts} />
         </div>
       </Section>
     </>

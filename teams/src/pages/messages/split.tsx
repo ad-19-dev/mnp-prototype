@@ -158,7 +158,7 @@ function StatusCell({ m, x }: { m: SendCtl; x: Rec }) {
   return (
     <span className="flex min-w-0 flex-col items-start gap-1">
       <StatusTag s={x.st} />
-      {fails ? <Button variant="link" size="xs" className="!h-auto !min-w-0 !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: x.r.id + '|' + x.k })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
+      {fails ? <Button variant="link" size="xs" className="!h-auto !min-w-0 !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: x.r.id + '|' + x.k })}>{L(fails + ' not sent', fails + ' 人未送出')}</Button> : null}
     </span>
   )
 }
@@ -264,7 +264,6 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       return (
         <span className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
-            {ICSD && x.r.bypass ? <Tip text={L('Urgent: sent without SMS approval', '緊急發送：略過 SMS 核准')}><span tabIndex={0} className="inline-flex shrink-0 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="amber">{L('Urgent', '緊急')}</Tag></span></Tip> : null}
             <Trunc tip={false} text={t.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: x.id })} />
           </span>
           {text ? <Trunc tip={false} text={text} className="text-caption text-fg-secondary" /> : null}
@@ -343,13 +342,11 @@ export function SplitDetailSheet({ m }: { m: SendCtl }) {
 // "n / m sent"; the status tags only show once something has gone out, so a message waiting for approval
 // doesn't repeat "Pending approval" on every line.
 function Item({ value, title, part, children }: { value: string; title: string; part?: Part; children: React.ReactNode }) {
-  const started = part && (part.st === 'progress' || done(part.st))
   return (
     <AccordionItem value={value} className="border-b border-divider last:border-b-0">
       <AccordionTrigger className="px-3">
         <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-left">
           <span className="text-body font-medium">{title}</span>
-          {part && started ? <StatusTag s={part.st} /> : null}
           {part && !part.unk && done(part.st) ? (part.of === 0
             ? <span className="text-caption text-fg-secondary">{L('Not needed', '不需要')}</span>
             : <span className="text-caption tabular-nums text-fg-secondary">{L(fmtN(part.ok) + ' / ' + fmtN(part.of) + ' sent', fmtN(part.ok) + ' / ' + fmtN(part.of) + ' 已送出')}</span>) : null}
@@ -368,7 +365,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
       <div className="flex flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
         {/* the channel, and the approval in one place: why it skipped approval (urgent only), then the link to the review */}
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
-          <span className="flex items-center gap-2 text-body font-medium"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span>
+          <span className="flex flex-wrap items-center gap-2"><StatusTag s={x.fb && x.pst ? x.pst : x.st} /><span className="inline-flex items-center gap-1.5 text-body font-medium"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></span>
           {approval ? (
             <div className="flex flex-col gap-1.5">
               {urgent && r.bypass ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Urgent reason', '緊急原因')}</span><span className="whitespace-pre-wrap text-body">{r.bypass.reason}</span></div> : null}
