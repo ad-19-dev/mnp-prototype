@@ -262,7 +262,7 @@ function ListTab() {
 function Rules() {
   return (
     <>
-      <Section eyebrow="Status" title="每一筆的狀態" lead="七種狀態與原本相同。核准與排程是整則訊息共用的，所以未送出前所有通道的狀態一樣；送出之後，每個通道各自進行，狀態可以不同。">
+      <Section eyebrow="Status" title="每一筆的狀態" lead="七種狀態與原本相同；Status 篩選選單與下面的排列都依訊息的生命週期：待核准、已排程、傳送中、已送出、傳送錯誤、已駁回、排程已過期。核准與排程是整則訊息共用的，所以未送出前所有通道的狀態一樣；送出之後，每個通道各自進行，狀態可以不同。">
         <SpecTable head={['情況', '這一筆顯示', '例子']} nowrap={[0]} rows={[
           ['還沒送出（待核准、排程已過期、已駁回、已排程）', '整則訊息的狀態，所有通道一樣', '—'],
           ['送出中，這個通道已經送完', <StatusTag s="sent" />, 'Device Notifications 先送完，Email 還在送'],
@@ -384,12 +384,12 @@ function StatusTab() {
       <Section eyebrow="Status" title="七種狀態" lead="每種狀態一節：狀態標籤（顏色與圖示都是設計系統 Tag）、列表上的那一列、每個欄位在這個狀態怎麼顯示，以及打開面板看到什麼。圖都是真實 prototype 的截圖。標籤：Tag 尺寸 sm，圖示加文字。">
         <SpecTable head={['狀態', '標籤', '顏色', '圖示']} nowrap={[0, 1]} rows={[
           [<StatusTag s="pending" />, <Copy en="Pending approval" zh="待核准" />, 'amber', 'Hourglass'],
-          [<StatusTag s="expired" />, <Copy en="Scheduled expired" zh="排程已過期" />, 'deep-orange', 'CalendarX2'],
-          [<StatusTag s="rejected" />, <Copy en="Rejected" zh="已駁回" />, 'red', 'CircleX'],
           [<StatusTag s="scheduled" />, <Copy en="Scheduled" zh="已排程" />, 'neutral', 'Calendar'],
           [<StatusTag s="progress" />, <Copy en="In progress" zh="傳送中" />, 'blue', 'Send'],
           [<StatusTag s="sent" />, <Copy en="Sent" zh="已送出" />, 'green', 'CheckCircle2'],
           [<StatusTag s="error" />, <Copy en="Error" zh="傳送錯誤" />, 'red', 'AlertTriangle'],
+          [<StatusTag s="rejected" />, <Copy en="Rejected" zh="已駁回" />, 'red', 'CircleX'],
+          [<StatusTag s="expired" />, <Copy en="Scheduled expired" zh="排程已過期" />, 'deep-orange', 'CalendarX2'],
         ]} />
       </Section>
       <StatusSpec id="待核准" s="pending" tagDesc="送出後等核准（SMS 審核人員、主管，或兩者）。所有通道一起等。" shots={['st-pending']} panel="detail-pending" rows={[
@@ -399,20 +399,6 @@ function StatusTab() {
         ['列選單', 'View message、Duplicate to new message'],
         ['面板', 'Approval center 連結；內容與收件人。有 SMS 備援的，SMS 區塊只有標題，沒有人數；面板最上方是狀態標籤'],
       ]} pn="核准的原因、進度與核准人都在 Approval center，面板不再顯示提示卡片。" />
-      <StatusSpec id="排程已過期" s="expired" tagDesc="核准時已經超過排程的時間，所以沒有送出。可以立即傳送、重新排程或刪除。" shots={['st-expired']} panel="detail-expired" rows={[
-        ['收件人數', '照常顯示'],
-        ['失敗人數', '不顯示'],
-        ['傳送時間', '原訂的排程時間'],
-        ['列選單', 'View message、Send now（all channels）、Reschedule（all channels）、Duplicate、Delete（all channels）'],
-        ['面板', 'Approval center 連結；內容與收件人'],
-      ]} pn="立即傳送與重新排程都套用到整則訊息，確認對話框會寫出受影響的通道。" />
-      <StatusSpec id="已駁回" s="rejected" tagDesc="核准人駁回，訊息不會送出。" shots={['st-rejected']} panel="detail-rejected" rows={[
-        ['收件人數', '照常顯示'],
-        ['失敗人數', '不顯示'],
-        ['傳送時間', '建立時間'],
-        ['列選單', 'View message、Edit and resubmit、Duplicate、Delete（all channels）'],
-        ['面板', 'Approval center 連結（駁回原因在那邊）；內容與收件人'],
-      ]} pn="駁回原因不在面板顯示，由 Approval center 提供。" />
       <StatusSpec id="已排程" s="scheduled" tagDesc="核准完成（或不需要核准），等排程時間到。" shots={['st-scheduled']} panel="detail-scheduled" rows={[
         ['收件人數', '照常顯示'],
         ['失敗人數', '不顯示'],
@@ -441,6 +427,20 @@ function StatusTab() {
         ['列選單', 'View message、Retry（all channels）、Duplicate'],
         ['面板', '內容與收件人'],
       ]} pn="下方第二組是同一則訊息裡一個通道送出、另一個通道錯誤：每一筆各自顯示自己的狀態。" />
+      <StatusSpec id="已駁回" s="rejected" tagDesc="核准人駁回，訊息不會送出。" shots={['st-rejected']} panel="detail-rejected" rows={[
+        ['收件人數', '照常顯示'],
+        ['失敗人數', '不顯示'],
+        ['傳送時間', '建立時間'],
+        ['列選單', 'View message、Edit and resubmit、Duplicate、Delete（all channels）'],
+        ['面板', 'Approval center 連結（駁回原因在那邊）；內容與收件人'],
+      ]} pn="駁回原因不在面板顯示，由 Approval center 提供。" />
+      <StatusSpec id="排程已過期" s="expired" tagDesc="核准時已經超過排程的時間，所以沒有送出。可以立即傳送、重新排程或刪除。" shots={['st-expired']} panel="detail-expired" rows={[
+        ['收件人數', '照常顯示'],
+        ['失敗人數', '不顯示'],
+        ['傳送時間', '原訂的排程時間'],
+        ['列選單', 'View message、Send now（all channels）、Reschedule（all channels）、Duplicate、Delete（all channels）'],
+        ['面板', 'Approval center 連結；內容與收件人'],
+      ]} pn="立即傳送與重新排程都套用到整則訊息，確認對話框會寫出受影響的通道。" />
     </>
   )
 }

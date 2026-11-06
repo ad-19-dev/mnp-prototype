@@ -44,7 +44,7 @@ export interface Template {
 // pending: waiting for approval; expired: approved after its scheduled time, so it wasn't sent and waits for
 // the sender (send now, reschedule or delete); rejected: the approver turned it down
 export type Status = 'pending' | 'expired' | 'rejected' | 'scheduled' | 'progress' | 'sent' | 'error'
-export const STATUS_ORDER: Status[] = ['pending', 'expired', 'rejected', 'scheduled', 'progress', 'sent', 'error']
+export const STATUS_ORDER: Status[] = ['pending', 'scheduled', 'progress', 'sent', 'error', 'rejected', 'expired']
 export interface Row {
   id: string; sender: string; tpl: string | null; title: string; content: string; smsText?: string
   // Desktop OS has its own text; on a message that also uses Device Notifications, title/content above are the device text
