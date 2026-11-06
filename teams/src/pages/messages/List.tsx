@@ -19,7 +19,11 @@ const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' 
 // the title and text the list shows: Device Notifications first, then Email, then Desktop OS
 export function listText(r: Row) {
   if (r.channels.indexOf('push') < 0 && r.channels.indexOf('email') >= 0 && r.email && r.email.mode === 'own') return { title: r.email.subject || r.title, content: htmlToText(r.email.html) || r.content }
-  return { title: r.title, content: r.content }
+  return dedupe(r.title, r.content)
+}
+// Device Notifications has no title field: a message's title is the start of its content, so don't print it twice
+export function dedupe(title: string, content: string) {
+  return title && content.startsWith(title) ? { title, content: content.slice(title.length).trim() } : { title, content }
 }
 
 // sort the whole list (not just the page in view)

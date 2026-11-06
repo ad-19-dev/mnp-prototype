@@ -18,7 +18,7 @@ import {
   ME,
 } from '../../lib/data'
 import {
-  approval, effEmailMode, hasNotif, multiPeople, noNumber, reachNote, smsCoverText, smsOn, stepOk, unresolved,
+  SENDER_RE, approval, effEmailMode, emailTooBig, hasNotif, multiPeople, noNumber, pushTitle, reachNote, smsCoverText, smsOn, stepOk, unresolved,
   type Compose, type Errs, type Reach,
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
@@ -261,11 +261,11 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 }
 
 // ---------- step 2 ----------
-function FormatBlock({ title, uses, children }: { title: string; uses?: React.ReactNode; children: React.ReactNode }) {
+function FormatBlock({ title, desc, uses, children }: { title: string; desc?: string; uses?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-body font-semibold">{title}</span>
+        <span className="flex flex-col gap-0.5"><span className="text-body font-semibold">{title}</span>{desc ? <span className="text-body text-fg-secondary">{desc}</span> : null}</span>
         {uses ? <span className="flex flex-wrap items-center gap-1.5">{uses}</span> : null}
       </div>
       {children}
@@ -299,31 +299,26 @@ function TplChoice({ m }: { m: SendCtl }) {
 function Step2({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, tried = c.tried || {}, hasN = hasNotif(c), lim = LIM.push, tpl = c.tplId ? m.tplById(c.tplId) : null
   const show = (k: keyof Errs, v: string, n: number) => (e[k] && (tried[2] || (v && v.length > n))) ? e[k]! : ''
-  const eSender = show('sender', c.sender, LIM.sender), eTitle = show('title', c.title, LIM.title), eContent = show('content', c.content, lim), eSms = show('sms', c.smsText, LIM.sms)
-  const edSender = show('dsender', c.dSender, LIM.sender), edTitle = show('dtitle', c.dTitle, LIM.dTitle), edContent = show('dcontent', c.dContent, LIM.desktop)
-  const rc = m.reach()
-  const smsWho = L('For people without the app' + (rc.extP ? ' and external phones' : ''), '給沒裝 App 的人' + (rc.extP ? '和外部電話' : ''))
+  const eSender = e.sender && (tried[2] || !SENDER_RE.test(c.sender) || c.sender.length > LIM.sender) ? e.sender : '', eContent = show('content', c.content, lim), eSms = show('sms', c.smsText, LIM.sms)
+  const edSender = e.dsender && (tried[2] || !SENDER_RE.test(c.dSender) || c.dSender.length > LIM.sender) ? e.dsender : '', edTitle = show('dtitle', c.dTitle, LIM.dTitle), edContent = show('dcontent', c.dContent, LIM.desktop)
   const noNotif = tpl && hasN && !tplHasNotif(tpl) ? <Banner tone="neutral">{L('This template has no notification text.', '這個模板沒有通知內容。')}</Banner> : null
   return (
-    <Section title={L('Message', '訊息內容')}>
+    <Section title={L('Message details', '訊息詳情')} sub={L('Compose the message title and body to be sent to your audience.', '撰寫要傳送給收件人的訊息標題和內容。')}>
       <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)]">
         <TplChoice m={m} />
         {c.ch.push ? (
           <FormatBlock title={CHN.push.name}>
             {noNotif}
-            <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} error={eSender}>
+            <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS).', '收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。')} error={eSender}>
               <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
             </FormField>
-            <FormField id="f-title" label={L('Title', '標題')} required count={c.title.length + ' / ' + LIM.title} over={c.title.length > LIM.title} error={eTitle}>
-              <Input id="f-title" value={c.title} error={!!eTitle} onChange={ev => m.setC({ title: ev.target.value })} placeholder={L('One line people can act on', '一句話說清楚重點')} />
-            </FormField>
-            <FormField id="f-content" label={L('Text', '內文')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} hint={L('Lock screens show about 4 lines.', '鎖定畫面約顯示 4 行。')} error={eContent}>
-              <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
+            <FormField id="f-content" label={L('Content', '內容')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} hint={L('Lock screens show about 4 lines.', '鎖定畫面約顯示 4 行。')} error={eContent}>
+              <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value, title: pushTitle(ev.target.value) })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
             </FormField>
           </FormatBlock>
         ) : null}
         {smsOn(c) ? (
-          <FormatBlock title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} uses={<Tag size="sm" unbounded>{smsWho}</Tag>}>
+          <FormatBlock title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
             <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
               <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} placeholder={L('Short version', '簡短版本')} />
             </FormField>
@@ -338,7 +333,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
             <FormField id="f-dtitle" label={L('Title', '標題')} required count={c.dTitle.length + ' / ' + LIM.dTitle} over={c.dTitle.length > LIM.dTitle} error={edTitle}>
               <Input id="f-dtitle" value={c.dTitle} error={!!edTitle} onChange={ev => m.setC({ dTitle: ev.target.value })} placeholder={L('One line people can act on', '一句話說清楚重點')} />
             </FormField>
-            <FormField id="f-dcontent" label={L('Text', '內文')} required count={fmtN(c.dContent.length) + ' / ' + LIM.desktop} over={c.dContent.length > LIM.desktop} hint={L('Put the action first.', '重點放前面。')} error={edContent}>
+            <FormField id="f-dcontent" label={L('Content', '內容')} required count={fmtN(c.dContent.length) + ' / ' + LIM.desktop} over={c.dContent.length > LIM.desktop} hint={L('Supports Chinese, English, and numbers only.', '僅支援中文、英文、數字。')} error={edContent}>
               <Textarea id="f-dcontent" rows={3} value={c.dContent} error={!!edContent} onChange={ev => m.setC({ dContent: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
             </FormField>
           </FormatBlock>
@@ -351,14 +346,15 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
 
 function EmailBlock({ m, e, show }: { m: SendCtl; e: Errs; show: (k: keyof Errs, v: string, n: number) => string }) {
   const c = m.s.c
-  const eSub = show('subject', c.subject, LIM.subject), bodyN = c.bodyText.trim().length, eBody = show('body', c.bodyText.trim(), LIM.body)
+  const tried2 = !!(c.tried || {})[2]
+  const eSub = show('subject', c.subject, LIM.subject), bodyN = c.bodyText.trim().length, eBody = e.body && (tried2 || emailTooBig(c)) ? e.body : ''
   return (
     <FormatBlock title="Email">
       <FormField id="f-subject" label={L('Subject', '主旨')} required count={c.subject.length + ' / ' + LIM.subject} over={c.subject.length > LIM.subject} error={eSub}>
         <Input id="f-subject" value={c.subject} error={!!eSub} onChange={ev => m.setC({ subject: ev.target.value })} placeholder={L('Email subject', 'Email 主旨')} />
       </FormField>
-      <FormField id="f-body" label={L('Email text', 'Email 內文')} required count={fmtN(bodyN) + ' / ' + fmtN(LIM.body)} over={bodyN > LIM.body} error={eBody}>
-        <RichText id="f-body" seedKey={'rte-' + c.htmlKey} html={c.html} label={L('Email text', 'Email 內文')} error={!!eBody} placeholder={L('Write the email…', '輸入 Email 內文…')} onInput={(h, t) => m.onEmailInput(h, t)} />
+      <FormField id="f-body" label={L('Content', '內容')} required hint={L('Supports text, tables, and images.', '支援文字、表格、圖片。')} error={eBody}>
+        <RichText id="f-body" seedKey={'rte-' + c.htmlKey} html={c.html} label={L('Content', '內容')} error={!!eBody} placeholder={L('Write the email…', '輸入 Email 內文…')} onInput={(h, t) => m.onEmailInput(h, t)} />
       </FormField>
     </FormatBlock>
   )
@@ -385,7 +381,7 @@ function Preview({ c }: { c: Compose }) {
   const [cur, setCur] = React.useState<PreviewChannel>(chs[0])
   const k = chs.indexOf(cur) >= 0 ? cur : chs[0]
   if (!k) return null
-  const d = k === 'desktop', msg = { sender: (d ? c.dSender : c.sender).trim(), title: (d ? c.dTitle : c.title).trim(), content: (d ? c.dContent : c.content).trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
+  const d = k === 'desktop', msg = { sender: (d ? c.dSender : c.sender).trim(), title: d ? c.dTitle.trim() : '', content: (d ? c.dContent : c.content).trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-md border border-divider p-[var(--layout-space-tight)]">
       <div className="flex flex-wrap items-center justify-between gap-2">

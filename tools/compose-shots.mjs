@@ -187,7 +187,7 @@ await step('urgent', async () => {
   await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(200);
   await main.getByRole('checkbox', { name: /It’s urgent/ }).click(); await p.locator('#f-urgent').fill('Typhoon warning issued at 07:30. Staff must know before they commute.');
   await btn('Next').click(); await wait(500);
-  await p.locator('#f-sender').fill('ESH Emergency'); await p.locator('#f-title').fill('Typhoon alert: work from home tomorrow'); await p.locator('#f-content').fill('Non-fab staff work from home on Oct 22.'); await p.locator('#f-sms').fill('Typhoon: non-fab staff WFH 10/22.');
+  await p.locator('#f-sender').fill('ESH Emergency'); await p.locator('#f-content').fill('Non-fab staff work from home on Oct 22.'); await p.locator('#f-sms').fill('Typhoon: non-fab staff WFH 10/22.');
   await btn('Next').click(); await wait(600); await btn('Create message').click(); await wait(500);
   await shot('dlg-urgent', p.getByRole('dialog'));
   { const mb = await main.boundingBox(); await shot('urgent-head', { x: mb.x, y: Math.max(0, mb.y - 48), width: mb.width, height: 48 }) }
@@ -197,7 +197,7 @@ async function quickSend(schedule) {
   await p.goto('http://localhost:4176/'); await wait(1500); await p.getByText('EN', { exact: true }).click(); await wait(300);
   await newMsg(); await addAud('Person', 'chen'); await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
   await btn('Next').click(); await wait(500);
-  await p.locator('#f-sender').fill('Platform Ops'); await p.locator('#f-title').fill('Team lunch moves to 12:30 today'); await p.locator('#f-content').fill('Lunch moves to 12:30 today, same place.');
+  await p.locator('#f-sender').fill('Platform Ops'); await p.locator('#f-content').fill('Lunch moves to 12:30 today, same place.');
   await btn('Next').click(); await wait(600);
   if (schedule) { await p.getByRole('radio', { name: /Scheduled send/ }).click(); await wait(300) }
   await btn('Create message').click(); await wait(1300);

@@ -99,11 +99,21 @@ export function multiPeople(c: Compose) { return smsOn(c) ? peopleTags(c).filter
 export function unresolved(c: Compose) { return multiPeople(c).filter(p => !c.pick['p:' + p.id]) }
 export function noNumber(c: Compose) { return smsOn(c) ? peopleTags(c).filter(p => !p.co && !p.pp) : [] }
 
+// Sender names: half-width English letters, numbers and spaces
+export const SENDER_RE = /^[A-Za-z0-9 ]*$/
+export const SENDER_ERR = () => L('Please use half-width English letters, numbers, and spaces only.', '請只使用半形英文字母、數字和空格。')
+// the email's size (text, tables, embedded images) in bytes against its 100 KB limit
+export const emailTooBig = (c: Compose) => new Blob([c.html || '']).size > LIM.mail
+// Device Notifications has no title: where one is still needed (the list), it's the first line of the content
+export const pushTitle = (content: string) => (content.split('\n').map(x => x.trim()).find(Boolean) || '').slice(0, LIM.title)
+
 export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'dsender' | 'dtitle' | 'dcontent' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent', string>>
 export function errs(c: Compose, groups: Group[]): Errs {
   const e: Errs = {}, lim = LIM.push, total = recvFlat(c, groups)
   const totalN = total.people.length + total.ext.length
   const tooLong = (n: number) => L('Up to ' + fmtN(n) + ' characters.', '最多 ' + fmtN(n) + ' 字。')
+  // every empty required field says the same thing
+  const req = L('This field is required.', '此欄位為必填。')
   // 1. Receivers and channels
   if (!c.receivers.length) e.recv = L('Add at least one audience.', '請加入至少一位收件人。')
   else if (totalN > CAP) e.recv = L('Over the ' + CAP + '-audience limit.', '超過 ' + CAP + ' 人上限。')
@@ -114,40 +124,42 @@ export function errs(c: Compose, groups: Group[]): Errs {
   // 2. Message
   // a sender name is required on Device Notifications, optional on Desktop OS, and Email has none
   if (c.ch.push) {
-    if (!c.sender.trim()) e.sender = L('Enter a sender name.', '請輸入寄件人名稱。')
+    if (!c.sender.trim()) e.sender = req
+    else if (!SENDER_RE.test(c.sender)) e.sender = SENDER_ERR()
     else if (c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
-    if (!c.title.trim()) e.title = L('Enter a title.', '請輸入標題。')
-    else if (c.title.length > LIM.title) e.title = tooLong(LIM.title)
-    if (!c.content.trim()) e.content = L('Enter the text.', '請輸入內文。')
+    // Device Notifications has no title field; the list's title is the start of the content (see pushTitle)
+    if (!c.content.trim()) e.content = req
     else if (c.content.length > lim) e.content = tooLong(lim)
   }
   if (c.ch.desktop) {
-    if (c.dSender.length > LIM.sender) e.dsender = tooLong(LIM.sender)
-    if (!c.dTitle.trim()) e.dtitle = L('Enter a title.', '請輸入標題。')
+    if (c.dSender.trim() && !SENDER_RE.test(c.dSender)) e.dsender = SENDER_ERR()
+    else if (c.dSender.length > LIM.sender) e.dsender = tooLong(LIM.sender)
+    if (!c.dTitle.trim()) e.dtitle = req
     else if (c.dTitle.length > LIM.dTitle) e.dtitle = tooLong(LIM.dTitle)
-    if (!c.dContent.trim()) e.dcontent = L('Enter the text.', '請輸入內文。')
+    if (!c.dContent.trim()) e.dcontent = req
     else if (c.dContent.length > LIM.desktop) e.dcontent = tooLong(LIM.desktop)
   }
   if (smsOn(c)) {
-    if (!c.smsText.trim()) e.sms = L('Enter the SMS text.', '請輸入 SMS 內容。')
+    if (!c.smsText.trim()) e.sms = req
     else if (c.smsText.length > LIM.sms) e.sms = tooLong(LIM.sms)
   }
   if (effEmailMode(c) === 'own') {
-    if (!c.subject.trim()) e.subject = L('Enter a subject.', '請輸入主旨。')
+    if (!c.subject.trim()) e.subject = req
     else if (c.subject.length > LIM.subject) e.subject = tooLong(LIM.subject)
     const n = c.bodyText.trim().length
-    if (!n) e.body = L('Write the email.', '請輸入 Email 內文。')
-    else if (n > LIM.body) e.body = tooLong(LIM.body)
+    // no character limit: only the total size (text, tables and embedded images) counts
+    if (!n) e.body = req
+    else if (emailTooBig(c)) e.body = L('Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images.', '訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。')
   }
   // 3. Schedule
   if (c.sendMode === 'schedule') {
     const d = fromIso(c.schedAt), now = new Date()
-    if (!d) e.sched = L('Pick a date and time.', '請選擇日期和時間。')
+    if (!d) e.sched = req
     else if (d < addMin(now, 10)) e.sched = L('Pick a time at least 10 minutes from now.', '請選 10 分鐘以後的時間。')
     else if (d > addMin(now, 30 * 24 * 60)) e.sched = L('Pick a time within 30 days.', '最多只能排 30 天內。')
   }
   if (ICSD && c.ch.sms && c.urgent) {
-    if (!c.urgentReason.trim()) e.urgent = L('Say why this can’t wait for SMS approval.', '請說明為什麼不能等 SMS 核准。')
+    if (!c.urgentReason.trim()) e.urgent = req
     else if (c.urgentReason.length > 200) e.urgent = tooLong(200)
   }
   return e

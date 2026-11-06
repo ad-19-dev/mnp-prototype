@@ -69,7 +69,7 @@ export function ChannelText({ r, k, noSender }: { r: Row; k: Channel; noSender?:
     )
   }
   const d = k === 'desktop' && r.desk ? r.desk : r
-  return <div className={box}>{d.sender && !noSender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}<strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</div>
+  return <div className={box}>{d.sender && !noSender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}{d.content.startsWith(d.title) ? d.content : <><strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</>}</div>
 }
 
 // SMS is the fallback for Device Notifications: its row sits right under it, indented, and says who it was for.

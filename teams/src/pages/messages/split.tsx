@@ -20,7 +20,7 @@ import { Banner, CHN, ChIcons, FilterMenu, personVal, NO_HIDE, PAvatar, PageSize
 import { ShellAside } from '../../components/shell'
 import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
-import { ListLoading } from './List'
+import { ListLoading, dedupe } from './List'
 import './split.css'
 import { AudienceList, ChannelText, Part, failCols, reviewer } from './Detail'
 
@@ -79,7 +79,7 @@ export function recText(r: Row, k: Channel) {
   // "Device Notifications (SMS)" shows the Device Notifications text; the SMS text is in its details
   if (k === 'email' && r.email && r.email.mode === 'own') return { title: r.email.subject || r.title, content: htmlToText(r.email.html) || r.content }
   if (k === 'desktop' && r.desk) return { title: r.desk.title, content: r.desk.content }
-  return { title: r.title, content: r.content }
+  return dedupe(r.title, r.content)
 }
 // only Device Notifications and Desktop OS carry a sender name
 const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')

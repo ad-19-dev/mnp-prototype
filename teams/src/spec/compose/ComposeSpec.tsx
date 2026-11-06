@@ -217,16 +217,16 @@ function ChannelsTab() {
 function MessageTab() {
   return (
     <>
-      <Section eyebrow="Step 2" title="訊息內容" lead="上方選「New」或「Use template」，下面依步驟 1 選的通道出現對應的內容區塊，順序固定：Device Notifications → SMS → Desktop OS → Email。區塊之間 2 倍 loose 間距，區塊標題 body semibold、不加圖示。">
+      <Section eyebrow="Step 2" title="訊息詳情（Message details）" lead="頁面標題「Message details」，下方說明「Compose the message title and body to be sent to your audience.」。上方選「New」或「Use template」，下面依步驟 1 選的通道出現對應的內容區塊，順序固定：Device Notifications → SMS → Desktop OS → Email。區塊之間 2 倍 loose 間距，區塊標題 body semibold、不加圖示。">
         <Figure label="四個通道都選時" sub="還沒填" shot="s2-empty" notes={[
           { n: 1, title: 'New', body: '預設。從空白開始寫。' },
           { n: 2, title: 'Use template', body: <>選了之後右邊的 DS <C>Select</C>（寬 320、可搜尋）才能用；沒選時停用。選項是這個空間的模板：名稱＋下方小字列出模板有內容的通道。選好後欄位只顯示模板名稱。</> },
-          { n: 3, title: 'Device Notifications', body: 'Sender（必填）、Title（必填）、Text（必填，4 行）。Text 下方提示「Lock screens show about 4 lines.」' },
+          { n: 3, title: 'Device Notifications', body: 'Sender（必填，26 字，只能用半形英文字母、數字和空格；欄位下方說明「Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS).」）、Content（必填，4 行，534 字，下方提示「Lock screens show about 4 lines.」）。沒有 Title 欄位，列表上的標題是內容的第一行。' },
           { n: 4, title: '字數', body: <>每個欄位右上角「目前 / 上限」，超過時變紅（見「驗證與字數」）。</> },
-          { n: 5, title: 'Device Notifications (SMS)', body: <>SMS text（必填，2 行，70 字）。標題右邊灰色標籤「For people without the app」（有外部電話時加「and external phones」）。提示「Links won’t open in SMS.」</> },
-          { n: 6, title: 'Desktop OS', body: <>自己的 Sender（選填）、Title（必填，40 字）、Text（必填，120 字）。字數上限剛好是桌面通知放得下的長度，所以不會被截斷，也不需要截斷警告。</> },
-          { n: 7, title: 'Email', body: 'Subject（必填，120 字）。' },
-          { n: 8, title: 'Email text', body: <>RichText 編輯器（粗體、斜體、底線、連結、項目符號、編號、清除格式），必填，5,000 字。沒有附件。</> },
+          { n: 5, title: 'Device Notifications (SMS)', body: <>SMS text（必填，2 行，534 字）。標題下方說明「Sent as a backup via SMS only if the push notification fails to send.」，沒有標籤。提示「Links won’t open in SMS.」</> },
+          { n: 6, title: 'Desktop OS', body: <>自己的 Sender（選填，規則和 Device Notifications 的 Sender 一樣）、Title（必填，40 字）、Content（必填，120 字，提示「Supports Chinese, English, and numbers only.」）。字數上限剛好是桌面通知放得下的長度，所以不會被截斷，也不需要截斷警告。</> },
+          { n: 7, title: 'Email', body: 'Subject（必填，70 字）。' },
+          { n: 8, title: 'Email 的 Content', body: <>RichText 編輯器（粗體、斜體、底線、連結、項目符號、編號、清除格式），必填，提示「Supports text, tables, and images.」。沒有字數上限，只有整體大小超過 100 KB 才報錯（見「驗證與字數」）。沒有附件。</> },
           { n: 9, title: 'Save as template', body: '把目前內容存成模板（見「對話框」）。內容沒填完時不能存，會提示「Finish the message first」。' },
         ]} />
       </Section>
@@ -275,7 +275,7 @@ function ReviewTab() {
           <figure><figcaption><b>Device Notifications (SMS)</b><span>訊息泡泡，只有 SMS 內容。</span></figcaption><div className="spec-canvas"><Shot name="prev-sms" alt="SMS 預覽" /></div></figure>
           <figure><figcaption><b>Email</b><span>主旨、寄件者「MNP &lt;no-reply@tsmc.com&gt;」，下方 Email 內文（保留格式，最高 260 後捲動）。</span></figcaption><div className="spec-canvas"><Shot name="prev-email" alt="Email 預覽" /></div></figure>
         </div>
-        <Notes items={[{ title: '還沒填的欄位', body: '預覽裡顯示灰色的欄位名稱（Title、Text、Subject…），讓使用者知道還缺什麼。' }]} />
+        <Notes items={[{ title: '還沒填的欄位', body: '預覽裡顯示灰色的欄位名稱（Title、Content、Subject…），讓使用者知道還缺什麼。' }]} />
       </Section>
 
       <Section eyebrow="Schedule" title="排程傳送">
@@ -368,19 +368,18 @@ function RulesTab() {
           ['1', '通道', '至少一個', '—', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />],
           ['1', '外部 Email', '需開 Email', '—', <Copy en="N external emails can only get Email. Turn on Email or remove them." zh="N 個外部 Email 只能收 Email。請開啟 Email，或移除它們。" />],
           ['1', '外部電話', '需開 SMS', '—', <Copy en="N external phones can only get SMS. Turn on SMS fallback or remove them." zh="N 支外部電話只能收 SMS。請開啟 SMS 備援，或移除它們。" />],
-          ['1', '緊急原因', '勾緊急時', '200', <Copy en="Say why this can’t wait for SMS approval." zh="請說明為什麼不能等 SMS 核准。" />],
-          ['2', 'Device Notifications · Sender', '是', '20', <Copy en="Enter a sender name." zh="請輸入寄件人名稱。" />],
-          ['2', 'Device Notifications · Title', '是', '50', <Copy en="Enter a title." zh="請輸入標題。" />],
-          ['2', 'Device Notifications · Text', '是', '300', <Copy en="Enter the text." zh="請輸入內文。" />],
-          ['2', 'SMS text', '是', '70', <Copy en="Enter the SMS text." zh="請輸入 SMS 內容。" />],
-          ['2', 'Desktop OS · Sender', '否', '20', '—'],
-          ['2', 'Desktop OS · Title', '是', '40', <Copy en="Enter a title." zh="請輸入標題。" />],
-          ['2', 'Desktop OS · Text', '是', '120', <Copy en="Enter the text." zh="請輸入內文。" />],
-          ['2', 'Email · Subject', '是', '120', <Copy en="Enter a subject." zh="請輸入主旨。" />],
-          ['2', 'Email text', '是', '5,000', <Copy en="Write the email." zh="請輸入 Email 內文。" />],
+          ['1', '緊急原因', '勾緊急時', '200', <Copy en="This field is required." zh="此欄位為必填。" />],
+          ['2', 'Device Notifications · Sender', '是', '26', <><Copy en="This field is required." zh="此欄位為必填。" /><Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
+          ['2', 'Device Notifications · Content', '是', '534', <Copy en="This field is required." zh="此欄位為必填。" />],
+          ['2', 'SMS text', '是', '534', <Copy en="This field is required." zh="此欄位為必填。" />],
+          ['2', 'Desktop OS · Sender', '否', '26', <Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" />],
+          ['2', 'Desktop OS · Title', '是', '40', <Copy en="This field is required." zh="此欄位為必填。" />],
+          ['2', 'Desktop OS · Content', '是', '120', <Copy en="This field is required." zh="此欄位為必填。" />],
+          ['2', 'Email · Subject', '是', '70', <Copy en="This field is required." zh="此欄位為必填。" />],
+          ['2', 'Email · Content', '是', '無字數上限；整體 100 KB', <><Copy en="This field is required." zh="此欄位為必填。" /><Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" /></>],
           ['3', '排程時間', '選排程時', '10 分鐘後～30 天內', '見「確認送出」'],
         ]} />
-        <Notes items={[{ title: '超過字數', body: <>所有欄位共用：<Copy en="Up to N characters." zh="最多 N 字。" />；字數計數變紅。</> }]} />
+        <Notes items={[{ title: '超過字數', body: <>所有欄位共用：<Copy en="Up to N characters." zh="最多 N 字。" />；字數計數變紅。沒填的必填欄位一律顯示「This field is required.」。</> }]} />
       </Section>
     </>
   )
