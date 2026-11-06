@@ -70,7 +70,7 @@ await step('list', async () => {
     [2, main.locator('[role="columnheader"]').filter({ hasText: 'Title' }), 'tl'],
     [3, main.locator('[role="columnheader"]').filter({ hasText: 'Status' }), 'tl'],
     [4, main.locator('[role="columnheader"]').filter({ hasText: 'Audience' }), 'tl'],
-    [5, main.getByRole('button', { name: /^\d+ failed$/ }).first(), 'tl'],
+    [5, main.getByRole('button', { name: /^\d+ not sent$/ }).first(), 'tl'],
     [6, main.getByRole('button', { name: /^Actions for/ }).first(), 'c'],
     [7, main.getByRole('button', { name: /^Status/ }), 'tl'],
     [8, main.getByRole('button', { name: /^Channel/ }), 'tl'],
@@ -182,7 +182,7 @@ await step('detail-mixed', async () => {
 
 // ---- dialogs
 await step('dlg-fail', async () => {
-  await row('Design review', 0).getByRole('button', { name: /failed/ }).click(); await wait(800);
+  await row('Design review', 0).getByRole('button', { name: /not sent/ }).click(); await wait(800);
   const d = p.getByRole('dialog'); await shot('dlg-fail', d, [
     [1, d.getByText(/Device Notifications \(SMS\) ·/), 'tl'],
     [2, d.locator('[role="columnheader"]').filter({ hasText: 'Reason' }), 'tl'],
@@ -265,13 +265,13 @@ await step('dlg-members', async () => {
 // ---- failed-members dialog: without SMS fallback, and a message that failed as a whole
 await step('dlg-fail-email', async () => {
   const rs = main.locator('[role="row"]').filter({ hasText: 'Design review' });
-  await rs.nth(1).getByRole('button', { name: /failed/ }).click().catch(async () => { await main.getByRole('button', { name: /^1 failed$/ }).nth(1).click() }); await wait(800);
+  await rs.nth(1).getByRole('button', { name: /not sent/ }).click().catch(async () => { await main.getByRole('button', { name: /^1 not sent$/ }).nth(1).click() }); await wait(800);
   await shot('dlg-fail-email', p.getByRole('dialog'), [], 12);
   await p.keyboard.press('Escape'); await wait(300);
 });
 await step('dlg-fail-error', async () => {
   await main.getByPlaceholder(/Search title/).fill('On-call swap'); await wait(500);
-  await main.getByRole('button', { name: /^4 failed$/ }).first().click(); await wait(800);
+  await main.getByRole('button', { name: /^4 not sent$/ }).first().click(); await wait(800);
   await shot('dlg-fail-error', p.getByRole('dialog'), [], 12);
   await p.keyboard.press('Escape'); await wait(300);
   await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
