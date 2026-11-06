@@ -56,8 +56,6 @@ export interface Row {
   chSt?: Partial<Record<Channel, Status>> | null
   team?: string | null
   // ICSD approval skipped because the message was urgent: who, when and why (kept for the record)
-  // why the sender asked for SMS fallback (shown in the details; sample data for now, the send flow doesn't ask yet)
-  smsReason?: string
   bypass?: { by: string; at: string; reason: string } | null
   // approval: who reviews it (ICSD, the sender's supervisor, or both in turn), when they decided, and why if rejected
   review?: { by: 'icsd' | 'mgr' | 'both'; at?: string; reason?: string } | null
@@ -534,16 +532,6 @@ if (SPLIT) {
 }
 MINE.forEach(r => { if (r.sender === '') r.sender = 'gywu' })
 ROWS0.push(...MINE)
-// sample reasons for the messages sent with SMS fallback
-if (SPLIT) {
-  const WHY = [
-    'Some recipients are on the fab floor and often have no signal on the app, so SMS is the only way to be sure they see it.',
-    'The notice is time-critical. Anyone who misses the push still needs to get it today.',
-    'A few recipients have no registered device yet; SMS reaches them.',
-    'Contractors in this audience don’t use the app, so they need a text message.',
-  ]
-  ROWS0.forEach(r => { if (r.sms && !r.smsReason) r.smsReason = WHY[hsh(r.id) % WHY.length] })
-}
 ROWS0.sort((a, b) => b.created.localeCompare(a.created))
 
 

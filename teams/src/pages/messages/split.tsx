@@ -377,7 +377,13 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
             <span className="flex items-center gap-1.5 text-body text-fg-secondary"><I className="size-4" aria-hidden />{chName(k)}</span>
           </div>
           {/* the review's progress, reasons and approvers live in the Approval center, not here */}
-          {approval ? <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('See review progress in the Approval center', '到 Approval center 查看審核進度')}</Button> : null}
+          {approval ? (
+            <div className="flex flex-col gap-1.5">
+              {/* an urgent send skipped SMS approval: why, right above the link to the review */}
+              {ICSD && r.bypass && k === 'sms' ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Urgent reason', '緊急原因')}</span><span className="whitespace-pre-wrap text-body">{r.bypass.reason}</span></div> : null}
+              <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('View in Approval center', '到 Approval center 查看')}</Button>
+            </div>
+          ) : null}
         </div>
 
         <Part title={L('Content', '內容')}>
@@ -387,7 +393,6 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
               <Block head title={L('SMS fallback', 'SMS 備援')} part={x.fb}>
                 <ChannelText r={r} k="sms" />
                 <span className="text-caption text-fg-secondary">{L('Sent to the people Device Notifications couldn’t reach, and to external phones.', '寄給 Device Notifications 送不到的人，以及外部電話。')}</span>
-                {r.smsReason ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Why SMS was requested', '申請 SMS 的理由')}</span><span className="whitespace-pre-wrap text-body">{r.smsReason}</span></div> : null}
               </Block>
             </div>
           ) : <ChannelText r={r} k={k} />}

@@ -217,6 +217,12 @@ await detail('detail-scheduled', 'out of office', 'out of office 10/27');
 await detail('detail-progress', 'Fire alarm', 'Fire alarm test in Building B');
 await detail('detail-error', 'On-call swap', 'On-call swap');
 await detail('detail-sent-fb', 'Design review', 'Design review with Northwind Studio: Thu 11/6');
+await step('detail-urgent', async () => {
+  await space('ESH Emergency');
+  await row('Typhoon update: offices reopen').getByText('Typhoon update: offices reopen').first().click(); await wait(800);
+  await panel('detail-urgent', []); await closeAside(); await space('My sending sp').catch(() => {});
+  await p.getByRole('button', { name: 'My sending space', exact: true }).first().click().catch(() => {}); await wait(1200);
+});
 // ---- members dialog (from a group or org in the audiences)
 await step('dlg-members', async () => {
   await row('Design review', 0).getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
