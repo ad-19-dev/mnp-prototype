@@ -9,7 +9,7 @@ import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { CalendarClock, CircleAlert, Copy, Eye, Filter, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
 import { CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, fmtN, htmlToText, rowChs, type Channel, type Row, type Status } from '../../lib/data'
 import { useApp } from '../../lib/store'
-import { CHN, ChIcons, PAvatar, StatusTag, Two, statusLabel } from '../../components/ui'
+import { CHN, ChIcons, PAvatar, StatusTag, Two, personVal, statusLabel } from '../../components/ui'
 import { L } from '../../lib/i18n'
 import { listSender, type SendCtl } from './ctl'
 
@@ -126,7 +126,7 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
     col.accessor('created', { header: L('Created', '建立時間'), cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     col.accessor('sched', { header: L('Scheduled', '排程時間'), cell: i => { const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // the personal space holds only what you created, so Created by appears in team spaces only
-    ...(app.space === 'me' ? [] : [col.accessor('creator', { header: L('Created by', '建立者'), cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
+    ...(app.space === 'me' ? [] : [col.accessor(r => personVal(PMAP[r.creator] || PEOPLE[0]), { id: 'creator', header: L('Created by', '建立者'), meta: { type: 'person' } })]),
   ], [m, app.lang, app.teams, app.space])
 
   return (

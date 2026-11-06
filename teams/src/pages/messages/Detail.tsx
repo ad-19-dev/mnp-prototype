@@ -13,7 +13,7 @@ import {
   type Channel, type Fail, type Group, type Row, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
-import { Banner, CHN, FormField, IconBox, PAvatar, StatusTag, Two } from '../../components/ui'
+import { Banner, CHN, FormField, IconBox, PAvatar, StatusTag, Two, personVal } from '../../components/ui'
 import { MailHtml } from '../../components/RichText'
 import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
 import { ShellAside } from '../../components/shell'
@@ -242,7 +242,7 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 
 const fcol = createColumnHelper<Fail>()
 export const failCols = (byCh?: boolean) => [
-  fcol.display({ id: 'who', header: L('Audience', '收件人'), cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
+  fcol.accessor(f => (f.ext ? f.ext : personVal(f.p!)), { id: 'who', header: L('Audience', '收件人'), meta: { type: 'person' } }),
   fcol.display({ id: 'org', header: L('Org', '組織'), cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),
   fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 300 }, cell: i => { const f = i.row.original; return (
     <span className="flex min-w-0 flex-col items-start gap-1">

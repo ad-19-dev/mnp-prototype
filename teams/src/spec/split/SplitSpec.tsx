@@ -171,10 +171,10 @@ function ListTab() {
           { n: 8, title: '通道篩選', body: <>多選，四種通道：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊有紀錄數。</> },
         ]} />
       </Section>
-      <Section eyebrow="Columns" title="欄位" lead="欄寬一律使用設計系統的預設值；只有「標題 / 內容」（以及對話框裡的主要文字欄）設最小寬度，並吸收多出來的空間。">
+      <Section eyebrow="Columns" title="欄位" lead="欄寬一律使用設計系統的預設值；例外是「通道」（不能被截斷，固定寬度）和「標題 / 內容」（設最小寬度，吸收多出來的空間）。">
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
           [<Copy en="Sender" zh="寄件人" />, 'DS 預設', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；Email 留白。不凍結。', '可'],
-          [<Copy en="Channel" zh="通道" />, 'DS 預設', '圖示加名稱', '—'],
+          [<Copy en="Channel" zh="通道" />, '270（固定，不截斷）', '圖示加名稱；名稱永遠完整顯示，寬度要放得下兩個圖示加「Device Notifications (SMS)」', '—'],
           [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 380，其餘空間由這欄吸收', '該通道的標題與內文', '—'],
           [<Copy en="Status" zh="狀態" />, 'DS 預設', '狀態標籤，失敗人數在下方', '—'],
           [<Copy en="Audience" zh="收件人數" />, 'DS 預設', '只有人數，齊右', '可'],

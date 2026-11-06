@@ -3,7 +3,7 @@ import * as React from 'react'
 import { DataTable, Dialog, Empty, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle, Input } from '@qijenchen/design-system'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Search } from 'lucide-react'
-import { NO_HIDE, PAvatar, Two } from './ui'
+import { NO_HIDE, PAvatar, Two, personVal } from './ui'
 import { addedAs, type AddedAs, type Person } from '../lib/data'
 import { L, P } from '../lib/i18n'
 
@@ -19,7 +19,7 @@ export function MembersDialog({ set, onClose }: { set: MemberSet | null; onClose
   // an org lists its people by employee ID and NT account; a group shows what each member was added by
   const g = set ? set.group : undefined
   const cols = React.useMemo(() => [
-    mcol.display({ id: 'p', header: L('Name', '姓名'), meta: { width: 280 }, cell: i => { const p = i.row.original; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.extKind ? p.value : p.zh + ' ' + p.en} b={p.extKind ? L('External', '外部') : undefined} strong /></span> } }),
+    mcol.accessor(p => personVal(p), { id: 'p', header: L('Name', '姓名'), meta: { type: 'person', width: 280 } }),
     ...(g ? [mcol.display({ id: 'as', header: L('Added by', '加入方式'), cell: i => { const a = addedAs(g, i.row.original); return <Two a={a.value} b={asType(a)} /> } })]
       : [mcol.display({ id: 'emp', header: L('Employee ID', '工號'), cell: i => i.row.original.emp || '—' }),
         mcol.display({ id: 'nt', header: L('NT account', 'NT 帳號'), cell: i => i.row.original.nt || '—' })]),

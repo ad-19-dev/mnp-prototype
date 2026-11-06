@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, ConfirmDialog, FormField, PAvatar, Section, Two, type Confirm } from '../../components/ui'
+import { Banner, ConfirmDialog, FormField, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RecvInput, type RiItem, type RiState } from '../../components/RecvInput'
 import { L, P, tx } from '../../lib/i18n'
@@ -178,7 +178,7 @@ function GroupList({ m }: { m: GCtl }) {
     gcol.accessor('count', { header: L('Members', '人數'), cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
     gcol.accessor('updated', { header: L('Updated', '更新時間'), cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // the personal space holds only your own groups, so Created by appears in team spaces only
-    ...(app.space === ME_SPACE ? [] : [gcol.accessor('creator', { header: L('Created by', '建立者'), cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
+    ...(app.space === ME_SPACE ? [] : [gcol.accessor(g => personVal(PMAP[g.creator] || PEOPLE[0]), { id: 'creator', header: L('Created by', '建立者'), meta: { type: 'person' } })]),
   ], [m, app.lang, app.space])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
@@ -237,7 +237,7 @@ function GroupEditor({ m }: { m: GCtl }) {
   ed.members.forEach(x => { has[x.pid] = true })
 
   const mcols = React.useMemo(() => [
-    mcol.display({ id: 'who', header: L('Member', '成員'), meta: { width: 220 }, cell: i => { const { p } = i.row.original; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.extKind ? p.value : p.zh + ' ' + p.en} b={p.title} strong /></span> } }),
+    mcol.accessor(x => personVal(x.p), { id: 'who', header: L('Member', '成員'), meta: { type: 'person', width: 220 } }),
     mcol.display({ id: 'emp', header: L('Employee ID', '工號'), cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
     mcol.display({ id: 'org', header: L('Org', '組織'), cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
     mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),

@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, go, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, type Confirm } from '../../components/ui'
+import { Banner, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RichText } from '../../components/RichText'
 import { L, P } from '../../lib/i18n'
@@ -142,7 +142,7 @@ function TplList({ m }: { m: TCtl }) {
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
     tcol.accessor('updated', { header: L('Updated', '更新日期') }),
     // the personal space holds only your own templates, so Created by appears in team spaces only
-    ...(app.space === ME_SPACE ? [] : [tcol.accessor('owner', { header: L('Created by', '建立者'), cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } })]),
+    ...(app.space === ME_SPACE ? [] : [tcol.accessor(t => personVal(PMAP[t.owner] || PEOPLE[0], t.owner === ME), { id: 'owner', header: L('Created by', '建立者'), meta: { type: 'person' } })]),
   ], [m, app.lang, app.space])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">

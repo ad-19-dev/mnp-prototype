@@ -16,7 +16,7 @@ import {
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
-import { Banner, CHN, ChIcons, FilterMenu, NO_HIDE, PAvatar, PageSize, StatusTag, Tip, Trunc, Two } from '../../components/ui'
+import { Banner, CHN, ChIcons, FilterMenu, personVal, NO_HIDE, PAvatar, PageSize, StatusTag, Tip, Trunc, Two } from '../../components/ui'
 import { ShellAside } from '../../components/shell'
 import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
@@ -92,7 +92,7 @@ function ChCell({ k }: { k: Channel }) {
         <Tag size="sm" color="neutral" icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
         {k === 'sms' ? <Tag size="sm" color="amber" icon={CHN.sms.icon} aria-hidden className="[&_[data-tag-text]]:hidden" /> : null}
       </span>
-      <Trunc text={chName(k)} />
+      <span className="whitespace-nowrap">{chName(k)}</span>
     </span>
   )
 }
@@ -242,7 +242,8 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
         {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : null}</>
     } }),
-    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, cell: i => {
+    // the one column that must never truncate: room for two icons and "Device Notifications (SMS)" (the message row of the grouped options adds a chevron)
+    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 300 : 270 }, cell: i => {
       const g = i.row.original
       if (g.hdr) return (
         <span className="flex min-w-0 items-center gap-2"><Mk g={g} />
@@ -277,7 +278,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // send now goes out at its created time, so it never shows a dash here
     col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    ...(app.space === 'me' ? [] : [col.accessor(x => x.r.creator, { id: 'creator', header: L('Created by', '建立者'), cell: i => { if (!shared(i.row.original)) return null; const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
+    ...(app.space === 'me' ? [] : [col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Created by', '建立者'), meta: { type: 'person' } })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs])
 
   return (

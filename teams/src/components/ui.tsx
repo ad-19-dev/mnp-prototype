@@ -5,12 +5,18 @@ import {
   Alert, Avatar, Badge, Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
   Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
-  type CategoricalColor,
+  type CategoricalColor, type PersonData,
 } from '@qijenchen/design-system'
 import { AlertTriangle, Calendar, CalendarX2, CheckCircle2, ChevronDown, CircleX, Hourglass, Filter, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
 import type { Channel, Fmt, ListKind, Person, Status } from '../lib/data'
 import { LIST_KINDS } from '../lib/data'
 import { L } from '../lib/i18n'
+
+// A person as the DS DataTable's `person` column type wants it: avatar and one name, with the profile card
+// (employee ID, NT account) on hover. Use it with `meta: { type: 'person' }` and no custom cell.
+export function personVal(p: Person, you?: boolean): PersonData {
+  return { name: p.extKind ? p.value || '' : p.en + ' ' + p.zh + (you ? L(' (you)', '（你）') : ''), id: p.extKind ? undefined : p.nt, employeeNumber: p.extKind ? undefined : p.emp }
+}
 
 // ---------- channels and statuses ----------
 const CH_ICON: Record<Channel, LucideIcon> = { push: Smartphone, desktop: Monitor, email: Mail, sms: MessageSquareText }
