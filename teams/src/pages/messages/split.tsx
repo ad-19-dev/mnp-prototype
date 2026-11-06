@@ -387,6 +387,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
               <Block head title={L('SMS fallback', 'SMS 備援')} part={x.fb}>
                 <ChannelText r={r} k="sms" />
                 <span className="text-caption text-fg-secondary">{L('Sent to the people Device Notifications couldn’t reach, and to external phones.', '寄給 Device Notifications 送不到的人，以及外部電話。')}</span>
+                {r.smsReason ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Why SMS was requested', '申請 SMS 的理由')}</span><span className="whitespace-pre-wrap text-body">{r.smsReason}</span></div> : null}
               </Block>
             </div>
           ) : <ChannelText r={r} k={k} />}

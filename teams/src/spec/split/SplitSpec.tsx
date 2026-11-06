@@ -251,7 +251,7 @@ function Detail() {
           { n: 1, title: '標題', body: <><C>Message content</C>；右上角關閉。</> },
           { n: 2, title: 'Approval center 連結', body: '審核的進度、原因、核准人都在內部的 Approval center，面板只放連結。見下方條件。' },
           { n: 3, title: 'Device Notifications 區塊', body: '區塊標題、這個通道自己的狀態、「n / m delivered」，下面是它寄出的內容（寄件人、標題、內文）。' },
-          { n: 4, title: 'SMS 備援區塊', body: '同樣有標題、自己的狀態與送達人數，下面是簡訊內文，以及一行說明：寄給 Device Notifications 送不到的人，以及外部電話。' },
+          { n: 4, title: 'SMS 備援區塊', body: '同樣有標題、自己的狀態與送達人數，下面是簡訊內文、一行說明（寄給 Device Notifications 送不到的人，以及外部電話），以及「申請 SMS 的理由」（寄件人當初申請 SMS 備援時填的原因）。' },
           { n: 5, title: '收件人', body: '組織、群組、個人、外部聯絡人；組織與群組的人數可以點開看成員。' },
         ]} />
       </Section>
@@ -268,6 +268,7 @@ function Detail() {
           ['Approval center 連結', <>出現在：Device Notifications (SMS)（SMS 要核准），或這則訊息有人核准過、正在等核准（外部收件人要主管核准）。文字 <Copy en="See review progress in the Approval center" zh="到 Approval center 查看審核進度" />。</>],
           ['審核提示卡片', '不顯示（待核准、已駁回、排程過期、緊急略過核准的提示都拿掉）。原因與時間在 Approval center。'],
           ['區塊標題與狀態', '只有 Device Notifications (SMS) 才有兩個區塊；一個區塊標題，旁邊是該部分的狀態標籤與「n / m delivered」。'],
+          ['申請 SMS 的理由', '有勾 SMS 備援的訊息才有，放在 SMS 備援區塊底下，標籤「Why SMS was requested / 申請 SMS 的理由」。目前發送流程還沒有收集這個欄位，範例資料是先填好的。'],
           ['SMS 的人數', 'Device Notifications 沒送完時，SMS 的人數還不知道，寫「Number known once Device Notifications finishes」。'],
           ['收件人', '只列這個通道實際寄得到的人：外部 Email 只出現在 Email，外部電話只出現在 Device Notifications (SMS)。'],
           ['拿掉的東西', '寄件人、模板、核准、建立者、建立時間、傳送時間、送達／失敗人數區、同時發送的其他通道、申請編號、底部的編輯／刪除按鈕。'],
