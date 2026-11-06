@@ -158,7 +158,7 @@ function StatusCell({ m, x }: { m: SendCtl; x: Rec }) {
   return (
     <span className="flex min-w-0 flex-col items-start gap-1">
       <StatusTag s={x.st} />
-      {fails ? <Button variant="link" size="xs" startIcon={CircleAlert} className="!h-auto !min-w-0 !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: x.r.id + '|' + x.k })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
+      {fails ? <Button variant="link" size="xs" className="!h-auto !min-w-0 !justify-start !p-0 !text-error-text hover:!text-error-text hover:underline" onClick={() => m.set({ ns: x.r.id + '|' + x.k })}>{L(fails + ' failed', fails + ' 人失敗')}</Button> : null}
     </span>
   )
 }
@@ -313,10 +313,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       )}
       {rows.length && !loading ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-body text-fg-secondary">{grouped
-            ? L((st + 1) + '–' + Math.min(unitN, st + per) + ' of ' + unitN + ' messages (' + rows.length + ' records)', '第 ' + (st + 1) + '–' + Math.min(unitN, st + per) + ' 則，共 ' + unitN + ' 則（' + rows.length + ' 筆）')
-            : L((st + 1) + '–' + Math.min(rows.length, st + per) + ' of ' + rows.length, '第 ' + (st + 1) + '–' + Math.min(rows.length, st + per) + ' 筆，共 ' + rows.length + ' 筆')}</span>
-          <div className="flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-3">
             <Pagination total={unitN} pageSize={per} page={page} onPageChange={p => m.set({ page: p })} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
             <PageSize value={per} onChange={n => { setPer(n); m.set({ page: 1 }) }} />
           </div>

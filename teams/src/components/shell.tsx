@@ -67,6 +67,7 @@ export function PageHeader({ crumbs, actions }: { crumbs: Crumb[]; actions?: Rea
   )
 }
 
+const SHOW_ACCOUNT = false
 function LangSwitch() {
   const { lang } = useApp()
   return (
@@ -115,13 +116,16 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
         </SidebarGroup>
       </SidebarContent>
       {/* DS primary-sidebar: the account sits at the bottom of the sidebar; the prototype's language switch sits with it */}
-      <SidebarFooter>
-        <div className="flex min-w-0 items-center gap-2 px-[var(--layout-space-tight)] py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <AccountMenu user={{ name: 'Grace Wu', avatar: { color: 'blue' } }} onViewProfile={() => {}} onOpenSettings={() => {}} onSignOut={() => {}} />
-          <span className="min-w-0 flex-1 truncate text-body group-data-[collapsible=icon]:hidden">Grace Wu</span>
-          <LangSwitch />
-        </div>
-      </SidebarFooter>
+      {/* hidden for now (2026-11-06): the account and the language switch; the prototype is English only */}
+      {SHOW_ACCOUNT ? (
+        <SidebarFooter>
+          <div className="flex min-w-0 items-center gap-2 px-[var(--layout-space-tight)] py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+            <AccountMenu user={{ name: 'Grace Wu', avatar: { color: 'blue' } }} onViewProfile={() => {}} onOpenSettings={() => {}} onSignOut={() => {}} />
+            <span className="min-w-0 flex-1 truncate text-body group-data-[collapsible=icon]:hidden">Grace Wu</span>
+            <LangSwitch />
+          </div>
+        </SidebarFooter>
+      ) : null}
       <TeamDialog open={creating} onClose={() => setCreating(false)} />
     </Sidebar>
   )

@@ -61,7 +61,6 @@ async function panel(name, list = [], open = false) {
 const openRecord = async (text, nth = 0) => { await row(text, nth).getByRole('link').first().click().catch(async () => { await row(text, nth).getByText(text).first().click() }); await wait(700) };
 
 await p.goto('http://localhost:4190/index.html'); await wait(300);
-await p.getByText('EN', { exact: true }).click(); await wait(200);
 await wait(1500);
 
 // ---- list

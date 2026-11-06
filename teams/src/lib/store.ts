@@ -20,9 +20,9 @@ export interface AppState {
   space: string
 }
 
+// English only for now (2026-11-06); the Chinese strings stay in the code and come back with the language switch
 function initialLang(): Lang {
-  try { const v = localStorage.getItem('mnp-lang'); if (v === 'en' || v === 'zh') return v } catch { /* storage blocked */ }
-  return /^zh/i.test(navigator.language || '') ? 'zh' : 'en'
+  return 'en'
 }
 
 let state: AppState = {
