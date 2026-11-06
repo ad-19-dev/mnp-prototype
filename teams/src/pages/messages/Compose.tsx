@@ -263,7 +263,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 // ---------- step 2 ----------
 function FormatBlock({ title, desc, uses, children }: { title: string; desc?: string; uses?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)]">
+    <div className="flex flex-col gap-[var(--layout-space-tight)] border-t border-divider pt-[var(--layout-space-loose)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-col gap-0.5"><span className="text-body font-semibold">{title}</span>{desc ? <span className="text-body text-fg-secondary">{desc}</span> : null}</span>
         {uses ? <span className="flex flex-wrap items-center gap-1.5">{uses}</span> : null}

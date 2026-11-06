@@ -152,7 +152,7 @@ function SendTab() {
           ['Email', 'Subject', '是', '70', REQ],
           ['', 'Content', '是', '無字數上限', <><Copy en="Supports text, tables, and images." zh="支援文字、表格、圖片。" />只有整體超過 100 KB 才報錯：<Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" /></>],
         ]} />
-        <Notes items={[{ title: '所有必填欄位', body: <>沒填一律顯示 <Copy en="This field is required." zh="此欄位為必填。" />，包含緊急原因和排程時間。</> }]} />
+        <Notes items={[{ title: '通道之間的分隔線', body: '每個通道區塊（Device Notifications、SMS、Desktop OS、Email）上方有一條細分隔線（設計系統的分隔線顏色），讓不同通道的欄位看得出分段；第一個通道上方的線把它和模板選擇隔開。' }, { title: '所有必填欄位', body: <>沒填一律顯示 <Copy en="This field is required." zh="此欄位為必填。" />，包含緊急原因和排程時間。</> }]} />
       </Section>
       <Section eyebrow="Step 3" title="Schedule & preview" lead={<>頁面最上方一行說明：<Copy en="Choose when to send and review all settings before submission." zh="選擇傳送時間，並在送出前確認所有設定。" /></>}>
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
