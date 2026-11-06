@@ -47,8 +47,11 @@ const row = (text, nth = 0) => main.locator('[role="row"]').filter({ hasText: te
 const openRowMenu = async text => { await main.getByRole('button', { name: new RegExp('^Actions for .*' + text) }).first().click(); await wait(350) };
 const closeAside = async () => { await aside().getByRole('button', { name: 'Close' }).first().click().catch(() => {}); await wait(300) };
 // a detail panel, cut just below its last section
-async function panel(name, list = []) {
-  const a = aside(), bb = await a.boundingBox();
+// open: unfold the content accordion first (it is folded by default)
+async function panel(name, list = [], open = false) {
+  const a = aside();
+  if (open) { const t = a.locator('button[aria-expanded="false"]'); for (let i = await t.count(); i > 0; i--) { await t.first().click(); await wait(250) } }
+  const bb = await a.boundingBox();
   const bottom = await a.evaluate(n => Math.max(...Array.from(n.querySelectorAll('section')).map(x => x.getBoundingClientRect().bottom)));
   await shot(name, { x: bb.x, y: bb.y, width: bb.width, height: Math.min(bb.height, bottom - bb.y + 28) }, list);
 }
@@ -142,15 +145,16 @@ await step('detail-fb', async () => {
     [4, a.getByText('SMS fallback', { exact: true }).first(), 'tl'],
     [5, a.getByText('Audiences', { exact: true }), 'tl'],
   ]);
+  await panel('detail-fb-open', [], true);
   await closeAside();
 });
 await step('detail-single', async () => {
   await space('My sending space');
   await row('Design review', 1).getByText('Design review with Northwind Studio: Thu, Nov 6').first().click(); await wait(800);
-  await panel('detail-email', []);
+  await panel('detail-email', [], true);
   await closeAside();
   await row('Team lunch moves to 12:30').getByText('Team lunch moves to 12:30 today').first().click(); await wait(800);
-  await panel('detail-push', []);
+  await panel('detail-push', [], true);
   await closeAside();
 });
 await step('detail-pending', async () => {

@@ -7,7 +7,7 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
-  Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Siren, Trash2 } from 'lucide-react'
@@ -337,22 +337,28 @@ const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.t
 export function SplitDetailSheet({ m }: { m: SendCtl }) {
   const app = useApp(), x = recordById(m, app.rows, m.s.det)
   if (!x) return null
-  return <ShellAside title={L('Message content', '訊息內容')} onClose={() => m.set({ det: null })}><SplitDetail m={m} x={x} /></ShellAside>
+  return <ShellAside title={L('Message content', '訊息內容')} onClose={() => m.set({ det: null })}><SplitDetail key={x.id} m={m} x={x} /></ShellAside>
 }
 
-// one block of the content: a heading, the send status with its numbers, and what was sent
-function Block({ title, part, children, head }: { title: string; part?: Part & { fails?: number }; children: React.ReactNode; head?: boolean }) {
+// What the sender wrote is folded away by default (it's long, and the list row already shows its first lines):
+// one accordion item per channel part. With SMS fallback there are two items, each with its own status and
+// "n / m sent"; the status tags only show once something has gone out, so a message waiting for approval
+// doesn't repeat "Pending approval" on every line.
+function Item({ value, title, part, children }: { value: string; title: string; part?: Part; children: React.ReactNode }) {
+  const started = part && (part.st === 'progress' || done(part.st))
   return (
-    <div className="flex flex-col gap-2">
-      {head ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <b className="text-body font-medium text-foreground">{title}</b>
-          {part && !part.unk && done(part.st) && part.of === 0 ? <span className="text-caption text-fg-secondary">{L('Not needed', '不需要')}</span> : part ? <StatusTag s={part.st} /> : null}
-          {part && !part.unk && done(part.st) && part.of > 0 ? <span className="text-caption tabular-nums text-fg-secondary">{L(fmtN(part.ok) + ' / ' + fmtN(part.of) + ' delivered', fmtN(part.ok) + ' / ' + fmtN(part.of) + ' 已送達')}</span> : null}
-        </div>
-      ) : null}
-      {children}
-    </div>
+    <AccordionItem value={value} className="border-b border-divider last:border-b-0">
+      <AccordionTrigger className="px-3">
+        <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-left">
+          <span className="text-body font-medium">{title}</span>
+          {part && started ? <StatusTag s={part.st} /> : null}
+          {part && !part.unk && done(part.st) ? (part.of === 0
+            ? <span className="text-caption text-fg-secondary">{L('Not needed', '不需要')}</span>
+            : <span className="text-caption tabular-nums text-fg-secondary">{L(fmtN(part.ok) + ' / ' + fmtN(part.of) + ' sent', fmtN(part.ok) + ' / ' + fmtN(part.of) + ' 已送出')}</span>) : null}
+        </span>
+      </AccordionTrigger>
+      <AccordionContent className="px-3"><div className="flex flex-col gap-2 pb-1">{children}</div></AccordionContent>
+    </AccordionItem>
   )
 }
 
@@ -362,15 +368,11 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
+        {/* the channel, and the approval in one place: why it skipped approval (urgent only), then the link to the review */}
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusTag s={x.st} />
-            <span className="flex items-center gap-1.5 text-body text-fg-secondary"><I className="size-4" aria-hidden />{chName(k)}</span>
-          </div>
-          {/* the review's progress, reasons and approvers live in the Approval center, not here */}
+          <span className="flex items-center gap-2 text-body font-medium"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span>
           {approval ? (
             <div className="flex flex-col gap-1.5">
-              {/* an urgent send skipped SMS approval: why, right above the link to the review */}
               {ICSD && r.bypass && k === 'sms' ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Urgent reason', '緊急原因')}</span><span className="whitespace-pre-wrap text-body">{r.bypass.reason}</span></div> : null}
               <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('View in Approval center', '到 Approval center 查看')}</Button>
             </div>
@@ -378,14 +380,12 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
         </div>
 
         <Part title={L('Content', '內容')}>
-          {x.fb ? (
-            <div className="flex flex-col gap-[var(--layout-space-loose)]">
-              <Block head title={CHN.push.name} part={{ ok: x.ok, of: x.of, unk: x.unk, st: x.pst }}><ChannelText r={r} k="push" noSender /></Block>
-              <Block head title={L('SMS fallback', 'SMS 備援')} part={x.fb}>
-                <ChannelText r={r} k="sms" />
-              </Block>
-            </div>
-          ) : <ChannelText r={r} k={k} noSender />}
+          <Accordion type="multiple" className="rounded-md border border-divider">
+            {x.fb ? <>
+              <Item value="push" title={CHN.push.name} part={{ ok: x.ok, of: x.of, unk: x.unk, st: x.pst }}><ChannelText r={r} k="push" noSender /></Item>
+              <Item value="sms" title={L('SMS fallback', 'SMS 備援')} part={x.fb}><ChannelText r={r} k="sms" /></Item>
+            </> : <Item value={k} title={chName(k)}><ChannelText r={r} k={k} noSender /></Item>}
+          </Accordion>
         </Part>
 
         <Part title={L('Audiences', '收件人')}>
@@ -395,6 +395,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
     </div>
   )
 }
+
 // ---------- who one record missed ----------
 // One record's list: the people it didn't reach. With SMS fallback that's the people neither Device Notifications nor SMS
 // reached, each with both reasons. Resend goes out on this record's channels again.

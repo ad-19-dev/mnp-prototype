@@ -107,7 +107,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
 
       <Section eyebrow="2" title="訊息內容面板" lead="開在列表右側，不離開列表。沒有操作按鈕；審核進度在 Approval center。">
         <div className="flow-branches">
-          <Card kind="page" title="Device Notifications (SMS)" when="點這種紀錄的標題" shots={['detail-fb']} then="兩個區塊：Device Notifications、SMS 備援，各有狀態與送達人數；有「到 Approval center 查看」連結；緊急送出的另有「緊急原因」" />
+          <Card kind="page" title="Device Notifications (SMS)" when="點這種紀錄的標題" shots={['detail-fb']} then="內容預設收合，兩項：Device Notifications、SMS 備援，各有狀態與「n / m sent」；有「到 Approval center 查看」連結；緊急送出的另有「緊急原因」" />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、沒勾 SMS 的 Device Notifications" shots={['detail-email', 'detail-push']} then="只有那一個通道的內容與收件人" />
           <Card kind="page" title="等待核准的訊息" when="狀態 Pending approval" shots={['detail-pending']} then="多一個 Approval center 連結；原因與進度都在那邊" />
           <Card kind="action" title="Approval center" when="點面板上的連結" then="開啟內部的 Approval center（prototype 只顯示提示，不會真的跳轉）" />
@@ -232,7 +232,7 @@ function Rules() {
           ['收件人數', '這個通道要寄給的人數。Device Notifications (SMS) 用 Device Notifications 的人數。'],
           ['失敗人數', '送完（已送出或傳送錯誤）才顯示。沒有 SMS 備援：收件人數減已送達。有 SMS 備援：只算推播與 SMS 都沒送到的人（SMS 會補寄給推播沒送到的人）。'],
           ['失敗名單', '點「{n} 人失敗」開對話框；有 SMS 備援的，原因欄第二行是 SMS 失敗的原因。'],
-          ['不顯示送達人數', '列表與面板只有收件人數與失敗人數；有 SMS 備援的面板各區塊會寫「n / m delivered」。'],
+          ['不顯示送達人數', '列表與面板只有收件人數與失敗人數；有 SMS 備援的面板收合列上會寫「n / m sent」。'],
         ]} />
       </Section>
       <Section eyebrow="Marks" title="空格的意思">
@@ -254,7 +254,7 @@ function Detail() {
         <Figure label="Device Notifications (SMS)" sub="有 SMS 備援，兩個區塊" shot="detail-fb" max={440} notes={[
           { n: 1, title: '標題', body: <><C>Message content</C>；右上角關閉。</> },
           { n: 2, title: 'Approval center 連結', body: '審核的進度、核准人都在內部的 Approval center，面板只放連結。緊急送出的，連結上方多一行「緊急原因」。見下方條件。' },
-          { n: 3, title: 'Device Notifications 區塊', body: '區塊標題、這個通道自己的狀態、「n / m delivered」，下面是它寄出的內容（標題、內文；寄件人在列表上，面板不重複）。' },
+          { n: 3, title: 'Device Notifications 區塊', body: '收合列：名稱、這個通道自己的狀態、「n / m sent」；展開才是它寄出的內容（標題、內文；寄件人在列表上，面板不重複）。' },
           { n: 4, title: 'SMS 備援區塊', body: '同樣有標題、自己的狀態與送達人數，下面是簡訊內文。推播全部送到、不需要 SMS 時，不顯示狀態與人數，寫「Not needed / 不需要」。' },
           { n: 5, title: '收件人', body: '組織、群組、個人、外部聯絡人；組織與群組的人數可以點開看成員。' },
         ]} />
@@ -262,7 +262,7 @@ function Detail() {
       <Section eyebrow="Variants" title="各種紀錄的面板">
         <div className="spec-gallery">
           <figure><figcaption><b>Email</b><span>主旨、有格式的內文與附件；收件人含外部 Email。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email" max={420} /></div></figure>
-          <figure><figcaption><b>沒勾 SMS 備援的 Device Notifications</b><span>只有一個內容區塊，沒有區塊標題與狀態。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="Device Notifications" max={420} /></div></figure>
+          <figure><figcaption><b>沒勾 SMS 備援的 Device Notifications</b><span>只有一項內容（預設收合，圖為展開），沒有狀態與人數。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="Device Notifications" max={420} /></div></figure>
           <figure><figcaption><b>有 SMS 備援，但不需要</b><span>推播全部送到，SMS 區塊寫「Not needed」，不顯示狀態與人數；列表上這一筆是「已送出」。</span></figcaption><div className="spec-canvas"><Shot name="detail-sms-notneeded" alt="不需要 SMS" max={420} /></div></figure>
           <figure><figcaption><b>等待核准</b><span>狀態標籤 Pending approval，加 Approval center 連結。</span></figcaption><div className="spec-canvas"><Shot name="detail-pending" alt="等待核准" max={420} /></div></figure>
           <figure><figcaption><b>多種收件人</b><span>組織、群組、個人與外部聯絡人同時出現；外部 Email 只出現在 Email 那一筆，外部電話只出現在 Device Notifications (SMS)。</span></figcaption><div className="spec-canvas"><Shot name="detail-mixed" alt="多種收件人" max={420} /></div></figure>
@@ -272,7 +272,8 @@ function Detail() {
         <SpecTable head={['項目', '規則']} nowrap={[0]} rows={[
           ['Approval center 連結', <>出現在：Device Notifications (SMS)（SMS 要核准），或這則訊息有人核准過、正在等核准（外部收件人要主管核准）。文字 <Copy en="See review progress in the Approval center" zh="到 Approval center 查看審核進度" />。</>],
           ['審核提示卡片', '不顯示（待核准、已駁回、排程過期、緊急略過核准的提示都拿掉）。原因與時間在 Approval center。'],
-          ['區塊標題與狀態', '只有 Device Notifications (SMS) 才有兩個區塊；一個區塊標題，旁邊是該部分的狀態標籤與「n / m delivered」。'],
+          ['收合列', '使用者寫的內容預設收合，有需要再展開（可以同時展開幾項）。換一筆紀錄時回到收合。Device Notifications (SMS) 有兩項；其他通道一項。'],
+          ['狀態標籤', '面板頂部不放狀態（列表已有）。只有 Device Notifications (SMS) 的兩個收合列各顯示自己的狀態，而且要已經開始送（傳送中、已送出、傳送錯誤）才顯示；待核准、已駁回等還沒送出的，不放標籤，避免到處都是同一個標籤。'],
           ['緊急原因', '只有緊急送出的訊息才有，放在 Approval center 連結上方。'],
           ['收件人', '只列這個通道實際寄得到的人：外部 Email 只出現在 Email，外部電話只出現在 Device Notifications (SMS)。'],
           ['拿掉的東西', '寄件人、模板、核准、建立者、建立時間、傳送時間、送達／失敗人數區、同時發送的其他通道、申請編號、底部的編輯／刪除按鈕。'],
@@ -349,49 +350,49 @@ function StatusTab() {
         ['失敗人數', '不顯示'],
         ['傳送時間', '有排程是排程時間；立即傳送是建立時間（核准後才會真的送出）'],
         ['列選單', 'View message、Duplicate to new message'],
-        ['面板', '狀態 Pending approval；Approval center 連結；內容與收件人。有 SMS 備援的，SMS 區塊只有標題和狀態，沒有人數'],
+        ['面板', 'Approval center 連結；內容與收件人。有 SMS 備援的，SMS 區塊只有標題和狀態，沒有人數'],
       ]} pn="核准的原因、進度與核准人都在 Approval center，面板不再顯示提示卡片。" />
       <StatusSpec id="排程已過期" s="expired" tagDesc="核准時已經超過排程的時間，所以沒有送出。可以立即傳送、重新排程或刪除。" shots={['st-expired']} panel="detail-expired" rows={[
         ['收件人數', '照常顯示'],
         ['失敗人數', '不顯示'],
         ['傳送時間', '原訂的排程時間'],
         ['列選單', 'View message、Send now（all channels）、Reschedule（all channels）、Duplicate、Delete（all channels）'],
-        ['面板', '狀態 Scheduled expired；Approval center 連結；內容與收件人'],
+        ['面板', 'Approval center 連結；內容與收件人'],
       ]} pn="立即傳送與重新排程都套用到整則訊息，確認對話框會寫出受影響的通道。" />
       <StatusSpec id="已駁回" s="rejected" tagDesc="核准人駁回，訊息不會送出。" shots={['st-rejected']} panel="detail-rejected" rows={[
         ['收件人數', '照常顯示'],
         ['失敗人數', '不顯示'],
         ['傳送時間', '建立時間'],
         ['列選單', 'View message、Edit and resubmit、Duplicate、Delete（all channels）'],
-        ['面板', '狀態 Rejected；Approval center 連結（駁回原因在那邊）；內容與收件人'],
+        ['面板', 'Approval center 連結（駁回原因在那邊）；內容與收件人'],
       ]} pn="駁回原因不在面板顯示，由 Approval center 提供。" />
       <StatusSpec id="已排程" s="scheduled" tagDesc="核准完成（或不需要核准），等排程時間到。" shots={['st-scheduled']} panel="detail-scheduled" rows={[
         ['收件人數', '照常顯示'],
         ['失敗人數', '不顯示'],
         ['傳送時間', '排程時間'],
         ['列選單', 'View message、Edit message、Duplicate、Delete（all channels）'],
-        ['面板', '狀態 Scheduled；內容與收件人；沒有 Approval center 連結（不需要核准的訊息）'],
+        ['面板', '內容與收件人；沒有 Approval center 連結（不需要核准的訊息）'],
       ]} pn="Device Notifications 與 Email 是同一則訊息的兩筆紀錄，狀態一樣，編輯時一起改。" />
       <StatusSpec id="傳送中" s="progress" tagDesc="已經開始送；各通道各自進行，標籤是這一筆整體的狀態。" shots={['st-progress']} panel="detail-progress" rows={[
         ['收件人數', '各通道人數'],
         ['失敗人數', '送完才顯示'],
         ['傳送時間', '建立時間或排程時間'],
         ['列選單', 'View message、Duplicate to new message'],
-        ['面板', '狀態 In progress；Email 這種單一通道只有一個內容區塊；有 SMS 備援的，兩個區塊各有自己的狀態'],
+        ['面板', 'Email 這種單一通道只有一個內容區塊；有 SMS 備援的，兩個區塊各有自己的狀態'],
       ]} pn="有 SMS 備援時，Device Notifications 先送完、SMS 還在送，這一筆整體仍顯示 In progress。" />
       <StatusSpec id="已送出" s="sent" tagDesc="這一筆已送完。可能有人沒收到，在狀態下方顯示失敗人數。" shots={['st-sent']} panel="detail-sent-fb" rows={[
         ['收件人數', '各通道人數'],
         ['失敗人數', <>狀態下方紅色連結「n failed」；沒有人失敗就不顯示。有 SMS 備援的，只算推播與 SMS 都沒送到的</>],
         ['傳送時間', '建立時間或排程時間'],
         ['列選單', 'View message、Duplicate to new message'],
-        ['面板', '狀態 Sent；有 SMS 備援的，兩區塊各寫「n / m delivered」'],
+        ['面板', '有 SMS 備援的，兩個收合列各寫「n / m sent」'],
       ]} pn="點「n failed」開失敗名單（見「對話框規格」）。" />
       <StatusSpec id="傳送錯誤" s="error" tagDesc="整個通道沒有送出（例如平台中斷、郵件伺服器退件）。" shots={['st-error', 'st-mixed']} panel="detail-error" rows={[
         ['收件人數', '各通道人數'],
         ['失敗人數', '全部都失敗，顯示「n failed」；有 SMS 備援而其中一個傳送錯誤時，整體標籤是 Error'],
         ['傳送時間', '建立時間'],
         ['列選單', 'View message、Retry（all channels）、Duplicate'],
-        ['面板', '狀態 Error；內容與收件人'],
+        ['面板', '內容與收件人'],
       ]} pn="下方第二組是同一則訊息裡一個通道送出、另一個通道錯誤：每一筆各自顯示自己的狀態。" />
     </>
   )
@@ -402,24 +403,25 @@ function Blocks() {
   return (
     <>
       <Section eyebrow="Panel" title="面板的版面" lead="面板開在列表右側（設計系統 Aside），標題「Message content / 訊息內容」，右上角關閉，內容可捲動。區塊由上到下，區塊之間的距離是一般間距的兩倍，區塊內的標題與內容貼近。">
+        <div className="spec-gallery"><figure><figcaption><b>展開內容</b><span>預設收合；展開後看到各通道寄出的內容。</span></figcaption><div className="spec-canvas"><Shot name="detail-fb-open" alt="展開內容" max={440} /></div></figure></div>
         <div className="spec-gallery"><figure><figcaption><b>緊急送出</b><span>連結上方多一行「緊急原因」。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="緊急送出" max={440} /></div></figure></div>
         <Figure label="Device Notifications (SMS)" sub="所有區塊都出現的樣子" shot="detail-fb" max={440} notes={[
           { n: 1, title: '標題列', body: <>標題 <C>Message content</C>；右上角關閉鈕（Esc 也能關）。</> },
-          { n: 2, title: '頂部：狀態與通道', body: '狀態標籤（這一筆整體的狀態）加通道圖示與名稱；有核准的訊息，下面一行 Approval center 連結。' },
-          { n: 3, title: '內容區塊', body: '區塊標題「Content」。有 SMS 備援時，裡面是兩個子區塊。' },
-          { n: 4, title: 'SMS 備援子區塊', body: '子標題、狀態、送達人數、簡訊內文。' },
+          { n: 2, title: '頂部：通道與審核', body: '通道圖示與名稱；有核准的訊息，下面是 Approval center 連結，緊急送出的連結上方多一行「緊急原因」。' },
+          { n: 3, title: '內容區塊', body: '區塊標題「Content」，下面是收合列（預設收合）。有 SMS 備援時兩列，否則一列。' },
+          { n: 4, title: 'SMS 備援子區塊', body: '收合列：名稱、狀態、「n / m sent」；展開是簡訊內文。' },
           { n: 5, title: '收件人區塊', body: '區塊標題「Audiences」，一張列表卡。' },
         ]} />
       </Section>
-      <Section eyebrow="Block 1" title="頂部：狀態、通道、Approval center 連結">
+      <Section eyebrow="Block 1" title="頂部：通道與審核">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['狀態標籤', '這一筆整體的狀態，樣式同列表。'],
-          ['通道', '圖示加名稱，次要文字色。Device Notifications (SMS) 用手機圖示加名稱。'],
+          ['通道', '圖示加名稱（中等粗細）。Device Notifications (SMS) 用手機圖示加名稱。面板頂部不放狀態，狀態看列表。'],
+          ['緊急原因', '緊急送出（略過 SMS 核准）的才有：標籤小字「Urgent reason / 緊急原因」，下面是原因全文，放在 Approval center 連結正上方。一般訊息只有連結。'],
           ['Approval center 連結', <>連結按鈕（sm），前面外連圖示，文字 <Copy en="View in Approval center" zh="到 Approval center 查看" />。出現條件：Device Notifications (SMS)，或這則訊息有核准紀錄。點了前往內部的 Approval center（prototype 只跳提示）。</>],
           ['不放的東西', '標題（內文已有）、審核提示卡片、寄件人、模板、時間、建立者。'],
         ]} />
       </Section>
-      <Section eyebrow="Block 2" title="內容：各通道的格式" lead="內容框是白底、細框線、圓角、內距 12 的一塊，文字保留換行。">
+      <Section eyebrow="Block 2" title="內容：各通道的格式" lead="展開後的內容框是白底、細框線、圓角、內距 12，文字保留換行。">
         <div className="spec-gallery">
           <figure><figcaption><b>Email</b><span>「Subject:」一行（標籤中等粗細），下面是有格式的內文框（粗體、清單、連結），附件用檔案項目列出名稱與大小。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email 內容" max={420} /></div></figure>
           <figure><figcaption><b>Device Notifications、Desktop OS</b><span>內容框：第一行標題（中等粗細），其後內文，不放寄件人（列表已有）。Desktop OS 若有自己的文字就用自己的。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="推播內容" max={420} /></div></figure>
@@ -431,11 +433,11 @@ function Blocks() {
           ['Email', '主旨、內文（有格式）、附件；模式為「同上」時用標題與內文'],
         ]} />
       </Section>
-      <Section eyebrow="Block 3" title="Device Notifications 與 SMS 備援子區塊" lead="只有 Device Notifications (SMS) 才有。沒勾 SMS 備援的紀錄，內容區塊直接就是一個內容框，沒有子標題。">
+      <Section eyebrow="Block 3" title="內容收合列（Device Notifications 與 SMS 備援）" lead="內容用設計系統的 Accordion，外框細線圓角。Device Notifications (SMS) 兩列，其他一列；沒勾 SMS 備援的紀錄一列，只有名稱，沒有狀態。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['子標題列', '一行：子標題（中等粗細）、狀態標籤、送達人數，可換行。'],
-          ['送達人數', <>只有送完（已送出或傳送錯誤）才顯示 <Copy en="133 / 142 delivered" zh="133 / 142 已送達" />。</>],
-          ['SMS 不需要', <>推播全部送到時，SMS 沒有要寄的人：這個區塊不顯示狀態與人數，只寫 <Copy en="Not needed" zh="不需要" />。</>],
+          ['送達人數', <>只有送完（已送出或傳送錯誤）才顯示 <Copy en="133 / 142 sent" zh="133 / 142 已送出" />。</>],
+          ['SMS 不需要', <>推播全部送到時，SMS 沒有要寄的人：這一列不顯示狀態與人數，只寫 <Copy en="Not needed" zh="不需要" />。</>],
           ['緊急原因', <>只有緊急送出（略過 SMS 核准）的 Device Notifications (SMS) 才有：標籤小字 <Copy en="Urgent reason" zh="緊急原因" />，下面是寄件人當初填的原因全文，放在 Approval center 連結正上方，兩者是同一塊「審核」資訊。沒有緊急送出的，只有連結。</>],
         ]} />
       </Section>
