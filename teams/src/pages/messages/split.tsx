@@ -110,28 +110,26 @@ function askSendNow(m: SendCtl, r: Row) {
 
 // lite: a channel row under its message row, where the message row holds the whole-message actions
 function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
-  const r = x.r, many = recKinds(r).length > 1
-  // "(all channels)" on the actions that change the whole message, so nobody expects them to touch one row
-  const all = many ? L(' (all channels)', '（所有通道）') : ''
+  const r = x.r
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + recText(r, x.k).title} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={232}>
-        <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View message', '查看訊息內容')}</DropdownMenuItem>
+        <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
         {lite ? null : <>
         {r.status === 'expired' ? <>
-          <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, r)}>{L('Send now', '立即傳送') + all}</DropdownMenuItem>
-          <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r)}>{L('Reschedule', '重新排程') + all}</DropdownMenuItem>
+          <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, r)}>{L('Send now', '立即傳送')}</DropdownMenuItem>
+          <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r)}>{L('Reschedule', '重新排程')}</DropdownMenuItem>
         </> : null}
-        {r.status === 'scheduled' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit message', '編輯訊息')}</DropdownMenuItem> : null}
-        {r.status === 'rejected' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit and resubmit', '修改後重新送審')}</DropdownMenuItem> : null}
-        {r.status === 'error' ? <DropdownMenuItem startIcon={RotateCw} onSelect={() => m.retry(r.id)}>{L('Retry', '重新傳送') + all}</DropdownMenuItem> : null}
+        {r.status === 'scheduled' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</DropdownMenuItem> : null}
+        {r.status === 'rejected' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</DropdownMenuItem> : null}
+        {r.status === 'error' ? <DropdownMenuItem startIcon={RotateCw} onSelect={() => m.retry(r.id)}>{L('Retry', '重新傳送')}</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => m.startCompose('duplicate', r)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
         {r.status === 'scheduled' || r.status === 'expired' || r.status === 'rejected' ? <>
           <DropdownMenuSeparator />
-          <DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => askDelete(m, r)}>{L('Delete', '刪除') + all}</DropdownMenuItem>
+          <DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => askDelete(m, r)}>{L('Delete', '刪除')}</DropdownMenuItem>
         </> : null}
         </>}
       </DropdownMenuContent>
