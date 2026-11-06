@@ -19,10 +19,10 @@ export function MembersDialog({ set, onClose }: { set: MemberSet | null; onClose
   // an org lists its people by employee ID and NT account; a group shows what each member was added by
   const g = set ? set.group : undefined
   const cols = React.useMemo(() => [
-    mcol.accessor(p => personVal(p), { id: 'p', header: L('Name', '姓名'), meta: { type: 'person', width: 280 } }),
-    ...(g ? [mcol.display({ id: 'as', header: L('Added by', '加入方式'), cell: i => { const a = addedAs(g, i.row.original); return <Two a={a.value} b={asType(a)} /> } })]
-      : [mcol.display({ id: 'emp', header: L('Employee ID', '工號'), cell: i => i.row.original.emp || '—' }),
-        mcol.display({ id: 'nt', header: L('NT account', 'NT 帳號'), cell: i => i.row.original.nt || '—' })]),
+    mcol.accessor(p => personVal(p), { id: 'p', header: L('Name', '姓名'), meta: { type: 'person', width: 240 } }),
+    ...(g ? [mcol.display({ id: 'as', header: L('Added by', '加入方式'), meta: { width: 200 }, cell: i => { const a = addedAs(g, i.row.original); return <Two a={a.value} b={asType(a)} /> } })]
+      : [mcol.display({ id: 'emp', header: L('Employee ID', '工號'), meta: { width: 120 }, cell: i => i.row.original.emp || '—' }),
+        mcol.display({ id: 'nt', header: L('NT account', 'NT 帳號'), meta: { width: 120 }, cell: i => i.row.original.nt || '—' })]),
   ], [g])
   return (
     <Dialog open={!!set} onOpenChange={o => { if (!o) { onClose(); setQ('') } }}>

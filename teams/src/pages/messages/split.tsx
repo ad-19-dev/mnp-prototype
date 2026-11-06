@@ -237,13 +237,13 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const shared = (g: GRow) => (hdrs ? !!g.hdr || g.n === 1 : group === 'merge' ? g.pos === 'solo' || g.pos === 'first' : true)
   const columns = React.useMemo(() => [
     // order: Sender, Channel, Title / Content, Status, Reach / Audience, Template, Created, Scheduled, Created by
-    col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), cell: i => {
+    col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 140 }, cell: i => {
       const g = i.row.original
       return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
         {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : null}</>
     } }),
     // the one column that must never truncate: room for two icons and "Device Notifications (SMS)" (the message row of the grouped options adds a chevron)
-    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 300 : 270 }, cell: i => {
+    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 304 : 272 }, cell: i => {
       const g = i.row.original
       if (g.hdr) return (
         <span className="flex min-w-0 items-center gap-2"><Mk g={g} />
@@ -253,7 +253,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       )
       return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} /></span>
     } }),
-    col.display({ id: 'title', header: L('Title / Content', '標題 / 內容'), meta: { width: 380 }, cell: i => {
+    col.display({ id: 'title', header: L('Title / Content', '標題 / 內容'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = recText(x.r, x.k), text = t.content.replace(/\s+/g, ' ')
       if (x.hdr) return (
         <span className="flex min-w-0 flex-col">
@@ -271,14 +271,14 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
         </span>
       )
     } }),
-    col.display({ id: 'status', header: L('Status', '狀態'), cell: i => { const g = i.row.original; return g.hdr ? <StatusTag s={g.r.status} /> : <StatusCell m={m} x={g} /> } }),
+    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 168 }, cell: i => { const g = i.row.original; return g.hdr ? <StatusTag s={g.r.status} /> : <StatusCell m={m} x={g} /> } }),
     // this channel's audience only (how many it goes to); failures sit under the status
-    col.display({ id: 'aud', header: L('Audience', '收件人數'), enableSorting: true, meta: { align: 'right' }, cell: i => i.row.original.hdr ? null : <AudienceN x={i.row.original} /> }),
-    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
-    col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    col.display({ id: 'aud', header: L('Audience', '收件人數'), enableSorting: true, meta: { width: 88, align: 'right' }, cell: i => i.row.original.hdr ? null : <AudienceN x={i.row.original} /> }),
+    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 140 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
+    col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 116 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // send now goes out at its created time, so it never shows a dash here
-    col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    ...(app.space === 'me' ? [] : [col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Created by', '建立者'), meta: { type: 'person' } })]),
+    col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    ...(app.space === 'me' ? [] : [col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Created by', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs])
 
   return (

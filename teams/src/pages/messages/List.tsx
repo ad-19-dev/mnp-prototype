@@ -88,14 +88,14 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
 
   const columns = React.useMemo(() => [
     // order: Sender, Channels, Title / Content, Status, Template, Reach / Audience, Created, Scheduled, Created by
-    col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), cell: i => (
+    col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 140 }, cell: i => (
       <span className="flex min-w-0 flex-col">
         {/* only Device Notifications and Desktop OS carry a sender name */}
         {listSender(i.row.original) ? <Trunc text={listSender(i.row.original)} className="font-medium" /> : <span className="text-fg-muted">—</span>}
       </span>
     ) }),
-    col.display({ id: 'ch', header: L('Channels', '通道'), enableSorting: false, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
-    col.accessor('title', { header: L('Title / Content', '標題 / 內容'), enableSorting: false, meta: { width: 400 }, cell: i => {
+    col.display({ id: 'ch', header: L('Channels', '通道'), meta: { width: 128 }, enableSorting: false, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
+    col.accessor('title', { header: L('Title / Content', '標題 / 內容'), enableSorting: false, meta: { width: 360 }, cell: i => {
       // title (opens the details) over the first line of the text: one wide column instead of two narrow ones;
       // with several channels it shows one version, Device Notifications first, then Email, then Desktop OS
       const r = i.row.original, lt = listText(r), text = lt.content.replace(/\s+/g, ' ')
@@ -110,10 +110,10 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
         </span>
       )
     } }),
-    col.accessor('status', { header: L('Status', '狀態'), enableSorting: false, cell: i => <StatusTag s={i.getValue()} /> }),
-    col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
+    col.accessor('status', { header: L('Status', '狀態'), meta: { width: 168 }, enableSorting: false, cell: i => <StatusTag s={i.getValue()} /> }),
+    col.accessor(r => m.tplName(r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 140 }, cell: i => i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     // sorts by how many people it goes to
-    col.accessor('total', { id: 'recv', header: L('Reach / Audience', '送達 / 收件人'), cell: i => {
+    col.accessor('total', { id: 'recv', header: L('Reach / Audience', '送達 / 收件人'), meta: { width: 148 }, cell: i => {
       const r = i.row.original, fails = (r.status === 'sent' || r.status === 'error') ? r.total - r.ok : 0
       return (
         <span className="flex w-full min-w-0 flex-col gap-1">
@@ -123,10 +123,10 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
         </span>
       )
     } }),
-    col.accessor('created', { header: L('Created', '建立時間'), cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    col.accessor('sched', { header: L('Scheduled', '排程時間'), cell: i => { const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    col.accessor('created', { header: L('Created', '建立時間'), meta: { width: 116 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    col.accessor('sched', { header: L('Scheduled', '排程時間'), meta: { width: 116 }, cell: i => { const v = i.getValue(); if (!v) return <span className="text-fg-muted">—</span>; const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // the personal space holds only what you created, so Created by appears in team spaces only
-    ...(app.space === 'me' ? [] : [col.accessor(r => personVal(PMAP[r.creator] || PEOPLE[0]), { id: 'creator', header: L('Created by', '建立者'), meta: { type: 'person' } })]),
+    ...(app.space === 'me' ? [] : [col.accessor(r => personVal(PMAP[r.creator] || PEOPLE[0]), { id: 'creator', header: L('Created by', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.teams, app.space])
 
   return (

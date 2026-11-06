@@ -171,17 +171,17 @@ function ListTab() {
           { n: 8, title: '通道篩選', body: <>多選，四種通道：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊有紀錄數。</> },
         ]} />
       </Section>
-      <Section eyebrow="Columns" title="欄位" lead="欄寬一律使用設計系統的預設值；例外是「通道」（不能被截斷，固定寬度）和「標題 / 內容」（設最小寬度，吸收多出來的空間）。">
+      <Section eyebrow="Columns" title="欄位" lead="設計系統沒有欄寬 token，欄寬由我們定：一律是 4 的倍數，依內容夠用就好（人數、日期都不放寬）。「標題 / 內容」的寬度是最小寬度，會吸收多出來的空間；「通道」不能被截斷，要放得下兩個圖示加「Device Notifications (SMS)」。">
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
-          [<Copy en="Sender" zh="寄件人" />, 'DS 預設', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；Email 留白。不凍結。', '可'],
-          [<Copy en="Channel" zh="通道" />, '270（固定，不截斷）', '圖示加名稱；名稱永遠完整顯示，寬度要放得下兩個圖示加「Device Notifications (SMS)」', '—'],
-          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 380，其餘空間由這欄吸收', '該通道的標題與內文', '—'],
-          [<Copy en="Status" zh="狀態" />, 'DS 預設', '狀態標籤，失敗人數在下方', '—'],
-          [<Copy en="Audience" zh="收件人數" />, 'DS 預設', '只有人數，齊右', '可'],
-          [<Copy en="Template" zh="模板" />, 'DS 預設', '模板名稱，沒用模板是「—」；同一則訊息只在第一列顯示', '可'],
-          [<Copy en="Created" zh="建立時間" />, 'DS 預設', '日期與時間兩行；只在第一列顯示', '可'],
-          [<Copy en="Send time" zh="傳送時間" />, 'DS 預設', '排程的訊息是排程時間；立即傳送的是建立時間，不會有「—」；只在第一列顯示', '可'],
-          [<Copy en="Created by" zh="建立者" />, 'DS 預設', '只有團隊空間有；個人空間只有自己，不顯示。只在第一列顯示', '可'],
+          [<Copy en="Sender" zh="寄件人" />, '140', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；Email 留白。不凍結。', '可'],
+          [<Copy en="Channel" zh="通道" />, '272（不截斷）', '圖示加名稱；名稱永遠完整顯示，寬度要放得下兩個圖示加「Device Notifications (SMS)」', '—'],
+          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320，其餘空間由這欄吸收', '該通道的標題與內文', '—'],
+          [<Copy en="Status" zh="狀態" />, '168', '狀態標籤，失敗人數在下方', '—'],
+          [<Copy en="Audience" zh="收件人數" />, '88', '只有人數，齊右', '可'],
+          [<Copy en="Template" zh="模板" />, '140', '模板名稱，沒用模板是「—」；同一則訊息只在第一列顯示', '可'],
+          [<Copy en="Created" zh="建立時間" />, '116', '日期與時間兩行；只在第一列顯示', '可'],
+          [<Copy en="Send time" zh="傳送時間" />, '116', '排程的訊息是排程時間；立即傳送的是建立時間，不會有「—」；只在第一列顯示', '可'],
+          [<Copy en="Created by" zh="建立者" />, '200', '只有團隊空間有；個人空間只有自己，不顯示。只在第一列顯示', '可'],
         ]} />
       </Section>
       <Section eyebrow="Group" title="同一則訊息的紀錄看起來是一組" lead="採用「合併共用欄位」：共用欄位只在第一列出現，其餘列留白，組內沒有分隔線。">
@@ -472,7 +472,7 @@ function Modals() {
       <Section eyebrow="Failed" title="失敗的收件人">
         <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
           { n: 1, title: '標題與說明', body: <><Copy en="Failed audience members" zh="傳送失敗的收件人" />；說明：通道名稱 · 失敗人數 / 收件人數。</> },
-          { n: 2, title: '表格', body: '高 380，欄：Audience（頭像、姓名、工號 · NT）、Org、Reason（兩行：推播失敗原因、SMS 失敗原因，這欄最小 300）。外部聯絡人用地球圖示。' },
+          { n: 2, title: '表格', body: '高 380，欄：Audience（頭像、姓名、工號 · NT）、Org、Reason（兩行：推播失敗原因、SMS 失敗原因）；寬 Audience 240、Org 112、Reason 300。外部聯絡人用地球圖示。' },
           { n: 3, title: '重寄', body: <><C>Resend to n on 通道</C>，進發送流程，收件人換成這些人，通道照這一筆。</> },
         ]} />
         <div className="spec-gallery">
@@ -506,7 +506,7 @@ function Modals() {
         <Figure label="組織成員" sub="寬 640" shot="dlg-members" max={640} notes={[
           { n: 1, title: '標題與說明', body: '標題是組織或群組名稱；說明：類型 · 人數。' },
           { n: 2, title: '搜尋', body: '小尺寸搜尋框，寬 72；組織搜姓名、NT 帳號、工號；群組另外搜 Email 與電話。找不到時顯示空狀態「No matching members」。' },
-          { n: 3, title: '表格', body: '組織：Name（最小 280）、Employee ID、NT account。群組：Name、Added by（加入方式與類型）。' },
+          { n: 3, title: '表格', body: '組織：Name 240、Employee ID 120、NT account 120。群組：Name 240、Added by 200（加入方式與類型）。' },
         ]} />
         <div className="spec-gallery"><figure><figcaption><b>群組成員</b><span>多一欄「Added by」，說明這個人是用 NT 帳號、Email、手機號碼或工號加進群組的。</span></figcaption><div className="spec-canvas"><Shot name="dlg-members-group" alt="群組成員" max={640} /></div></figure></div>
       </Section>
