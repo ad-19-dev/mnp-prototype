@@ -147,8 +147,8 @@ function SendTab() {
           ['', 'Content', '是', '534', <>沒有 Title 欄位；列表上的標題是內容的第一行。提示「Lock screens show about 4 lines.」{REQ}</>],
           ['Device Notifications (SMS)', 'SMS text', '是', '534', <>區塊標題下方說明 <Copy en="Sent as a backup via SMS only if the push notification fails to send." zh="只有推播傳送失敗時，才會用 SMS 補送。" />，沒有標籤。{REQ}</>],
           ['Desktop OS', 'Sender', '否', '26', <>錯誤和 Device Notifications 的 Sender 一樣。</>],
-          ['', 'Title', '是', '40', REQ],
-          ['', 'Content', '是', '120', <><Copy en="Supports Chinese, English, and numbers only." zh="僅支援中文、英文、數字。" />{REQ}</>],
+          ['', 'Title', '是', '20', REQ],
+          ['', 'Content', '是', '70', <><Copy en="Supports Chinese, English, and numbers only." zh="僅支援中文、英文、數字。" />{REQ}</>],
           ['Email', 'Subject', '是', '70', REQ],
           ['', 'Content', '是', '無字數上限', <><Copy en="Supports text, tables, and images." zh="支援文字、表格、圖片。" />只有整體超過 100 KB 才報錯：<Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" /></>],
         ]} />
@@ -156,7 +156,7 @@ function SendTab() {
       </Section>
       <Section eyebrow="Step 3" title="Schedule & preview" lead={<>頁面最上方一行說明：<Copy en="Choose when to send and review all settings before submission." zh="選擇傳送時間，並在送出前確認所有設定。" /></>}>
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['Send time', <>兩個選項：<Copy en="Send now" zh="立即傳送" />（沒有說明文字）、<Copy en="Scheduled send" zh="排程傳送" />，說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />。選排程才出現日期時間欄位。</>],
+          ['Schedule', <>區塊標題「Schedule」，兩個選項：<Copy en="Send now" zh="立即傳送" />（沒有說明文字）、<Copy en="Scheduled send" zh="排程傳送" />，說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />。選排程才出現日期時間欄位。</>],
           ['排程錯誤', <>選到過去，或超過現在起 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" />（重新排程對話框也一樣）。不再有「至少 10 分鐘後」的規則。</>],
           ['Review：收件人', '依通道各一列，和列表、面板的通道一致：Device Notifications（有 SMS 備援時是 Device Notifications (SMS)）、Desktop OS、Email，每列寫這個通道的人數，例如「9 people」。沒有總收件人數那一列。'],
           ['Review：其他', 'SMS 核准（有 SMS 備援時，緊急的會寫原因）、「n people won’t get this」警告。不再有「Needs approval from…」的橘色說明框。'],

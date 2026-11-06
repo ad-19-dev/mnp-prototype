@@ -17,7 +17,7 @@ export const SUPERVISOR = 'Jimmy Chen 陳志明'
 export type Channel = 'push' | 'desktop' | 'email' | 'sms'
 export const CH_ORDER: Channel[] = ['push', 'desktop', 'email', 'sms']
 export const CH_CARDS: Channel[] = ['push', 'desktop', 'email']
-export const LIM = { sender: 26, title: 50, push: 534, desktop: 120, dTitle: 40, sms: 534, subject: 70, body: 5000, mail: 100 * 1024, files: 5, bytes: 10 * 1024 * 1024, name: 50 }
+export const LIM = { sender: 26, title: 50, push: 534, desktop: 70, dTitle: 20, sms: 534, subject: 70, body: 5000, mail: 100 * 1024, files: 5, bytes: 10 * 1024 * 1024, name: 50 }
 export const BLOCKED = ['exe', 'bat', 'cmd', 'com', 'js', 'vbs', 'msi', 'ps1', 'scr']
 // Desktop OS notifications show about 2 lines of title and 2–3 lines of text; CJK characters are about twice as wide
 export const DESK = { title: 80, text: 120 }

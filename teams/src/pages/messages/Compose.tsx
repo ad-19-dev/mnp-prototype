@@ -416,7 +416,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   return (
     <>
       <p className="text-body text-fg-secondary">{L('Choose when to send and review all settings before submission.', '選擇傳送時間，並在送出前確認所有設定。')}</p>
-      <Section title={L('Send time', '傳送時間')} sub={L('Taipei time (GMT+8)', '台北時間（GMT+8）')}>
+      <Section title={L('Schedule', '排程')} sub={L('Taipei time (GMT+8)', '台北時間（GMT+8）')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RadioGroup value={c.sendMode} onValueChange={v => v === 'now' ? m.setC({ sendMode: 'now' }) : m.setC({ sendMode: 'schedule', schedAt: c.schedAt || tomorrow9 })} className="grid gap-[var(--layout-space-tight)] md:grid-cols-2">
             {opts.map(x => (
