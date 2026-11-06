@@ -53,7 +53,8 @@ export function Part({ title, children }: { title: string; children: React.React
 }
 
 // what one channel sent, as text (the previews belong to the send flow)
-export function ChannelText({ r, k }: { r: Row; k: Channel }) {
+// noSender: the sender is already in the list's Sender column
+export function ChannelText({ r, k, noSender }: { r: Row; k: Channel; noSender?: boolean }) {
   const box = 'whitespace-pre-wrap rounded-md border border-divider p-3 text-body'
   if (k === 'sms') return <div className={box}>{r.smsText}</div>
   if (k === 'email') {
@@ -68,7 +69,7 @@ export function ChannelText({ r, k }: { r: Row; k: Channel }) {
     )
   }
   const d = k === 'desktop' && r.desk ? r.desk : r
-  return <div className={box}>{d.sender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}<strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</div>
+  return <div className={box}>{d.sender && !noSender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}<strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</div>
 }
 
 // SMS is the fallback for Device Notifications: its row sits right under it, indented, and says who it was for.

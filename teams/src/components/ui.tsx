@@ -168,12 +168,14 @@ export function PageSize({ value, onChange }: { value: number; onChange: (n: num
 // Hover text always goes through the DS Tooltip, never the browser's own `title` box.
 // Trunc: one line that ends in "…" when it doesn't fit; the full text shows only while it is cut off
 // (DS truncated-text pattern: the Tooltip is always there, `open` is held closed when nothing is cut).
-export function Trunc({ text, className, onClick }: { text: string; className?: string; onClick?: () => void }) {
+// tip={false}: no hover tooltip with the full text (long email bodies with images or tables never fit in one anyway)
+export function Trunc({ text, className, onClick, tip = true }: { text: string; className?: string; onClick?: () => void; tip?: boolean }) {
   const { ref, isTruncated } = useTruncated<HTMLElement>({ deps: [text] })
   const cls = cn('min-w-0 truncate', className)
   const el = onClick
     ? <button ref={ref as React.Ref<HTMLButtonElement>} type="button" className={cn(cls, 'text-left')} onClick={onClick}>{text}</button>
     : <span ref={ref as React.Ref<HTMLSpanElement>} className={cls} tabIndex={isTruncated ? 0 : undefined}>{text}</span>
+  if (!tip) return el
   return (
     <Tooltip open={isTruncated ? undefined : false}>
       <TooltipTrigger asChild>{el}</TooltipTrigger>

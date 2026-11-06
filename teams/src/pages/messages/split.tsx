@@ -257,7 +257,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       const x = i.row.original, t = recText(x.r, x.k), text = t.content.replace(/\s+/g, ' ')
       if (x.hdr) return (
         <span className="flex min-w-0 flex-col">
-          <Trunc text={x.r.title} className="font-bold" />
+          <Trunc tip={false} text={x.r.title} className="font-bold" />
           <span className="text-caption text-fg-secondary">{L(x.n + (x.n === 1 ? ' channel' : ' channels'), x.n + ' 個通道')}{group === 'fold' && !x.open ? L(' · open to see each one', '・展開看各通道') : ''}</span>
         </span>
       )
@@ -265,9 +265,9 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
         <span className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
             {ICSD && x.r.bypass ? <Tip text={L('Urgent: sent without SMS approval', '緊急發送：略過 SMS 核准')}><span tabIndex={0} className="inline-flex shrink-0 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Tag size="sm" color="amber" icon={Siren}>{L('Urgent', '緊急')}</Tag></span></Tip> : null}
-            <Trunc text={t.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: x.id })} />
+            <Trunc tip={false} text={t.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: x.id })} />
           </span>
-          {text ? <Trunc text={text} className="text-caption text-fg-secondary" /> : null}
+          {text ? <Trunc tip={false} text={text} className="text-caption text-fg-secondary" /> : null}
         </span>
       )
     } }),
@@ -347,9 +347,8 @@ function Block({ title, part, children, head }: { title: string; part?: Part & {
       {head ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <b className="text-body font-medium text-foreground">{title}</b>
-          {part ? <StatusTag s={part.st} /> : null}
-          {part && !part.unk && done(part.st) ? <span className="text-caption tabular-nums text-fg-secondary">{L(fmtN(part.ok) + ' / ' + fmtN(part.of) + ' delivered', fmtN(part.ok) + ' / ' + fmtN(part.of) + ' 已送達')}</span> : null}
-          {part && part.unk ? <span className="text-caption text-fg-secondary">{L('Number known once Device Notifications finishes', '等 Device Notifications 送完才知道人數')}</span> : null}
+          {part && !part.unk && done(part.st) && part.of === 0 ? <span className="text-caption text-fg-secondary">{L('Not needed', '不需要')}</span> : part ? <StatusTag s={part.st} /> : null}
+          {part && !part.unk && done(part.st) && part.of > 0 ? <span className="text-caption tabular-nums text-fg-secondary">{L(fmtN(part.ok) + ' / ' + fmtN(part.of) + ' delivered', fmtN(part.ok) + ' / ' + fmtN(part.of) + ' 已送達')}</span> : null}
         </div>
       ) : null}
       {children}
@@ -381,13 +380,12 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
         <Part title={L('Content', '內容')}>
           {x.fb ? (
             <div className="flex flex-col gap-[var(--layout-space-loose)]">
-              <Block head title={CHN.push.name} part={{ ok: x.ok, of: x.of, unk: x.unk, st: x.pst }}><ChannelText r={r} k="push" /></Block>
+              <Block head title={CHN.push.name} part={{ ok: x.ok, of: x.of, unk: x.unk, st: x.pst }}><ChannelText r={r} k="push" noSender /></Block>
               <Block head title={L('SMS fallback', 'SMS 備援')} part={x.fb}>
                 <ChannelText r={r} k="sms" />
-                <span className="text-caption text-fg-secondary">{L('Sent to the people Device Notifications couldn’t reach, and to external phones.', '寄給 Device Notifications 送不到的人，以及外部電話。')}</span>
               </Block>
             </div>
-          ) : <ChannelText r={r} k={k} />}
+          ) : <ChannelText r={r} k={k} noSender />}
         </Part>
 
         <Part title={L('Audiences', '收件人')}>

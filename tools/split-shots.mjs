@@ -219,6 +219,11 @@ await detail('detail-scheduled', 'out of office', 'out of office 10/27');
 await detail('detail-progress', 'Fire alarm', 'Fire alarm test in Building B');
 await detail('detail-error', 'On-call swap', 'On-call swap');
 await detail('detail-sent-fb', 'Design review', 'Design review with Northwind Studio: Thu 11/6');
+await step('detail-sms-notneeded', async () => {
+  await space('ESH Emergency');
+  await row('Earthquake drill on Oct 3').getByText('Earthquake drill on Oct 3').first().click(); await wait(800);
+  await panel('detail-sms-notneeded', []); await closeAside();
+});
 await step('detail-urgent', async () => {
   await space('ESH Emergency');
   await row('Typhoon update: offices reopen').getByText('Typhoon update: offices reopen').first().click(); await wait(800);
