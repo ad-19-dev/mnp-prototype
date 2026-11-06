@@ -105,7 +105,7 @@ export const SENDER_ERR = () => L('Please use half-width English letters, number
 // the email's size (text, tables, embedded images) in bytes against its 100 KB limit
 export const emailTooBig = (c: Compose) => new Blob([c.html || '']).size > LIM.mail
 // Device Notifications has no title: where one is still needed (the list), it's the first line of the content
-export const pushTitle = (content: string) => (content.split('\n').map(x => x.trim()).find(Boolean) || '').slice(0, LIM.title)
+export const pushTitle = (content: string) => content.split('\n').map(x => x.trim()).find(Boolean) || ''
 
 export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'dsender' | 'dtitle' | 'dcontent' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent', string>>
 export function errs(c: Compose, groups: Group[]): Errs {
@@ -155,8 +155,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
   if (c.sendMode === 'schedule') {
     const d = fromIso(c.schedAt), now = new Date()
     if (!d) e.sched = req
-    else if (d < addMin(now, 10)) e.sched = L('Pick a time at least 10 minutes from now.', '請選 10 分鐘以後的時間。')
-    else if (d > addMin(now, 30 * 24 * 60)) e.sched = L('Pick a time within 30 days.', '最多只能排 30 天內。')
+    else if (d < now || d > new Date(now.getFullYear(), now.getMonth() + 3, now.getDate(), now.getHours(), now.getMinutes())) e.sched = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。')
   }
   if (ICSD && c.ch.sms && c.urgent) {
     if (!c.urgentReason.trim()) e.urgent = req

@@ -7,7 +7,7 @@ import { StatusTag } from '../../components/ui'
 import { C, Copy, Figure, Notes, Section, Shot, SpecTable } from '../parts'
 
 const PROTO = 'https://claude.ai/artifact/Kq6FnvbagCvdtmoPXiRD91'
-const TABS = [['flow', 'UI Flow'], ['overview', '總覽'], ['list', '列表'], ['rules', '狀態與合併規則'], ['status', '各狀態的列與面板'], ['detail', '訊息內容面板'], ['blocks', '面板區塊規格'], ['actions', '列選單'], ['modals', '對話框規格'], ['data', '範例資料']] as const
+const TABS = [['flow', 'UI Flow'], ['send', '發送流程'], ['overview', '總覽'], ['list', '列表'], ['rules', '狀態與合併規則'], ['status', '各狀態的列與面板'], ['detail', '訊息內容面板'], ['blocks', '面板區塊規格'], ['actions', '列選單'], ['modals', '對話框規格'], ['data', '範例資料']] as const
 type TabKey = typeof TABS[number][0]
 const isTab = (h: string): h is TabKey => TABS.some(t => t[0] === h)
 
@@ -35,6 +35,7 @@ export default function SplitSpec() {
       </div>
       <main className="spec-wrap spec-main" key={tab}>
         {tab === 'flow' ? <Flow go={go} /> : null}
+        {tab === 'send' ? <SendTab /> : null}
         {tab === 'overview' ? <Overview /> : null}
         {tab === 'list' ? <ListTab /> : null}
         {tab === 'rules' ? <Rules /> : null}
@@ -123,6 +124,52 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="dialog" title="Reschedule" when="選單 Reschedule（排程已過期）" shots={['dlg-reschedule']} then="選新時間，不需要重新核准；整則訊息一起改" />
           <Card kind="action" title="Edit message / Edit and resubmit / Duplicate" when="選單對應項目" then="進入發送流程（編輯、重新送審、複製）；套用到整則訊息" />
         </div>
+      </Section>
+    </>
+  )
+}
+
+// ---------- the send flow (what changed; the three steps are otherwise as before) ----------
+const REQ = <Copy en="This field is required." zh="此欄位為必填。" />
+function SendTab() {
+  return (
+    <>
+      <Section eyebrow="Send" title="發送流程" lead="寄件人還是一次選好幾個通道，流程仍是三步；以下是目前版本的內容與文案。第 1 步（收件人與通道）與之前相同。">
+        <SpecTable head={['步驟', '名稱']} nowrap={[0]} rows={[
+          ['1', <Copy en="Audiences & channels" zh="收件人與通道" />],
+          ['2', <Copy en="Message" zh="訊息內容" />],
+          ['3', <Copy en="Schedule & preview" zh="排程與預覽" />],
+        ]} />
+      </Section>
+      <Section eyebrow="Step 2" title="Message details" lead={<>標題「Message details」，下方說明 <Copy en="Compose the message title and body to be sent to your audience." zh="撰寫要傳送給收件人的訊息標題和內容。" /></>}>
+        <SpecTable head={['區塊', '欄位', '必填', '上限', '說明與錯誤']} nowrap={[0, 1, 2, 3]} rows={[
+          ['Device Notifications', 'Sender', '是', '26', <><Copy en="Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS)." zh="收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。" />{REQ}<Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
+          ['', 'Content', '是', '534', <>沒有 Title 欄位；列表上的標題是內容的第一行。提示「Lock screens show about 4 lines.」{REQ}</>],
+          ['Device Notifications (SMS)', 'SMS text', '是', '534', <>區塊標題下方說明 <Copy en="Sent as a backup via SMS only if the push notification fails to send." zh="只有推播傳送失敗時，才會用 SMS 補送。" />，沒有標籤。{REQ}</>],
+          ['Desktop OS', 'Sender', '否', '26', <>錯誤和 Device Notifications 的 Sender 一樣。</>],
+          ['', 'Title', '是', '40', REQ],
+          ['', 'Content', '是', '120', <><Copy en="Supports Chinese, English, and numbers only." zh="僅支援中文、英文、數字。" />{REQ}</>],
+          ['Email', 'Subject', '是', '70', REQ],
+          ['', 'Content', '是', '無字數上限', <><Copy en="Supports text, tables, and images." zh="支援文字、表格、圖片。" />只有整體超過 100 KB 才報錯：<Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" /></>],
+        ]} />
+        <Notes items={[{ title: '所有必填欄位', body: <>沒填一律顯示 <Copy en="This field is required." zh="此欄位為必填。" />，包含緊急原因和排程時間。</> }]} />
+      </Section>
+      <Section eyebrow="Step 3" title="Schedule & preview" lead={<>頁面最上方一行說明：<Copy en="Choose when to send and review all settings before submission." zh="選擇傳送時間，並在送出前確認所有設定。" /></>}>
+        <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
+          ['Send time', <>兩個選項：<Copy en="Send now" zh="立即傳送" />（沒有說明文字）、<Copy en="Scheduled send" zh="排程傳送" />，說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />。選排程才出現日期時間欄位。</>],
+          ['排程錯誤', <>選到過去，或超過現在起 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" />（重新排程對話框也一樣）。不再有「至少 10 分鐘後」的規則。</>],
+          ['Review：收件人', '依通道各一列，和列表、面板的通道一致：Device Notifications（有 SMS 備援時是 Device Notifications (SMS)）、Desktop OS、Email，每列寫這個通道的人數，例如「9 people」。沒有總收件人數那一列。'],
+          ['Review：其他', 'SMS 核准（有 SMS 備援時，緊急的會寫原因）、「n people won’t get this」警告。不再有「Needs approval from…」的橘色說明框。'],
+          ['預覽', '不顯示「now」時間；Device Notifications 沒有標題，只有寄件人與內容。'],
+        ]} />
+      </Section>
+      <Section eyebrow="After" title="送出之後" lead="三種情況都直接回到訊息列表，用一行 toast 說結果，不再進「Sent for approval」結果頁。">
+        <SpecTable head={['情況', 'Toast', '列表上']} nowrap={[0, 1]} rows={[
+          ['立即傳送，不需核准', <Copy en="Sending to n audiences" zh="傳送給 n 位收件人" />, <StatusTag s="progress" />],
+          ['排程傳送，不需核准', <Copy en="Scheduled for <時間>" zh="已排程：<時間>" />, <StatusTag s="scheduled" />],
+          ['需要核准（SMS 審核人員或主管）', <Copy en="Sent for approval" zh="已送出審核" />, <StatusTag s="pending" />],
+        ]} />
+        <Notes items={[{ title: 'Toast 的樣子', body: '只有一行短文字，前面沒有狀態圖示（成功、錯誤、警告都不放）；顏色仍由類型決定。右側有關閉鈕，約 4 秒自動消失。' }]} />
       </Section>
     </>
   )

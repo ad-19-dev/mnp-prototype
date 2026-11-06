@@ -66,7 +66,7 @@ export function ComposeView({ m }: { m: SendCtl }) {
 
 function StepBar({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, narrow = useIsNarrowViewport()
-  const steps = [L('Audiences & channels', '收件人與通道'), L('Message', '訊息內容'), L('Review & send', '確認送出')]
+  const steps = [L('Audiences & channels', '收件人與通道'), L('Message', '訊息內容'), L('Schedule & preview', '排程與預覽')]
   const done = [1, 2, 3].filter(n => n !== c.step && n <= c.maxStep && stepOk(n, e)).map(n => 's' + n)
   // on a phone the three steps don't fit side by side
   if (narrow) return (
@@ -400,18 +400,22 @@ function Preview({ c }: { c: Compose }) {
 function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, tried = c.tried || {}, rc = m.reach(), ap = approval(c), mode = effEmailMode(c)
   const schedD = fromIso(c.schedAt), nowD = new Date(), schedErr = (e.sched && (tried[3] || c.schedAt)) ? e.sched : ''
-  const rows: React.ReactNode[] = [
-    <RvRow key="r" icon={Users} k={L('Audiences', '收件人')} v={P(rc.total, 'audience', '人') + (rc.ext ? L(', incl. ' + rc.ext + ' external', '，含 ' + rc.ext + ' 位外部') : '')} />,
-  ]
+  // the audience per channel, as the details panel and the list show it (SMS fallback is part of Device Notifications)
+  const chRows: [Channel, number][] = []
+  if (c.ch.push) chRows.push([c.ch.sms ? 'sms' : 'push', rc.push + (c.ch.sms ? rc.smsable + rc.extP : 0)])
+  if (c.ch.desktop) chRows.push(['desktop', rc.desktop])
+  if (c.ch.email) chRows.push(['email', rc.email])
+  const rows: React.ReactNode[] = chRows.map(([k, n]) => <RvRow key={'ch' + k} icon={CHN[k === 'sms' ? 'push' : k].icon} k={CHN[k].name} v={P(n, 'person', '人', 'people')} />)
   if (ICSD && c.ch.sms) rows.push(<RvRow key="icsd" icon={c.urgent ? ShieldAlert : ShieldCheck} warn={c.urgent} k={L('SMS approval', 'SMS 核准')} v={c.urgent ? L('Skipped as urgent. Reason: ', '緊急略過。原因：') + c.urgentReason.trim() : L('Sent after the SMS reviewer approves it', 'SMS 審核人員核准後才會送出')} />)
   if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} />)
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
-    ['now', Zap, L('Send now', '立即傳送'), ap.need ? L('Right after approval', '核准後立即傳送') : L('Starts right away', '馬上開始傳送')],
-    ['schedule', CalendarClock, L('Scheduled send', '排程傳送'), L('Up to 30 days ahead', '30 天內任一時間')],
+    ['now', Zap, L('Send now', '立即傳送'), undefined],
+    ['schedule', CalendarClock, L('Scheduled send', '排程傳送'), L('Up to 3 months ahead', '3 個月內任一時間')],
   ] as const
   return (
     <>
+      <p className="text-body text-fg-secondary">{L('Choose when to send and review all settings before submission.', '選擇傳送時間，並在送出前確認所有設定。')}</p>
       <Section title={L('Send time', '傳送時間')} sub={L('Taipei time (GMT+8)', '台北時間（GMT+8）')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RadioGroup value={c.sendMode} onValueChange={v => v === 'now' ? m.setC({ sendMode: 'now' }) : m.setC({ sendMode: 'schedule', schedAt: c.schedAt || tomorrow9 })} className="grid gap-[var(--layout-space-tight)] md:grid-cols-2">
@@ -432,7 +436,6 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">{rows}</div>
           <Preview c={c} />
-          {ap.need ? <Banner tone="warning" title={L('Needs approval from ' + joinL(ap.who), '需要 ' + joinL(ap.who) + ' 核准')}>{L('Nothing is sent until it’s approved.', '核准前不會送出。')}</Banner> : null}
         </div>
       </Section>
     </>

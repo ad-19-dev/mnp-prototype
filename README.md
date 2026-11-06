@@ -103,3 +103,5 @@ cd teams && npx vite build -c vite.split-spec.config.ts && cd ..
 node tools/lock.mjs <密碼> publish/mnp-split-spec.html teams/split-spec "MNP 單一通道紀錄 UI Flow 與設計規格"
 ```
 通道的分類是四種：Device Notifications、Device Notifications (SMS)（勾了 SMS 備援）、Desktop OS、Email；SMS 備援不是獨立的一筆。
+
+**維護範圍（2026-11-06 起）：** 只維護單一通道紀錄版（`teams/` 預設建置）、它的 UI Flow 與設計規格（`split-spec`）。先前一則訊息一列的 Teams 版（`--mode legacy` 仍可建置）、訊息紀錄規格、發送訊息規格與發送 UI Flow 不再更新。

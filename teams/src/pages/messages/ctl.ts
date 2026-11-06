@@ -44,6 +44,8 @@ export const initSend = (): SendState => ({
 
 // the name of the open space, for headers and breadcrumbs
 // the sender shown in the list: Device Notifications (required) and Desktop OS (optional) carry a sender name; Email doesn't
+// three calendar months ahead
+const addMonths = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth() + n, d.getDate(), d.getHours(), d.getMinutes())
 export const listSender = (r: Row) => (r.channels.indexOf('push') >= 0 || r.channels.indexOf('desktop') >= 0 ? r.sender : '')
 // what the filter panel compares, one field per filterable column ('' = no sender name / no template)
 export const filterFields = (r: Row) => ({ status: r.status, chs: rowChs(r), sender: listSender(r), tpl: r.tpl || '' })
@@ -115,8 +117,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     rescheduleErr() {
       const rs = get().rs, d = rs ? fromIso(rs.at) : null, now = new Date()
       if (!d) return L('Pick a date and time.', '請選擇日期和時間。')
-      if (d < addMin(now, 10)) return L('Pick a time at least 10 minutes from now.', '請選 10 分鐘以後的時間。')
-      if (d > addMin(now, 30 * 24 * 60)) return L('Pick a time within 30 days.', '最多只能排 30 天內。')
+      if (d < now || d > addMonths(now, 3)) return L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。')
       return ''
     },
     reschedule() {
@@ -313,14 +314,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
           icon: ShieldAlert, tone: 'warn', cancel: L('Go back', '返回'), ok: L('Skip approval and send', '略過核准並送出'), danger: true, run: () => { set({ cf: null }); m.submit(true) } } })
         return
       }
-      if (ap.need) {
-        m.doSend({ by: ap.icsd && ap.mgr ? 'both' : ap.icsd ? 'icsd' : 'mgr' })
-        const now = new Date(), schedD = c.sendMode === 'schedule' ? fromIso(c.schedAt) : null
-        const reqId = 'MNP-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + (1000 + Math.floor(Math.random() * 9000))
-        m.setC({ result: { reqId, ap, when: fmtDT(now), sends: schedD ? niceDT(schedD) + ', if it’s approved by then' : 'As soon as it’s approved', total: m.recvTotal(), chs: selChs(c) }, dirty: false }, true)
-        scrollTop()
-        return
-      }
+      // waiting for approval: back to the list with a short toast (no result page)
+      if (ap.need) { m.doSend({ by: ap.icsd && ap.mgr ? 'both' : ap.icsd ? 'icsd' : 'mgr' }); return }
       m.doSend()
     },
     emailOut() {
@@ -350,9 +345,9 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       let id: string
       if (c.mode === 'edit' && c.editId) { id = c.editId; setApp(s => ({ rows: s.rows.map(r => r.id === id ? { ...r, ...base } as Row : r) })) }
       else { id = 'n' + (++seq); setApp(s => ({ rows: [{ id, creator: ME, created: fmtDT(now), ...base } as Row].concat(s.rows) })) }
-      if (review) return
       set({ view: 'list', cf: null, c: blankCompose(), page: 1, q: '', fs: [], fch: [] })
       scrollTop()
+      if (review) { flash(L('Sent for approval', '已送出審核'), 'ok'); return }
       if (schedD) { flash(L('Scheduled for ', '已排程：') + niceDT(schedD)); return }
       flash(L('Sending to ', '傳送給 ') + P(rc.total, 'audience', '位收件人'), 'ok')
       const byCh: Partial<Record<Channel, [number, number]>> = {}

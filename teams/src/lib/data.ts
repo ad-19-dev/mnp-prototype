@@ -8,8 +8,9 @@ export const CAP = 500
 // SMS approval (an SMS reviewer approves every SMS; urgent messages may skip it, on record). On. The UI never names
 // the reviewing team; it says "SMS approval" and "the SMS reviewer".
 export const ICSD = true
-// "one record per channel" version (build with `--mode split`): the list shows a row per channel of a message
-export const SPLIT = import.meta.env.MODE === 'split'
+// "one record per channel" version: the list shows a row per channel of a message. It is the version being developed
+// and the default build; the earlier one-row-per-message list is frozen (build it with `--mode legacy`).
+export const SPLIT = import.meta.env.MODE !== 'legacy'
 export const ME = 'p01'
 export const SUPERVISOR = 'Jimmy Chen 陳志明'
 
