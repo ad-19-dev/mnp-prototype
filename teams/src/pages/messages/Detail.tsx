@@ -321,7 +321,7 @@ export function RescheduleDialog({ m }: { m: SendCtl }) {
             </div>
           </DialogHeader>
           <DialogBody>
-            <FormField id="rs-at" label={L('New date and time', '新的日期和時間')} required hint={d && !err ? L('Sends ', '將於 ') + niceDT(d) + L('', ' 傳送') : L('Taipei time (GMT+8), up to 30 days ahead', '台北時間（GMT+8），30 天內')} error={show}>
+            <FormField id="rs-at" label={L('New date and time', '新的日期和時間')} required hint={d && !err ? L('Sends ', '將於 ') + niceDT(d) + L('', ' 傳送') : L('Taipei time (GMT+8), up to 3 months ahead', '台北時間（GMT+8），3 個月內')} error={show}>
               <DatePicker id="rs-at" showTime typeable locale={L('en-US', 'zh-TW')} value={rs.at || null} error={!!show} onChange={v => m.set({ rs: { ...rs, at: v || '' } })} placeholder="YYYY/MM/DD HH:MM" />
             </FormField>
           </DialogBody>
