@@ -229,7 +229,6 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const [loading, setLoading] = React.useState(true)
   React.useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 700); return () => clearTimeout(t) }, [app.space])
   const clearAll = () => m.set({ fs: [], fch: [], q: '', page: 1 })
-  const fOn = s.fs.length > 0 || s.fch.length > 0, fN = s.fs.length + s.fch.length
   const flip = <K,>(list: K[], k: K) => (list.indexOf(k) >= 0 ? list.filter(x => x !== k) : list.concat([k]))
   const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.st === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.st === k).length }))
   const chOpts = REC_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k === 'sms' ? 'push' : k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
@@ -294,13 +293,6 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             <FilterMenu<Channel> label={L('Channel', '通道')} opts={chOpts} sel={s.fch} toggle={k => m.set({ fch: flip(s.fch, k), page: 1 })} clear={() => m.set({ fch: [], page: 1 })} />
           </div>
         </div>
-        {fOn || q ? (
-          <p className="flex flex-wrap items-center gap-x-2 text-body text-fg-secondary" aria-live="polite">
-            {L('Showing ' + rows.length + ' of ' + vis.length + ' records', '顯示 ' + vis.length + ' 筆中的 ' + rows.length + ' 筆')}
-            {fOn ? <span>{L('· ' + fN + (fN === 1 ? ' filter' : ' filters'), '・' + fN + ' 個篩選條件')}</span> : null}
-            <Button variant="link" size="sm" onClick={clearAll}>{L('Clear', '清除')}</Button>
-          </p>
-        ) : null}
       </div>
       {loading ? <ListLoading /> : (
         <div className={'mnp-center flex min-h-0 flex-1 flex-col mnp-g-' + group}>

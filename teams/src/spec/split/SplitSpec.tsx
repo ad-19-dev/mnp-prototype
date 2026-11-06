@@ -95,7 +95,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         ]} />
         <div className="flow-branches">
           <h3>從列表可以</h3>
-          <Card kind="menu" title="篩選" when="點「Status」或「Channel」" shots={['status-menu', 'channel-menu']} then="列表只留下符合的紀錄，上方出現「Showing n of m records · n filters · Clear」" />
+          <Card kind="menu" title="篩選" when="點「Status」或「Channel」" shots={['status-menu', 'channel-menu']} then="列表只留下符合的紀錄；篩選按鈕變藍並顯示選了幾個，選單最下面的「Clear」可以清除" />
           <Card kind="page" title="搜尋沒有結果" when="輸入找不到的關鍵字" shots={['empty']} then="空狀態，按鈕「Clear filters」" />
           <Card kind="menu" title="列選單：已送出" when="點列尾的 ⋮" shots={['menu-sent']} then="View message、Duplicate to new message" />
           <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="加上 Edit message、Delete" />
@@ -202,7 +202,7 @@ function ListTab() {
         <div className="spec-gallery">
           <figure><figcaption><b>狀態</b><span>多選；只列這個空間有的狀態。</span></figcaption><div className="spec-canvas"><Shot name="status-menu" alt="狀態篩選" /></div></figure>
           <figure><figcaption><b>通道</b><span>多選；SMS 備援包含在 Device Notifications (SMS)。</span></figcaption><div className="spec-canvas"><Shot name="channel-menu" alt="通道篩選" /></div></figure>
-          <figure><figcaption><b>篩選後</b><span>顯示「Showing n of m records」與「Clear」。</span></figcaption><div className="spec-canvas"><Shot name="filtered" alt="篩選後" /></div></figure>
+          <figure><figcaption><b>篩選後</b><span>篩選按鈕變藍、角標顯示數量；不另外顯示「顯示 n 筆」那一行。</span></figcaption><div className="spec-canvas"><Shot name="filtered" alt="篩選後" /></div></figure>
           <figure><figcaption><b>沒有符合的</b><span>空狀態與「Clear filters」。</span></figcaption><div className="spec-canvas"><Shot name="empty" alt="空狀態" /></div></figure>
         </div>
         <Notes items={[{ title: '搜尋範圍', body: '標題、內容、寄件人、模板、建立者；搜的是各通道自己的文字（例如 Email 的主旨）。' }]} />

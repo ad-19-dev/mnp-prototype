@@ -104,7 +104,9 @@ await step('filtered', async () => {
   await p.getByRole('menuitemcheckbox').filter({ hasText: 'In progress' }).first().click(); await wait(200);
   await p.keyboard.press('Escape'); await wait(500);
   await shot('filtered', null);
-  await main.getByRole('button', { name: 'Clear', exact: true }).first().click(); await wait(400);
+  await main.getByRole('button', { name: /^Status/ }).first().click(); await wait(300);
+  await p.getByRole('menuitem', { name: 'Clear' }).click(); await wait(400);
+  await p.keyboard.press('Escape'); await wait(300);
 });
 await step('empty', async () => {
   await main.getByPlaceholder(/Search title/).fill('zzzz'); await wait(500);
