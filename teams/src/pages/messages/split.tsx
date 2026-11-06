@@ -7,7 +7,7 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
-  PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  DescriptionList, DescriptionItem, PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Trash2 } from 'lucide-react'
@@ -367,16 +367,13 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex flex-1 flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
-        {/* the channel, and the approval in one place: why it skipped approval (urgent only), then the link to the review */}
-        <div className="flex flex-col gap-[var(--layout-space-tight)]">
-          <span className="flex flex-wrap items-center gap-2"><StatusTag s={x.fb && x.pst ? x.pst : x.st} /><span className="inline-flex items-center gap-1.5 text-body font-medium"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></span>
-          {approval ? (
-            <div className="flex flex-col gap-1.5">
-              {urgent && r.bypass ? <div className="flex flex-col gap-0.5"><span className="text-caption text-fg-secondary">{L('Urgent reason', '緊急原因')}</span><span className="whitespace-pre-wrap text-body">{r.bypass.reason}</span></div> : null}
-              <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('View in Approval center', '到 Approval center 查看')}</Button>
-            </div>
-          ) : null}
-        </div>
+        {/* the basics as vertical fields (label above value): channel, status, why it's urgent, where the approval stands */}
+        <DescriptionList>
+          <DescriptionItem label={L('Channel', '通道')}><span className="inline-flex items-center gap-1.5"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></DescriptionItem>
+          <DescriptionItem label={L('Status', '狀態')}><StatusTag s={x.fb && x.pst ? x.pst : x.st} /></DescriptionItem>
+          {urgent && r.bypass ? <DescriptionItem label={L('Urgent reason', '緊急原因')}><span className="whitespace-pre-wrap">{r.bypass.reason}</span></DescriptionItem> : null}
+          {approval ? <DescriptionItem label={L('Approval', '審核')}><Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('View in Approval center', '到 Approval center 查看')}</Button></DescriptionItem> : null}
+        </DescriptionList>
 
         <Part title={L('Content', '內容')}>
           <Accordion type="multiple" className="rounded-md border border-divider">

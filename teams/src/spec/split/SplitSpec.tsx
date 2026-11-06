@@ -322,8 +322,8 @@ function Detail() {
           ['Approval center 連結', <>出現在：Device Notifications (SMS)（SMS 要核准），或這則訊息有人核准過、正在等核准（外部收件人要主管核准）。文字 <Copy en="See review progress in the Approval center" zh="到 Approval center 查看審核進度" />。</>],
           ['審核提示卡片', '不顯示（待核准、已駁回、排程過期、緊急略過核准的提示都拿掉）。原因與時間在 Approval center。'],
           ['收合列', '使用者寫的內容預設收合，有需要再展開（可以同時展開幾項）。換一筆紀錄時回到收合。Device Notifications (SMS) 有兩項；其他通道一項。'],
-          ['狀態標籤', '只在面板最上方放一個，和列表上這一筆的狀態一致；有 SMS 備援時以 Device Notifications 的狀態為主。收合列裡不放狀態標籤，也沒有各通道的標籤。'],
-          ['緊急原因', '只有緊急送出的訊息才有，放在 Approval center 連結上方。'],
+          ['狀態標籤', '放在「Status」欄位的值，和列表上這一筆的狀態一致；有 SMS 備援時以 Device Notifications 的狀態為主。收合列裡不放狀態標籤，也沒有各通道的標籤。'],
+          ['緊急原因', '只有緊急送出的訊息才有，是「Urgent reason」欄位，在 Status 之後、Approval 之前。'],
           ['收件人', '只列這個通道實際寄得到的人：外部 Email 只出現在 Email，外部電話只出現在 Device Notifications (SMS)。'],
           ['拿掉的東西', '寄件人、模板、核准、建立者、建立時間、傳送時間、送達／失敗人數區、同時發送的其他通道、申請編號、底部的編輯／刪除按鈕。'],
         ]} />
@@ -464,7 +464,7 @@ function Blocks() {
         <div className="spec-gallery"><figure><figcaption><b>緊急送出</b><span>連結上方多一行「緊急原因」。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="緊急送出" max={440} /></div></figure></div>
         <Figure label="Device Notifications (SMS)" sub="所有區塊都出現的樣子" shot="detail-fb" max={440} notes={[
           { n: 1, title: '標題列', body: <>標題 <C>Message detail</C>；右上角關閉鈕（Esc 也能關）。</> },
-          { n: 2, title: '頂部：通道與審核', body: '狀態標籤加通道圖示與名稱；有核准的訊息，下面是 Approval center 連結，緊急送出的連結上方多一行「緊急原因」。' },
+          { n: 2, title: '基本資訊（垂直欄位）', body: '用設計系統的 DescriptionList（垂直）：欄位名稱在上、值在下，依序是 Channel、Status、Urgent reason（只有緊急送出的）、Approval（有核准的）。' },
           { n: 3, title: '內容區塊', body: '區塊標題「Content」，下面是收合列（預設收合）。有 SMS 備援時兩列，否則一列。' },
           { n: 4, title: 'SMS 備援子區塊', body: '收合列：名稱、「n / m sent」；展開是簡訊內文。' },
           { n: 5, title: '收件人區塊', body: '區塊標題「Audiences」，一張列表卡。' },
@@ -479,21 +479,22 @@ function Blocks() {
           ['Aside 自己捲動（ScrollArea），header 固定不動', '內容超過視窗高度時只有面板內部捲動，標題列固定。'],
           ['寬度由使用者自訂，限制 240–640', '一般視窗 400，大視窗（xl）480。'],
           ['不要在 Sheet 裡再開 Sheet', '面板裡不再開面板；成員清單用對話框。'],
-          ['Sheet 不放整頁複雜流程、不超過 3–4 個區塊', '只有三個區塊：通道與審核、Content、Audiences。'],
+          ['Sheet 不放整頁複雜流程、不超過 3–4 個區塊', '只有三個區塊：基本資訊、Content、Audiences。'],
         ]} />
       </Section>
       <Section eyebrow="Link" title="怎麼知道面板是列表上的哪一筆" lead="面板不重複列表已有的資料（寄件人、模板、時間），所以用列表來指出是哪一筆：">
         <SpecTable head={['做法', '規格']} nowrap={[0]} rows={[
-          ['列表上的列高亮', '面板開著時，對應的那一列整列用淺藍底色（設計系統選取列的慣例：primary-subtle），滑過也維持，所以一眼就看得到。換開另一筆或關閉面板，高亮跟著移動或消失。'],
-          ['面板頂部', '狀態標籤加通道圖示與名稱（例：In progress · Desktop OS），和列表上那一列的狀態、通道一致，可以對照。'],
+          ['列表上的列高亮', '面板開著時，對應的那一列整列用設計系統選取列的灰色（neutral-selected），滑過時再深一階（neutral-selected-hover），所以一眼就看得到。換開另一筆或關閉面板，高亮跟著移動或消失。'],
+          ['面板頂部', '「Channel」與「Status」兩個欄位，和列表上那一列的通道、狀態一致，可以對照。'],
           ['不做的事', '面板裡不重複標題、寄件人、時間（PM 的決定）；也不用另外的「第 n 筆」文字。'],
         ]} />
       </Section>
-      <Section eyebrow="Block 1" title="頂部：通道與審核">
+      <Section eyebrow="Block 1" title="基本資訊：垂直欄位" lead="用設計系統的 DescriptionList（垂直）：每個欄位是「名稱在上、值在下」，名稱用次要文字色、值用一般文字色，欄位之間 tight 間距。值需要時可以放 Tag（例如 Status）。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['通道', '圖示加名稱（中等粗細），前面是這一筆的狀態標籤（有 SMS 備援時以 Device Notifications 為主）。Device Notifications (SMS) 用手機圖示加名稱。'],
-          ['緊急原因', '緊急送出（略過 SMS 核准）的訊息才有，這則訊息的每一筆紀錄（含 Email）都顯示：標籤小字「Urgent reason / 緊急原因」，下面是原因全文，放在 Approval center 連結正上方。一般訊息只有連結。'],
-          ['Approval center 連結', <>連結按鈕（sm），前面外連圖示，文字 <Copy en="View in Approval center" zh="到 Approval center 查看" />。出現條件：Device Notifications (SMS)，或這則訊息有核准紀錄。點了前往內部的 Approval center（prototype 只跳提示）。</>],
+          ['Channel', '圖示加通道名稱（Device Notifications (SMS) 用手機圖示加名稱）。每一筆都有。'],
+          ['Status', '狀態標籤，和列表上這一筆一致；有 SMS 備援時以 Device Notifications 的狀態為主。每一筆都有。'],
+          ['Urgent reason', '緊急送出（略過 SMS 核准）的訊息才有，這則訊息的每一筆紀錄（含 Email）都顯示，值是原因全文（保留換行）。一般訊息沒有這個欄位。'],
+          [<Copy en="Approval" zh="審核" />, <>值是連結按鈕（sm，前面外連圖示）<Copy en="View in Approval center" zh="到 Approval center 查看" />。出現條件：Device Notifications (SMS)，或這則訊息有核准紀錄。點了前往內部的 Approval center（prototype 只跳提示）。</>],
           ['不放的東西', '標題（內文已有）、審核提示卡片、寄件人、模板、時間、建立者。'],
         ]} />
       </Section>
@@ -514,7 +515,7 @@ function Blocks() {
           ['子標題列', '一行：子標題（中等粗細）、送達人數，可換行；不放狀態標籤。'],
           ['送達人數', <>只有送完（已送出或傳送錯誤）才顯示 <Copy en="133 / 142 sent" zh="133 / 142 已送出" />。</>],
           ['SMS 不需要', <>推播全部送到時，SMS 沒有要寄的人：這一列不顯示人數，只寫 <Copy en="Not needed" zh="不需要" />。</>],
-          ['緊急原因', <>只有緊急送出（略過 SMS 核准）的 Device Notifications (SMS) 才有：標籤小字 <Copy en="Urgent reason" zh="緊急原因" />，下面是寄件人當初填的原因全文，放在 Approval center 連結正上方，兩者是同一塊「審核」資訊。沒有緊急送出的，只有連結。</>],
+          ['緊急原因', <>見上方「基本資訊」的 <Copy en="Urgent reason" zh="緊急原因" /> 欄位；不在內容收合列裡。</>],
         ]} />
       </Section>
       <Section eyebrow="Block 4" title="收件人" lead="這個通道實際寄得到的收件人，一人（組）一列，排序固定：組織、群組、個人、外部聯絡人。">
