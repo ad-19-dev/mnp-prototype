@@ -286,6 +286,13 @@ await step('dlg-reschedule-error', async () => {
   await p.keyboard.press('Escape'); await wait(300);
 });
 
+// ---- first use: a space with nothing in it (last, it adds a team)
+await step('empty-first', async () => {
+  await p.getByRole('button', { name: /add|new|create/i }).first().click(); await wait(600);
+  await p.getByPlaceholder(/Fab 18/).fill('Brand New Team'); await p.getByRole('button', { name: 'Create team' }).click(); await wait(1500);
+  await shot('empty-first', null);
+});
+
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
 console.log(errs.length ? 'errors:\n' + errs.join('\n') : 'no errors');
 await b.close();

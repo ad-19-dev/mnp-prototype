@@ -10,7 +10,7 @@ import {
   PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, RotateCw, Search, Send, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Trash2 } from 'lucide-react'
 import {
   CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
@@ -281,6 +281,16 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Created by', '建立者'), meta: { width: 200 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs])
 
+  // first use (nothing in this space yet): a page-level empty state, no search, filters or table frame
+  if (!loading && vis.length === 0) return (
+    <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
+      {intro}
+      <div className="py-[calc(var(--layout-space-bottom)*2)]">
+        <Empty icon={Send} title={L('No messages yet', '還沒有訊息')} description={L('Send your first notification to see it here.', '發送第一則通知後，會顯示在這裡。')} action={<Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>} />
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
       {intro}
@@ -305,9 +315,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             autoRowHeight
             getRowId={x => x.id}
             rowActions={(x: GRow) => <><Mk g={x} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
-            emptyState={vis.length
-              ? <Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />
-              : <Empty icon={Send} title={L('No messages yet', '還沒有訊息')} description={L('Click “+ New message” to send your first notification.', '點「＋ 新訊息」發送第一則通知。')} />}
+            emptyState={<Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />}
           />
         </div>
       )}
