@@ -149,7 +149,7 @@ await step('detail-fb', async () => {
   await row('Chemical delivery at Dock 2').getByText('Chemical delivery at Dock 2').first().click(); await wait(800);
   const a = aside();
   await panel('detail-fb', [
-    [1, a.getByText('Message content').first(), 'tl'],
+    [1, a.getByText('Message detail').first(), 'tl'],
     [2, a.getByRole('button', { name: /Approval center/ }), 'tl'],
     [3, a.getByText('Device Notifications', { exact: true }).first(), 'tl'],
     [4, a.getByText('SMS fallback', { exact: true }).first(), 'tl'],

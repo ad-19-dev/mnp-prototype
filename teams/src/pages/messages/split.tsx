@@ -172,7 +172,7 @@ function StatusCell({ m, x }: { m: SendCtl; x: Rec }) {
 export type GroupStyle = 'none' | 'merge' | 'divider' | 'band' | 'bracket' | 'header' | 'fold'
 // a table row: one record, or (header / fold) the message's own row
 interface GRow extends Rec { hdr?: boolean; pos: 'solo' | 'first' | 'mid' | 'last'; band: 0 | 1; n: number; open?: boolean }
-const Mk = ({ g }: { g: GRow }) => <i hidden data-gpos={g.pos} data-band={g.band} data-hdr={g.hdr ? '' : undefined} />
+const Mk = ({ g, on }: { g: GRow; on?: boolean }) => <i hidden data-gpos={g.pos} data-band={g.band} data-hdr={g.hdr ? '' : undefined} data-open={on ? '1' : undefined} />
 const col = createColumnHelper<GRow>()
 function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
@@ -235,19 +235,19 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     // order: Sender, Channel, Title / Content, Status, Reach / Audience, Template, Created, Scheduled, Created by
     col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 140 }, cell: i => {
       const g = i.row.original
-      return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
+      return <><Mk g={g} on={s.det === g.id} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
         {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span>}</>
     } }),
     // icons only: room for two icons (the message row of the grouped options adds a chevron)
     col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 128 : 96 }, cell: i => {
       const g = i.row.original
       if (g.hdr) return (
-        <span className="flex min-w-0 items-center gap-2"><Mk g={g} />
+        <span className="flex min-w-0 items-center gap-2"><Mk g={g} on={s.det === g.id} />
           {group === 'fold' ? <Button variant="text" size="xs" iconOnly startIcon={ChevronRight} className={g.open ? '[&_svg]:rotate-90' : ''} aria-expanded={g.open} aria-label={(g.open ? L('Hide channels of ', '收合通道：') : L('Show channels of ', '展開通道：')) + g.r.title} onClick={() => setOpened(o => ({ ...o, [g.r.id]: !o[g.r.id] }))} /> : null}
           <ChIcons list={rowChs(g.r)} />
         </span>
       )
-      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} /></span>
+      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} on={s.det === g.id} /><ChCell k={g.k} /></span>
     } }),
     col.display({ id: 'title', header: L('Title / Content', '標題 / 內容'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = recText(x.r, x.k), text = t.content.replace(/\s+/g, ' ')
@@ -275,7 +275,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     ...(app.space === 'me' ? [] : [// the DS person display, but blank (not the DS's own dash) on the message's other rows
       col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Created by', '建立者'), meta: { width: 200 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null })]),
-  ], [m, app.lang, app.teams, app.space, group, hdrs])
+  ], [m, app.lang, app.teams, app.space, group, hdrs, s.det])
 
   // first use (nothing in this space yet): a page-level empty state, no search, filters or table frame
   if (!loading && vis.length === 0) return (
@@ -310,7 +310,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             height="100%"
             autoRowHeight
             getRowId={x => x.id}
-            rowActions={(x: GRow) => <><Mk g={x} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
+            rowActions={(x: GRow) => <><Mk g={x} on={s.det === x.id} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
             emptyState={<Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />}
           />
         </div>
@@ -338,7 +338,7 @@ const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.t
 export function SplitDetailSheet({ m }: { m: SendCtl }) {
   const app = useApp(), x = recordById(m, app.rows, m.s.det)
   if (!x) return null
-  return <ShellAside title={L('Message content', '訊息內容')} onClose={() => m.set({ det: null })}><SplitDetail key={x.id} m={m} x={x} /></ShellAside>
+  return <ShellAside title={L('Message detail', '訊息詳情')} onClose={() => m.set({ det: null })}><SplitDetail key={x.id} m={m} x={x} /></ShellAside>
 }
 
 // What the sender wrote is folded away by default (it's long, and the list row already shows its first lines):
@@ -366,7 +366,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
   const tags = tagsFor(r, k), urgent = ICSD && !!r.bypass, approval = (ICSD && k === 'sms') || !!r.review || urgent
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
+      <div className="flex flex-1 flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
         {/* the channel, and the approval in one place: why it skipped approval (urgent only), then the link to the review */}
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <span className="flex flex-wrap items-center gap-2"><StatusTag s={x.fb && x.pst ? x.pst : x.st} /><span className="inline-flex items-center gap-1.5 text-body font-medium"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></span>

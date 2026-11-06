@@ -7,7 +7,7 @@ import { StatusTag } from '../../components/ui'
 import { C, Copy, Figure, Notes, Section, Shot, SpecTable } from '../parts'
 
 const PROTO = 'https://claude.ai/artifact/Kq6FnvbagCvdtmoPXiRD91'
-const TABS = [['flow', 'UI Flow'], ['send', '發送流程'], ['overview', '總覽'], ['list', '列表'], ['rules', '狀態與合併規則'], ['status', '各狀態的列與面板'], ['detail', '訊息內容面板'], ['blocks', '面板區塊規格'], ['actions', '列選單'], ['modals', '對話框規格'], ['data', '範例資料']] as const
+const TABS = [['flow', 'UI Flow'], ['send', '發送流程'], ['overview', '總覽'], ['list', '列表'], ['rules', '狀態與合併規則'], ['status', '各狀態的列與面板'], ['detail', '訊息詳情面板'], ['blocks', '面板區塊規格'], ['actions', '列選單'], ['modals', '對話框規格'], ['data', '範例資料']] as const
 type TabKey = typeof TABS[number][0]
 const isTab = (h: string): h is TabKey => TABS.some(t => t[0] === h)
 
@@ -73,7 +73,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         <div className="flow-map" role="list">
           <Stop sub="進入發送空間的「Send messages」">訊息列表</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="搜尋、狀態、通道">找到那一筆</Stop><span className="flow-arrow" aria-hidden>→</span>
-          <Stop sub="點標題，或選單「View details」">訊息內容面板</Stop><span className="flow-arrow" aria-hidden>→</span>
+          <Stop sub="點標題，或選單「View details」">訊息詳情面板</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="Approval center、收件人成員">繼續查看</Stop>
         </div>
         <div className="flow-legend">
@@ -86,7 +86,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
       <Section eyebrow="1" title="訊息列表" lead={<>主畫面。每一列是一個通道的紀錄，同一則訊息的紀錄排在一起、共用欄位只在第一列出現。詳細欄位見「<button type="button" className="flow-spec-link" onClick={() => go('list')}>列表</button>」。</>}>
         <Figure label="訊息列表（個人發送空間）" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
           { n: 1, title: '通道', body: '四種：Device Notifications、Device Notifications (SMS)、Desktop OS、Email。' },
-          { n: 2, title: '標題 / 內容', body: '該通道自己的標題與內文；點標題開「訊息內容」面板。' },
+          { n: 2, title: '標題 / 內容', body: '該通道自己的標題與內文；點標題開「訊息詳情」面板。' },
           { n: 3, title: '狀態', body: '每一筆各自的狀態；未送出人數在狀態下方。' },
           { n: 4, title: '收件人數', body: '只放這個通道要寄給多少人，齊右。' },
           { n: 5, title: '{n} 人未送出', body: '點了開名單對話框。' },
@@ -107,7 +107,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         </div>
       </Section>
 
-      <Section eyebrow="2" title="訊息內容面板" lead="開在列表右側，不離開列表。沒有操作按鈕；審核進度在 Approval center。">
+      <Section eyebrow="2" title="訊息詳情面板" lead="開在列表右側，不離開列表。沒有操作按鈕；審核進度在 Approval center。">
         <div className="flow-branches">
           <Card kind="page" title="Device Notifications (SMS)" when="點這種紀錄的標題" shots={['detail-fb']} then="面板最上方是狀態標籤（以 Device Notifications 為主）；內容預設收合，兩項：Device Notifications、SMS 備援，各有「n / m sent」；有「到 Approval center 查看」連結；緊急送出的另有「緊急原因」" />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、沒勾 SMS 的 Device Notifications" shots={['detail-email', 'detail-push']} then="只有那一個通道的內容與收件人" />
@@ -299,9 +299,9 @@ function Rules() {
 function Detail() {
   return (
     <>
-      <Section eyebrow="Panel" title="訊息內容面板" lead="標題「Message content / 訊息內容」。只放列表上看不到的：這個通道實際寄出的內容、收件人，以及審核進度的連結。寄件人、模板、時間、建立者、人數都在列上，面板不重複；也沒有操作按鈕，操作在列選單。">
+      <Section eyebrow="Panel" title="訊息詳情面板" lead="標題「Message detail / 訊息詳情」。只放列表上看不到的：這個通道實際寄出的內容、收件人，以及審核進度的連結。寄件人、模板、時間、建立者、人數都在列上，面板不重複；也沒有操作按鈕，操作在列選單。">
         <Figure label="Device Notifications (SMS)" sub="有 SMS 備援，兩個區塊" shot="detail-fb" max={440} notes={[
-          { n: 1, title: '標題', body: <><C>Message content</C>；右上角關閉。</> },
+          { n: 1, title: '標題', body: <><C>Message detail</C>；右上角關閉。</> },
           { n: 2, title: 'Approval center 連結', body: '審核的進度、核准人都在內部的 Approval center，面板只放連結。緊急送出的，連結上方多一行「緊急原因」。見下方條件。' },
           { n: 3, title: 'Device Notifications 區塊', body: '收合列：名稱、「n / m sent」（不放狀態標籤）；展開才是它寄出的內容（標題、內文；寄件人在列表上，面板不重複）。' },
           { n: 4, title: 'SMS 備援區塊', body: '同樣有標題與送達人數（不放狀態標籤），下面是簡訊內文。推播全部送到、不需要 SMS 時，不顯示狀態與人數，寫「Not needed / 不需要」。' },
@@ -347,7 +347,7 @@ function Actions() {
           [<StatusTag s="expired" />, '✓', '✓', '✓', '✓', '✓', '✓'],
         ]} />
         <SpecTable head={['項目', '做什麼', '備註']} nowrap={[0]} rows={[
-          [<Copy en="View details" zh="查看詳情" />, '開「訊息內容」面板（和點標題一樣）', '每個狀態都有，永遠排第一'],
+          [<Copy en="View details" zh="查看詳情" />, '開「訊息詳情」面板（和點標題一樣）', '每個狀態都有，永遠排第一'],
           [<Copy en="Edit" zh="編輯" />, '進入發送流程，帶入這則訊息的內容', '已駁回：改完重新送審；排程已過期：改完重新排程送出'],
           [<Copy en="Reschedule" zh="重新排程" />, '開「重新排程」對話框，改新的傳送時間', '排程已過期、傳送錯誤；不用重新核准'],
           [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，立刻傳送', '排程已過期、傳送錯誤'],
@@ -459,15 +459,34 @@ function StatusTab() {
 function Blocks() {
   return (
     <>
-      <Section eyebrow="Panel" title="面板的版面" lead="面板開在列表右側（設計系統 Aside），標題「Message content / 訊息內容」，右上角關閉，內容可捲動。區塊由上到下，區塊之間的距離是一般間距的兩倍，區塊內的標題與內容貼近。">
+      <Section eyebrow="Panel" title="面板的版面" lead="面板開在列表右側（設計系統 Aside），標題「Message detail / 訊息詳情」，右上角關閉，內容可捲動。區塊由上到下。版面照設計系統 Sheet / Aside 的規則：區塊之間用一個 loose 間距（並列的獨立區塊），區塊標題與內容之間用 tight 間距。">
         <div className="spec-gallery"><figure><figcaption><b>展開內容</b><span>預設收合；展開後看到各通道寄出的內容。</span></figcaption><div className="spec-canvas"><Shot name="detail-fb-open" alt="展開內容" max={440} /></div></figure></div>
         <div className="spec-gallery"><figure><figcaption><b>緊急送出</b><span>連結上方多一行「緊急原因」。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="緊急送出" max={440} /></div></figure></div>
         <Figure label="Device Notifications (SMS)" sub="所有區塊都出現的樣子" shot="detail-fb" max={440} notes={[
-          { n: 1, title: '標題列', body: <>標題 <C>Message content</C>；右上角關閉鈕（Esc 也能關）。</> },
+          { n: 1, title: '標題列', body: <>標題 <C>Message detail</C>；右上角關閉鈕（Esc 也能關）。</> },
           { n: 2, title: '頂部：通道與審核', body: '狀態標籤加通道圖示與名稱；有核准的訊息，下面是 Approval center 連結，緊急送出的連結上方多一行「緊急原因」。' },
           { n: 3, title: '內容區塊', body: '區塊標題「Content」，下面是收合列（預設收合）。有 SMS 備援時兩列，否則一列。' },
           { n: 4, title: 'SMS 備援子區塊', body: '收合列：名稱、「n / m sent」；展開是簡訊內文。' },
           { n: 5, title: '收件人區塊', body: '區塊標題「Audiences」，一張列表卡。' },
+        ]} />
+      </Section>
+      <Section eyebrow="Rules" title="對照設計系統 Sheet / Aside 的規則" lead="面板是 DS 的 AppShellAside（桌面是靠右的常駐欄，視窗窄於 768 時變成 Sheet）。下面是 DS 的規定，與這個面板怎麼對應。">
+        <SpecTable head={['DS 規則', '這個面板']} nowrap={[0]} rows={[
+          ['標題必填（無障礙：aria-labelledby）', <>標題 <Copy en="Message detail" zh="訊息詳情" />，單行，沒有副標題（chrome header 禁止第二行）。</>],
+          ['右上角一定有關閉鈕；Esc 也能關', '有。關閉後焦點回到列表。'],
+          ['Aside 的 body 自己不加 padding，內容自帶 px-loose、上 tight', '內容自帶：左右 loose、上方 tight、下方 loose。'],
+          ['並列、獨立的區塊之間 = loose；區塊標題與其內容 = tight', '區塊（Content、Audiences）之間一個 loose；區塊標題與內容之間 tight。'],
+          ['Aside 自己捲動（ScrollArea），header 固定不動', '內容超過視窗高度時只有面板內部捲動，標題列固定。'],
+          ['寬度由使用者自訂，限制 240–640', '一般視窗 400，大視窗（xl）480。'],
+          ['不要在 Sheet 裡再開 Sheet', '面板裡不再開面板；成員清單用對話框。'],
+          ['Sheet 不放整頁複雜流程、不超過 3–4 個區塊', '只有三個區塊：通道與審核、Content、Audiences。'],
+        ]} />
+      </Section>
+      <Section eyebrow="Link" title="怎麼知道面板是列表上的哪一筆" lead="面板不重複列表已有的資料（寄件人、模板、時間），所以用列表來指出是哪一筆：">
+        <SpecTable head={['做法', '規格']} nowrap={[0]} rows={[
+          ['列表上的列高亮', '面板開著時，對應的那一列整列用淺藍底色（設計系統選取列的慣例：primary-subtle），滑過也維持，所以一眼就看得到。換開另一筆或關閉面板，高亮跟著移動或消失。'],
+          ['面板頂部', '狀態標籤加通道圖示與名稱（例：In progress · Desktop OS），和列表上那一列的狀態、通道一致，可以對照。'],
+          ['不做的事', '面板裡不重複標題、寄件人、時間（PM 的決定）；也不用另外的「第 n 筆」文字。'],
         ]} />
       </Section>
       <Section eyebrow="Block 1" title="頂部：通道與審核">
