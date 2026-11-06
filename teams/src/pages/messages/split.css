@@ -3,7 +3,7 @@
    style whole rows of the DS DataTable, in its pinned column too. */
 
 /* no line between the rows of one message */
-:is(.mnp-g-divider, .mnp-g-band, .mnp-g-bracket, .mnp-g-header, .mnp-g-fold)
+:is(.mnp-g-merge, .mnp-g-divider, .mnp-g-band, .mnp-g-bracket, .mnp-g-header, .mnp-g-fold)
   [role="row"]:is(:has([data-gpos="first"]), :has([data-gpos="mid"])) { border-bottom-color: transparent; }
 
 /* divider: a stronger line where the next message starts */
@@ -22,6 +22,3 @@
 /* header / fold: the message row on a light tint; its channels sit under it */
 :is(.mnp-g-header, .mnp-g-fold) [role="row"]:has([data-hdr]) { background: color-mix(in srgb, var(--color-surface-strong) 40%, var(--color-surface)); }
 :is(.mnp-g-header, .mnp-g-fold) [role="row"]:has([data-hdr])[data-hovered] { background: color-mix(in srgb, var(--color-surface-strong) 60%, var(--color-surface)); }
-
-/* merge (the default): between the channels of one message a lighter line than the one between messages */
-.mnp-g-merge [role="row"]:is(:has([data-gpos="first"]), :has([data-gpos="mid"])) { border-bottom-color: color-mix(in srgb, var(--color-border) 40%, transparent); }

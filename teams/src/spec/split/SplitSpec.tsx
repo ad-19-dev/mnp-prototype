@@ -231,7 +231,7 @@ function ListTab() {
           [<Copy en="Created by" zh="建立者" />, '200', '只有團隊空間有；個人空間只有自己，不顯示。只在第一列顯示', '可'],
         ]} />
       </Section>
-      <Section eyebrow="Group" title="同一則訊息的紀錄看起來是一組" lead="採用「合併共用欄位」：共用欄位只在第一列出現，其餘列留白。分隔線分兩種：訊息和訊息之間是一般的線；同一則訊息的各通道之間是更淡的線（一般線的 40% 濃度），所以通道列看得出分段，但仍然是同一組。">
+      <Section eyebrow="Group" title="同一則訊息的紀錄看起來是一組" lead="採用「合併共用欄位」：共用欄位只在第一列出現，其餘列留白，組內沒有分隔線。">
         <Figure label="一則訊息的兩筆紀錄" sub="Device Notifications (SMS) ＋ Email" shot="group" max={1180} wideNotes notes={[
           { n: 1, title: '寄件人', body: 'Device Notifications 有寄件人，Email 那一列沒有這個欄位，顯示「—」。' },
           { n: 2, title: '通道', body: '第一筆：手機＋簡訊兩個圖示，代表勾了 SMS 備援。' },
@@ -240,7 +240,6 @@ function ListTab() {
           { n: 5, title: '共用欄位留白', body: '第二列的模板、時間、建立者留白，表示和第一列相同。' },
         ]} />
         <Notes cols items={[
-          { title: '分隔線的層級', body: '一般線＝換一則訊息；淡線＝同一則訊息裡換一個通道。沒有第三種線，也不改欄位內容。' },
           { title: '留白只有「同上」一種意思', body: '「—」是沒有值（例如沒用模板），而且只會出現在每則訊息的第一列。' },
           { title: '分頁以訊息為單位', body: '每頁最多 20 則訊息，一則訊息的紀錄一定在同一頁；頁尾只有分頁控制（頁碼與每頁筆數），不顯示「1–20 of 22 messages」之類的筆數文字。' },
           { title: '排序', body: '排序以整則訊息為單位，組內順序固定。' },
