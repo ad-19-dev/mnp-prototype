@@ -167,7 +167,7 @@ function StatusCell({ m, x }: { m: SendCtl; x: Rec }) {
 // How a message's records read as one group (design options; the prototype uses 'none'):
 //   merge: message-wide cells (template, times, creator) only on its first row; status stays on every row.
 //          Marks, one meaning each: blank = same as the message's first row; "—" = no value (first row only);
-//          a channel with no sender name (Email, SMS fallback) leaves Sender blank for now
+//          a record with no sender name (Email) shows a dash in Sender, like any other empty value
 //   divider: no lines inside a message, a stronger line between messages
 //   band: every other message on a tinted background
 //   bracket: a bar down the left edge joins a message's rows
@@ -240,7 +240,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 140 }, cell: i => {
       const g = i.row.original
       return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
-        {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : null}</>
+        {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span>}</>
     } }),
     // icons only: room for two icons (the message row of the grouped options adds a chevron)
     col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 128 : 96 }, cell: i => {

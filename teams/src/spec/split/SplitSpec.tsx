@@ -173,7 +173,7 @@ function ListTab() {
       </Section>
       <Section eyebrow="Columns" title="欄位" lead="設計系統沒有欄寬 token，欄寬由我們定：一律是 4 的倍數，依內容夠用就好（人數、日期、通道圖示都不放寬）。「標題 / 內容」的寬度是最小寬度，會吸收多出來的空間。">
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
-          [<Copy en="Sender" zh="寄件人" />, '140', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；Email 留白。不凍結。', '可'],
+          [<Copy en="Sender" zh="寄件人" />, '140', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；沒有的（Email）顯示「—」，每一列都顯示。不凍結。', '可'],
           [<Copy en="Channel" zh="通道" />, '96', '只顯示圖示，名稱在滑過的提示與螢幕閱讀器標籤裡；Device Notifications (SMS) 是手機加簡訊兩個圖示', '—'],
           [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320，其餘空間由這欄吸收', '該通道的標題與內文', '—'],
           [<Copy en="Status" zh="狀態" />, '168', '狀態標籤，失敗人數在下方', '—'],
@@ -186,7 +186,7 @@ function ListTab() {
       </Section>
       <Section eyebrow="Group" title="同一則訊息的紀錄看起來是一組" lead="採用「合併共用欄位」：共用欄位只在第一列出現，其餘列留白，組內沒有分隔線。">
         <Figure label="一則訊息的兩筆紀錄" sub="Device Notifications (SMS) ＋ Email" shot="group" max={1180} wideNotes notes={[
-          { n: 1, title: '寄件人', body: 'Device Notifications 有寄件人，Email 那一列留白。' },
+          { n: 1, title: '寄件人', body: 'Device Notifications 有寄件人，Email 那一列沒有這個欄位，顯示「—」。' },
           { n: 2, title: '通道', body: '第一筆：手機＋簡訊兩個圖示，代表勾了 SMS 備援。' },
           { n: 3, title: '狀態與失敗', body: '每一筆各自顯示，不合併。' },
           { n: 4, title: '收件人數', body: '各通道自己的人數：Device Notifications 57、Email 59。' },
@@ -237,8 +237,8 @@ function Rules() {
       </Section>
       <Section eyebrow="Marks" title="空格的意思">
         <SpecTable head={['標示', '意思']} nowrap={[0]} rows={[
-          ['留白', '同上：和這則訊息第一列的內容相同（模板、建立時間、傳送時間、建立者），或這個通道沒有這個欄位（Email 的寄件人）。'],
-          ['—', '沒有值，例如沒用模板。只會出現在每則訊息的第一列。'],
+          ['留白', '同上：和這則訊息第一列的內容相同（模板、建立時間、傳送時間、建立者）。'],
+          ['—', '沒有值：沒用模板，或這個通道本來就沒有這個欄位（Email 沒有寄件人）。共用欄位（模板等）只出現在第一列；寄件人每一列都顯示。'],
           ['傳送時間', '排程的是排程時間；立即傳送的是建立時間，不會是「—」。'],
         ]} />
       </Section>
