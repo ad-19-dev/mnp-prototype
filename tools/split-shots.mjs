@@ -200,7 +200,7 @@ const dlgShot = async (name, text, item, btn) => {
     await p.keyboard.press('Escape'); await wait(300);
   });
 };
-await dlgShot('dlg-delete', 'out of office', /^Delete/);
+await dlgShot('dlg-delete', 'UX sync moves', /^Delete/);
 await dlgShot('dlg-sendnow', 'UX sync moves', /^Send now/);
 await dlgShot('dlg-reschedule', 'UX sync moves', /^Reschedule/);
 

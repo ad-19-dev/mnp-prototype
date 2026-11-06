@@ -113,12 +113,12 @@
  },
  "menu-scheduled": {
   "w": 1402,
-  "h": 230,
+  "h": 149,
   "marks": []
  },
  "menu-expired": {
   "w": 1402,
-  "h": 262,
+  "h": 294,
   "marks": []
  },
  "menu-rejected": {
@@ -128,7 +128,7 @@
  },
  "menu-error": {
   "w": 1402,
-  "h": 184,
+  "h": 265,
   "marks": []
  },
  "detail-fb": {
@@ -221,7 +221,7 @@
  },
  "dlg-delete": {
   "w": 504,
-  "h": 257,
+  "h": 236,
   "marks": []
  },
  "dlg-sendnow": {
