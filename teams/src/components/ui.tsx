@@ -123,7 +123,7 @@ export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }
           ))}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled={!sel.length} onSelect={clear}>{L('Clear', '清除')}</DropdownMenuItem>
+        <DropdownMenuItem disabled={!sel.length} onSelect={clear} className={sel.length ? 'text-primary data-[highlighted]:text-primary' : undefined}>{L('Clear', '清除')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

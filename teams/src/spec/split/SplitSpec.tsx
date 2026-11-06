@@ -96,7 +96,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         ]} />
         <div className="flow-branches">
           <h3>從列表可以</h3>
-          <Card kind="menu" title="篩選" when="點「Status」或「Channel」" shots={['status-menu', 'channel-menu']} then="列表只留下符合的紀錄；篩選按鈕變藍並顯示選了幾個，選單最下面的「Clear」可以清除" />
+          <Card kind="menu" title="篩選" when="點「Status」或「Channel」" shots={['status-menu', 'channel-menu']} then="列表只留下符合的紀錄；篩選按鈕變藍並顯示選了幾個，選單最下面的「Clear」有選項時是藍色、可點，沒選時灰色停用，點了清除這個選單的選項" />
           <Card kind="page" title="搜尋沒有結果" when="輸入找不到的關鍵字" shots={['empty']} then="空狀態，按鈕「Clear filters」" />
           <Card kind="menu" title="列選單：已送出" when="點列尾的 ⋮" shots={['menu-sent']} then="View message、Duplicate to new message" />
           <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="加上 Edit message、Delete" />
