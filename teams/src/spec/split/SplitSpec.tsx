@@ -90,7 +90,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           { n: 3, title: '狀態', body: '每一筆各自的狀態；未送出人數在狀態下方。' },
           { n: 4, title: '收件人數', body: '只放這個通道要寄給多少人，齊右。' },
           { n: 5, title: '{n} 人未送出', body: '點了開名單對話框。' },
-          { n: 6, title: '列選單', body: '查看、編輯、刪除等，依狀態不同。' },
+          { n: 6, title: '列選單', body: '查看詳情、編輯、立即傳送、重新排程、複製、刪除，依狀態不同。' },
           { n: 7, title: '狀態篩選', body: '多選。' },
           { n: 8, title: '通道篩選', body: '多選，四種通道。' },
         ]} />
@@ -100,10 +100,10 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="搜尋沒有結果" when="輸入找不到的關鍵字" shots={['empty']} then="表格框裡的空狀態，按鈕「Clear filters」" />
           <Card kind="page" title="還沒有任何訊息" when="新空間第一次使用" shots={['empty-first']} then="頁面層級的空狀態：沒有搜尋、篩選與表格，只有「No messages yet」與 New message 按鈕" />
           <Card kind="menu" title="列選單：已送出" when="點列尾的 ⋮" shots={['menu-sent']} then="View details、Duplicate to new message" />
-          <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="加上 Edit、Delete" />
-          <Card kind="menu" title="列選單：排程已過期" when="狀態 Scheduled expired" shots={['menu-expired']} then="加上 Send now、Reschedule、Delete" />
-          <Card kind="menu" title="列選單：已駁回" when="狀態 Rejected" shots={['menu-rejected']} then="加上 Edit、Delete" />
-          <Card kind="menu" title="列選單：傳送錯誤" when="狀態 Error" shots={['menu-error']} then="加上 Retry" />
+          <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="View details、Duplicate to new message（沒有編輯與刪除）" />
+          <Card kind="menu" title="列選單：排程已過期" when="狀態 Scheduled expired" shots={['menu-expired']} then="全部：View details、Edit、Send now、Reschedule、Duplicate to new message、Delete" />
+          <Card kind="menu" title="列選單：已駁回" when="狀態 Rejected" shots={['menu-rejected']} then="View details、Edit、Duplicate to new message、Delete" />
+          <Card kind="menu" title="列選單：傳送錯誤" when="狀態 Error" shots={['menu-error']} then="View details、Send now、Reschedule、Duplicate to new message、Delete" />
         </div>
       </Section>
 
@@ -337,24 +337,24 @@ function Actions() {
   return (
     <>
       <Section eyebrow="Menu" title="列選單" lead="每一筆的 ⋮ 選單。項目文案由 PM 確定，一律用這六個：View details、Edit、Reschedule、Send now、Duplicate to new message、Delete。每個狀態只出現它能做的項目；所有項目都以整則訊息為單位（訊息有兩個以上的紀錄時，確認對話框會說明會套用到哪些通道）。">
-        <SpecTable head={['狀態', 'View details', 'Edit', 'Reschedule', 'Send now', 'Duplicate to new message', 'Delete']} nowrap={[0, 1, 2, 3, 4, 5, 6]} rows={[
+        <SpecTable head={['狀態', 'View details', 'Edit', 'Send now', 'Reschedule', 'Duplicate to new message', 'Delete']} nowrap={[0, 1, 2, 3, 4, 5, 6]} rows={[
           [<StatusTag s="pending" />, '✓', '', '', '', '✓', ''],
-          [<StatusTag s="scheduled" />, '✓', '✓', '', '', '✓', '✓'],
+          [<StatusTag s="scheduled" />, '✓', '', '', '', '✓', ''],
           [<StatusTag s="progress" />, '✓', '', '', '', '✓', ''],
           [<StatusTag s="sent" />, '✓', '', '', '', '✓', ''],
-          [<StatusTag s="error" />, '✓', '', '', '', '✓', ''],
+          [<StatusTag s="error" />, '✓', '', '✓', '✓', '✓', '✓'],
           [<StatusTag s="rejected" />, '✓', '✓', '', '', '✓', '✓'],
-          [<StatusTag s="expired" />, '✓', '', '✓', '✓', '✓', '✓'],
+          [<StatusTag s="expired" />, '✓', '✓', '✓', '✓', '✓', '✓'],
         ]} />
         <SpecTable head={['項目', '做什麼', '備註']} nowrap={[0]} rows={[
           [<Copy en="View details" zh="查看詳情" />, '開「訊息內容」面板（和點標題一樣）', '每個狀態都有，永遠排第一'],
-          [<Copy en="Edit" zh="編輯" />, '進入發送流程，帶入這則訊息的內容', '已排程：改完仍是已排程；已駁回：改完重新送審'],
-          [<Copy en="Reschedule" zh="重新排程" />, '開「重新排程」對話框，改新的傳送時間', '只有排程已過期；不用重新核准'],
-          [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，立刻傳送', '只有排程已過期'],
+          [<Copy en="Edit" zh="編輯" />, '進入發送流程，帶入這則訊息的內容', '已駁回：改完重新送審；排程已過期：改完重新排程送出'],
+          [<Copy en="Reschedule" zh="重新排程" />, '開「重新排程」對話框，改新的傳送時間', '排程已過期、傳送錯誤；不用重新核准'],
+          [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，立刻傳送', '排程已過期、傳送錯誤'],
           [<Copy en="Duplicate to new message" zh="複製為新訊息" />, '進入發送流程，內容帶入、當成新訊息', '每個狀態都有'],
-          [<Copy en="Delete" zh="刪除" />, '開確認對話框，刪除整則訊息', '紅字，上方有分隔線；只有還沒送出的狀態（已排程、排程已過期、已駁回）'],
+          [<Copy en="Delete" zh="刪除" />, '開確認對話框，刪除整則訊息', '紅字，上方有分隔線；排程已過期、已駁回、傳送錯誤'],
         ]} />
-        <Notes items={[{ title: '傳送錯誤的 Retry', body: <>傳送錯誤的選單另有一項 <Copy en="Retry" zh="重新傳送" />（重新送出整則訊息）。它不在 PM 給的六個文案裡，目前保留，等 PM 確認要不要留。</> }]} />
+        <Notes items={[{ title: '已排程不能編輯或刪除', body: '已排程的訊息選單只有 View details 與 Duplicate to new message。' }, { title: '沒有 Retry', body: '選單不再有 Retry；傳送錯誤的訊息用 Send now 或 Reschedule 重新送出。' }]} />
         <div className="spec-gallery">
           <figure><figcaption><b>已送出</b></figcaption><div className="spec-canvas"><Shot name="menu-sent" alt="已送出的選單" /></div></figure>
           <figure><figcaption><b>已排程</b></figcaption><div className="spec-canvas"><Shot name="menu-scheduled" alt="已排程的選單" /></div></figure>
@@ -413,7 +413,7 @@ function StatusTab() {
         ['收件人數', '照常顯示'],
         ['失敗人數', '不顯示'],
         ['傳送時間', '排程時間'],
-        ['列選單', 'View details、Edit、Duplicate to new message、Delete'],
+        ['列選單', 'View details、Duplicate to new message'],
         ['面板', '內容與收件人；沒有 Approval center 連結（不需要核准的訊息）'],
       ]} pn="Device Notifications 與 Email 是同一則訊息的兩筆紀錄，狀態一樣，編輯時一起改。" />
       <StatusSpec id="傳送中" s="progress" tagDesc="已經開始送；各通道各自進行，標籤是這一筆整體的狀態。" shots={['st-progress']} panel="detail-progress" rows={[
@@ -434,7 +434,7 @@ function StatusTab() {
         ['收件人數', '各通道人數'],
         ['失敗人數', '全部都失敗，顯示「n not sent」；有 SMS 備援而其中一個傳送錯誤時，整體標籤是 Error'],
         ['傳送時間', '建立時間'],
-        ['列選單', 'View details、Retry、Duplicate to new message'],
+        ['列選單', 'View details、Send now、Reschedule、Duplicate to new message、Delete'],
         ['面板', '內容與收件人'],
       ]} pn="下方第二組是同一則訊息裡一個通道送出、另一個通道錯誤：每一筆各自顯示自己的狀態。" />
       <StatusSpec id="已駁回" s="rejected" tagDesc="核准人駁回，訊息不會送出。" shots={['st-rejected']} panel="detail-rejected" rows={[
@@ -448,7 +448,7 @@ function StatusTab() {
         ['收件人數', '照常顯示'],
         ['失敗人數', '不顯示'],
         ['傳送時間', '原訂的排程時間'],
-        ['列選單', 'View details、Send now、Reschedule、Duplicate to new message、Delete'],
+        ['列選單', 'View details、Edit、Send now、Reschedule、Duplicate to new message、Delete'],
         ['面板', 'Approval center 連結；內容與收件人'],
       ]} pn="立即傳送與重新排程都套用到整則訊息，確認對話框會寫出受影響的通道。" />
     </>
@@ -542,7 +542,7 @@ function Modals() {
       <Section eyebrow="Confirm" title="刪除與立即傳送" lead="確認對話框：寬 480，標題、一段說明、兩個按鈕。說明寫明會影響哪些通道。">
         <div className="spec-gallery">
           <figure><figcaption><b>刪除</b><span>按鈕 Keep（取消）與 Delete（紅色主要）。訊息有兩個以上通道時，列出每個通道，並說明這些紀錄會一起移除。無法復原。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delete" alt="刪除" max={520} /></div></figure>
-          <figure><figcaption><b>立即傳送</b><span>只有排程已過期的訊息。按鈕 Not now 與 Send now。說明：馬上送出、不等原訂時間，已經核准；多通道時列出通道。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
+          <figure><figcaption><b>立即傳送</b><span>排程已過期或傳送錯誤的訊息。傳送錯誤的沒有原訂時間，說明不提原訂時間。按鈕 Not now 與 Send now。說明：馬上送出、不等原訂時間，已經核准；多通道時列出通道。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
         </div>
         <SpecTable head={['對話框', '標題', '取消', '確認']} nowrap={[0]} rows={[
           ['刪除', <Copy en="Delete this message?" zh="要刪除這則訊息嗎？" />, <Copy en="Keep" zh="保留" />, <Copy en="Delete" zh="刪除" />],
