@@ -132,17 +132,17 @@ function TplList({ m }: { m: TCtl }) {
   const app = useApp(), s = m.s, rows = m.listRows(), nAll = app.templates.filter(t => tplInSpace(t)).length
   const filtered = !!s.q.trim()
   const cols = React.useMemo(() => [
-    tcol.accessor('name', { header: L('Template', '模板'), meta: { width: 280 }, cell: i => { const t = i.row.original, first = t.title || (t.email && t.email.subject) || ''; return (
+    tcol.accessor('name', { header: L('Template', '模板'), cell: i => { const t = i.row.original, first = t.title || (t.email && t.email.subject) || ''; return (
       <span className="flex min-w-0 flex-col">
         <Trunc text={t.name} className="font-medium text-primary hover:text-primary-hover hover:underline" onClick={() => m.openEd(t)} />
         <Trunc text={first} className="text-caption text-fg-secondary" />
       </span>
     ) } }),
-    tcol.display({ id: 'fmt', header: L('Channels', '通道'), meta: { width: 140 }, cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
+    tcol.display({ id: 'fmt', header: L('Channels', '通道'), cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
-    tcol.accessor('updated', { header: L('Updated', '更新日期'), meta: { width: 110 } }),
+    tcol.accessor('updated', { header: L('Updated', '更新日期') }),
     // the personal space holds only your own templates, so Created by appears in team spaces only
-    ...(app.space === ME_SPACE ? [] : [tcol.accessor('owner', { header: L('Created by', '建立者'), meta: { width: 180 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } })]),
+    ...(app.space === ME_SPACE ? [] : [tcol.accessor('owner', { header: L('Created by', '建立者'), cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en + (i.getValue() === ME ? L(' (you)', '（你）') : '')} b={p.zh} /></span> } })]),
   ], [m, app.lang, app.space])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">

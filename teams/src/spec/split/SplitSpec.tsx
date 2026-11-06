@@ -161,27 +161,27 @@ function ListTab() {
     <>
       <Section eyebrow="Page" title="列表" lead="一列一個通道的紀錄。頁首、搜尋與篩選、表格、分頁，與原本的訊息列表相同；差別在於資料單位是「紀錄」而不是「訊息」。">
         <Figure label="個人發送空間" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
-          { n: 1, title: '通道', body: <>寬 210。圖示加名稱；Device Notifications (SMS) 顯示兩個圖示（手機、簡訊）。篩選 <C>Channel</C>。</> },
-          { n: 2, title: '標題 / 內容', body: <>寬 380。標題（藍字，點了開面板）加一行內文，截斷。Email 顯示主旨與內文；Desktop OS 顯示桌面通知自己的文字；Device Notifications (SMS) 顯示 Device Notifications 的文字（SMS 文字在面板裡）。緊急送出的有「Urgent」標籤。</> },
-          { n: 3, title: '狀態', body: '寬 180。每一筆各自的狀態，見「狀態與合併規則」。' },
-          { n: 4, title: '收件人數', body: <>寬 140，數字齊右（表頭也齊右）。只放這個通道要寄給多少人，不放已送達。<C>Device Notifications (SMS)</C> 的數字是 Device Notifications 的收件人數。可排序。</> },
+          { n: 1, title: '通道', body: <>圖示加名稱；Device Notifications (SMS) 顯示兩個圖示（手機、簡訊）。篩選 <C>Channel</C>。</> },
+          { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開面板）加一行內文，截斷。Email 顯示主旨與內文；Desktop OS 顯示桌面通知自己的文字；Device Notifications (SMS) 顯示 Device Notifications 的文字（SMS 文字在面板裡）。緊急送出的有「Urgent」標籤。</> },
+          { n: 3, title: '狀態', body: '每一筆各自的狀態，見「狀態與合併規則」。' },
+          { n: 4, title: '收件人數', body: <>數字齊右（表頭也齊右）。只放這個通道要寄給多少人，不放已送達。<C>Device Notifications (SMS)</C> 的數字是 Device Notifications 的收件人數。可排序。</> },
           { n: 5, title: '{n} 人失敗', body: <>紅色連結，放在狀態標籤下方，點了開失敗名單。有 SMS 備援的，只算 SMS 也沒送到的人。</> },
           { n: 6, title: '列選單', body: '見「列選單」與「對話框規格」。' },
           { n: 7, title: '狀態篩選', body: '多選，只列出目前這個空間有的狀態，每個旁邊有數量。' },
           { n: 8, title: '通道篩選', body: <>多選，四種通道：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊有紀錄數。</> },
         ]} />
       </Section>
-      <Section eyebrow="Columns" title="欄位">
-        <SpecTable head={['欄位', '寬', '內容', '排序']} nowrap={[0]} rows={[
-          [<Copy en="Sender" zh="寄件人" />, '170', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；Email 留白。釘在左側。', '可'],
-          [<Copy en="Channel" zh="通道" />, '210', '圖示加名稱', '—'],
-          [<Copy en="Title / Content" zh="標題 / 內容" />, '380', '該通道的標題與內文', '—'],
-          [<Copy en="Status" zh="狀態" />, '180', '狀態標籤，失敗人數在下方', '—'],
-          [<Copy en="Audience" zh="收件人數" />, '140', '只有人數，齊右', '可'],
-          [<Copy en="Template" zh="模板" />, '150', '模板名稱，沒用模板是「—」；同一則訊息只在第一列顯示', '可'],
-          [<Copy en="Created" zh="建立時間" />, '120', '日期與時間兩行；只在第一列顯示', '可'],
-          [<Copy en="Send time" zh="傳送時間" />, '130', '排程的訊息是排程時間；立即傳送的是建立時間，不會有「—」；只在第一列顯示', '可'],
-          [<Copy en="Created by" zh="建立者" />, '170', '只有團隊空間有；個人空間只有自己，不顯示。只在第一列顯示', '可'],
+      <Section eyebrow="Columns" title="欄位" lead="欄寬一律使用設計系統的預設值；只有「標題 / 內容」（以及對話框裡的主要文字欄）設最小寬度，並吸收多出來的空間。">
+        <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
+          [<Copy en="Sender" zh="寄件人" />, 'DS 預設', '只有 Device Notifications 與 Desktop OS 有寄件人名稱；Email 留白。不凍結。', '可'],
+          [<Copy en="Channel" zh="通道" />, 'DS 預設', '圖示加名稱', '—'],
+          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 380，其餘空間由這欄吸收', '該通道的標題與內文', '—'],
+          [<Copy en="Status" zh="狀態" />, 'DS 預設', '狀態標籤，失敗人數在下方', '—'],
+          [<Copy en="Audience" zh="收件人數" />, 'DS 預設', '只有人數，齊右', '可'],
+          [<Copy en="Template" zh="模板" />, 'DS 預設', '模板名稱，沒用模板是「—」；同一則訊息只在第一列顯示', '可'],
+          [<Copy en="Created" zh="建立時間" />, 'DS 預設', '日期與時間兩行；只在第一列顯示', '可'],
+          [<Copy en="Send time" zh="傳送時間" />, 'DS 預設', '排程的訊息是排程時間；立即傳送的是建立時間，不會有「—」；只在第一列顯示', '可'],
+          [<Copy en="Created by" zh="建立者" />, 'DS 預設', '只有團隊空間有；個人空間只有自己，不顯示。只在第一列顯示', '可'],
         ]} />
       </Section>
       <Section eyebrow="Group" title="同一則訊息的紀錄看起來是一組" lead="採用「合併共用欄位」：共用欄位只在第一列出現，其餘列留白，組內沒有分隔線。">
@@ -472,7 +472,7 @@ function Modals() {
       <Section eyebrow="Failed" title="失敗的收件人">
         <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
           { n: 1, title: '標題與說明', body: <><Copy en="Failed audience members" zh="傳送失敗的收件人" />；說明：通道名稱 · 失敗人數 / 收件人數。</> },
-          { n: 2, title: '表格', body: '高 380，欄：Audience 260（頭像、姓名、工號 · NT）、Org 110、Reason 300（兩行：推播失敗原因、SMS 失敗原因）。外部聯絡人用地球圖示。' },
+          { n: 2, title: '表格', body: '高 380，欄：Audience（頭像、姓名、工號 · NT）、Org、Reason（兩行：推播失敗原因、SMS 失敗原因，這欄最小 300）。外部聯絡人用地球圖示。' },
           { n: 3, title: '重寄', body: <><C>Resend to n on 通道</C>，進發送流程，收件人換成這些人，通道照這一筆。</> },
         ]} />
         <div className="spec-gallery">
@@ -506,7 +506,7 @@ function Modals() {
         <Figure label="組織成員" sub="寬 640" shot="dlg-members" max={640} notes={[
           { n: 1, title: '標題與說明', body: '標題是組織或群組名稱；說明：類型 · 人數。' },
           { n: 2, title: '搜尋', body: '小尺寸搜尋框，寬 72；組織搜姓名、NT 帳號、工號；群組另外搜 Email 與電話。找不到時顯示空狀態「No matching members」。' },
-          { n: 3, title: '表格', body: '組織：Name 280、Employee ID 130、NT account 130。群組：Name 280、Added by 260（加入方式與類型）。' },
+          { n: 3, title: '表格', body: '組織：Name（最小 280）、Employee ID、NT account。群組：Name、Added by（加入方式與類型）。' },
         ]} />
         <div className="spec-gallery"><figure><figcaption><b>群組成員</b><span>多一欄「Added by」，說明這個人是用 NT 帳號、Email、手機號碼或工號加進群組的。</span></figcaption><div className="spec-canvas"><Shot name="dlg-members-group" alt="群組成員" max={640} /></div></figure></div>
       </Section>

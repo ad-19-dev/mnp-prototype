@@ -8,7 +8,7 @@ import {
   SidebarFooter, SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem, Tabs, TabsList, TabsTrigger,
 } from '@qijenchen/design-system'
-import { Megaphone, Plus, Settings, UserRound, UsersRound } from 'lucide-react'
+import { House, Megaphone, Plus, Settings, UsersRound } from 'lucide-react'
 import { go, setApp, setLang, useApp, type Page } from '../lib/store'
 import { ME_SPACE, myTeams, spaceName, teamById } from '../lib/teams'
 import { TeamDialog } from './TeamPanels'
@@ -95,7 +95,7 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton id={'sp:' + ME_SPACE} startIcon={UserRound} tooltip={spaceName(ME_SPACE)} onClick={() => onSpace(ME_SPACE)}>{spaceName(ME_SPACE)}</SidebarMenuButton>
+                <SidebarMenuButton id={'sp:' + ME_SPACE} startIcon={House} tooltip={spaceName(ME_SPACE)} onClick={() => onSpace(ME_SPACE)}>{spaceName(ME_SPACE)}</SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

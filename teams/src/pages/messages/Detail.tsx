@@ -242,8 +242,8 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 
 const fcol = createColumnHelper<Fail>()
 export const failCols = (byCh?: boolean) => [
-  fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 260 }, cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
-  fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),
+  fcol.display({ id: 'who', header: L('Audience', '收件人'), cell: i => { const f = i.row.original; return f.ext ? <span className="flex min-w-0 items-center gap-2"><IconBox icon={Globe} /><Two a={f.ext} b={L('External', '外部')} strong /></span> : <span className="flex min-w-0 items-center gap-2"><PAvatar p={f.p!} /><Two a={f.p!.zh + ' ' + f.p!.en} b={f.p!.emp + ' · ' + f.p!.nt} strong /></span> } }),
+  fcol.display({ id: 'org', header: L('Org', '組織'), cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),
   fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 300 }, cell: i => { const f = i.row.original; return (
     <span className="flex min-w-0 flex-col items-start gap-1">
       <Two a={tx(f.reason)} b={tx(f.fallback)} />
@@ -251,7 +251,7 @@ export const failCols = (byCh?: boolean) => [
     </span>
   ) } }),
   // on one channel's list: did another channel still reach them?
-  ...(byCh ? [fcol.display({ id: 'via', header: L('Other channels', '其他通道'), meta: { width: 170 }, cell: i => { const v = i.row.original.via; return v ? <span>{L('Got it by ', '已由') + CHN[v].short + L('', ' 收到')}</span> : <span className="font-medium text-error-text">{L('Not reached', '未收到')}</span> } })] : []),
+  ...(byCh ? [fcol.display({ id: 'via', header: L('Other channels', '其他通道'), cell: i => { const v = i.row.original.via; return v ? <span>{L('Got it by ', '已由') + CHN[v].short + L('', ' 收到')}</span> : <span className="font-medium text-error-text">{L('Not reached', '未收到')}</span> } })] : []),
 ]
 
 export function NotSentDialog({ m }: { m: SendCtl }) {

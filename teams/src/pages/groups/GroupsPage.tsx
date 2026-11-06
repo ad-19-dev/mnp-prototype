@@ -175,10 +175,10 @@ function GroupList({ m }: { m: GCtl }) {
         <Trunc text={i.row.original.desc || L('No description', '沒有說明')} className="text-caption text-fg-secondary" />
       </span>
     ) }),
-    gcol.accessor('count', { header: L('Members', '人數'), meta: { width: 120 }, cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
-    gcol.accessor('updated', { header: L('Updated', '更新時間'), meta: { width: 150 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    gcol.accessor('count', { header: L('Members', '人數'), cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
+    gcol.accessor('updated', { header: L('Updated', '更新時間'), cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // the personal space holds only your own groups, so Created by appears in team spaces only
-    ...(app.space === ME_SPACE ? [] : [gcol.accessor('creator', { header: L('Created by', '建立者'), meta: { width: 210 }, cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
+    ...(app.space === ME_SPACE ? [] : [gcol.accessor('creator', { header: L('Created by', '建立者'), cell: i => { const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
   ], [m, app.lang, app.space])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">
@@ -238,12 +238,12 @@ function GroupEditor({ m }: { m: GCtl }) {
 
   const mcols = React.useMemo(() => [
     mcol.display({ id: 'who', header: L('Member', '成員'), meta: { width: 220 }, cell: i => { const { p } = i.row.original; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.extKind ? p.value : p.zh + ' ' + p.en} b={p.title} strong /></span> } }),
-    mcol.display({ id: 'emp', header: L('Employee ID', '工號'), meta: { width: 120 }, cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
-    mcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 110 }, cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
-    mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), meta: { width: 160 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
-    mcol.display({ id: 'desk', header: L('Desktop OS', '桌面通知'), meta: { width: 130 }, cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? L('Installed', '已安裝') : L('Not installed', '未安裝')}</Cv> }),
-    mcol.display({ id: 'email', header: 'Email', meta: { width: 110 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
-    mcol.display({ id: 'sms', header: L('Device Notifications (SMS)', 'Device Notifications（SMS）'), meta: { width: 200 }, cell: i => {
+    mcol.display({ id: 'emp', header: L('Employee ID', '工號'), cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
+    mcol.display({ id: 'org', header: L('Org', '組織'), cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
+    mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
+    mcol.display({ id: 'desk', header: L('Desktop OS', '桌面通知'), cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? L('Installed', '已安裝') : L('Not installed', '未安裝')}</Cv> }),
+    mcol.display({ id: 'email', header: 'Email', cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
+    mcol.display({ id: 'sms', header: L('Device Notifications (SMS)', 'Device Notifications（SMS）'), cell: i => {
       const p = i.row.original.p, co = p.extKind === 'phone' ? p.value : p.co ? 'MVPN ' + p.mvpn : '', pp = !p.extKind && p.pp ? maskPhone(p.pp) : ''
       if (!co && !pp) return <Cv ok={false}>{L('No number', '沒有號碼')}</Cv>
       // which number gets the SMS shows on hover

@@ -132,16 +132,16 @@ function RecvTable({ m }: { m: SendCtl }) {
         </span>
       )
     } }),
-    rcol.accessor('kind', { header: L('Type', '類型'), meta: { width: 130 } }),
+    rcol.accessor('kind', { header: L('Type', '類型') }),
     // a group or org's count opens its member list
     // (the DS link button has a 56px min width with its text centred; !min-w-0 keeps the number flush right)
-    rcol.accessor('cnt', { header: L('People', '人數'), meta: { width: 100, align: 'right' }, cell: i => {
+    rcol.accessor('cnt', { header: L('People', '人數'), meta: { align: 'right' }, cell: i => {
       const x = i.row.original
       return x.t.type === 'group' || x.t.type === 'org'
         ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl, group: x.t.type === 'group' ? x.t.id : undefined })}>{fmtN(x.cnt)}</Button>
         : <span className="tabular-nums">{fmtN(i.getValue())}</span>
     } }),
-    rcol.display({ id: 'can', header: L('Can receive', '可收到的通道'), meta: { width: 260 }, cell: i => (
+    rcol.display({ id: 'can', header: L('Can receive', '可收到的通道'), cell: i => (
       <span className="flex flex-wrap items-center gap-1.5">
         {i.row.original.can.map(x => {
           const I = CHN[x.k].icon

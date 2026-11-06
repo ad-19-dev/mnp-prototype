@@ -237,12 +237,12 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const shared = (g: GRow) => (hdrs ? !!g.hdr || g.n === 1 : group === 'merge' ? g.pos === 'solo' || g.pos === 'first' : true)
   const columns = React.useMemo(() => [
     // order: Sender, Channel, Title / Content, Status, Reach / Audience, Template, Created, Scheduled, Created by
-    col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 170 }, cell: i => {
+    col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), cell: i => {
       const g = i.row.original
       return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
         {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : null}</>
     } }),
-    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 236 : 210 }, cell: i => {
+    col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, cell: i => {
       const g = i.row.original
       if (g.hdr) return (
         <span className="flex min-w-0 items-center gap-2"><Mk g={g} />
@@ -270,14 +270,14 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
         </span>
       )
     } }),
-    col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 180 }, cell: i => { const g = i.row.original; return g.hdr ? <StatusTag s={g.r.status} /> : <StatusCell m={m} x={g} /> } }),
+    col.display({ id: 'status', header: L('Status', '狀態'), cell: i => { const g = i.row.original; return g.hdr ? <StatusTag s={g.r.status} /> : <StatusCell m={m} x={g} /> } }),
     // this channel's audience only (how many it goes to); failures sit under the status
-    col.display({ id: 'aud', header: L('Audience', '收件人數'), enableSorting: true, meta: { width: 140, align: 'right' }, cell: i => i.row.original.hdr ? null : <AudienceN x={i.row.original} /> }),
-    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 150 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
-    col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 120 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    col.display({ id: 'aud', header: L('Audience', '收件人數'), enableSorting: true, meta: { align: 'right' }, cell: i => i.row.original.hdr ? null : <AudienceN x={i.row.original} /> }),
+    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
+    col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // send now goes out at its created time, so it never shows a dash here
-    col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 130 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
-    ...(app.space === 'me' ? [] : [col.accessor(x => x.r.creator, { id: 'creator', header: L('Created by', '建立者'), meta: { width: 170 }, cell: i => { if (!shared(i.row.original)) return null; const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
+    col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    ...(app.space === 'me' ? [] : [col.accessor(x => x.r.creator, { id: 'creator', header: L('Created by', '建立者'), cell: i => { if (!shared(i.row.original)) return null; const p = PMAP[i.getValue()] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PAvatar p={p} /><Two a={p.en} b={p.zh} /></span> } })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs])
 
   return (
@@ -303,7 +303,6 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             height="100%"
             autoRowHeight
             getRowId={x => x.id}
-            pinnedLeftColumns={['sender']}
             rowActions={(x: GRow) => <><Mk g={x} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
             emptyState={vis.length
               ? <Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />
