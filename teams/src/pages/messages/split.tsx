@@ -404,7 +404,6 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
   const close = () => m.set({ ns: null })
   const resend = () => {
     if (!r) return
-    if (r.status === 'error') { m.retry(r.id); return }
     const tags: RTag[] = list.map(f => f.ext ? { key: 'e:' + f.ext, type: 'ext' as const, email: f.ext } : { key: 'p:' + f.p!.id, type: 'person' as const, id: f.p!.id })
     close()
     m.startCompose('resend', r, tags)
@@ -416,8 +415,8 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
         <DialogContent maxWidth={760} height="hug">
           <DialogHeader>
             <div className="flex flex-col gap-0.5">
-              <DialogTitle>{L('Failed audience members', '傳送失敗的收件人')}</DialogTitle>
-              <DialogDescription className="text-body text-fg-secondary">{chName(k) + ' · ' + L(fmtN(n) + ' of ' + fmtN(rec ? rec.of : 0), fmtN(n) + ' / ' + fmtN(rec ? rec.of : 0) + ' 人')}</DialogDescription>
+              <DialogTitle>{L('Not sent to', '未送達的收件人')}</DialogTitle>
+              <DialogDescription className="sr-only">{chName(k)}</DialogDescription>
             </div>
           </DialogHeader>
           <DialogBody>
@@ -427,7 +426,7 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
             </div>
           </DialogBody>
           <DialogFooter>
-            <Button variant="primary" startIcon={RotateCw} onClick={resend}>{r.status === 'error' ? L('Retry', '重新傳送') : L('Resend to ' + fmtN(list.length) + ' on ' + chName(k), '用' + chName(k) + '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
+            <Button variant="primary" startIcon={RotateCw} onClick={resend}>{L('Resend to ' + fmtN(list.length) + ' on ' + chName(k), '用' + chName(k) + '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
           </DialogFooter>
         </DialogContent>
       ) : null}

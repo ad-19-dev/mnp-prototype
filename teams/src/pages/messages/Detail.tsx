@@ -60,10 +60,10 @@ export function ChannelText({ r, k, noSender }: { r: Row; k: Channel; noSender?:
   if (k === 'email') {
     const em = r.email
     if (!em || em.mode !== 'own') return <div className={box}><strong className="font-medium">{r.title}</strong>{'\n'}{r.content}</div>
+    // the subject sits in the box like a notification's title, the formatted body under it
     return (
       <div className="flex flex-col gap-2">
-        <span className="text-body text-fg-secondary"><span className="font-medium text-foreground">{L('Subject:', '主旨：')}</span> {em.subject}</span>
-        <MailHtml html={em.html || ''} />
+        <div className="rounded-md border border-divider p-3 text-body"><strong className="block font-medium">{em.subject}</strong><MailHtml html={em.html || ''} className="rounded-none border-0 bg-transparent p-0" /></div>
         {(em.atts || []).map(a => <FileItem key={a.name} name={a.name} description={fmtSize(a.size)} onDownload={() => flash(L('Downloading', '下載中'), 'ok')} />)}
       </div>
     )

@@ -121,7 +121,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
 
       <Section eyebrow="3" title="未送出名單與整則訊息的操作">
         <div className="flow-branches">
-          <Card kind="dialog" title="Failed audience members" when="點狀態下的 {n} not sent" shots={['dlg-fail']} then="未送出的收件人與原因；按鈕 Resend to n on 通道。" />
+          <Card kind="dialog" title="Not sent to" when="點狀態下的 {n} not sent" shots={['dlg-fail']} then="未送出的收件人與原因；按鈕 Resend to n on 通道。" />
           <Card kind="page" title="重寄" when="名單裡按 Resend to…" shots={['resend']} then="進入發送流程第 1 步，收件人是這些人，通道是這一筆的通道。" />
           <Card kind="dialog" title="Delete this message?" when="選單 Delete" shots={['dlg-delete']} then="確認後整則訊息（所有通道的紀錄）一起刪除。" />
           <Card kind="dialog" title="Send it now?" when="選單 Send now" shots={['dlg-sendnow']} then="立即送出整則訊息，狀態變成 In progress。" />
@@ -487,13 +487,13 @@ function Blocks() {
       <Section eyebrow="Block 2" title="Content" lead="設計系統 Accordion，外框細線圓角，預設收合。">
         <div className="spec-gallery">
           <figure><figcaption><b>展開</b><span>Device Notifications 與 SMS fallback。</span></figcaption><div className="spec-canvas"><Shot name="detail-fb-open" alt="展開內容" max={440} /></div></figure>
-          <figure><figcaption><b>Email</b><span>Subject 一行，下方有格式的內文與附件。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email 內容" max={420} /></div></figure>
+          <figure><figcaption><b>Email</b><span>內容框裡第一行是主旨（中等粗細，同 Device Notifications 的標題），其後是有格式的內文；附件在框下方。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email 內容" max={420} /></div></figure>
         </div>
         <SpecTable head={['收合列', '標題列', '展開後']} nowrap={[0]} rows={[
           ['Device Notifications', <>名稱；送完後顯示 <Copy en="n / m sent" zh="n / m 已送出" />（只在有 SMS 備援時）</>, '內容（第一行即標題）'],
           ['SMS fallback', <>名稱；送完後顯示 n / m sent；不需要 SMS 時顯示 <Copy en="Not needed" zh="不需要" /></>, '簡訊內文'],
           ['Desktop OS', '名稱', '標題（中等粗細）與內文'],
-          ['Email', '名稱', '主旨、有格式的內文、附件'],
+          ['Email', '名稱', '內容框：主旨（中等粗細）與有格式的內文；附件在框下方'],
         ]} />
         <Notes items={[{ title: '內容框', body: '白底、細框線、圓角、內距 12，保留換行。' }]} />
       </Section>
@@ -517,9 +517,9 @@ function Blocks() {
 function Modals() {
   return (
     <>
-      <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、說明、內容、右下角按鈕（取消在左、主要動作在右）。點遮罩、Esc 或右上角關閉都等於取消。">
+      <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（取消在左、主要動作在右），不放副標。點遮罩、Esc 或右上角關閉都等於取消。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
-          ['未送出名單', '狀態下方 {n} not sent', '760', 'Resend to n on 通道；傳送錯誤的訊息是 Retry'],
+          ['未送出名單', '狀態下方 {n} not sent', '760', 'Resend to n on 通道'],
           ['刪除', '選單 Delete', '480', 'Delete（紅色）'],
           ['立即傳送', '選單 Send now', '480', 'Send now'],
           ['重新排程', '選單 Reschedule', '480', 'Reschedule'],
@@ -528,13 +528,13 @@ function Modals() {
       </Section>
       <Section eyebrow="Not sent" title="未送出名單">
         <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
-          { n: 1, title: '標題與說明', body: <><Copy en="Failed audience members" zh="傳送失敗的收件人" />；說明：通道 · 未送出人數 / 收件人數。</> },
+          { n: 1, title: '標題', body: <><Copy en="Not sent to" zh="未送達的收件人" />，沒有副標。</> },
           { n: 2, title: '表格', body: '高 380。欄：Audience 240（頭像、姓名、工號 · NT）、Org 112、Reason 300（有 SMS 備援時兩行：推播原因、SMS 原因）。外部聯絡人用地球圖示。' },
           { n: 3, title: '重寄', body: <><C>Resend to n on 通道</C>：進入發送流程，收件人是這些人，通道是這一筆的通道。</> },
         ]} />
         <div className="spec-gallery">
           <figure><figcaption><b>Email</b><span>Reason 一行。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 未送出名單" /></div></figure>
-          <figure><figcaption><b>傳送錯誤</b><span>上方是錯誤提示（原因與建議）；按鈕 Retry，重新送出整則訊息。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
+          <figure><figcaption><b>傳送錯誤</b><span>表格上方是錯誤提示（原因與建議）；按鈕同樣是 Resend to n on 通道。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
       </Section>
       <Section eyebrow="Confirm" title="刪除與立即傳送" lead="寬 480：標題、一段說明、兩個按鈕。訊息有兩個以上通道時，說明會列出這些通道。">
@@ -559,7 +559,7 @@ function Modals() {
       </Section>
       <Section eyebrow="Members" title="成員">
         <Figure label="組織成員" sub="寬 640" shot="dlg-members" max={640} notes={[
-          { n: 1, title: '標題與說明', body: '標題是組織或群組名稱；說明：類型 · 人數。' },
+          { n: 1, title: '標題', body: '組織或群組名稱，沒有副標。' },
           { n: 2, title: '搜尋', body: '小尺寸搜尋框。組織搜姓名、NT 帳號、工號；群組另外搜 Email 與電話。沒有結果時顯示 No matching members。' },
           { n: 3, title: '表格', body: '組織：Name 240、Employee ID 120、NT account 120。群組：Name 240、Added by 200。' },
         ]} />
