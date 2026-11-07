@@ -175,7 +175,7 @@ await step('detail-pending', async () => {
 await step('detail-mixed', async () => {
   await row('Design review', 0).getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
   await panel('detail-mixed', [
-    [1, aside().getByRole('button', { name: /Approval center/ }), 'tl'],
+    [1, aside().getByRole('button', { name: /Approval Center/ }), 'tl'],
   ]);
   await closeAside();
 });

@@ -77,7 +77,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Stop sub="發送空間的 Send messages">訊息列表</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="搜尋、狀態、通道">找到那一筆</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="點標題、ⓘ 或 View details">訊息詳情面板</Stop><span className="flow-arrow" aria-hidden>→</span>
-          <Stop sub="Approval center、收件人成員">繼續查看</Stop>
+          <Stop sub="Approval Center、收件人成員">繼續查看</Stop>
         </div>
         <div className="flow-legend">
           <span><i className="flow-key" style={{ background: 'var(--flow-done)' }} />畫面</span>
@@ -115,7 +115,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="Device Notifications (SMS)" when="點這種紀錄的標題" shots={['detail-fb']} then={'欄位：' + FIELDS + '。內容兩項（Device Notifications、SMS fallback），預設收合。'} />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、Device Notifications" shots={['detail-email', 'detail-push']} then="內容一項；收件人只列這個通道寄得到的人。" />
           <Card kind="page" title="緊急送出的訊息" when="寄件人勾了「It’s urgent」" shots={['detail-urgent']} then="多一個 Urgent reason 欄位，顯示寄件人填的原因。" />
-          <Card kind="action" title="Approval center" when="點 View in Approval center" then="開啟內部的 Approval center（prototype 只顯示提示）。" />
+          <Card kind="action" title="Approval Center" when="點 View in Approval Center" then="開啟內部的 Approval Center（prototype 只顯示提示）。" />
         </div>
       </Section>
 
@@ -328,7 +328,7 @@ function Detail() {
           ['Channel', '每一筆都有。'],
           ['Status', '每一筆都有，和列表上這一筆相同；有 SMS 備援時以 Device Notifications 的狀態為主。'],
           ['Urgent reason', '緊急送出的訊息才有；同一則訊息的每一筆（含 Email）都顯示。'],
-          ['Approval', <>這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。值是連結 <Copy en="View in Approval center" zh="到 Approval center 查看" />；審核進度與駁回原因都在 Approval center。</>],
+          ['Approval', <>這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。值是連結 <Copy en="View in Approval Center" zh="到 Approval Center 查看" />；審核進度與駁回原因都在 Approval Center。</>],
           ['Content', '預設收合，可同時展開多項；換一筆紀錄時回到收合。Device Notifications (SMS) 兩項，其他一項。'],
           ['Audiences', '只列這個通道寄得到的人：外部 Email 只在 Email，外部電話只在 Device Notifications (SMS)。'],
           ['列表上的對應列', '面板開著時，那一筆列尾的 ⓘ 是 checked 樣式（淺藍底、藍色圖示）；列表本身不變色。'],
@@ -447,7 +447,7 @@ function StatusTab() {
         ['未送出人數', '不顯示'],
         ['傳送時間', '建立時間'],
         ['列選單', 'View details、Edit、Duplicate to new message、Delete'],
-        ['面板', panel('駁回原因在 Approval center。')],
+        ['面板', panel('駁回原因在 Approval Center。')],
       ]} />
       <StatusSpec id="排程已過期" s="expired" tagDesc="核准時已超過排程時間，沒有送出。" shots={['st-expired']} panel="detail-expired" urg="urg-expired" rows={[
         ['收件人數', '顯示'],
@@ -485,7 +485,7 @@ function Blocks() {
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤', '每一筆'],
           ['Urgent reason', '寄件人填的原因全文，保留換行', '緊急送出的訊息'],
-          ['Approval', <>連結按鈕（sm，外連圖示）<Copy en="View in Approval center" zh="到 Approval center 查看" /></>, 'Device Notifications (SMS)，或需要核准的訊息'],
+          ['Approval', <>連結按鈕（sm，外連圖示）<Copy en="View in Approval Center" zh="到 Approval Center 查看" /></>, 'Device Notifications (SMS)，或需要核准的訊息'],
         ]} />
         <div className="spec-gallery"><figure><figcaption><b>四個欄位都出現</b><span>緊急送出的 Device Notifications (SMS)。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="四個欄位" max={440} /></div></figure></div>
       </Section>

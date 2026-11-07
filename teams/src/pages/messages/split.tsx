@@ -332,7 +332,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
 const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
 
 // What the panel adds to the row it opens from: the channel's full content, whom it went to, and where the
-// approval stands (a link to the Approval center). With SMS fallback the panel has two blocks, Device
+// approval stands (a link to the Approval Center). With SMS fallback the panel has two blocks, Device
 // Notifications and SMS fallback, each with its own send status. What the row shows (sender, template, times,
 // creator, audience count) isn't repeated, and there are no actions here: those are in the row's menu.
 export function SplitDetailSheet({ m }: { m: SendCtl }) {
@@ -372,7 +372,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
           <DescriptionItem label={L('Channel', '通道')}><span className="inline-flex items-center gap-1.5"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></DescriptionItem>
           <DescriptionItem label={L('Status', '狀態')}><StatusTag s={x.fb && x.pst ? x.pst : x.st} /></DescriptionItem>
           {urgent && r.bypass ? <DescriptionItem label={L('Urgent reason', '緊急原因')}><span className="whitespace-pre-wrap">{r.bypass.reason}</span></DescriptionItem> : null}
-          {approval ? <DescriptionItem label={L('Approval', '審核')}><Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval center', '前往 Approval center'), 'ok')}>{L('View in Approval center', '到 Approval center 查看')}</Button></DescriptionItem> : null}
+          {approval ? <DescriptionItem label={L('Approval', '審核')}><Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval Center', '前往 Approval Center'), 'ok')}>{L('View in Approval Center', '到 Approval Center 查看')}</Button></DescriptionItem> : null}
         </DescriptionList>
 
         <Part title={L('Content', '內容')}>
