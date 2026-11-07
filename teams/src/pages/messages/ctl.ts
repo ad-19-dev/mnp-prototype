@@ -12,7 +12,7 @@ import { flash, getApp, patchRow, setApp } from '../../lib/store'
 import { groupInSpace, rowInSpace, spaceName, spaceTeam, tplInSpace } from '../../lib/teams'
 import { scrollTop } from '../../lib/logic'
 import type { Confirm } from '../../components/ui'
-import { chText } from '../../components/ui'
+import { CHN, chText } from '../../components/ui'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
 import { CircleAlert, LayoutTemplate, Trash2, Ban, Send, ShieldAlert } from 'lucide-react'
 import type { RiState } from '../../components/RecvInput'
@@ -25,7 +25,7 @@ export interface SendState {
   q: string; fs: Status[]; fch: Channel[]; page: number
   det: string | null; ns: string | null; cf: Confirm | null
   // reschedule a message whose approval came after its scheduled time
-  rs: { id: string; at: string; tried: boolean } | null
+  rs: { id: string; at: string; tried: boolean; k?: Channel } | null
   c: Compose
   ri: RiState; rf: string
   imp: ImpState | null
@@ -100,6 +100,46 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       set({ cf: null, det: null })
       flash(L('Message deleted', '已刪除訊息'), 'ok')
     },
+    // ---------- one channel of a message (the per-channel list acts on one channel at a time) ----------
+    // a record's own status (and schedule); "sms" is Device Notifications with its SMS fallback, so both parts
+    setCh(id: string, k: Channel, st: Status, sched?: string | null) {
+      const r = app().rows.find(x => x.id === id)!, ks: Channel[] = k === 'sms' ? ['push', 'sms'] : [k]
+      const chSt = { ...(r.chSt || {}) }, chSched = { ...(r.chSched || {}) }
+      ks.forEach(x => { chSt[x] = st; if (sched !== undefined) { if (sched) chSched[x] = sched; else delete chSched[x] } })
+      patchRow(id, { chSt, chSched, fresh: Date.now() })
+    },
+    // Edit content: one channel's text on its own screen; saving changes that channel only
+    startEditContent(r: Row, k: Channel) {
+      m.startCompose('edit', r)
+      m.setC({ only: k, step: 2, maxStep: 2, ch: { push: k === 'push' || k === 'sms', desktop: k === 'desktop', email: k === 'email', sms: k === 'sms' } }, true)
+    },
+    saveContent() {
+      const c = get().c, k = c.only!, id = c.editId!, r = app().rows.find(x => x.id === id)!
+      if (msgErr(m.errs())) { m.setC({ tried: { ...(c.tried || {}), 2: true } }, true); return }
+      const p: Partial<Row> = { fresh: Date.now() }
+      if (k === 'push' || k === 'sms') { p.sender = c.sender.trim(); p.title = c.title.trim(); p.content = c.content.trim(); if (k === 'sms') p.smsText = c.smsText.trim() }
+      if (k === 'desktop') { const d = { sender: c.dSender.trim(), title: c.dTitle.trim(), content: c.dContent.trim() }; if (r.channels.indexOf('push') >= 0) p.desk = d; else { p.sender = d.sender; p.title = d.title; p.content = d.content } }
+      if (k === 'email') p.email = m.emailOut() as any
+      patchRow(id, p)
+      // a rejected channel goes back for approval with its new text
+      const recSt = (r.chSt && r.chSt[k === 'sms' ? 'push' : k]) || r.status
+      set({ view: 'list', cf: null, c: blankCompose() })
+      scrollTop()
+      if (recSt === 'rejected') { m.setCh(id, k, 'pending'); flash(L('Sent for approval', '已送出審核'), 'ok') }
+      else flash(L('Content saved', '已儲存內容'), 'ok')
+    },
+    sendNowCh(id: string, k: Channel) {
+      const r = app().rows.find(x => x.id === id)!, ks: Channel[] = k === 'sms' ? ['push', 'sms'] : [k]
+      set({ cf: null })
+      m.setCh(id, k, 'progress', null)
+      flash(L('Sending on ', '傳送中：') + CHN[k].name, 'ok')
+      setTimeout(() => { const byCh = { ...(r.byCh || {}) }; ks.forEach(x => { const of = x === 'sms' ? 0 : r.total; byCh[x] = [of, of] }); patchRow(id, { byCh }); m.setCh(id, k, 'sent') }, 2800)
+    },
+    cancelCh(id: string, k: Channel) {
+      set({ cf: null })
+      m.setCh(id, k, 'canceled', null)
+      flash(L('Canceled on ', '已取消：') + CHN[k].name, 'ok')
+    },
     // expired: approved too late for its schedule. Send it now, ignoring the old time
     askSendNow(r: Row) {
       set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It goes out right away instead of at ' + r.sched + '. It’s already approved.', '會立刻送出，不再等原訂的 ' + r.sched + '。這則訊息已經核准。'), icon: Send, tone: 'info', cancel: L('Cancel', '取消'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
@@ -113,7 +153,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       setTimeout(() => patchRow(id, { status: 'sent', ok: r.total }), 2800)
     },
     // expired: pick a new time; the approval still holds, so it doesn't go back for review
-    openReschedule(r: Row) { const d = new Date(); set({ rs: { id: r.id, at: toIso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 9, 0)), tried: false } }) },
+    openReschedule(r: Row, k?: Channel) { const d = new Date(); set({ rs: { id: r.id, k, at: toIso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 9, 0)), tried: false } }) },
     rescheduleErr() {
       const rs = get().rs, d = rs ? fromIso(rs.at) : null, now = new Date()
       if (!d) return L('Pick a date and time.', '請選擇日期和時間。')
@@ -124,7 +164,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       const rs = get().rs!
       if (m.rescheduleErr()) { set({ rs: { ...rs, tried: true } }); return }
       const d = fromIso(rs.at)!
-      patchRow(rs.id, { status: 'scheduled', sched: fmtDT(d), fresh: Date.now() })
+      if (rs.k) m.setCh(rs.id, rs.k, 'scheduled', fmtDT(d))
+      else patchRow(rs.id, { status: 'scheduled', sched: fmtDT(d), fresh: Date.now() })
       set({ rs: null })
       flash(L('Rescheduled for ', '已改為 ') + niceDT(d), 'ok')
     },
@@ -177,7 +218,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     goList() {
       const s = get()
       if (s.view === 'compose' && s.c.dirty && !s.c.result) {
-        set({ cf: { title: L('Leave without sending?', '還沒送出，要離開嗎？'), text: L('What you’ve written won’t be kept.', '你填寫的內容不會保留。'), icon: CircleAlert, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Discard', '捨棄'), danger: true, run: () => m.toList() } })
+        const ed = !!s.c.only
+        set({ cf: { title: ed ? L('Leave without saving?', '還沒儲存，要離開嗎？') : L('Leave without sending?', '還沒送出，要離開嗎？'), text: ed ? L('Your changes won’t be kept.', '你的修改不會保留。') : L('What you’ve written won’t be kept.', '你填寫的內容不會保留。'), icon: CircleAlert, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Discard', '捨棄'), danger: true, run: () => m.toList() } })
         return
       }
       m.toList()

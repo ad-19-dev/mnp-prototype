@@ -9,6 +9,8 @@ export interface Att { id: string; name: string; size: number }
 export interface Compose {
   mode: 'new' | 'edit' | 'duplicate' | 'resend'
   editId: string | null
+  // Edit content: only this channel's content, on its own screen (no steps, audiences or other channels)
+  only: Channel | null
   step: number
   maxStep: number
   receivers: Tag[]
@@ -34,7 +36,7 @@ export interface Approval { icsd: boolean; skipped: boolean; mgr: boolean; ext: 
 
 export function blankCompose(): Compose {
   return {
-    mode: 'new', editId: null, step: 1, maxStep: 1,
+    mode: 'new', editId: null, only: null, step: 1, maxStep: 1,
     receivers: [], pick: {},
     ch: { push: false, desktop: false, email: false, sms: false },
     tplId: null, team: null, sender: '', title: '', content: '', smsText: '', dSender: '', dTitle: '', dContent: '',

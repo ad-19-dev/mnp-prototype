@@ -2,15 +2,16 @@
 // The send flow doesn't change: a sender still picks several channels in one go. The list then shows one row
 // per channel, each with that channel's own text, status and audience count, so a row never has to merge
 // several channels' numbers (and the backend never has to intersect their audiences).
-// Actions that change the message itself (edit, delete, reschedule, send now, duplicate) still act on the
-// whole message, on every channel; the dialogs say so.
+// Message and channel are kept apart: a message (one message ID) has one or more channels. Every action works on
+// one channel only (Edit content, Send now, Reschedule, Duplicate to new message, Cancel); the message ID tag shows
+// which records went out together.
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
   DescriptionList, DescriptionItem, PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Ban } from 'lucide-react'
 import {
   CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
@@ -97,20 +98,25 @@ function ChCell({ k }: { k: Channel }) {
   )
 }
 
-// ---------- whole-message actions, worded for every channel ----------
-const chList = (r: Row) => recKinds(r).map(chName).join(L(', ', '、'))
-// short: what happens, on which channels when there are several
-const onAll = (r: Row) => (recKinds(r).length > 1 ? L(' on all ' + recKinds(r).length + ' channels (' + chList(r) + ')', '（全部 ' + recKinds(r).length + ' 個通道：' + chList(r) + '）') : '')
-function askDelete(m: SendCtl, r: Row) {
-  m.set({ cf: { title: L('Delete this message?', '要刪除這則訊息嗎？'), text: L('It will be deleted' + onAll(r) + '. This can’t be undone.', '這則訊息會被刪除' + onAll(r) + '，無法復原。'), icon: Trash2, tone: 'err', cancel: L('Cancel', '取消'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteRow(r.id) } })
+// ---------- the message ID, and the actions on one channel ----------
+// the message ID: the same on every channel of one send, so records can be told apart and searched by it
+export const msgId = (r: Row) => 'MSG-' + String((r.id.startsWith('n') ? 90000 : 10000) + (parseInt(r.id.replace(/\D/g, ''), 10) || 0))
+function askSendNow(m: SendCtl, x: Rec) {
+  m.set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It will be sent right away on ' + chName(x.k) + '.', '會立刻用 ' + chName(x.k) + ' 送出。'), icon: Send, tone: 'info', cancel: L('Cancel', '取消'), ok: L('Send now', '立即傳送'), run: () => m.sendNowCh(x.r.id, x.k) } })
 }
-function askSendNow(m: SendCtl, r: Row) {
-  m.set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It will be sent right away' + onAll(r) + '.', '這則訊息會立刻送出' + onAll(r) + '。'), icon: Send, tone: 'info', cancel: L('Cancel', '取消'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
+function askCancel(m: SendCtl, x: Rec) {
+  m.set({ cf: { title: L('Cancel sending?', '要取消傳送嗎？'), text: L('It won’t be sent on ' + chName(x.k) + '. The record stays in the list.', '不會用 ' + chName(x.k) + ' 送出，紀錄仍會留在列表。'), icon: Ban, tone: 'err', cancel: L('Keep', '保留'), ok: L('Cancel sending', '取消傳送'), danger: true, run: () => m.cancelCh(x.r.id, x.k) } })
+}
+// a new message from this channel only: its channel, its text and the audiences it reached
+function duplicateCh(m: SendCtl, x: Rec) {
+  const k = x.k
+  m.startCompose('duplicate', x.r, tagsFor(x.r, k))
+  m.setC({ ch: { push: k === 'push' || k === 'sms', desktop: k === 'desktop', email: k === 'email', sms: k === 'sms' } }, true)
 }
 
 // lite: a channel row under its message row, where the message row holds the whole-message actions
 function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
-  const r = x.r
+  const r = x.r, st = x.st
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -119,15 +125,15 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
       <DropdownMenuContent align="end" minWidth={232}>
         <DropdownMenuItem startIcon={Info} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
         {lite ? null : <>
-        {r.status === 'expired' || r.status === 'rejected' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</DropdownMenuItem> : null}
-        {r.status === 'expired' || r.status === 'error' ? <>
-          <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, r)}>{L('Send now', '立即傳送')}</DropdownMenuItem>
-          <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r)}>{L('Reschedule', '重新排程')}</DropdownMenuItem>
+        {st === 'expired' || st === 'rejected' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startEditContent(r, x.k)}>{L('Edit content', '編輯內容')}</DropdownMenuItem> : null}
+        {st === 'expired' || st === 'error' ? <>
+          <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, x)}>{L('Send now', '立即傳送')}</DropdownMenuItem>
+          <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r, x.k)}>{L('Reschedule', '重新排程')}</DropdownMenuItem>
         </> : null}
-        <DropdownMenuItem startIcon={Copy} onSelect={() => m.startCompose('duplicate', r)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
-        {r.status === 'expired' || r.status === 'rejected' || r.status === 'error' ? <>
+        <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
+        {st === 'expired' || st === 'rejected' || st === 'error' ? <>
           <DropdownMenuSeparator />
-          <DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => askDelete(m, r)}>{L('Delete', '刪除')}</DropdownMenuItem>
+          <DropdownMenuItem startIcon={Ban} className="text-error-text" onSelect={() => askCancel(m, x)}>{L('Cancel', '取消')}</DropdownMenuItem>
         </> : null}
         </>}
       </DropdownMenuContent>
@@ -178,7 +184,7 @@ function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
   if (!s) return list
   const key = (x: Rec): string | number => s.id === 'sender' ? recSender(x.r, x.k).toLowerCase() : s.id === 'tpl' ? m.tplName(x.r.tpl).toLowerCase() : s.id === 'aud' ? x.of
-    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? x.r.sched || x.r.created : ''
+    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created : ''
   const out = list.slice().sort((a, b) => { const p = key(a), q = key(b); return p < q ? -1 : p > q ? 1 : 0 })
   return s.desc ? out.reverse() : out
 }
@@ -192,7 +198,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     if (s.fch.length && s.fch.indexOf(x.k) < 0) return false
     if (!q) return true
     const cr = PMAP[x.r.creator] || ({} as any), t = recText(x.r, x.k)
-    return [recSender(x.r, x.k), m.tplName(x.r.tpl), t.title, t.content, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
+    return [msgId(x.r), recSender(x.r, x.k), m.tplName(x.r.tpl), t.title, t.content, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
   })
   const [sorting, setSorting] = React.useState<SortingState>([])
   const sorted = React.useMemo(() => sortRecs(rows, sorting, m), [rows, sorting, m])
@@ -260,6 +266,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       return (
         <span className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
+            <Tag size="sm" color="neutral" className="shrink-0 tabular-nums">{msgId(x.r)}</Tag>
             <Trunc tip={false} text={t.title} className="font-medium text-primary hover:text-primary-hover hover:underline focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.set({ det: x.id })} />
           </span>
           {text ? <Trunc tip={false} text={text} className="text-caption text-fg-secondary" /> : null}
@@ -272,7 +279,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 140 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 116 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // send now goes out at its created time, so it never shows a dash here
-    col.accessor(x => x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    col.accessor(x => (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     ...(app.space === 'me' ? [] : [// the DS person display, but blank (not the DS's own dash) on the message's other rows
       col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Created by', '建立者'), meta: { width: 200 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs, s.det])
@@ -293,7 +300,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="min-w-60 max-w-sm flex-1">
-            <Input startIcon={Search} type="search" placeholder={L('Search title, content, sender, template or creator', '搜尋標題、內容、寄件人、模板或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
+            <Input startIcon={Search} type="search" placeholder={L('Search message ID, title, content, sender, template or creator', '搜尋訊息 ID、標題、內容、寄件人、模板或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <FilterMenu<Status> label={L('Status', '狀態')} opts={stOpts} sel={s.fs} toggle={k => m.set({ fs: flip(s.fs, k), page: 1 })} clear={() => m.set({ fs: [], page: 1 })} />
@@ -370,6 +377,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
         {/* the basics as vertical fields (label above value): channel, status, why it's urgent, where the approval stands */}
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
         <DescriptionList>
+          <DescriptionItem label={L('Message ID', '訊息 ID')}><span className="tabular-nums">{msgId(r)}</span></DescriptionItem>
           <DescriptionItem label={L('Channel', '通道')}><span className="inline-flex items-center gap-1.5"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></DescriptionItem>
           <DescriptionItem label={L('Status', '狀態')}><StatusTag s={x.fb && x.pst ? x.pst : x.st} /></DescriptionItem>
           {urgent && r.bypass ? <DescriptionItem label={L('Urgent reason', '緊急原因')}><span className="whitespace-pre-wrap">{r.bypass.reason}</span></DescriptionItem> : null}

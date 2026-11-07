@@ -42,8 +42,8 @@ export function ComposeView({ m }: { m: SendCtl }) {
   return (
     <div data-compose className="flex min-h-full flex-col">
       <PageHeader
-        crumbs={[{ label: scopeLabel(), onClick: () => m.goList() }, { label: title(c.mode) }]}
-        actions={c.result ? null : (
+        crumbs={[{ label: scopeLabel(), onClick: () => m.goList() }, { label: c.only ? L('Edit content', '編輯內容') : title(c.mode) }]}
+        actions={c.result || c.only ? null : (
           <>
             {ap.mgr ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs supervisor approval', '需主管核准')}</Tag> : null}
             {ap.icsd ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs SMS approval', '需 SMS 核准')}</Tag> : null}
@@ -54,8 +54,8 @@ export function ComposeView({ m }: { m: SendCtl }) {
       {c.result ? <ResultView m={m} /> : (
         <>
           <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
-            <StepBar m={m} e={e} />
-            {c.step === 1 ? <Step1 m={m} e={e} /> : c.step === 2 ? <Step2 m={m} e={e} /> : <Step3 m={m} e={e} />}
+            {c.only ? null : <StepBar m={m} e={e} />}
+            {c.only ? <Step2 m={m} e={e} /> : c.step === 1 ? <Step1 m={m} e={e} /> : c.step === 2 ? <Step2 m={m} e={e} /> : <Step3 m={m} e={e} />}
           </div>
           <FootBar m={m} />
         </>
@@ -296,9 +296,9 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
   const edSender = e.dsender && (tried[2] || !SENDER_RE.test(c.dSender) || c.dSender.length > LIM.sender) ? e.dsender : '', edTitle = show('dtitle', c.dTitle, LIM.dTitle), edContent = show('dcontent', c.dContent, LIM.desktop)
   const noNotif = tpl && hasN && !tplHasNotif(tpl) ? <Banner tone="neutral">{L('This template has no notification text.', '這個模板沒有通知內容。')}</Banner> : null
   return (
-    <Section title={L('Message details', '訊息詳情')} sub={L('Compose the message title and body to be sent to your audience.', '撰寫要傳送給收件人的訊息標題和內容。')}>
+    <Section title={c.only ? L('Edit content', '編輯內容') : L('Message details', '訊息詳情')} sub={c.only ? L('Changes apply to ' + CHN[c.only].name + ' only. Audiences and other channels stay the same.', '只會改到 ' + CHN[c.only].name + '，收件人和其他通道不變。') : L('Compose the message title and body to be sent to your audience.', '撰寫要傳送給收件人的訊息標題和內容。')}>
       <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)]">
-        <TplChoice m={m} />
+        {c.only ? null : <TplChoice m={m} />}
         {c.ch.push ? (
           <FormatBlock title={CHN.push.name}>
             {noNotif}
@@ -440,6 +440,12 @@ function FootBar({ m }: { m: SendCtl }) {
   return (
     <div className="sticky bottom-0 z-10 border-t border-divider bg-surface">
       <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
+        {c.only ? (
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button variant="text" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
+            <Button variant="primary" onClick={() => m.saveContent()}>{L('Save', '儲存')}</Button>
+          </div>
+        ) : <>
         <div className="flex flex-wrap gap-2">
           {c.step === 1 ? <Button variant="tertiary" startIcon={UserPlus} disabled={!c.receivers.length} onClick={() => m.set({ sg: { name: '', desc: '', tried: false } })}>{L('Save as group', '存成群組')}</Button> : null}
           {c.step === 2 ? <Button variant="tertiary" startIcon={LayoutTemplate} onClick={() => m.openSaveTpl()}>{L('Save as template', '存成模板')}</Button> : null}
@@ -452,6 +458,7 @@ function FootBar({ m }: { m: SendCtl }) {
             ? <Button variant="primary" endIcon={ChevronRight} onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>
             : <Button variant="primary" startIcon={ap.need ? ShieldCheck : ap.skipped ? ShieldAlert : c.sendMode === 'schedule' ? CalendarClock : Send} onClick={() => m.submit()}>{primary}</Button>}
         </div>
+        </>}
       </div>
     </div>
   )

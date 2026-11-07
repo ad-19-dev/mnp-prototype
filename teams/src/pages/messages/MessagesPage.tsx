@@ -43,7 +43,7 @@ export function MessagesPage() {
             <Button variant="primary" startIcon={Plus} onClick={() => m.startCompose('new')}>{L('New message', '新訊息')}</Button>
             <SpaceSettings />
           </>} />
-          {SPLIT ? <SplitList m={m} intro={<SpaceIntro />} group="merge" /> : <SendList m={m} intro={<SpaceIntro />} />}
+          {SPLIT ? <SplitList m={m} intro={<SpaceIntro />} /> : <SendList m={m} intro={<SpaceIntro />} />}
         </>
       )}
       {SPLIT ? <SplitDetailSheet m={m} /> : <DetailSheet m={m} />}

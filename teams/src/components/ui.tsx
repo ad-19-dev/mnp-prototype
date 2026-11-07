@@ -7,7 +7,7 @@ import {
   Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor, type PersonData,
 } from '@qijenchen/design-system'
-import { AlertTriangle, Calendar, CalendarX2, CheckCircle2, ChevronDown, CircleX, Hourglass, Filter, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
+import { AlertTriangle, Ban, Calendar, CalendarX2, CheckCircle2, ChevronDown, CircleX, Hourglass, Filter, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
 import type { Channel, Fmt, ListKind, Person, Status } from '../lib/data'
 import { LIST_KINDS } from '../lib/data'
 import { L } from '../lib/i18n'
@@ -41,6 +41,7 @@ const ST: Record<Status, { en: string; zh: string; color: CategoricalColor; icon
   progress: { en: 'In progress', zh: '傳送中', color: 'blue', icon: Send },
   sent: { en: 'Sent', zh: '已送出', color: 'green', icon: CheckCircle2 },
   error: { en: 'Error', zh: '傳送錯誤', color: 'red', icon: AlertTriangle },
+  canceled: { en: 'Canceled', zh: '已取消', color: 'neutral', icon: Ban },
 }
 export const statusLabel = (s: Status) => L(ST[s].en, ST[s].zh)
 export function StatusTag({ s }: { s: Status }) {
