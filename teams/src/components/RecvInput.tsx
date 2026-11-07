@@ -37,7 +37,7 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
     if (!q) out.tip = ''
     else out.opts = PEOPLE.filter(p => [p.zh, p.en, p.nt, p.emp].some(v => v.toLowerCase().indexOf(low) >= 0)).slice(0, 8).map(p => person(p))
   } else if (ri.type === 'org') {
-    out.opts = ORGS.filter(x => !q || x.code.toLowerCase().indexOf(low) >= 0 || x.name.toLowerCase().indexOf(low) >= 0).map(x => ({ item: { kind: 'org', id: x.code }, icon: Building2, name: x.name, sub: x.code, meta: P(x.count, 'member', '人') }))
+    out.opts = ORGS.filter(x => !q || x.code.toLowerCase().indexOf(low) >= 0 || x.no.toLowerCase().indexOf(low) >= 0 || x.name.toLowerCase().indexOf(low) >= 0).map(x => ({ item: { kind: 'org', id: x.code }, icon: Building2, name: x.code, sub: x.no, meta: P(x.count, 'member', '人') }))
   } else if (ri.type === 'group') {
     out.opts = groups.filter(g => g.id !== excludeGroup && (!q || (g.name + ' ' + g.desc).toLowerCase().indexOf(low) >= 0)).map(g => ({ item: { kind: 'group', id: g.id }, icon: Users, name: g.name, sub: g.desc, meta: P(g.count, 'member', '人'), group: g }))
   } else if (ri.type === 'mvpn') {

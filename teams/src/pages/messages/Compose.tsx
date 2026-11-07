@@ -108,7 +108,7 @@ function RecvTable({ m }: { m: SendCtl }) {
     } else if (t.type === 'group' || t.type === 'org') {
       ppl = flatten([t], app.groups).map(x => PMAP[x.pid]).filter(Boolean); cnt = ppl.length
       if (t.type === 'group') { const g = app.groups.find(x => x.id === t.id); label = g ? g.name : t.id!; sub = g ? g.desc : '' }
-      else { const o = ORGS.find(x => x.code === t.id); label = o ? o.name : t.id!; sub = t.id! }
+      else { const o = ORGS.find(x => x.code === t.id); label = t.id!; sub = o ? o.no : '' }
     } else {
       const ph = isExtPhone(t), on = ph ? c.ch.sms : c.ch.email
       label = t.email!; sub = ph ? L('SMS only', '只收 SMS') : L('Email only', '只收 Email'); warn = !on

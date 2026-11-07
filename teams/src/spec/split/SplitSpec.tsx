@@ -67,7 +67,7 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Channel、Status；緊急送出的加 Urgent reason；需要核准的加 Approval'
+const FIELDS = 'Channel、Status；緊急送出的加 Urgent reason；需要核准的，欄位下方有 View in Approval Center 連結'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
@@ -319,7 +319,7 @@ function Detail() {
           <figure><figcaption><b>Email</b><span>主旨、有格式的內文與附件。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email" max={420} /></div></figure>
           <figure><figcaption><b>Device Notifications</b><span>內容一項（圖為展開）。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="Device Notifications" max={420} /></div></figure>
           <figure><figcaption><b>不需要 SMS</b><span>推播全部送到，SMS fallback 寫 Not needed。</span></figcaption><div className="spec-canvas"><Shot name="detail-sms-notneeded" alt="不需要 SMS" max={420} /></div></figure>
-          <figure><figcaption><b>等待核准</b><span>Status 是 Pending approval，有 Approval 欄位。</span></figcaption><div className="spec-canvas"><Shot name="detail-pending" alt="等待核准" max={420} /></div></figure>
+          <figure><figcaption><b>等待核准</b><span>Status 是 Pending approval，下方有 View in Approval Center 連結。</span></figcaption><div className="spec-canvas"><Shot name="detail-pending" alt="等待核准" max={420} /></div></figure>
           <figure><figcaption><b>多種收件人</b><span>組織、群組、個人與外部聯絡人。</span></figcaption><div className="spec-canvas"><Shot name="detail-mixed" alt="多種收件人" max={420} /></div></figure>
         </div>
       </Section>
@@ -328,7 +328,7 @@ function Detail() {
           ['Channel', '每一筆都有。'],
           ['Status', '每一筆都有，和列表上這一筆相同；有 SMS 備援時以 Device Notifications 的狀態為主。'],
           ['Urgent reason', '緊急送出的訊息才有；同一則訊息的每一筆（含 Email）都顯示。'],
-          ['Approval', <>這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。值是連結 <Copy en="View in Approval Center" zh="到 Approval Center 查看" />；審核進度與駁回原因都在 Approval Center。</>],
+          ['View in Approval Center', <>放在基本欄位下方（tight 間距），沒有欄位名稱。這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。連結文字 <Copy en="View in Approval Center" zh="到 Approval Center 查看" />；審核進度與駁回原因都在 Approval Center。</>],
           ['Content', '預設收合，可同時展開多項；換一筆紀錄時回到收合。Device Notifications (SMS) 兩項，其他一項。'],
           ['Audiences', '只列這個通道寄得到的人：外部 Email 只在 Email，外部電話只在 Device Notifications (SMS)。'],
           ['列表上的對應列', '面板開著時，那一筆列尾的 ⓘ 是 checked 樣式（淺藍底、藍色圖示）；列表本身不變色。'],
@@ -485,9 +485,9 @@ function Blocks() {
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤', '每一筆'],
           ['Urgent reason', '寄件人填的原因全文，保留換行', '緊急送出的訊息'],
-          ['Approval', <>連結按鈕（sm，外連圖示）<Copy en="View in Approval Center" zh="到 Approval Center 查看" /></>, 'Device Notifications (SMS)，或需要核准的訊息'],
         ]} />
-        <div className="spec-gallery"><figure><figcaption><b>四個欄位都出現</b><span>緊急送出的 Device Notifications (SMS)。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="四個欄位" max={440} /></div></figure></div>
+        <Notes items={[{ title: 'View in Approval Center', body: <>連結按鈕（sm，外連圖示），在基本欄位下方、tight 間距，沒有欄位名稱。出現條件：Device Notifications (SMS)，或需要核准的訊息。</> }]} />
+        <div className="spec-gallery"><figure><figcaption><b>所有欄位與連結都出現</b><span>緊急送出的 Device Notifications (SMS)。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="四個欄位" max={440} /></div></figure></div>
       </Section>
       <Section eyebrow="Block 2" title="Content" lead="設計系統 Accordion，外框細線圓角，預設收合。">
         <div className="spec-gallery">
@@ -504,12 +504,12 @@ function Blocks() {
       </Section>
       <Section eyebrow="Block 3" title="Audiences" lead="這個通道寄得到的收件人，一列一個，順序：組織、群組、個人、外部聯絡人。">
         <Figure label="多種收件人" sub="組織、群組、個人、外部" shot="detail-mixed" max={420} notes={[
-          { n: 1, title: '列', body: '左側圖示或頭像；名稱（中等粗細）與一行說明（次要小字）；組織與群組右側是人數連結，點了開成員對話框。' },
+          { n: 1, title: '列', body: '左側圖示或頭像（都是 24）；名稱（中等粗細）與一行說明（次要小字）；組織與群組右側是人數連結，點了開成員對話框。' },
         ]} />
         <SpecTable head={['類型', '圖示', '名稱', '說明', '右側']} nowrap={[0]} rows={[
-          ['組織', '大樓', '組織名稱', '組織代碼（英文與數字，例：PLTUX）', <>人數連結 <C>21 people</C></>],
-          ['群組', '兩個人（Users）', '群組名稱', 'Audience group', '人數連結'],
-          ['個人', '頭像', '中文名 英文名', '組織 · NT 帳號 · 工號', '—'],
+          ['組織', '大樓，墊 bg-muted 灰色圓底', '組織代號（純英文、很短，例：PUX）', '組織代碼（以數字為主，例：51031A）', <>人數連結 <C>21 people</C></>],
+          ['群組', '兩個人（Users），墊 bg-muted 灰色圓底', '群組名稱', 'Audience group', '人數連結'],
+          ['個人', '頭像', '中文名 英文名', '組織代號 · NT 帳號 · 工號', '—'],
           ['外部 Email', '信封（Mail）', '電子郵件', 'External email · Email only', '—'],
           ['外部電話', '電話', '電話號碼', 'External phone · SMS only', '—'],
         ]} />

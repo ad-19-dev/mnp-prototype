@@ -252,7 +252,7 @@ await step('detail-urgent', async () => {
 // ---- members dialog (from a group or org in the audiences)
 await step('dlg-members', async () => {
   await row('Design review', 0).getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
-  await aside().getByRole('button', { name: /members of Platform User Experience/ }).click(); await wait(700);
+  await aside().getByRole('button', { name: /members of PUX/ }).click(); await wait(700);
   await shot('dlg-members', p.getByRole('dialog'), [
     [1, p.getByRole('dialog').getByRole('heading').first(), 'tl'],
     [2, p.getByRole('dialog').getByPlaceholder(/Search/), 'tl'],

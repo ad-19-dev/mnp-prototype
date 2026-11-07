@@ -120,6 +120,8 @@ const AUD_ORDER = { org: 0, group: 1, person: 2, ext: 3 } as Record<string, numb
 export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
   const [mem, setMem] = React.useState<MemberSet | null>(null)
   const list = tags.slice().sort((a, b) => AUD_ORDER[a.type] - AUD_ORDER[b.type])
+  // orgs and groups: the icon on a round bg-muted backing
+  const circle = (I: typeof Globe) => <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><I className="size-3.5 text-fg-secondary" aria-hidden /></span>
   const icon = (I: typeof Globe) => <span className="inline-flex size-6 shrink-0 items-center justify-center"><I className="size-4 text-fg-secondary" aria-hidden /></span>
   return (
     <>
@@ -129,9 +131,9 @@ export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }
           if (t.type === 'group' || t.type === 'org') {
             const g = t.type === 'group' ? groups.find(x => x.id === t.id) : null, o = t.type === 'org' ? ORGS.find(x => x.code === t.id) : null
             const people = g ? membersFor(g).map(x => PMAP[x.pid]).filter(Boolean) : orgMembers(t.id!)
-            // an org: its name, and its code (letters and digits) as the only description
-            name = g ? g.name : o ? o.name : t.id!; sub = g ? L('Audience group', '收件群組') : o ? o.code : t.id!
-            lead = icon(g ? Users : Building2)
+            // an org: its short name, and its org number as the only description
+            name = g ? g.name : o ? o.code : t.id!; sub = g ? L('Audience group', '收件群組') : o ? o.no : ''
+            lead = circle(g ? Users : Building2)
             end = <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
               onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people, group: g ? g.id : undefined })}>{P(people.length, 'person', '人', 'people')}</Button>
           } else if (t.type === 'person') {

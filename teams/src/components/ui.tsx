@@ -141,7 +141,7 @@ export const listKindName = (k: ListKind) => ({
 })[k]
 export const listKindExample = (k: ListKind) => ({
   nt: 'gywu, cmchen', emp: '120588, 112306', name: L('陳怡君, Kevin Lin', '陳怡君, Kevin Lin'), email: 'gywu@tsmc.com, partner@example.com',
-  phone: '0918-226-588, 0921660734', mvpn: '61588, 60217', org: 'PLTUX, F18MFG3',
+  phone: '0918-226-588, 0921660734', mvpn: '61588, 60217', org: 'PUX, FMFG',
 })[k]
 export function ListKindField({ id, value, onChange, error }: { id: string; value: ListKind | null; onChange: (k: ListKind) => void; error?: string }) {
   return (

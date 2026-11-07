@@ -368,12 +368,14 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
     <div className="flex min-h-full flex-col">
       <div className="flex flex-1 flex-col gap-[var(--layout-space-loose)] px-[var(--layout-space-loose)] pt-[var(--layout-space-tight)] pb-[var(--layout-space-loose)]">
         {/* the basics as vertical fields (label above value): channel, status, why it's urgent, where the approval stands */}
+        <div className="flex flex-col gap-[var(--layout-space-tight)]">
         <DescriptionList>
           <DescriptionItem label={L('Channel', '通道')}><span className="inline-flex items-center gap-1.5"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></DescriptionItem>
           <DescriptionItem label={L('Status', '狀態')}><StatusTag s={x.fb && x.pst ? x.pst : x.st} /></DescriptionItem>
           {urgent && r.bypass ? <DescriptionItem label={L('Urgent reason', '緊急原因')}><span className="whitespace-pre-wrap">{r.bypass.reason}</span></DescriptionItem> : null}
-          {approval ? <DescriptionItem label={L('Approval', '審核')}><Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval Center', '前往 Approval Center'), 'ok')}>{L('View in Approval Center', '到 Approval Center 查看')}</Button></DescriptionItem> : null}
         </DescriptionList>
+        {approval ? <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval Center', '前往 Approval Center'), 'ok')}>{L('View in Approval Center', '到 Approval Center 查看')}</Button> : null}
+        </div>
 
         <Part title={L('Content', '內容')}>
           <Accordion type="multiple" className="rounded-md border border-divider">
