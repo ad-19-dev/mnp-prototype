@@ -133,57 +133,13 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
   )
 }
 
-// ---------- send flow ----------
-const REQ = <Copy en="This field is required." zh="此欄位為必填。" />
+// ---------- send flow: its own document ----------
+const NEWMSG = 'https://claude.ai/artifact/7ecvVKR6PMEQ85j34Uyn72'
 function SendTab() {
   return (
-    <>
-      <Section eyebrow="Send" title="發送流程" lead="三個步驟。">
-        <SpecTable head={['步驟', '名稱']} nowrap={[0]} rows={[
-          ['1', <Copy en="Audiences & channels" zh="收件人與通道" />],
-          ['2', <Copy en="Message" zh="訊息內容" />],
-          ['3', <Copy en="Schedule & preview" zh="排程與預覽" />],
-        ]} />
-      </Section>
-      <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 後，下方出現 SMS 備援的勾選框。">
-        <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 <Copy en="Needs SMS approval" zh="需 SMS 核准" />；說明 <Copy en="Send an SMS to anyone the push doesn’t reach." zh="推播沒送到的人，改發 SMS。" /></>],
-          ['核准提示', <>勾了 SMS 後出現一個框，標題 <Copy en="The SMS needs approval before it’s sent" zh="SMS 核准後才會送出" />；勾了緊急後改為 <Copy en="SMS approval will be skipped" zh="將略過 SMS 核准" /></>],
-          ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />；說明 <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" /></>],
-          ['原因（Reason）', <>勾了緊急才出現；必填，上限 200 字。{REQ}填的原因會顯示在詳情面板的 Urgent reason 欄位。</>],
-          ['有外部收件人', <>緊急送出仍需主管核准，框內顯示 <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" /></>],
-        ]} />
-      </Section>
-      <Section eyebrow="Step 2" title="Message details" lead={<>標題 Message details，說明 <Copy en="Compose the message title and body to be sent to your audience." zh="撰寫要傳送給收件人的訊息標題和內容。" />。每個通道一個區塊，區塊之間有分隔線。</>}>
-        <SpecTable head={['區塊', '欄位', '必填', '上限', '說明與錯誤']} nowrap={[0, 1, 2, 3]} rows={[
-          ['Device Notifications', 'Sender', '是', '26', <><Copy en="Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS)." zh="收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。" />{REQ}<Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
-          ['', 'Content', '是', '534', <>提示 <Copy en="Lock screens show about 4 lines." zh="鎖定畫面約顯示 4 行。" />。列表上的標題取內容的第一行。{REQ}</>],
-          ['SMS', 'SMS text', '是', '534', <>區塊說明 <Copy en="Sent as a backup via SMS only if the push notification fails to send." zh="只有推播傳送失敗時，才會用 SMS 補送。" />{REQ}</>],
-          ['Desktop OS', 'Sender', '否', '26', '錯誤訊息同 Device Notifications 的 Sender。'],
-          ['', 'Title', '是', '20', REQ],
-          ['', 'Content', '是', '70', <><Copy en="Supports Chinese, English, and numbers only." zh="僅支援中文、英文、數字。" />{REQ}</>],
-          ['Email', 'Subject', '是', '70', REQ],
-          ['', 'Content', '是', '—', <><Copy en="Supports text, tables, and images." zh="支援文字、表格、圖片。" />整體超過 100 KB 時：<Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" /></>],
-        ]} />
-        <Notes items={[{ title: '必填欄位', body: <>沒填時一律顯示 {REQ}</> }]} />
-      </Section>
-      <Section eyebrow="Step 3" title="Schedule & preview" lead={<>頁面說明 <Copy en="Choose when to send and review all settings before submission." zh="選擇傳送時間，並在送出前確認所有設定。" /></>}>
-        <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['Schedule', <>兩個選項：<Copy en="Send now" zh="立即傳送" />、<Copy en="Scheduled send" zh="排程傳送" />（說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />）。選排程時出現日期時間欄位。</>],
-          ['排程錯誤', <>選到過去或超過 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" /></>],
-          ['Preview', '可切換通道；標題下方顯示這個通道的收件人數 Audience: n people。Device Notifications 的預覽只有寄件人與內容。'],
-          ['警告', <>有人所有通道都送不到時，顯示 <Copy en="n people can’t get the message" zh="n 人收不到訊息" /></>],
-        ]} />
-      </Section>
-      <Section eyebrow="After" title="送出之後" lead="回到訊息列表，以 toast 顯示結果。">
-        <SpecTable head={['情況', 'Toast', '列表上的狀態']} nowrap={[0, 1]} rows={[
-          ['立即傳送，不需核准', <Copy en="Sending to n audiences" zh="傳送給 n 位收件人" />, <StatusTag s="progress" />],
-          ['排程傳送，不需核准', <Copy en="Scheduled for <時間>" zh="已排程：<時間>" />, <StatusTag s="scheduled" />],
-          ['需要核准', <Copy en="Sent for approval" zh="已送出審核" />, <StatusTag s="pending" />],
-        ]} />
-        <Notes items={[{ title: 'Toast', body: '一行文字，前面不放圖示；右側有關閉鈕。' }]} />
-      </Section>
-    </>
+    <Section eyebrow="Send" title="發送流程" lead={<>New message 的 UI flow 與設計規格是另一份文件：<a className="text-primary hover:underline" href={NEWMSG} target="_blank" rel="noreferrer">New message：UI Flow 與設計規格</a>（需密碼）。</>}>
+      <span className="text-body text-fg-secondary">三個步驟（收件人與通道、訊息內容、排程與預覽）、所有對話框、送出之後的 toast 與錯誤訊息都在那份文件。</span>
+    </Section>
   )
 }
 

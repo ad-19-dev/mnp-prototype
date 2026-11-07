@@ -1,0 +1,122 @@
+{
+ "s1-empty": {
+  "w": 1680,
+  "h": 940,
+  "marks": []
+ },
+ "s1-error": {
+  "w": 1680,
+  "h": 940,
+  "marks": []
+ },
+ "s1-search": {
+  "w": 1680,
+  "h": 940,
+  "marks": []
+ },
+ "dlg-import": {
+  "w": 744,
+  "h": 599,
+  "marks": []
+ },
+ "dlg-import-list": {
+  "w": 744,
+  "h": 599,
+  "marks": []
+ },
+ "dlg-import-result": {
+  "w": 744,
+  "h": 641,
+  "marks": []
+ },
+ "s1-unreach": {
+  "w": 1680,
+  "h": 940,
+  "marks": []
+ },
+ "dlg-unreach": {
+  "w": 744,
+  "h": 247,
+  "marks": []
+ },
+ "s1-filled": {
+  "w": 1680,
+  "h": 1500,
+  "marks": []
+ },
+ "s1-sms": {
+  "w": 1680,
+  "h": 1500,
+  "marks": []
+ },
+ "s1-urgent": {
+  "w": 1680,
+  "h": 1500,
+  "marks": []
+ },
+ "dlg-numbers": {
+  "w": 744,
+  "h": 315,
+  "marks": []
+ },
+ "dlg-save-group": {
+  "w": 584,
+  "h": 385,
+  "marks": []
+ },
+ "s2-empty": {
+  "w": 1680,
+  "h": 1500,
+  "marks": []
+ },
+ "s2-error": {
+  "w": 1680,
+  "h": 1500,
+  "marks": []
+ },
+ "s2-filled": {
+  "w": 1680,
+  "h": 1500,
+  "marks": []
+ },
+ "dlg-save-tpl": {
+  "w": 584,
+  "h": 249,
+  "marks": []
+ },
+ "s3-now": {
+  "w": 1680,
+  "h": 1400,
+  "marks": []
+ },
+ "s3-schedule": {
+  "w": 1680,
+  "h": 1400,
+  "marks": []
+ },
+ "s3-error": {
+  "w": 1680,
+  "h": 1400,
+  "marks": []
+ },
+ "s3-preview-email": {
+  "w": 1680,
+  "h": 1400,
+  "marks": []
+ },
+ "dlg-leave": {
+  "w": 504,
+  "h": 215,
+  "marks": []
+ },
+ "dlg-urgent": {
+  "w": 504,
+  "h": 405,
+  "marks": []
+ },
+ "after-submit": {
+  "w": 1680,
+  "h": 940,
+  "marks": []
+ }
+}

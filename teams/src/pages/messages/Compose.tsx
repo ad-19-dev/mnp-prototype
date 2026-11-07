@@ -381,7 +381,7 @@ function Preview({ c, counts }: { c: Compose; counts: Partial<Record<PreviewChan
         <span className="text-h6 font-bold">{L('Preview', '預覽')}</span>
         {chs.length > 1 ? (
           <SegmentedControl size="sm" value={k} onValueChange={v => v && setCur(v as PreviewChannel)} aria-label={L('Preview channel', '預覽通道')}>
-            {chs.map(x => <SegmentedControlItem key={x} value={x}>{CHN[x].name}</SegmentedControlItem>)}
+            {chs.map(x => <SegmentedControlItem key={x} value={x}>{x === 'sms' ? 'SMS' : CHN[x].name}</SegmentedControlItem>)}
           </SegmentedControl>
         ) : <span className="text-body text-fg-secondary">{CHN[k].name}</span>}
       </div>
