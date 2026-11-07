@@ -97,7 +97,9 @@ export function approval(c: Compose): Approval {
 }
 
 export function peopleTags(c: Compose) { return c.receivers.filter(t => t.type === 'person').map(t => PMAP[t.id!]).filter(Boolean) }
-export function multiPeople(c: Compose) { return smsOn(c) ? peopleTags(c).filter(p => p.co && p.pp) : [] }
+// The SMS number is picked by the system, not the sender: company mobile first, else personal phone. So there's
+// never anyone to pick a number for (the Choose SMS numbers dialog and its prompts don't show).
+export function multiPeople(_c: Compose): Person[] { return [] }
 export function unresolved(c: Compose) { return multiPeople(c).filter(p => !c.pick['p:' + p.id]) }
 export function noNumber(c: Compose) { return smsOn(c) ? peopleTags(c).filter(p => !p.co && !p.pp) : [] }
 

@@ -99,7 +99,6 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="選好收件人與通道" when="加入收件人、勾通道" shots={['s1-filled']} then="收件人表格顯示每位能收到哪些通道。" />
           <Card kind="dialog" title="n people can’t get the message" when="點通道下方的藍字" shots={['s1-unreach', 'dlg-unreach']} then="列出所有選到的通道都收不到的人與原因。" />
           <Card kind="page" title="SMS 備援與緊急送出" when="勾 Device Notifications (SMS)，再勾 It’s urgent" shots={['s1-sms', 's1-urgent']} then="勾了緊急，必填原因。" />
-          <Card kind="dialog" title="Choose SMS numbers" when="有人有兩支手機" shots={['dlg-numbers']} then="每人選一支收 SMS。" />
           <Card kind="dialog" title="Save as group" when="頁尾 Save as group" shots={['dlg-save-group']} then="把目前的收件人存成群組。" />
           <Card kind="page" title="驗證錯誤" when="沒有收件人或通道就按 Next" shots={['s1-error']} then="錯誤顯示在對應的區塊下方。" />
         </div>
@@ -208,7 +207,7 @@ function Step1() {
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />；說明 <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" /></>],
           ['Reason', <>勾了緊急才出現，必填，上限 200 字，提示文字 <C>e.g. Typhoon warning issued at 07:30; staff must know before commuting.</C> 填的原因會顯示在訊息詳情面板的 Urgent reason。</>],
           ['有外部收件人', <>緊急送出仍要主管核准，框內顯示 <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" /></>],
-          ['有兩支手機的人', <>表格中那一列出現 Choose number；表格下方提示 <Copy en="n people have 2 phone numbers. Pick one for SMS." zh="n 人有兩支電話，請選一支收 SMS。" />與 Choose 按鈕。</>],
+          ['SMS 寄到哪支手機', '由系統決定，寄件人不用選：有公務手機寄公務手機，沒有才寄私人手機。'],
           ['沒有電話的人', <>提示 <Copy en="<名字> has no phone number and won’t get SMS." zh="<名字> 沒有電話，收不到 SMS。" /></>],
         ]} />
         <Gallery items={[['s1-sms', '勾了 SMS 備援'], ['s1-urgent', '勾了緊急送出', '原因必填']]} />
@@ -289,7 +288,6 @@ function Dialogs() {
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
           ['Batch import', '步驟 1 Batch import', '720', 'Find matches → Add n audiences'],
           ['n people can’t get the message', '步驟 1 通道下方藍字', '720', '無（Close）'],
-          ['Choose SMS numbers', '步驟 1 Choose / Choose number', '720', 'Save'],
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
           ['Replace your text?', '步驟 2 選模板', '480', 'Replace'],
@@ -308,7 +306,7 @@ function Dialogs() {
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
-        <Gallery items={[['dlg-unreach', 'n people can’t get the message', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因；只有 Close'], ['dlg-numbers', 'Choose SMS numbers', '每人選公務手機或私人手機（遮蔽）；Use company mobile for all'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
+        <Gallery items={[['dlg-unreach', 'n people can’t get the message', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因；只有 Close'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
         <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-urgent', 'Send without SMS approval?'], ['dlg-leave', 'Leave without sending?']]} max={520} />

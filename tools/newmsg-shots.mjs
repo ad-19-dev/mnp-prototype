@@ -88,12 +88,6 @@ await step('s1-urgent', async () => {
   await page('s1-urgent');
   await p.locator('#f-urgent').fill('The typhoon warning was issued at 07:30; staff must know before commuting.'); await wait(200);
 });
-await step('dlg-numbers', async () => {
-  await p.getByRole('button', { name: /^(Choose|Review)$/ }).first().click(); await wait(600);
-  await shot('dlg-numbers', dlg(), [], 12);
-  await dlg().getByRole('button', { name: /Use company mobile/ }).click(); await wait(200);
-  await dlg().locator('button').last().click(); await wait(400);
-});
 await step('dlg-save-group', async () => {
   await foot('Save as group').click(); await wait(500);
   await shot('dlg-save-group', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
