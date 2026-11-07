@@ -2,7 +2,7 @@
 import * as React from 'react'
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger, Button, DataTable, DescriptionItem, DescriptionList, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle, DatePicker, FileItem, ProgressBar,
+  DialogHeader, DialogTitle, DatePicker, FileItem, PersonDisplay, ProgressBar,
   Tag,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
@@ -245,17 +245,20 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 }
 
 const fcol = createColumnHelper<Fail>()
-// the per-channel Not sent to list: one Audience column like the panel's audiences (people: avatar, name,
-// org · NT · ID; external contacts: Mail or Phone icon, the address, what it is), then the reason
-export const notSentCols = () => [
-  fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 280 }, cell: i => {
+// the per-channel Not sent to list, one line per cell (DS table rule): people use the DS person display (avatar
+// and name, NT and ID in its hover card), external contacts their icon and address; Org says External for them.
+// With SMS fallback, the SMS reason gets its own column instead of a second line.
+const smsWhy = (t: string) => t.replace(/^SMS fallback: /, '').replace(/^./, x => x.toUpperCase())
+export const notSentCols = (fb: boolean) => [
+  fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: fb ? 232 : 280 }, cell: i => {
     const f = i.row.original
-    if (f.ext) { const ph = f.ext.indexOf('@') < 0, I = ph ? Phone : Mail
-      return <span className="flex min-w-0 items-center gap-3"><span className="inline-flex size-6 shrink-0 items-center justify-center"><I className="size-4 text-fg-secondary" aria-hidden /></span><Two a={f.ext} b={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')} strong /></span> }
-    const p = f.p!
-    return <span className="flex min-w-0 items-center gap-3"><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={[p.org, p.nt, p.emp].filter(Boolean).join(' · ')} strong /></span>
+    if (!f.ext) return <PersonDisplay value={personVal(f.p!)} />
+    const I = f.ext.indexOf('@') < 0 ? Phone : Mail
+    return <span className="flex min-w-0 items-center gap-2"><I className="size-4 shrink-0 text-fg-secondary" aria-hidden /><span className="truncate">{f.ext}</span></span>
   } }),
-  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 340 }, cell: i => { const f = i.row.original; return <Two a={tx(f.reason)} b={tx(f.fallback)} /> } }),
+  fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: fb ? 96 : 120 }, cell: i => <span className="truncate">{i.row.original.ext ? L('External', '外部') : i.row.original.p!.org}</span> }),
+  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: fb ? 200 : 320 }, cell: i => <span className="truncate">{tx(i.row.original.reason)}</span> }),
+  ...(fb ? [fcol.display({ id: 'sms', header: L('SMS fallback', 'SMS 備援'), meta: { width: 200 }, cell: i => <span className="truncate">{i.row.original.fallback ? smsWhy(tx(i.row.original.fallback)) : '—'}</span> })] : []),
 ]
 
 export const failCols = (byCh?: boolean) => [
