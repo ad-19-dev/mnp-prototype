@@ -429,7 +429,7 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
             </div>
           </DialogBody>
           <DialogFooter>
-            <Button variant="primary" startIcon={RotateCw} onClick={resend}>{L('Resend', '重新寄送')}</Button>
+            <Button variant="primary" onClick={resend}>{L('Resend to ' + fmtN(list.length), '重新寄送給 ' + fmtN(list.length) + ' 人')}</Button>
           </DialogFooter>
         </DialogContent>
       ) : null}

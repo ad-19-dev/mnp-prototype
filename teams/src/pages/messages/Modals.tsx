@@ -44,7 +44,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
     const n = splitTokens(imp.text).length, k = imp.kind
     return (
       <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
-        foot={<><Button variant="tertiary" onClick={close}>{imp.done ? L('Close', '關閉') : L('Cancel', '取消')}</Button><Button variant="primary" startIcon={Wand2} disabled={!n || !k} onClick={() => m.identify()}>{L('Find matches', '比對名單')}</Button></>}>
+        foot={<><Button variant="tertiary" onClick={close}>{imp.done ? L('Close', '關閉') : L('Cancel', '取消')}</Button><Button variant="primary" disabled={!n || !k} onClick={() => m.identify()}>{L('Find matches', '比對名單')}</Button></>}>
         {imp.done ? <Banner tone="success" title={L('Added ' + P(imp.done, 'audience', ''), '已加入 ' + imp.done + ' 位收件人')}>{L('The entries below weren’t found. Fix them and match again, or close.', '下面是找不到的項目，修正後再比對一次，或直接關閉。')}</Banner> : null}
         <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />
         <FormField id="imp-text" label={L('List', '名單')} count={n ? P(n, 'entry', '筆', 'entries') : ''} hint={L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
@@ -67,7 +67,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
   const addN = sets.ready.length + pickedN
   return (
     <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
-      foot={<><Button variant="tertiary" startIcon={ChevronLeft} onClick={() => m.setImp({ res: null, picks: {} })}>{L('Edit list', '修改名單')}</Button>{!addN && sets.miss.length ? <Button variant="primary" onClick={() => m.impFixMissing()}>{L('Fix entries not found', '修正找不到的項目')}</Button> : <Button variant="primary" disabled={!addN} onClick={() => m.impAdd()}>{addN ? L('Add ', '加入 ') + P(addN, 'audience', '人') : L('Nothing to add', '沒有可加入的人')}</Button>}</>}>
+      foot={<><Button variant="tertiary" onClick={() => m.setImp({ res: null, picks: {} })}>{L('Edit list', '修改名單')}</Button>{!addN && sets.miss.length ? <Button variant="primary" onClick={() => m.impFixMissing()}>{L('Fix entries not found', '修正找不到的項目')}</Button> : <Button variant="primary" disabled={!addN} onClick={() => m.impAdd()}>{addN ? L('Add ', '加入 ') + P(addN, 'audience', '人') : L('Nothing to add', '沒有可加入的人')}</Button>}</>}>
       <div className="flex flex-wrap gap-2">
         <Tag size="md" color="green">{L(sets.ready.length + ' ready', sets.ready.length + ' 筆可加入')}</Tag>
         {amb.length ? <Tag size="md" color="amber">{L(amb.length + ' to choose', amb.length + ' 筆待選擇')}</Tag> : null}
@@ -219,10 +219,10 @@ export function UnreachDialog({ m }: { m: SendCtl }) {
   const c = s.c, rc = m.reach()
   const why = () => { const w: string[] = []; if (c.ch.push) w.push(c.ch.sms ? L('no device or phone', '沒有裝置或電話') : L('no device', '沒有裝置')); if (c.ch.desktop) w.push(L('no desktop agent', '沒有桌面程式')); return w.join(L(', ', '、')).replace(/^./, x => x.toUpperCase()) }
   return (
-    <Shell open={open} onClose={close} width={720} title={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')}
-      foot={<><Button variant="tertiary" onClick={close}>{L('Close', '關閉')}</Button>{rc.viaSms ? <Button variant="secondary" startIcon={Plus} onClick={() => { m.pickChannel('sms'); close() }}>{L('Turn on SMS fallback', '開啟 SMS 備援')}</Button> : null}{rc.viaEmail ? <Button variant="primary" startIcon={Plus} onClick={() => { m.pickChannel('email'); close() }}>{L('Add Email', '加入 Email')}</Button> : null}</>}>
+    <Shell open={open} onClose={close} width={720} title={L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}
+      foot={<Button variant="tertiary" onClick={close}>{L('Close', '關閉')}</Button>}>
       <ListBox max={380}>
-        {rc.unr.map(p => <ListRow key={p.id}><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={p.emp + ' · ' + p.org} strong className="flex-1" /><span className="text-caption text-fg-secondary">{why()}</span></ListRow>)}
+        {rc.unr.map(p => <ListRow key={p.id}><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={[p.org, p.nt, p.emp].filter(Boolean).join(' · ')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{why()}</span></ListRow>)}
         {rc.flat.ext.filter(x => x.indexOf('@') >= 0 ? rc.unrE : rc.unrP).map(x => { const ph = x.indexOf('@') < 0; return <ListRow key={x}><IconBox icon={ph ? Phone : Mail} /><Two a={x} b={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{ph ? L('SMS only', '只收 SMS') : L('Email only', '只收 Email')}</span></ListRow> })}
       </ListBox>
     </Shell>

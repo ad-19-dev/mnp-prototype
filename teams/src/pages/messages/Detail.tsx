@@ -312,7 +312,7 @@ export function NotSentDialog({ m }: { m: SendCtl }) {
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button variant="primary" startIcon={RotateCw} onClick={() => m.resendNotSent(r)}>{r.status === 'error' ? L('Retry', '重新傳送') : L('Resend to ' + fmtN(list.length), '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
+          <Button variant="primary" onClick={() => m.resendNotSent(r)}>{r.status === 'error' ? L('Retry', '重新傳送') : L('Resend to ' + fmtN(list.length), '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
         </DialogFooter>
       </>
     )
@@ -346,7 +346,7 @@ export function RescheduleDialog({ m }: { m: SendCtl }) {
           </DialogBody>
           <DialogFooter>
             <Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button>
-            <Button variant="primary" startIcon={CalendarClock} onClick={() => m.reschedule()}>{L('Reschedule', '重新排程')}</Button>
+            <Button variant="primary" onClick={() => m.reschedule()}>{L('Reschedule', '重新排程')}</Button>
           </DialogFooter>
         </DialogContent>
       ) : null}

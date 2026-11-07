@@ -172,7 +172,7 @@ function SendTab() {
           ['Schedule', <>兩個選項：<Copy en="Send now" zh="立即傳送" />、<Copy en="Scheduled send" zh="排程傳送" />（說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />）。選排程時出現日期時間欄位。</>],
           ['排程錯誤', <>選到過去或超過 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" /></>],
           ['Preview', '可切換通道；標題下方顯示這個通道的收件人數 Audience: n people。Device Notifications 的預覽只有寄件人與內容。'],
-          ['警告', <>有人所有通道都送不到時，顯示 <Copy en="n people won’t get this" zh="n 人收不到" /></>],
+          ['警告', <>有人所有通道都送不到時，顯示 <Copy en="n people can’t get the message" zh="n 人收不到訊息" /></>],
         ]} />
       </Section>
       <Section eyebrow="After" title="送出之後" lead="回到訊息列表，以 toast 顯示結果。">

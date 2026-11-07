@@ -243,16 +243,9 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           {e.ext ? <ErrText>{e.ext}</ErrText> : null}
           {e.extp ? <ErrText>{e.extp}</ErrText> : null}
           {ap.mgr ? <Banner tone="warning">{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</Banner> : null}
-          {hasR && anyCh ? (
-            // how many people get it, in one line; when one channel would reach everyone left, offer it
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-divider pt-[var(--layout-space-tight)]">
-              {rc.unrN ? <>
-                <p className="text-body"><span className="font-medium">{L(fmtN(rc.reachable) + ' of ' + fmtN(rc.total) + ' people get it', fmtN(rc.reachable) + ' / ' + fmtN(rc.total) + ' 人收得到')}</span><span className="text-fg-secondary">{L(' · ' + fmtN(rc.unrN) + ' don’t', '，' + fmtN(rc.unrN) + ' 人收不到')}</span></p>
-                <Button variant="link" size="sm" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button>
-                {rc.viaEmail ? <Button size="sm" variant="secondary" startIcon={Plus} className="ml-auto" onClick={() => m.pickChannel('email')}>{rc.viaEmail >= rc.unrN ? L('Add Email to reach everyone', '加入 Email，全部收得到') : L('Add Email (+' + rc.viaEmail + ')', '加入 Email（多 ' + rc.viaEmail + ' 人）')}</Button>
-                  : rc.viaSms ? <Button size="sm" variant="secondary" startIcon={Plus} className="ml-auto" onClick={() => m.pickChannel('sms')}>{rc.viaSms >= rc.unrN ? L('Add SMS to reach everyone', '加入 SMS，全部收得到') : L('Add SMS (+' + rc.viaSms + ')', '加入 SMS（多 ' + rc.viaSms + ' 人）')}</Button> : null}
-              </> : <p className="flex items-center gap-2 text-body font-medium text-success-text"><CircleCheck className="size-4" aria-hidden />{L('All ' + fmtN(rc.total) + ' people get it', fmtN(rc.total) + ' 人都收得到')}</p>}
-            </div>
+          {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
+          {hasR && anyCh && rc.unrN ? (
+            <div><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</Button></div>
           ) : null}
         </div>
       </Section>
@@ -404,7 +397,7 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const rows: React.ReactNode[] = []
   // the audience of each channel sits with its preview
   const counts: Partial<Record<PreviewChannel, number>> = { push: rc.push, sms: rc.smsable + rc.extP, desktop: rc.desktop, email: rc.email }
-  if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' won’t get this', rc.unrN + ' 人收不到')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} />)
+  if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} />)
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
     ['now', Zap, L('Send now', '立即傳送'), undefined],

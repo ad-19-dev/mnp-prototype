@@ -122,7 +122,7 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
               </div>
             </DialogBody>
             <DialogFooter>
-              {team ? <Button variant="text" danger startIcon={LogOut} className="mr-auto" onClick={askLeave}>{L('Leave team', '離開團隊')}</Button> : null}
+              {team ? <Button variant="text" danger className="mr-auto" onClick={askLeave}>{L('Leave team', '離開團隊')}</Button> : null}
               <Button variant="tertiary" onClick={onClose}>{L('Cancel', '取消')}</Button>
               <Button variant="primary" onClick={save}>{team ? L('Save', '儲存') : L('Create team', '建立團隊')}</Button>
             </DialogFooter>
