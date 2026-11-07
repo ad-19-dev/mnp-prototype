@@ -25,4 +25,4 @@
 
 /* the row whose Message detail panel is open: the DS selected gray (neutral-selected) */
 [role="row"]:has([data-open="1"]) { background: var(--color-neutral-selected); }
-[role="row"]:has([data-open="1"])[data-hovered] { background: var(--color-neutral-selected-hover); }
+[role="row"]:has([data-open="1"])[data-hovered] { background: var(--color-neutral-selected); } /* a selected row stays put on hover (DS item anatomy) */
