@@ -143,7 +143,7 @@
    {
     "n": 2,
     "x": 3.54,
-    "y": 28.69
+    "y": 8.54
    },
    {
     "n": 3,
@@ -302,6 +302,41 @@
  "detail-sent-fb": {
   "w": 480,
   "h": 764,
+  "marks": []
+ },
+ "urg-pending": {
+  "w": 480,
+  "h": 595,
+  "marks": []
+ },
+ "urg-scheduled": {
+  "w": 480,
+  "h": 595,
+  "marks": []
+ },
+ "urg-progress": {
+  "w": 480,
+  "h": 574,
+  "marks": []
+ },
+ "urg-sent": {
+  "w": 480,
+  "h": 595,
+  "marks": []
+ },
+ "urg-error": {
+  "w": 480,
+  "h": 595,
+  "marks": []
+ },
+ "urg-rejected": {
+  "w": 480,
+  "h": 595,
+  "marks": []
+ },
+ "urg-expired": {
+  "w": 480,
+  "h": 595,
   "marks": []
  },
  "detail-sms-notneeded": {
