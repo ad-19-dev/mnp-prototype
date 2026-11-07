@@ -67,12 +67,12 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Channel、Status；緊急送出的加 Urgent reason；需要核准的，欄位下方有 View in Approval Center 連結'
+const FIELDS = 'Message ID、Channel、Status；緊急送出的加 Urgent reason；需要核准的，欄位下方有 View in Approval Center 連結'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
     <>
-      <Section eyebrow="Flow" title="從列表出發的操作流程" lead="一則訊息選了幾個通道，列表就有幾筆紀錄（Device Notifications 加 SMS 備援算一筆）。所有操作都從列表開始：點標題、列尾的 ⓘ 或選單的 View details 開右側的詳情面板；其他操作在每一筆的 ⋮ 選單裡。">
+      <Section eyebrow="Flow" title="從列表出發的操作流程" lead="一則訊息選了幾個通道，列表就有幾筆紀錄（Device Notifications 加 SMS 備援算一筆）。所有操作都從列表開始：點標題、列尾的 ⓘ 或選單的 View details 開右側的詳情面板；其他操作在每一筆的 ⋮ 選單裡，都只作用在這一個通道。">
         <div className="flow-map" role="list">
           <Stop sub="發送空間的 Send messages">訊息列表</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="搜尋、狀態、通道">找到那一筆</Stop><span className="flow-arrow" aria-hidden>→</span>
@@ -86,10 +86,10 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         </div>
       </Section>
 
-      <Section eyebrow="1" title="訊息列表" lead={<>每一列是一個通道的紀錄；同一則訊息的紀錄排在一起，共用欄位只在第一列顯示。欄位見「<button type="button" className="flow-spec-link" onClick={() => go('list')}>列表</button>」。</>}>
+      <Section eyebrow="1" title="訊息列表" lead={<>每一列是一個通道的紀錄，每一列都顯示自己的完整資料；同一次發送的紀錄有相同的訊息 ID（例：MSG-10154），排在一起。欄位見「<button type="button" className="flow-spec-link" onClick={() => go('list')}>列表</button>」。</>}>
         <Figure label="訊息列表（個人發送空間）" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
           { n: 1, title: '通道', body: 'Device Notifications、Device Notifications (SMS)、Desktop OS、Email。' },
-          { n: 2, title: '標題 / 內容', body: '這個通道的標題與內文；點標題開詳情面板。' },
+          { n: 2, title: '訊息 ID、標題 / 內容', body: '訊息 ID 標籤，後面是這個通道的標題與內文；點標題開詳情面板。' },
           { n: 3, title: '狀態', body: '這一筆的狀態。' },
           { n: 4, title: '收件人數', body: '這個通道要寄給的人數。' },
           { n: 5, title: '{n} not sent', body: '未送出的人數；點了開名單。' },
@@ -104,9 +104,9 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="還沒有任何訊息" when="空間裡沒有訊息" shots={['empty-first']} then="頁面層級的空狀態：No messages yet 與 New message 按鈕。" />
           <Card kind="menu" title="列選單：已送出" when="狀態 Sent" shots={['menu-sent']} then="View details、Duplicate to new message" />
           <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="View details、Duplicate to new message" />
-          <Card kind="menu" title="列選單：排程已過期" when="狀態 Scheduled expired" shots={['menu-expired']} then="View details、Edit、Send now、Reschedule、Duplicate to new message、Delete" />
-          <Card kind="menu" title="列選單：已駁回" when="狀態 Rejected" shots={['menu-rejected']} then="View details、Edit、Duplicate to new message、Delete" />
-          <Card kind="menu" title="列選單：傳送錯誤" when="狀態 Error" shots={['menu-error']} then="View details、Send now、Reschedule、Duplicate to new message、Delete" />
+          <Card kind="menu" title="列選單：排程已過期" when="狀態 Scheduled expired" shots={['menu-expired']} then="View details、Edit content、Send now、Reschedule、Duplicate to new message、Cancel" />
+          <Card kind="menu" title="列選單：已駁回" when="狀態 Rejected" shots={['menu-rejected']} then="View details、Edit content、Duplicate to new message、Cancel" />
+          <Card kind="menu" title="列選單：傳送錯誤" when="狀態 Error" shots={['menu-error']} then="View details、Send now、Reschedule、Duplicate to new message、Cancel" />
         </div>
       </Section>
 
@@ -119,14 +119,15 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         </div>
       </Section>
 
-      <Section eyebrow="3" title="未送出名單與整則訊息的操作">
+      <Section eyebrow="3" title="未送出名單與這個通道的操作" lead="以下操作都只作用在選到的那一個通道，同一個訊息 ID 的其他通道不受影響。">
         <div className="flow-branches">
           <Card kind="dialog" title="Not sent to" when="點狀態下的 {n} not sent" shots={['dlg-fail']} then="未送出的收件人與原因；按鈕 Resend。" />
           <Card kind="page" title="重寄" when="名單裡按 Resend" shots={['resend']} then="進入發送流程第 1 步，收件人是這些人，通道是這一筆的通道。" />
-          <Card kind="dialog" title="Delete this message?" when="選單 Delete" shots={['dlg-delete']} then="確認後整則訊息（所有通道的紀錄）一起刪除。" />
-          <Card kind="dialog" title="Send it now?" when="選單 Send now" shots={['dlg-sendnow']} then="立即送出整則訊息，狀態變成 In progress。" />
-          <Card kind="dialog" title="Reschedule" when="選單 Reschedule" shots={['dlg-reschedule']} then="選新的傳送時間，整則訊息一起改，不需要重新核准。" />
-          <Card kind="action" title="Edit / Duplicate to new message" when="選單對應項目" then="進入發送流程。Edit 編輯這則訊息；Duplicate 以這則訊息的內容建立新訊息。" />
+          <Card kind="page" title="Edit content" when="選單 Edit content" shots={['edit-content']} then="只有這個通道的內容欄位，沒有步驟、收件人與其他通道；Save 後回到列表。" />
+          <Card kind="dialog" title="Send it now?" when="選單 Send now" shots={['dlg-sendnow']} then="立即用這個通道送出，這一筆變成 In progress。" />
+          <Card kind="dialog" title="Reschedule" when="選單 Reschedule" shots={['dlg-reschedule']} then="這個通道改到新的傳送時間，不需要重新核准。" />
+          <Card kind="dialog" title="Cancel sending?" when="選單 Cancel" shots={['dlg-cancel']} then="這個通道不再送出，狀態變成 Canceled；紀錄留在列表。" />
+          <Card kind="action" title="Duplicate to new message" when="選單 Duplicate to new message" then="進入發送流程，只帶入這個通道（通道、內容與它的收件人）。" />
         </div>
       </Section>
     </>
@@ -157,12 +158,16 @@ function Overview() {
         ]} />
         <Notes items={[{ title: 'SMS 備援', body: 'SMS 是 Device Notifications 的備援，和它算同一筆，列表上沒有單獨的 SMS 列。' }]} />
       </Section>
-      <Section eyebrow="Shared" title="整則訊息共用與各通道自己的資訊">
-        <SpecTable head={['整則訊息共用', '各通道自己的']} rows={[[
-          '模板、建立時間、傳送時間、建立者、核准、緊急原因；選單的 Edit、Send now、Reschedule、Delete、Duplicate to new message',
-          '通道、寄件人、標題／內容、狀態、收件人數、未送出人數與名單',
-        ]]} />
-        <Notes items={[{ title: '整則訊息的操作', body: '從任何一筆執行，都套用到這則訊息的所有通道；確認對話框會列出受影響的通道。' }]} />
+      <Section eyebrow="Model" title="Message 與 Channel" lead="一次發送是一個 Message（一個訊息 ID），底下有一個或多個 Channel。列表的每一列是一個 Channel 的紀錄。">
+        <SpecTable head={['', 'Message', 'Channel']} nowrap={[0]} rows={[
+          ['代表', '同一批發送（同一個訊息 ID）', '實際發送的渠道，例如 Email、Device Notifications'],
+          ['列表上', '訊息 ID 標籤（在標題前）', '一列'],
+          ['操作', '目前沒有一次操作多個通道的功能', '所有操作都以一個 Channel 為單位'],
+        ]} />
+        <Notes items={[
+          { title: '每一列都完整', body: '模板、建立時間、傳送時間、建立者每一列都顯示，不合併；同一次發送靠訊息 ID 辨認。' },
+          { title: '未來', body: '之後加入更多渠道時，一個 Message 底下會有更多 Channel；訊息 ID 也可以用來搜尋。' },
+        ]} />
       </Section>
     </>
   )
@@ -188,28 +193,28 @@ function ListTab() {
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
           [<Copy en="Sender" zh="寄件人" />, '140', 'Device Notifications 與 Desktop OS 的寄件人；Email 沒有寄件人，顯示「—」。每一列都顯示。', '可'],
           [<Copy en="Channel" zh="通道" />, '96', '通道圖示', '—'],
-          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320', '標題與一行內文', '—'],
+          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320', '訊息 ID 標籤（Tag sm、neutral，例：MSG-10154），後面是標題；下一行是內文', '—'],
           [<Copy en="Status" zh="狀態" />, '168', '狀態標籤；下方是 {n} not sent', '—'],
           [<Copy en="Audience" zh="收件人數" />, '88', '人數，齊右', '可'],
-          [<Copy en="Template" zh="模板" />, '140', '模板名稱；沒用模板顯示「—」。只在第一列顯示。', '可'],
-          [<Copy en="Created" zh="建立時間" />, '116', '日期、時間兩行。只在第一列顯示。', '可'],
-          [<Copy en="Send time" zh="傳送時間" />, '116', '排程的訊息是排程時間，立即傳送的是建立時間。只在第一列顯示。', '可'],
-          [<Copy en="Created by" zh="建立者" />, '200', '人員（頭像與姓名）。只在團隊空間顯示，只在第一列顯示。', '可'],
+          [<Copy en="Template" zh="模板" />, '140', '模板名稱；沒用模板顯示「—」。', '可'],
+          [<Copy en="Created" zh="建立時間" />, '116', '日期、時間兩行。', '可'],
+          [<Copy en="Send time" zh="傳送時間" />, '116', '這個通道的傳送時間：排程的是排程時間（單獨重新排程後是新的時間），立即傳送的是建立時間。', '可'],
+          [<Copy en="Created by" zh="建立者" />, '200', '人員（頭像與姓名）。只在團隊空間顯示。', '可'],
           ['（列尾）', '依內容', 'ⓘ 與 ⋮ 兩個圖示按鈕（xs）', '—'],
         ]} />
       </Section>
-      <Section eyebrow="Group" title="同一則訊息的紀錄" lead="共用欄位只在第一列顯示，其他列留白；同一則訊息的列之間沒有分隔線。">
-        <Figure label="一則訊息的兩筆紀錄" sub="Device Notifications (SMS) ＋ Email" shot="group" max={1180} wideNotes notes={[
+      <Section eyebrow="Group" title="同一次發送的紀錄" lead="同一個訊息 ID 的紀錄排在一起，但每一列都是獨立的紀錄：欄位都顯示，操作也只作用在那一列。">
+        <Figure label="同一個訊息 ID 的兩筆紀錄" sub="Device Notifications (SMS) ＋ Email" shot="group" max={1180} wideNotes notes={[
           { n: 1, title: '寄件人', body: 'Email 沒有寄件人，顯示「—」。' },
           { n: 2, title: '通道', body: 'Device Notifications (SMS)：手機與簡訊兩個圖示。' },
           { n: 3, title: '狀態與未送出', body: '每一筆各自顯示。' },
           { n: 4, title: '收件人數', body: '每一筆是自己通道的人數。' },
-          { n: 5, title: '共用欄位留白', body: '第二列的模板、時間、建立者留白。' },
+          { n: 5, title: '訊息 ID', body: '兩列的訊息 ID 相同，表示是同一次發送。' },
         ]} />
         <Notes cols items={[
-          { title: '留白與「—」', body: '留白：和這則訊息的第一列相同。「—」：沒有值，例如沒用模板、Email 沒有寄件人。' },
-          { title: '分頁', body: '以訊息為單位，每頁最多 20 則；一則訊息的紀錄一定在同一頁。頁尾只有分頁控制。' },
-          { title: '排序', body: '以整則訊息為單位；同一則訊息的紀錄順序固定。' },
+          { title: '「—」', body: '沒有值，例如沒用模板、Email 沒有寄件人。' },
+          { title: '分頁', body: '以訊息為單位，每頁最多 20 則；同一個訊息 ID 的紀錄一定在同一頁。頁尾只有分頁控制。' },
+          { title: '排序', body: '以訊息為單位；同一個訊息 ID 的紀錄順序固定：Device Notifications → Desktop OS → Email。' },
         ]} />
       </Section>
       <Section eyebrow="Filter" title="篩選、搜尋與空狀態">
@@ -221,7 +226,7 @@ function ListTab() {
           <figure><figcaption><b>還沒有任何訊息</b><span>頁面層級的空狀態：沒有搜尋、篩選與表格；內容靠上，按鈕 New message。</span></figcaption><div className="spec-canvas"><Shot name="empty-first" alt="還沒有任何訊息" /></div></figure>
         </div>
         <Notes items={[
-          { title: '搜尋範圍', body: '標題、內容、寄件人、模板、建立者（各通道自己的文字，例如 Email 的主旨）。' },
+          { title: '搜尋範圍', body: '訊息 ID、標題、內容、寄件人、模板、建立者（各通道自己的文字，例如 Email 的主旨）。' },
           { title: 'Clear', body: '篩選選單底部。有選項時是藍色可點，沒有選項時停用。' },
         ]} />
       </Section>
@@ -233,15 +238,16 @@ function ListTab() {
 function Rules() {
   return (
     <>
-      <Section eyebrow="Status" title="每一筆的狀態" lead="核准與排程是整則訊息共用的，所以送出前每個通道的狀態相同；送出後各通道各自進行，狀態可以不同。">
+      <Section eyebrow="Status" title="每一筆的狀態" lead="核准是整則訊息一起送審的，所以待核准、已駁回時每個通道狀態相同；之後的 Send now、Reschedule、Cancel 只改一個通道，送出後各通道也各自進行，狀態可以不同。">
         <SpecTable head={['情況', '這一筆的狀態', '例子']} nowrap={[0]} rows={[
-          ['還沒送出', '整則訊息的狀態：待核准、已排程、已駁回或排程已過期', '—'],
+          ['還沒送出', '待核准、已排程、已駁回或排程已過期（單獨重新排程、取消的通道除外，各通道相同）', '—'],
           ['這個通道送完了', <StatusTag s="sent" />, 'Device Notifications 送完，Email 還在送'],
           ['這個通道還在送', <StatusTag s="progress" />, 'Email 15 / 21'],
           ['有 SMS 備援，推播或 SMS 還在送', <StatusTag s="progress" />, 'Device Notifications 送完，SMS 還在送'],
           ['有 SMS 備援，推播全部送到', <StatusTag s="sent" />, '不需要 SMS；面板的 SMS fallback 寫 Not needed'],
           ['有 SMS 備援，SMS 傳送錯誤', <StatusTag s="error" />, '推播送出，SMS 閘道失敗'],
           ['這個通道傳送錯誤', <StatusTag s="error" />, 'Email 被郵件伺服器退件'],
+          ['這個通道被取消', <StatusTag s="canceled" />, '選單 Cancel；其他通道不變'],
         ]} />
       </Section>
       <Section eyebrow="Numbers" title="收件人數與未送出人數">
@@ -281,6 +287,7 @@ function Detail() {
       </Section>
       <Section eyebrow="Rules" title="面板規則">
         <SpecTable head={['項目', '規則']} nowrap={[0]} rows={[
+          ['Message ID', '每一筆都有；同一次發送的各通道相同。'],
           ['Channel', '每一筆都有。'],
           ['Status', '每一筆都有，和列表上這一筆相同；有 SMS 備援時以 Device Notifications 的狀態為主。'],
           ['Urgent reason', '緊急送出的訊息才有；同一則訊息的每一筆（含 Email）都顯示。'],
@@ -297,12 +304,12 @@ function Detail() {
 // ---------- actions ----------
 function Actions() {
   return (
-    <Section eyebrow="Menu" title="列尾按鈕與列選單" lead="每一筆列尾有兩個圖示按鈕：ⓘ 與 ⋮。⋮ 選單的項目依狀態不同，都套用到整則訊息。">
+    <Section eyebrow="Menu" title="列尾按鈕與列選單" lead="每一筆列尾有兩個圖示按鈕：ⓘ 與 ⋮。⋮ 選單的項目依這一筆的狀態不同，都只作用在這一個通道；同一個訊息 ID 的其他通道不受影響。">
       <SpecTable head={['按鈕', '規格']} nowrap={[0]} rows={[
         ['ⓘ View details', '設計系統 Button（text、xs、只有圖示 Info）。點了開這一筆的詳情面板，按鈕變成 checked（pressed，emphasis：淺藍底、藍色圖示）；再點一次，或關閉面板，回到一般樣式。同一時間只有一筆是 checked。'],
         ['⋮', '列選單（DropdownMenu）。選單包含所有操作，所以 View details 也在選單裡（設計系統表格的列操作規則）。'],
       ]} />
-      <SpecTable head={['狀態', 'View details', 'Edit', 'Send now', 'Reschedule', 'Duplicate to new message', 'Delete']} nowrap={[0, 1, 2, 3, 4, 5, 6]} rows={[
+      <SpecTable head={['狀態', 'View details', 'Edit content', 'Send now', 'Reschedule', 'Duplicate to new message', 'Cancel']} nowrap={[0, 1, 2, 3, 4, 5, 6]} rows={[
         [<StatusTag s="pending" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="scheduled" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="progress" />, '✓', '', '', '', '✓', ''],
@@ -310,14 +317,15 @@ function Actions() {
         [<StatusTag s="error" />, '✓', '', '✓', '✓', '✓', '✓'],
         [<StatusTag s="rejected" />, '✓', '✓', '', '', '✓', '✓'],
         [<StatusTag s="expired" />, '✓', '✓', '✓', '✓', '✓', '✓'],
+        [<StatusTag s="canceled" />, '✓', '', '', '', '✓', ''],
       ]} />
       <SpecTable head={['項目', '做什麼']} nowrap={[0]} rows={[
         [<Copy en="View details" zh="查看詳情" />, '開詳情面板（同點標題、同列尾的 ⓘ）。圖示是 i（Info）。'],
-        [<Copy en="Edit" zh="編輯" />, '進入發送流程編輯這則訊息。已駁回的，改完重新送審。'],
-        [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，確認後立即傳送。'],
-        [<Copy en="Reschedule" zh="重新排程" />, '開重新排程對話框，選新的傳送時間；不需要重新核准。'],
-        [<Copy en="Duplicate to new message" zh="複製為新訊息" />, '進入發送流程，以這則訊息的內容建立新訊息。'],
-        [<Copy en="Delete" zh="刪除" />, '開確認對話框，確認後刪除整則訊息。紅字，上方有分隔線。'],
+        [<Copy en="Edit content" zh="編輯內容" />, '開 Edit content 畫面：只有這個通道的內容欄位，不回到發送流程，不能改通道、收件人或其他通道的內容。已駁回的，Save 後重新送審（Pending approval）。'],
+        [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，確認後這個通道立即傳送。'],
+        [<Copy en="Reschedule" zh="重新排程" />, '開重新排程對話框，替這個通道選新的傳送時間；不需要重新核准。'],
+        [<Copy en="Duplicate to new message" zh="複製為新訊息" />, '進入發送流程，只帶入這個通道：通道、它的內容與它的收件人。'],
+        [<Copy en="Cancel" zh="取消" />, '開確認對話框，確認後這個通道不再送出，狀態變成 Canceled；紀錄留在列表，可以查看與複製。紅字，上方有分隔線。'],
       ]} />
       <div className="spec-gallery">
         <figure><figcaption><b>已送出</b></figcaption><div className="spec-canvas"><Shot name="menu-sent" alt="已送出的選單" /></div></figure>
@@ -331,7 +339,7 @@ function Actions() {
 }
 
 // ---------- every status: its list rows and its panel ----------
-function StatusSpec({ id, s, tagDesc, rows, shots, panel, urg }: { id: string; s: Parameters<typeof StatusTag>[0]['s']; tagDesc: string; rows: [React.ReactNode, React.ReactNode][]; shots: string[]; panel: string; urg: string }) {
+function StatusSpec({ id, s, tagDesc, rows, shots, panel, urg }: { id: string; s: Parameters<typeof StatusTag>[0]['s']; tagDesc: string; rows: [React.ReactNode, React.ReactNode][]; shots: string[]; panel: string; urg?: string }) {
   return (
     <Section eyebrow="Status" title={id}>
       <header className="flex flex-wrap items-center gap-3"><StatusTag s={s} /><span className="spec-lead">{tagDesc}</span></header>
@@ -341,7 +349,7 @@ function StatusSpec({ id, s, tagDesc, rows, shots, panel, urg }: { id: string; s
       <SpecTable head={['項目', '規格']} nowrap={[0]} rows={rows} />
       <div className="spec-gallery">
         <figure><figcaption><b>面板</b></figcaption><div className="spec-canvas"><Shot name={panel} max={380} alt={id + ' 的面板'} /></div></figure>
-        <figure><figcaption><b>面板（緊急送出）</b><span>多 Urgent reason 欄位。</span></figcaption><div className="spec-canvas"><Shot name={urg} max={380} alt={id + ' 的面板（緊急送出）'} /></div></figure>
+        {urg ? <figure><figcaption><b>面板（緊急送出）</b><span>多 Urgent reason 欄位。</span></figcaption><div className="spec-canvas"><Shot name={urg} max={380} alt={id + ' 的面板（緊急送出）'} /></div></figure> : null}
       </div>
     </Section>
   )
@@ -351,7 +359,7 @@ function StatusTab() {
   const panel = (extra: string) => '欄位：' + FIELDS + '。' + extra
   return (
     <>
-      <Section eyebrow="Status" title="七種狀態" lead="依訊息的生命週期排序，Status 篩選選單也是這個順序。每種狀態一節：列表上的列、各欄位怎麼顯示、面板（一般與緊急送出）。狀態標籤用設計系統 Tag（sm，圖示加文字）。">
+      <Section eyebrow="Status" title="八種狀態" lead="依訊息的生命週期排序，Status 篩選選單也是這個順序。每種狀態一節：列表上的列、各欄位怎麼顯示、面板（一般與緊急送出）。狀態標籤用設計系統 Tag（sm，圖示加文字）。">
         <SpecTable head={['狀態', '文字', '顏色', '圖示']} nowrap={[0, 1]} rows={[
           [<StatusTag s="pending" />, <Copy en="Pending approval" zh="待核准" />, 'amber', 'Hourglass'],
           [<StatusTag s="scheduled" />, <Copy en="Scheduled" zh="已排程" />, 'neutral', 'Calendar'],
@@ -360,6 +368,7 @@ function StatusTab() {
           [<StatusTag s="error" />, <Copy en="Error" zh="傳送錯誤" />, 'red', 'AlertTriangle'],
           [<StatusTag s="rejected" />, <Copy en="Rejected" zh="已駁回" />, 'red', 'CircleX'],
           [<StatusTag s="expired" />, <Copy en="Scheduled expired" zh="排程已過期" />, 'deep-orange', 'CalendarX2'],
+          [<StatusTag s="canceled" />, <Copy en="Canceled" zh="已取消" />, 'neutral', 'Ban'],
         ]} />
       </Section>
       <StatusSpec id="待核准" s="pending" tagDesc="等待核准（SMS 審核人員、主管，或兩者）。所有通道一起等。" shots={['st-pending']} panel="detail-pending" urg="urg-pending" rows={[
@@ -394,7 +403,7 @@ function StatusTab() {
         ['收件人數', '顯示'],
         ['未送出人數', '顯示 {n} not sent（通常是全部的人）'],
         ['傳送時間', '建立時間'],
-        ['列選單', 'View details、Send now、Reschedule、Duplicate to new message、Delete'],
+        ['列選單', 'View details、Send now、Reschedule、Duplicate to new message、Cancel'],
         ['面板', panel('')],
         ['同一則訊息', '一個通道送出、另一個通道錯誤時，各自顯示自己的狀態（第二張圖）。'],
       ]} />
@@ -402,15 +411,23 @@ function StatusTab() {
         ['收件人數', '顯示'],
         ['未送出人數', '不顯示'],
         ['傳送時間', '建立時間'],
-        ['列選單', 'View details、Edit、Duplicate to new message、Delete'],
+        ['列選單', 'View details、Edit content、Duplicate to new message、Cancel'],
         ['面板', panel('駁回原因在 Approval Center。')],
       ]} />
       <StatusSpec id="排程已過期" s="expired" tagDesc="核准時已超過排程時間，沒有送出。" shots={['st-expired']} panel="detail-expired" urg="urg-expired" rows={[
         ['收件人數', '顯示'],
         ['未送出人數', '不顯示'],
         ['傳送時間', '原訂的排程時間'],
-        ['列選單', 'View details、Edit、Send now、Reschedule、Duplicate to new message、Delete'],
+        ['列選單', 'View details、Edit content、Send now、Reschedule、Duplicate to new message、Cancel'],
         ['面板', panel('')],
+      ]} />
+      <StatusSpec id="已取消" s="canceled" tagDesc="寄件人用選單 Cancel 取消了這個通道；同一個訊息 ID 的其他通道不受影響。紀錄留在列表。" shots={['st-canceled']} panel="detail-canceled" rows={[
+        ['收件人數', '顯示'],
+        ['未送出人數', '不顯示'],
+        ['傳送時間', '原訂的傳送時間'],
+        ['列選單', 'View details、Duplicate to new message'],
+        ['面板', panel('')],
+        ['同一個訊息 ID', '圖中 Email 已取消，Device Notifications (SMS) 仍是排程已過期。'],
       ]} />
     </>
   )
@@ -438,6 +455,7 @@ function Blocks() {
       </Section>
       <Section eyebrow="Block 1" title="基本欄位" lead="設計系統 DescriptionList（vertical）：名稱在上（次要文字色）、值在下，欄位之間 tight。">
         <SpecTable head={['欄位', '值', '出現條件']} nowrap={[0]} rows={[
+          ['Message ID', '訊息 ID（例：MSG-10154），同一次發送的各通道相同', '每一筆'],
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤', '每一筆'],
           ['Urgent reason', '寄件人填的原因全文，保留換行', '緊急送出的訊息'],
@@ -481,7 +499,7 @@ function Modals() {
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），不放副標。點遮罩、Esc 或右上角關閉都等於取消。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
           ['未送出名單', '狀態下方 {n} not sent', '760', 'Resend'],
-          ['刪除', '選單 Delete', '480', 'Delete（紅色）'],
+          ['取消傳送', '選單 Cancel', '480', 'Cancel sending（紅色）'],
           ['立即傳送', '選單 Send now', '480', 'Send now'],
           ['重新排程', '選單 Reschedule', '480', 'Reschedule'],
           ['成員', '面板中組織或群組的人數連結', '640', '無（只有關閉）'],
@@ -498,17 +516,18 @@ function Modals() {
           <figure><figcaption><b>傳送錯誤</b><span>表格上方是錯誤提示（原因與建議）；按鈕同樣是 Resend。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
       </Section>
-      <Section eyebrow="Confirm" title="刪除與立即傳送" lead="寬 480：標題、一句說明、兩個按鈕。訊息有兩個以上通道時，說明加上「on all n channels (通道…)」。">
+      <Section eyebrow="Confirm" title="取消傳送與立即傳送" lead="寬 480：標題、一句說明、兩個按鈕。說明寫出是哪一個通道；只作用在這個通道。">
         <div className="spec-gallery">
-          <figure><figcaption><b>刪除</b><span>整則訊息與所有通道的紀錄一起刪除。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delete" alt="刪除" max={520} /></div></figure>
-          <figure><figcaption><b>立即傳送</b><span>立即送出整則訊息，不寫原訂時間。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
+          <figure><figcaption><b>取消傳送</b><span>這個通道不再送出，紀錄留在列表，狀態 Canceled。</span></figcaption><div className="spec-canvas"><Shot name="dlg-cancel" alt="取消傳送" max={520} /></div></figure>
+          <figure><figcaption><b>立即傳送</b><span>這個通道立即送出，不寫原訂時間。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
         </div>
-        <SpecTable head={['對話框', '標題', '說明', '取消', '確認']} nowrap={[0]} rows={[
-          ['刪除', <Copy en="Delete this message?" zh="要刪除這則訊息嗎？" />, <Copy en="It will be deleted. This can’t be undone." zh="這則訊息會被刪除，無法復原。" />, <Copy en="Cancel" zh="取消" />, <Copy en="Delete" zh="刪除" />],
-          ['立即傳送', <Copy en="Send it now?" zh="要立即傳送嗎？" />, <Copy en="It will be sent right away." zh="這則訊息會立刻送出。" />, <Copy en="Cancel" zh="取消" />, <Copy en="Send now" zh="立即傳送" />],
+        <SpecTable head={['對話框', '標題', '說明', '關閉', '確認']} nowrap={[0]} rows={[
+          ['取消傳送', <Copy en="Cancel sending?" zh="要取消傳送嗎？" />, <Copy en="It won’t be sent on <通道>. The record stays in the list." zh="不會用 <通道> 送出，紀錄仍會留在列表。" />, <Copy en="Keep" zh="保留" />, <Copy en="Cancel sending" zh="取消傳送" />],
+          ['立即傳送', <Copy en="Send it now?" zh="要立即傳送嗎？" />, <Copy en="It will be sent right away on <通道>." zh="會立刻用 <通道> 送出。" />, <Copy en="Cancel" zh="取消" />, <Copy en="Send now" zh="立即傳送" />],
         ]} />
+        <Notes items={[{ title: '取消傳送的關閉按鈕', body: '用 Keep 而不是 Cancel，避免和確認按鈕 Cancel sending 混淆。' }]} />
       </Section>
-      <Section eyebrow="Reschedule" title="重新排程" lead="核准仍然有效，只改時間；整則訊息一起改。完成後 toast：Rescheduled for <時間>。">
+      <Section eyebrow="Reschedule" title="重新排程" lead="核准仍然有效，只改這個通道的傳送時間；同一個訊息 ID 的其他通道不變。完成後 toast：Rescheduled for <時間>。">
         <div className="spec-gallery">
           <figure><figcaption><b>預設</b><span>日期時間欄位必填，預設隔天 09:00；提示 Taipei time (GMT+8), up to 3 months ahead。</span></figcaption><div className="spec-canvas"><Shot name="dlg-reschedule" alt="重新排程" max={520} /></div></figure>
           <figure><figcaption><b>錯誤</b><span>按 Reschedule 時檢查；錯誤在欄位下方，欄位紅框。</span></figcaption><div className="spec-canvas"><Shot name="dlg-reschedule-error" alt="重新排程錯誤" max={520} /></div></figure>
@@ -539,6 +558,7 @@ function Data() {
         ['多種收件人', '個人「Design review with Northwind Studio」；Platform Ops「tWorkspace 5.2 is live」；Fab 18「Water shutdown」；ESH「Chemical delivery」；UX Team「Usability study invitation」'],
         ['SMS 備援與未送出人數', '個人「Design review…」：Device Notifications 4 人未送達，SMS 補寄後仍有 1 人未送出'],
         ['待核准、已駁回、排程已過期', '個人「Project Atlas demo」、「Reminder: badge photo update」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
+        ['已取消的通道', '個人「Badge reader outage at the B lobby until 12:00」：Email 已取消，Device Notifications (SMS) 排程已過期'],
         ['緊急送出（七種狀態）', '個人空間「Parking lot A closed…」（待核准）、「Network maintenance tonight…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out of service…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
         ['傳送錯誤', '個人「On-call swap」；Fab 18「Shift handover…」；UX Team「Reminder: send design review topics」'],
       ]} />

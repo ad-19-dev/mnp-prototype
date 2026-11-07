@@ -46,8 +46,8 @@ const row = (text, nth = 0) => main.locator('[role="row"]').filter({ hasText: te
 // the row actions sit in their own column outside the row, so find them by their label
 const openRowMenu = async text => { await main.getByRole('button', { name: new RegExp('^Actions for .*' + text) }).first().click(); await wait(350) };
 // bring a message to the top of the list (the list is longer than the window)
-const find = async text => { await main.getByPlaceholder(/Search title/).fill(text); await wait(500) };
-const unfind = async () => { await main.getByPlaceholder(/Search title/).fill(''); await wait(400) };
+const find = async text => { await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500) };
+const unfind = async () => { await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400) };
 const closeAside = async () => { await aside().getByRole('button', { name: 'Close' }).first().click().catch(() => {}); await wait(300) };
 // a detail panel, cut just below its last section
 // open: unfold the content accordion first (it is folded by default)
@@ -84,7 +84,7 @@ await step('group', async () => {
     [2, a.locator('[role="cell"]').nth(1), 'tl'],
     [3, a.locator('[role="cell"]').nth(3), 'tl'],
     [4, a.locator('[role="cell"]').nth(4), 'tl'],
-    [5, c.locator('[role="cell"]').nth(5), 'tl'],
+    [5, c.getByText(/^MSG-/).first(), 'tl'],
   ], 10);
   await unfind();
 });
@@ -102,7 +102,7 @@ await step('rows-nofb', async () => {
 });
 await step('status-menu', async () => {
   await main.getByRole('button', { name: /^Status/ }).first().click(); await wait(400);
-  const menu = p.getByRole('menu'), mb = await menu.boundingBox(), tb = await main.getByPlaceholder(/Search title/).boundingBox();
+  const menu = p.getByRole('menu'), mb = await menu.boundingBox(), tb = await main.getByPlaceholder(/Search message ID/).boundingBox();
   await shot('status-menu', { x: mb.x - 260, y: tb.y - 12, width: mb.width + 410, height: mb.y + mb.height - tb.y + 24 });
   await p.keyboard.press('Escape'); await wait(250);
   await main.getByRole('button', { name: /^Channel/ }).first().click(); await wait(400);
@@ -120,9 +120,9 @@ await step('filtered', async () => {
   await p.keyboard.press('Escape'); await wait(300);
 });
 await step('empty', async () => {
-  await main.getByPlaceholder(/Search title/).fill('zzzz'); await wait(500);
+  await main.getByPlaceholder(/Search message ID/).fill('zzzz'); await wait(500);
   await shot('empty', null);
-  await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
+  await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
 });
 
 // ---- row menus
@@ -200,7 +200,7 @@ const dlgShot = async (name, text, item, btn) => {
     await p.keyboard.press('Escape'); await wait(300);
   });
 };
-await dlgShot('dlg-delete', 'UX sync moves', /^Delete/);
+await dlgShot('dlg-cancel', 'UX sync moves', /^Cancel$/);
 await dlgShot('dlg-sendnow', 'UX sync moves', /^Send now/);
 await dlgShot('dlg-reschedule', 'UX sync moves', /^Reschedule/);
 
@@ -210,24 +210,24 @@ await step('status-rows', async () => {
   await space('My sending sp').catch(() => {});
 });
 await step('rows', async () => {
-  const pairs = [['st-pending', 'Atlas demo moves'], ['st-expired', 'UX sync moves'], ['st-rejected', 'Reminder: badge photo'], ['st-scheduled', 'out of office'], ['st-progress', 'Fire alarm'], ['st-sent', 'Design review'], ['st-error', 'On-call swap'], ['st-mixed', 'Team lunch on Fri']];
+  const pairs = [['st-pending', 'Atlas demo moves'], ['st-expired', 'UX sync moves'], ['st-rejected', 'Reminder: badge photo'], ['st-scheduled', 'out of office'], ['st-progress', 'Fire alarm'], ['st-sent', 'Design review'], ['st-error', 'On-call swap'], ['st-mixed', 'Team lunch on Fri'], ['st-canceled', 'Badge reader']];
   for (const [name, text] of pairs) {
     // search for the message so its rows are at the top of the list, in view
-    await main.getByPlaceholder(/Search title/).fill(text); await wait(500);
+    await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500);
     const rs = main.locator('[role="row"]').filter({ hasText: text });
     const n = await rs.count();
     await shot(name, n > 1 ? [rs.nth(0), rs.nth(n - 1)] : [rs.nth(0)], [], 10);
   }
-  await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
+  await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
 });
 // ---- one detail per status
 const detail = async (name, text, title, list = []) => {
   await step(name, async () => {
     // search first so the message is at the top of the list, in view
-    await main.getByPlaceholder(/Search title/).fill(text); await wait(500);
+    await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500);
     await row(text, 0).getByText(title).first().click(); await wait(800);
     await panel(name, list); await closeAside();
-    await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
+    await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
   });
 };
 await detail('detail-expired', 'UX sync moves', 'UX sync moves to Tue');
@@ -236,6 +236,19 @@ await detail('detail-scheduled', 'out of office', 'out of office 10/27');
 await detail('detail-progress', 'Fire alarm', 'Fire alarm test in Building B');
 await detail('detail-error', 'On-call swap', 'On-call swap');
 await detail('detail-sent-fb', 'Design review', 'Design review with Northwind Studio: Thu 11/6');
+// a canceled channel next to the other channel of the same message
+await step('detail-canceled', async () => {
+  await find('Badge reader'); await row('Badge reader', 1).getByText('Badge reader outage').first().click(); await wait(800);
+  await panel('detail-canceled', []); await closeAside(); await unfind();
+});
+// Edit content: one channel's text on its own screen
+await step('edit-content', async () => {
+  await find('UX sync moves'); await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: 'Edit content' }).click(); await wait(900);
+  await shot('edit-content', null);
+  await p.locator('[data-compose]').getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(600);
+  if (await p.getByRole('dialog').count()) { await p.getByRole('dialog').getByRole('button').last().click(); await wait(500) }
+  await unfind();
+});
 // the urgent samples (personal space), one per status: the panel shows the reason the sender gave
 for (const [n, t] of [['urg-pending', 'Parking lot A closed'], ['urg-scheduled', 'Network maintenance tonight'], ['urg-progress', 'Water leak on 5F'], ['urg-sent', 'Elevator 3 out of service'], ['urg-error', 'Power dip in Building C'], ['urg-rejected', 'Fire drill moved'], ['urg-expired', 'Badge reader outage']]) await detail(n, t, t);
 await step('detail-sms-notneeded', async () => {
@@ -272,11 +285,11 @@ await step('dlg-fail-email', async () => {
   await p.keyboard.press('Escape'); await wait(300);
 });
 await step('dlg-fail-error', async () => {
-  await main.getByPlaceholder(/Search title/).fill('On-call swap'); await wait(500);
+  await main.getByPlaceholder(/Search message ID/).fill('On-call swap'); await wait(500);
   await main.getByRole('button', { name: /^4 not sent$/ }).first().click(); await wait(800);
   await shot('dlg-fail-error', p.getByRole('dialog'), [], 12);
   await p.keyboard.press('Escape'); await wait(300);
-  await main.getByPlaceholder(/Search title/).fill(''); await wait(400);
+  await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
 });
 // ---- reschedule with a time in the past
 await step('dlg-reschedule-error', async () => {
