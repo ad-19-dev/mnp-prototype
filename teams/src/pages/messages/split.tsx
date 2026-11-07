@@ -133,7 +133,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
         <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
         {st === 'expired' || st === 'rejected' || st === 'error' ? <>
           <DropdownMenuSeparator />
-          <DropdownMenuItem startIcon={Ban} className="text-error-text" onSelect={() => askCancel(m, x)}>{L('Cancel', '取消')}</DropdownMenuItem>
+          <DropdownMenuItem startIcon={Ban} className="text-error-text" onSelect={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</DropdownMenuItem>
         </> : null}
         </>}
       </DropdownMenuContent>
@@ -299,7 +299,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       {intro}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <div className="min-w-60 max-w-sm flex-1">
+          <div className="w-[480px] max-w-full shrink">
             <Input startIcon={Search} type="search" placeholder={L('Search message ID, title, content, sender, template or creator', '搜尋訊息 ID、標題、內容、寄件人、模板或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">

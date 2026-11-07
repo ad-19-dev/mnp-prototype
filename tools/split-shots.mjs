@@ -200,7 +200,7 @@ const dlgShot = async (name, text, item, btn) => {
     await p.keyboard.press('Escape'); await wait(300);
   });
 };
-await dlgShot('dlg-cancel', 'UX sync moves', /^Cancel$/);
+await dlgShot('dlg-cancel', 'UX sync moves', /^Cancel sending$/);
 await dlgShot('dlg-sendnow', 'UX sync moves', /^Send now/);
 await dlgShot('dlg-reschedule', 'UX sync moves', /^Reschedule/);
 
