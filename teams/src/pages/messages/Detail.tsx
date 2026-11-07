@@ -245,6 +245,19 @@ function DetailBody({ m, r, groups }: { m: SendCtl; r: Row; groups: Group[] }) {
 }
 
 const fcol = createColumnHelper<Fail>()
+// the per-channel Not sent to list: one Audience column like the panel's audiences (people: avatar, name,
+// org · NT · ID; external contacts: Mail or Phone icon, the address, what it is), then the reason
+export const notSentCols = () => [
+  fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 280 }, cell: i => {
+    const f = i.row.original
+    if (f.ext) { const ph = f.ext.indexOf('@') < 0, I = ph ? Phone : Mail
+      return <span className="flex min-w-0 items-center gap-3"><span className="inline-flex size-6 shrink-0 items-center justify-center"><I className="size-4 text-fg-secondary" aria-hidden /></span><Two a={f.ext} b={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')} strong /></span> }
+    const p = f.p!
+    return <span className="flex min-w-0 items-center gap-3"><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={[p.org, p.nt, p.emp].filter(Boolean).join(' · ')} strong /></span>
+  } }),
+  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: 340 }, cell: i => { const f = i.row.original; return <Two a={tx(f.reason)} b={tx(f.fallback)} /> } }),
+]
+
 export const failCols = (byCh?: boolean) => [
   fcol.accessor(f => (f.ext ? f.ext : personVal(f.p!)), { id: 'who', header: L('Audience', '收件人'), meta: { width: 240, type: 'person' } }),
   fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 112 }, cell: i => <span className="truncate">{i.row.original.ext ? '—' : i.row.original.p!.org}</span> }),

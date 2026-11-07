@@ -534,11 +534,11 @@ function Modals() {
       <Section eyebrow="Not sent" title="未送出名單">
         <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
           { n: 1, title: '標題', body: <><Copy en="Not sent to" zh="未送達的收件人" />，沒有副標。</> },
-          { n: 2, title: '表格', body: '高 380。欄：Audience 240（頭像、姓名、工號 · NT）、Org 112、Reason 300（有 SMS 備援時兩行：推播原因、SMS 原因）。外部 Email 用信封圖示，外部電話用電話圖示。' },
+          { n: 2, title: '表格', body: '高 380。兩欄：Audience 280、Reason 340。內部人員：頭像、姓名，下一行是組織代號 · NT · 工號；外部聯絡人：信封（Email）或電話圖示、地址或號碼，下一行是 External email 或 External phone。先列內部人員，再列外部聯絡人。Reason 有 SMS 備援時兩行：推播原因、SMS 原因。' },
           { n: 3, title: '重寄', body: <><C>Resend</C>：進入發送流程，收件人是這些人，通道是這一筆的通道。</> },
         ]} />
         <div className="spec-gallery">
-          <figure><figcaption><b>Email</b><span>Reason 一行。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 未送出名單" /></div></figure>
+          <figure><figcaption><b>Email（內部人員與外部聯絡人）</b><span>Reason 一行；外部 Email 排在最後。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 未送出名單" /></div></figure>
           <figure><figcaption><b>傳送錯誤</b><span>表格上方是錯誤提示（原因與建議）；按鈕同樣是 Resend。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
       </Section>

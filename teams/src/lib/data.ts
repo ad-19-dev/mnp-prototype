@@ -491,7 +491,7 @@ MINE.push(
   MINE.push({ id: 'm154', sender: 'Grace Wu', tpl: null, title: 'Design review with Northwind Studio: Thu 11/6 14:00', content: 'Design review with Northwind Studio on Thu, Nov 6 at 14:00 in 5F-Ocean. Guests get badges at the B lobby.', smsText: 'Design review Thu 11/6 14:00, 5F-Ocean. Badges at B lobby.',
     channels: ['push', 'email'], sms: true, status: 'sent', created: '2026/11/03 11:20', sched: null, total, ok: total - 2, creator: 'p01', team: null, aud,
     email: { mode: 'own', subject: 'Design review with Northwind Studio: Thu, Nov 6, 14:00', html: textToHtml('Hi all,\n\nOur design review with Northwind Studio is on Thu, Nov 6 at 14:00 in 5F-Ocean. Guests get badges at the B lobby.\n\nGrace'), atts: [] },
-    byCh: { push: [total - 6, total - 2], email: [total - 1, total], sms: [3, 4] }, fr: [['No registered device', 'SMS fallback: number not in service']], fx: [['lisa.ho@vendor-example.com', 'Mailbox full (552)']] })
+    byCh: { push: [total - 6, total - 2], email: [total - 3, total], sms: [3, 4] }, fr: [['No registered device', 'SMS fallback: number not in service']], fx: [['lisa.ho@vendor-example.com', 'Mailbox full (552)']] })
 }
 // still going out: Device Notifications has finished, Email and SMS fallback are still sending
 MINE.push({ id: 'm155', sender: 'Grace Wu', tpl: null, title: 'Fire alarm test in Building B today at 15:00', content: 'The fire alarm in Building B will be tested today at 15:00 for about 10 minutes. No need to evacuate.', smsText: 'Fire alarm test in Bldg B today 15:00, about 10 min. No need to evacuate.',

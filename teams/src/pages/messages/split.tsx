@@ -22,7 +22,7 @@ import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
 import { ListLoading, dedupe } from './List'
 import './split.css'
-import { AudienceList, ChannelText, Part, failCols, reviewer } from './Detail'
+import { AudienceList, ChannelText, Part, notSentCols, reviewer } from './Detail'
 
 // ---------- records ----------
 // One record per channel of a message. SMS fallback isn't a record of its own: a message sent with it is one
@@ -402,7 +402,8 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
   const r = nid ? app.rows.find(x => x.id === nid) : null
   const rec = r ? recordsOf(m, [r]).find(x => x.k === nch) || recordsOf(m, [r])[0] : null
   const k: Channel = rec ? rec.k : 'push', n = rec ? failsOf(rec) : 0
-  const list = r ? chFailList(r, k === 'sms' ? 'push' : k, n).map(f => ({ ...f, via: null })) : []
+  // people first, then external contacts (the panel's audience order)
+  const list = r ? chFailList(r, k === 'sms' ? 'push' : k, n).map(f => ({ ...f, via: null })).sort((a, b) => (a.ext ? 1 : 0) - (b.ext ? 1 : 0)) : []
   const close = () => m.set({ ns: null })
   const resend = () => {
     if (!r) return
@@ -424,7 +425,7 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
           <DialogBody>
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               {r.err ? <Banner tone="error" title={tx(r.err.title)}>{tx(r.err.text)}</Banner> : null}
-              <DataTable tableOptions={NO_HIDE} columns={failCols() as any} data={list} bordered height="380px" autoRowHeight getRowId={(_, i) => String(i)} />
+              <DataTable tableOptions={NO_HIDE} columns={notSentCols() as any} data={list} bordered height="380px" autoRowHeight getRowId={(_, i) => String(i)} />
             </div>
           </DialogBody>
           <DialogFooter>
