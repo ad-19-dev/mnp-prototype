@@ -184,7 +184,7 @@ await step('detail-mixed', async () => {
 await step('dlg-fail', async () => {
   await row('Design review', 0).getByRole('button', { name: /not sent/ }).click(); await wait(800);
   const d = p.getByRole('dialog'); await shot('dlg-fail', d, [
-    [1, d.getByText(/Device Notifications \(SMS\) ·/), 'tl'],
+    [1, d.getByText('Not sent to', { exact: true }), 'tl'],
     [2, d.locator('[role="columnheader"]').filter({ hasText: 'Reason' }), 'tl'],
     [3, d.getByRole('button', { name: /^Resend to/ }), 'tl'],
   ], 12);
