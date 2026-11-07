@@ -43,13 +43,6 @@ export function ComposeView({ m }: { m: SendCtl }) {
     <div data-compose className="flex min-h-full flex-col">
       <PageHeader
         crumbs={[{ label: scopeLabel(), onClick: () => m.goList() }, { label: c.only ? L('Edit content', '編輯內容') : title(c.mode) }]}
-        actions={c.result || c.only ? null : (
-          <>
-            {ap.mgr ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs supervisor approval', '需主管核准')}</Tag> : null}
-            {ap.icsd ? <Tag size="md" color="amber" unbounded icon={ShieldCheck}>{L('Needs SMS approval', '需 SMS 核准')}</Tag> : null}
-            {ap.skipped ? <Tag size="md" color="red" unbounded icon={ShieldAlert}>{L('Skipping SMS approval (urgent)', '略過 SMS 核准（緊急）')}</Tag> : null}
-          </>
-        )}
       />
       {c.result ? <ResultView m={m} /> : (
         <>
