@@ -160,12 +160,12 @@ await step('detail-fb', async () => {
 });
 await step('detail-single', async () => {
   await space('My sending space');
-  await row('Design review', 1).getByText('Design review with Northwind Studio: Thu, Nov 6').first().click(); await wait(800);
+  await find('Design review'); await row('Design review', 1).getByText('Design review with Northwind Studio: Thu, Nov 6').first().click(); await wait(800);
   await panel('detail-email', [], true);
   await closeAside();
-  await row('Team lunch moves to 12:30').getByText('Team lunch moves to 12:30 today').first().click(); await wait(800);
+  await find('Team lunch moves'); await row('Team lunch moves to 12:30').getByText('Team lunch moves to 12:30 today').first().click(); await wait(800);
   await panel('detail-push', [], true);
-  await closeAside();
+  await closeAside(); await unfind();
 });
 await step('detail-pending', async () => {
   await row('Atlas demo moves').getByText('Atlas demo moves to Mon').first().click(); await wait(800);

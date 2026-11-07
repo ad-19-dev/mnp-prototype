@@ -71,8 +71,8 @@
    },
    {
     "n": 5,
-    "x": 67.68,
-    "y": 50.36
+    "x": 22.21,
+    "y": 60.28
    }
   ]
  },
@@ -88,7 +88,7 @@
  },
  "status-menu": {
   "w": 670,
-  "h": 394,
+  "h": 428,
   "marks": []
  },
  "channel-menu": {
@@ -133,63 +133,63 @@
  },
  "detail-fb": {
   "w": 480,
-  "h": 675,
+  "h": 731,
   "marks": [
    {
     "n": 1,
     "x": 3.54,
-    "y": 1.7
+    "y": 1.57
    },
    {
     "n": 2,
     "x": 3.54,
-    "y": 8.88
+    "y": 15.86
    },
    {
     "n": 3,
     "x": 6.25,
-    "y": 38.77
+    "y": 43.46
    },
    {
     "n": 4,
     "x": 6.25,
-    "y": 46.77
+    "y": 50.84
    },
    {
     "n": 5,
     "x": 3.54,
-    "y": 54.76
+    "y": 58.22
    }
   ]
  },
  "detail-fb-open": {
   "w": 480,
-  "h": 893,
+  "h": 940,
   "marks": []
  },
  "detail-email": {
   "w": 480,
-  "h": 823,
+  "h": 879,
   "marks": []
  },
  "detail-push": {
   "w": 480,
-  "h": 821,
+  "h": 877,
   "marks": []
  },
  "detail-pending": {
   "w": 480,
-  "h": 491,
+  "h": 547,
   "marks": []
  },
  "detail-mixed": {
   "w": 480,
-  "h": 737,
+  "h": 793,
   "marks": [
    {
     "n": 1,
     "x": 3.54,
-    "y": 24.22
+    "y": 29.57
    }
   ]
  },
@@ -219,9 +219,9 @@
   "h": 940,
   "marks": []
  },
- "dlg-delete": {
+ "dlg-cancel": {
   "w": 504,
-  "h": 215,
+  "h": 236,
   "marks": []
  },
  "dlg-sendnow": {
@@ -274,79 +274,94 @@
   "h": 133,
   "marks": []
  },
+ "st-canceled": {
+  "w": 1346,
+  "h": 128,
+  "marks": []
+ },
  "detail-expired": {
-  "w": 480,
-  "h": 491,
-  "marks": []
- },
- "detail-rejected": {
-  "w": 480,
-  "h": 491,
-  "marks": []
- },
- "detail-scheduled": {
-  "w": 480,
-  "h": 404,
-  "marks": []
- },
- "detail-progress": {
-  "w": 480,
-  "h": 491,
-  "marks": []
- },
- "detail-error": {
-  "w": 480,
-  "h": 589,
-  "marks": []
- },
- "detail-sent-fb": {
-  "w": 480,
-  "h": 737,
-  "marks": []
- },
- "urg-pending": {
-  "w": 480,
-  "h": 568,
-  "marks": []
- },
- "urg-scheduled": {
-  "w": 480,
-  "h": 568,
-  "marks": []
- },
- "urg-progress": {
   "w": 480,
   "h": 547,
   "marks": []
  },
+ "detail-rejected": {
+  "w": 480,
+  "h": 547,
+  "marks": []
+ },
+ "detail-scheduled": {
+  "w": 480,
+  "h": 460,
+  "marks": []
+ },
+ "detail-progress": {
+  "w": 480,
+  "h": 547,
+  "marks": []
+ },
+ "detail-error": {
+  "w": 480,
+  "h": 645,
+  "marks": []
+ },
+ "detail-sent-fb": {
+  "w": 480,
+  "h": 793,
+  "marks": []
+ },
+ "detail-canceled": {
+  "w": 480,
+  "h": 631,
+  "marks": []
+ },
+ "edit-content": {
+  "w": 1680,
+  "h": 940,
+  "marks": []
+ },
+ "urg-pending": {
+  "w": 480,
+  "h": 624,
+  "marks": []
+ },
+ "urg-scheduled": {
+  "w": 480,
+  "h": 624,
+  "marks": []
+ },
+ "urg-progress": {
+  "w": 480,
+  "h": 603,
+  "marks": []
+ },
  "urg-sent": {
   "w": 480,
-  "h": 568,
+  "h": 624,
   "marks": []
  },
  "urg-error": {
   "w": 480,
-  "h": 568,
+  "h": 624,
   "marks": []
  },
  "urg-rejected": {
   "w": 480,
-  "h": 568,
+  "h": 624,
   "marks": []
  },
  "urg-expired": {
   "w": 480,
-  "h": 568,
+  "h": 624,
   "marks": []
  },
  "detail-sms-notneeded": {
   "w": 480,
-  "h": 491,
+  "h": 547,
   "marks": []
  },
  "detail-urgent": {
   "w": 480,
-  "h": 752,
+  "h": 808,
   "marks": []
  },
  "dlg-members": {
