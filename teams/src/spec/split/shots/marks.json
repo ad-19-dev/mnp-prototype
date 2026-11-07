@@ -221,12 +221,12 @@
  },
  "dlg-delete": {
   "w": 504,
-  "h": 236,
+  "h": 215,
   "marks": []
  },
  "dlg-sendnow": {
   "w": 504,
-  "h": 236,
+  "h": 215,
   "marks": []
  },
  "dlg-reschedule": {
