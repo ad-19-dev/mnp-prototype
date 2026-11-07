@@ -172,10 +172,7 @@ function StatusCell({ m, x }: { m: SendCtl; x: Rec }) {
 export type GroupStyle = 'none' | 'merge' | 'divider' | 'band' | 'bracket' | 'header' | 'fold'
 // a table row: one record, or (header / fold) the message's own row
 interface GRow extends Rec { hdr?: boolean; pos: 'solo' | 'first' | 'mid' | 'last'; band: 0 | 1; n: number; open?: boolean }
-// design comparison: VITE_DETAIL_UI=info builds the version with an Info toggle button before ⋮ (pressed while its
-// panel is open) and no row highlight; the default build highlights the open row
-const INFO_BTN = import.meta.env.VITE_DETAIL_UI === 'info'
-const Mk = ({ g, on }: { g: GRow; on?: boolean }) => <i hidden data-gpos={g.pos} data-band={g.band} data-hdr={g.hdr ? '' : undefined} data-open={on ? '1' : undefined} />
+const Mk = ({ g }: { g: GRow }) => <i hidden data-gpos={g.pos} data-band={g.band} data-hdr={g.hdr ? '' : undefined} />
 const col = createColumnHelper<GRow>()
 function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
@@ -238,19 +235,19 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     // order: Sender, Channel, Title / Content, Status, Reach / Audience, Template, Created, Scheduled, Created by
     col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 140 }, cell: i => {
       const g = i.row.original
-      return <><Mk g={g} on={!INFO_BTN && s.det === g.id} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
+      return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
         {g.hdr ? null : i.getValue() ? <Trunc text={i.getValue()} className="font-medium" /> : <span className="text-fg-muted">—</span>}</>
     } }),
     // icons only: room for two icons (the message row of the grouped options adds a chevron)
     col.display({ id: 'ch', header: L('Channel', '通道'), enableSorting: false, meta: { width: hdrs ? 128 : 96 }, cell: i => {
       const g = i.row.original
       if (g.hdr) return (
-        <span className="flex min-w-0 items-center gap-2"><Mk g={g} on={!INFO_BTN && s.det === g.id} />
+        <span className="flex min-w-0 items-center gap-2"><Mk g={g} />
           {group === 'fold' ? <Button variant="text" size="xs" iconOnly startIcon={ChevronRight} className={g.open ? '[&_svg]:rotate-90' : ''} aria-expanded={g.open} aria-label={(g.open ? L('Hide channels of ', '收合通道：') : L('Show channels of ', '展開通道：')) + g.r.title} onClick={() => setOpened(o => ({ ...o, [g.r.id]: !o[g.r.id] }))} /> : null}
           <ChIcons list={rowChs(g.r)} />
         </span>
       )
-      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} on={!INFO_BTN && s.det === g.id} /><ChCell k={g.k} /></span>
+      return <span className={'flex min-w-0 items-center' + (hdrs && g.n > 1 ? ' pl-7' : '')}><Mk g={g} /><ChCell k={g.k} /></span>
     } }),
     col.display({ id: 'title', header: L('Title / Content', '標題 / 內容'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = recText(x.r, x.k), text = t.content.replace(/\s+/g, ' ')
@@ -313,7 +310,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             height="100%"
             autoRowHeight
             getRowId={x => x.id}
-            rowActions={(x: GRow) => <><Mk g={x} on={!INFO_BTN && s.det === x.id} />{INFO_BTN ? <Button variant="text" size="xs" iconOnly startIcon={Info} pressed={s.det === x.id} aria-label={L('View details', '查看詳情')} onClick={() => m.set({ det: s.det === x.id ? null : x.id })} /> : null}<RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
+            rowActions={(x: GRow) => <><Mk g={x} />{/* View details as a toggle (DS Button pressed, emphasis): pressed while this record's panel is open */}<Button variant="text" size="xs" iconOnly startIcon={Info} pressed={s.det === x.id} aria-label={L('View details', '查看詳情')} onClick={() => m.set({ det: s.det === x.id ? null : x.id })} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
             emptyState={<Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />}
           />
         </div>

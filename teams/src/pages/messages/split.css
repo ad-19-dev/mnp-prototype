@@ -22,7 +22,3 @@
 /* header / fold: the message row on a light tint; its channels sit under it */
 :is(.mnp-g-header, .mnp-g-fold) [role="row"]:has([data-hdr]) { background: color-mix(in srgb, var(--color-surface-strong) 40%, var(--color-surface)); }
 :is(.mnp-g-header, .mnp-g-fold) [role="row"]:has([data-hdr])[data-hovered] { background: color-mix(in srgb, var(--color-surface-strong) 60%, var(--color-surface)); }
-
-/* the row whose Message detail panel is open: the DS selected gray (neutral-selected) */
-[role="row"]:has([data-open="1"]) { background: var(--color-neutral-selected); }
-[role="row"]:has([data-open="1"])[data-hovered] { background: var(--color-neutral-selected); } /* a selected row stays put on hover (DS item anatomy) */

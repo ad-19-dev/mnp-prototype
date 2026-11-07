@@ -72,11 +72,11 @@ const FIELDS = 'Channel、Status；緊急送出的加 Urgent reason；需要核�
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
     <>
-      <Section eyebrow="Flow" title="從列表出發的操作流程" lead="一則訊息選了幾個通道，列表就有幾筆紀錄（Device Notifications 加 SMS 備援算一筆）。所有操作都從列表開始：點標題或選單的 View details 開右側的詳情面板；其他操作在每一筆的選單裡。">
+      <Section eyebrow="Flow" title="從列表出發的操作流程" lead="一則訊息選了幾個通道，列表就有幾筆紀錄（Device Notifications 加 SMS 備援算一筆）。所有操作都從列表開始：點標題、列尾的 ⓘ 或選單的 View details 開右側的詳情面板；其他操作在每一筆的 ⋮ 選單裡。">
         <div className="flow-map" role="list">
           <Stop sub="發送空間的 Send messages">訊息列表</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="搜尋、狀態、通道">找到那一筆</Stop><span className="flow-arrow" aria-hidden>→</span>
-          <Stop sub="點標題，或選單 View details">訊息詳情面板</Stop><span className="flow-arrow" aria-hidden>→</span>
+          <Stop sub="點標題、ⓘ 或 View details">訊息詳情面板</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="Approval center、收件人成員">繼續查看</Stop>
         </div>
         <div className="flow-legend">
@@ -93,7 +93,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           { n: 3, title: '狀態', body: '這一筆的狀態。' },
           { n: 4, title: '收件人數', body: '這個通道要寄給的人數。' },
           { n: 5, title: '{n} not sent', body: '未送出的人數；點了開名單。' },
-          { n: 6, title: '列選單', body: '項目依狀態不同，見「列選單」。' },
+          { n: 6, title: '列尾按鈕', body: 'ⓘ 開關詳情面板；⋮ 是列選單，項目依狀態不同。' },
           { n: 7, title: '狀態篩選', body: '多選。' },
           { n: 8, title: '通道篩選', body: '多選。' },
         ]} />
@@ -110,7 +110,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         </div>
       </Section>
 
-      <Section eyebrow="2" title="訊息詳情面板" lead="開在列表右側，列表上對應的那一列以灰色標示。面板沒有操作按鈕。">
+      <Section eyebrow="2" title="訊息詳情面板" lead="開在列表右側；開著時，那一筆列尾的 ⓘ 是 checked 樣式。面板沒有操作按鈕。">
         <div className="flow-branches">
           <Card kind="page" title="Device Notifications (SMS)" when="點這種紀錄的標題" shots={['detail-fb']} then={'欄位：' + FIELDS + '。內容兩項（Device Notifications、SMS fallback），預設收合。'} />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、Device Notifications" shots={['detail-email', 'detail-push']} then="內容一項；收件人只列這個通道寄得到的人。" />
@@ -223,7 +223,7 @@ function ListTab() {
           { n: 3, title: '狀態', body: '這一筆的狀態，見「狀態與合併規則」。' },
           { n: 4, title: '收件人數', body: <>這個通道要寄給的人數，數字與表頭都齊右。<C>Device Notifications (SMS)</C> 用 Device Notifications 的人數。</> },
           { n: 5, title: '{n} not sent', body: '紅色文字連結，在狀態標籤下方，點了開名單。有 SMS 備援的，只算推播與 SMS 都沒送到的人。' },
-          { n: 6, title: '列選單', body: '見「列選單」。' },
+          { n: 6, title: '列尾按鈕', body: <>ⓘ（View details）開關詳情面板，開著時是 checked 樣式；⋮ 是列選單，見「列選單」。</> },
           { n: 7, title: '狀態篩選', body: '多選；只列出這個空間有的狀態與數量，依生命週期排序。' },
           { n: 8, title: '通道篩選', body: <>多選：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊是數量。</> },
         ]} />
@@ -239,6 +239,7 @@ function ListTab() {
           [<Copy en="Created" zh="建立時間" />, '116', '日期、時間兩行。只在第一列顯示。', '可'],
           [<Copy en="Send time" zh="傳送時間" />, '116', '排程的訊息是排程時間，立即傳送的是建立時間。只在第一列顯示。', '可'],
           [<Copy en="Created by" zh="建立者" />, '200', '人員（頭像與姓名）。只在團隊空間顯示，只在第一列顯示。', '可'],
+          ['（列尾）', '依內容', 'ⓘ 與 ⋮ 兩個圖示按鈕（xs）', '—'],
         ]} />
       </Section>
       <Section eyebrow="Group" title="同一則訊息的紀錄" lead="共用欄位只在第一列顯示，其他列留白；同一則訊息的列之間沒有分隔線。">
@@ -330,7 +331,7 @@ function Detail() {
           ['Approval', <>這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。值是連結 <Copy en="View in Approval center" zh="到 Approval center 查看" />；審核進度與駁回原因都在 Approval center。</>],
           ['Content', '預設收合，可同時展開多項；換一筆紀錄時回到收合。Device Notifications (SMS) 兩項，其他一項。'],
           ['Audiences', '只列這個通道寄得到的人：外部 Email 只在 Email，外部電話只在 Device Notifications (SMS)。'],
-          ['列表上的對應列', '面板開著時，對應的那一列以灰色標示（設計系統選取列的顏色）。'],
+          ['列表上的對應列', '面板開著時，那一筆列尾的 ⓘ 是 checked 樣式（淺藍底、藍色圖示）；列表本身不變色。'],
         ]} />
       </Section>
     </>
@@ -340,7 +341,11 @@ function Detail() {
 // ---------- actions ----------
 function Actions() {
   return (
-    <Section eyebrow="Menu" title="列選單" lead="每一筆列尾的 ⋮ 選單。項目依狀態不同，都套用到整則訊息。">
+    <Section eyebrow="Menu" title="列尾按鈕與列選單" lead="每一筆列尾有兩個圖示按鈕：ⓘ 與 ⋮。⋮ 選單的項目依狀態不同，都套用到整則訊息。">
+      <SpecTable head={['按鈕', '規格']} nowrap={[0]} rows={[
+        ['ⓘ View details', '設計系統 Button（text、xs、只有圖示 Info）。點了開這一筆的詳情面板，按鈕變成 checked（pressed，emphasis：淺藍底、藍色圖示）；再點一次，或關閉面板，回到一般樣式。同一時間只有一筆是 checked。'],
+        ['⋮', '列選單（DropdownMenu）。選單包含所有操作，所以 View details 也在選單裡（設計系統表格的列操作規則）。'],
+      ]} />
       <SpecTable head={['狀態', 'View details', 'Edit', 'Send now', 'Reschedule', 'Duplicate to new message', 'Delete']} nowrap={[0, 1, 2, 3, 4, 5, 6]} rows={[
         [<StatusTag s="pending" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="scheduled" />, '✓', '', '', '', '✓', ''],
@@ -351,7 +356,7 @@ function Actions() {
         [<StatusTag s="expired" />, '✓', '✓', '✓', '✓', '✓', '✓'],
       ]} />
       <SpecTable head={['項目', '做什麼']} nowrap={[0]} rows={[
-        [<Copy en="View details" zh="查看詳情" />, '開詳情面板（同點標題）。圖示是 i（Info）。'],
+        [<Copy en="View details" zh="查看詳情" />, '開詳情面板（同點標題、同列尾的 ⓘ）。圖示是 i（Info）。'],
         [<Copy en="Edit" zh="編輯" />, '進入發送流程編輯這則訊息。已駁回的，改完重新送審。'],
         [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，確認後立即傳送。'],
         [<Copy en="Reschedule" zh="重新排程" />, '開重新排程對話框，選新的傳送時間；不需要重新核准。'],
