@@ -60,7 +60,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
     openEd(g: Group | null, dup?: boolean) { set({ view: 'edit', ed: makeEd(g, dup) }); scrollTop() },
     askDelete(id: string) {
       const g = getApp().groups.find(x => x.id === id) || ({ name: '' } as Group)
-      set({ cf: { title: L('Delete “' + g.name + '”?', '刪除「' + g.name + '」？'), text: L('No one can use it anymore. Messages already sent aren’t affected.', '刪除後就不能再選這個群組，已送出的訊息不受影響。'), icon: Trash2, tone: 'err', cancel: L('Keep', '保留'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteGroup(id) } })
+      set({ cf: { title: L('Delete “' + g.name + '”?', '刪除「' + g.name + '」？'), text: L('No one can use it anymore. Messages already sent aren’t affected.', '刪除後就不能再選這個群組，已送出的訊息不受影響。'), icon: Trash2, tone: 'err', cancel: L('Cancel', '取消'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteGroup(id) } })
     },
     deleteGroup(id: string) {
       const g = getApp().groups.find(x => x.id === id)
@@ -72,7 +72,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
     backFromEd() {
       const ed = get().ed
       if (ed && ed.dirty && ed.role !== 'Viewer') {
-        set({ cf: { title: L('Discard changes?', '要捨棄變更嗎？'), text: L('Your changes haven’t been saved.', '你的變更還沒儲存。'), icon: CircleAlert, tone: 'warn', cancel: L('Keep editing', '繼續編輯'), ok: L('Discard', '捨棄'), danger: true, run: () => { set({ cf: null, view: 'list', ed: null }); scrollTop() } } })
+        set({ cf: { title: L('Discard changes?', '要捨棄變更嗎？'), text: L('Your changes haven’t been saved.', '你的變更還沒儲存。'), icon: CircleAlert, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Discard', '捨棄'), danger: true, run: () => { set({ cf: null, view: 'list', ed: null }); scrollTop() } } })
         return
       }
       set({ view: 'list', ed: null })

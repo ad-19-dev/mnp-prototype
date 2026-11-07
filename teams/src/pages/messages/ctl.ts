@@ -92,7 +92,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     },
     // delete a message that hasn't gone out (scheduled, expired or rejected): the row is removed
     askDelete(r: Row) {
-      set({ cf: { title: L('Delete this message?', '要刪除這則訊息嗎？'), text: L('“' + r.title + '” won’t be sent, and it’s removed from the list. This can’t be undone.', '「' + r.title + '」不會送出，也會從列表移除，無法復原。'), icon: Trash2, tone: 'err', cancel: L('Keep', '保留'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteRow(r.id) } })
+      set({ cf: { title: L('Delete this message?', '要刪除這則訊息嗎？'), text: L('“' + r.title + '” won’t be sent, and it’s removed from the list. This can’t be undone.', '「' + r.title + '」不會送出，也會從列表移除，無法復原。'), icon: Trash2, tone: 'err', cancel: L('Cancel', '取消'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteRow(r.id) } })
     },
     deleteRow(id: string) {
       const r = app().rows.find(x => x.id === id)!
@@ -102,7 +102,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     },
     // expired: approved too late for its schedule. Send it now, ignoring the old time
     askSendNow(r: Row) {
-      set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It goes out right away instead of at ' + r.sched + '. It’s already approved.', '會立刻送出，不再等原訂的 ' + r.sched + '。這則訊息已經核准。'), icon: Send, tone: 'info', cancel: L('Not now', '先不要'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
+      set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It goes out right away instead of at ' + r.sched + '. It’s already approved.', '會立刻送出，不再等原訂的 ' + r.sched + '。這則訊息已經核准。'), icon: Send, tone: 'info', cancel: L('Cancel', '取消'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
     },
     sendNow(id: string) {
       const r = app().rows.find(x => x.id === id)!
@@ -177,7 +177,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     goList() {
       const s = get()
       if (s.view === 'compose' && s.c.dirty && !s.c.result) {
-        set({ cf: { title: L('Leave without sending?', '還沒送出，要離開嗎？'), text: L('What you’ve written won’t be kept.', '你填寫的內容不會保留。'), icon: CircleAlert, tone: 'warn', cancel: L('Keep editing', '繼續編輯'), ok: L('Discard', '捨棄'), danger: true, run: () => m.toList() } })
+        set({ cf: { title: L('Leave without sending?', '還沒送出，要離開嗎？'), text: L('What you’ve written won’t be kept.', '你填寫的內容不會保留。'), icon: CircleAlert, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Discard', '捨棄'), danger: true, run: () => m.toList() } })
         return
       }
       m.toList()
@@ -287,7 +287,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     askTemplate(t: Template) {
       const c = get().c, has = (c.title + c.content + c.dTitle + c.dContent + c.smsText + c.subject + c.bodyText).trim()
       if (!has || c.tplId === t.id) { m.applyTemplate(t); return }
-      set({ tp: null, cf: { title: L('Replace your text?', '要取代目前的內容嗎？'), text: L('“' + t.name + '” will replace what you’ve written. Audiences and channels stay the same.', '「' + t.name + '」會取代你寫的內容，收件人和通道不變。'), icon: LayoutTemplate, tone: 'warn', cancel: L('Keep mine', '保留我的'), ok: L('Replace', '取代'), run: () => m.applyTemplate(t) } })
+      set({ tp: null, cf: { title: L('Replace your text?', '要取代目前的內容嗎？'), text: L('“' + t.name + '” will replace what you’ve written. Audiences and channels stay the same.', '「' + t.name + '」會取代你寫的內容，收件人和通道不變。'), icon: LayoutTemplate, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Replace', '取代'), run: () => m.applyTemplate(t) } })
     },
     applyTemplate(t: Template, quiet?: boolean) {
       const c = get().c, own = tplHasEmail(t)
@@ -311,7 +311,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
         const me = PMAP[ME]
         set({ cf: { title: L('Send without SMS approval?', '要略過 SMS 核准直接送出嗎？'), text: L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。'),
           rows: [{ k: L('Reason', '原因'), v: c.urgentReason.trim() }, { k: L('Logged as', '記錄為'), v: me.en + ' ' + me.zh + ' · ' + fmtDT(new Date()) }, { k: L('Notified', '通知對象'), v: L('The SMS reviewer and your supervisor, ' + SUPERVISOR, 'SMS 審核人員和你的主管 ' + SUPERVISOR) }],
-          icon: ShieldAlert, tone: 'warn', cancel: L('Go back', '返回'), ok: L('Skip approval and send', '略過核准並送出'), danger: true, run: () => { set({ cf: null }); m.submit(true) } } })
+          icon: ShieldAlert, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Skip approval and send', '略過核准並送出'), danger: true, run: () => { set({ cf: null }); m.submit(true) } } })
         return
       }
       // waiting for approval: back to the list with a short toast (no result page)
@@ -390,7 +390,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       flash(L('Group saved', '已存成群組'), 'ok')
     },
     askRemoveAll() {
-      set({ cf: { title: L('Remove all audiences?', '移除所有收件人？'), text: L('Channels and text stay the same.', '通道和內容不受影響。'), icon: Trash2, tone: 'warn', cancel: L('Keep', '保留'), ok: L('Remove all', '全部移除'), danger: true, run: () => { m.setC({ receivers: [], pick: {} }); set({ cf: null }) } } })
+      set({ cf: { title: L('Remove all audiences?', '移除所有收件人？'), text: L('Channels and text stay the same.', '通道和內容不受影響。'), icon: Trash2, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Remove all', '全部移除'), danger: true, run: () => { m.setC({ receivers: [], pick: {} }); set({ cf: null }) } } })
     },
 
     // ---------- batch import ----------

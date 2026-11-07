@@ -522,7 +522,7 @@ function Blocks() {
 function Modals() {
   return (
     <>
-      <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（取消在左、主要動作在右），不放副標。點遮罩、Esc 或右上角關閉都等於取消。">
+      <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），不放副標。點遮罩、Esc 或右上角關閉都等於取消。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
           ['未送出名單', '狀態下方 {n} not sent', '760', 'Resend'],
           ['刪除', '選單 Delete', '480', 'Delete（紅色）'],
@@ -542,14 +542,14 @@ function Modals() {
           <figure><figcaption><b>傳送錯誤</b><span>表格上方是錯誤提示（原因與建議）；按鈕同樣是 Resend。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
       </Section>
-      <Section eyebrow="Confirm" title="刪除與立即傳送" lead="寬 480：標題、一段說明、兩個按鈕。訊息有兩個以上通道時，說明會列出這些通道。">
+      <Section eyebrow="Confirm" title="刪除與立即傳送" lead="寬 480：標題、一句說明、兩個按鈕。訊息有兩個以上通道時，說明加上「on all n channels (通道…)」。">
         <div className="spec-gallery">
-          <figure><figcaption><b>刪除</b><span>整則訊息與所有通道的紀錄一起刪除，無法復原。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delete" alt="刪除" max={520} /></div></figure>
-          <figure><figcaption><b>立即傳送</b><span>立即送出、已經核准；排程已過期的另寫出原訂時間。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
+          <figure><figcaption><b>刪除</b><span>整則訊息與所有通道的紀錄一起刪除。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delete" alt="刪除" max={520} /></div></figure>
+          <figure><figcaption><b>立即傳送</b><span>立即送出整則訊息，不寫原訂時間。</span></figcaption><div className="spec-canvas"><Shot name="dlg-sendnow" alt="立即傳送" max={520} /></div></figure>
         </div>
-        <SpecTable head={['對話框', '標題', '取消', '確認']} nowrap={[0]} rows={[
-          ['刪除', <Copy en="Delete this message?" zh="要刪除這則訊息嗎？" />, <Copy en="Keep" zh="保留" />, <Copy en="Delete" zh="刪除" />],
-          ['立即傳送', <Copy en="Send it now?" zh="要立即傳送嗎？" />, <Copy en="Not now" zh="先不要" />, <Copy en="Send now" zh="立即傳送" />],
+        <SpecTable head={['對話框', '標題', '說明', '取消', '確認']} nowrap={[0]} rows={[
+          ['刪除', <Copy en="Delete this message?" zh="要刪除這則訊息嗎？" />, <Copy en="It will be deleted. This can’t be undone." zh="這則訊息會被刪除，無法復原。" />, <Copy en="Cancel" zh="取消" />, <Copy en="Delete" zh="刪除" />],
+          ['立即傳送', <Copy en="Send it now?" zh="要立即傳送嗎？" />, <Copy en="It will be sent right away." zh="這則訊息會立刻送出。" />, <Copy en="Cancel" zh="取消" />, <Copy en="Send now" zh="立即傳送" />],
         ]} />
       </Section>
       <Section eyebrow="Reschedule" title="重新排程" lead="核准仍然有效，只改時間；整則訊息一起改。完成後 toast：Rescheduled for <時間>。">

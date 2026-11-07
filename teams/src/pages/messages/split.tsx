@@ -99,13 +99,13 @@ function ChCell({ k }: { k: Channel }) {
 
 // ---------- whole-message actions, worded for every channel ----------
 const chList = (r: Row) => recKinds(r).map(chName).join(L(', ', '、'))
-const allNote = (r: Row) => (recKinds(r).length > 1 ? L(' This applies to all ' + recKinds(r).length + ' channels: ' + chList(r) + '.', '會套用到全部 ' + recKinds(r).length + ' 個通道：' + chList(r) + '。') : '')
+// short: what happens, on which channels when there are several
+const onAll = (r: Row) => (recKinds(r).length > 1 ? L(' on all ' + recKinds(r).length + ' channels (' + chList(r) + ')', '（全部 ' + recKinds(r).length + ' 個通道：' + chList(r) + '）') : '')
 function askDelete(m: SendCtl, r: Row) {
-  const n = recKinds(r).length
-  m.set({ cf: { title: L('Delete this message?', '要刪除這則訊息嗎？'), text: L('“' + r.title + '” won’t be sent' + (n > 1 ? ' on any of its ' + n + ' channels (' + chList(r) + ')' : '') + ', and ' + (n > 1 ? 'its ' + n + ' records are' : 'it’s') + ' removed from the list. This can’t be undone.', '「' + r.title + '」' + (n > 1 ? '的 ' + n + ' 個通道（' + chList(r) + '）都' : '') + '不會送出，' + (n > 1 ? '這 ' + n + ' 筆紀錄' : '') + '也會從列表移除，無法復原。'), icon: Trash2, tone: 'err', cancel: L('Keep', '保留'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteRow(r.id) } })
+  m.set({ cf: { title: L('Delete this message?', '要刪除這則訊息嗎？'), text: L('It will be deleted' + onAll(r) + '. This can’t be undone.', '這則訊息會被刪除' + onAll(r) + '，無法復原。'), icon: Trash2, tone: 'err', cancel: L('Cancel', '取消'), ok: L('Delete', '刪除'), danger: true, run: () => m.deleteRow(r.id) } })
 }
 function askSendNow(m: SendCtl, r: Row) {
-  m.set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: (r.sched ? L('It goes out right away instead of at ' + r.sched + '. It’s already approved.', '會立刻送出，不再等原訂的 ' + r.sched + '。這則訊息已經核准。') : L('It goes out right away. It’s already approved.', '會立刻送出。這則訊息已經核准。')) + allNote(r), icon: Send, tone: 'info', cancel: L('Not now', '先不要'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
+  m.set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It will be sent right away' + onAll(r) + '.', '這則訊息會立刻送出' + onAll(r) + '。'), icon: Send, tone: 'info', cancel: L('Cancel', '取消'), ok: L('Send now', '立即傳送'), run: () => m.sendNow(r.id) } })
 }
 
 // lite: a channel row under its message row, where the message row holds the whole-message actions

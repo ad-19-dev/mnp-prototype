@@ -56,14 +56,14 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
     goList() {
       const ed = get().ed
       if (get().view === 'edit' && ed && ed.dirty && ed.role !== 'Viewer') {
-        set({ cf: { title: L('Discard changes?', '要捨棄變更嗎？'), text: L('Your changes haven’t been saved.', '你的變更還沒儲存。'), icon: CircleAlert, tone: 'warn', cancel: L('Keep editing', '繼續編輯'), ok: L('Discard', '捨棄'), danger: true, run: () => { set({ cf: null, view: 'list', ed: null }); scrollTop() } } })
+        set({ cf: { title: L('Discard changes?', '要捨棄變更嗎？'), text: L('Your changes haven’t been saved.', '你的變更還沒儲存。'), icon: CircleAlert, tone: 'warn', cancel: L('Cancel', '取消'), ok: L('Discard', '捨棄'), danger: true, run: () => { set({ cf: null, view: 'list', ed: null }); scrollTop() } } })
         return
       }
       set({ view: 'list', ed: null })
       scrollTop()
     },
     askDelete(t: Template) {
-      set({ cf: { title: L('Delete “' + t.name + '”?', '刪除「' + t.name + '」？'), text: L('No one can use it anymore. Messages already sent aren’t affected.', '刪除後大家都不能再用，已送出的訊息不受影響。'), icon: Trash2, tone: 'err', cancel: L('Keep', '保留'), ok: L('Delete', '刪除'), danger: true, run: () => {
+      set({ cf: { title: L('Delete “' + t.name + '”?', '刪除「' + t.name + '」？'), text: L('No one can use it anymore. Messages already sent aren’t affected.', '刪除後大家都不能再用，已送出的訊息不受影響。'), icon: Trash2, tone: 'err', cancel: L('Cancel', '取消'), ok: L('Delete', '刪除'), danger: true, run: () => {
         setApp(a => ({ templates: a.templates.filter(x => x.id !== t.id) }))
         set({ cf: null, view: 'list', ed: null })
         flash(L('Template deleted', '已刪除模板'), 'ok')

@@ -90,7 +90,7 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
       text: last ? L('You’re the last member. Leaving deletes the team and its shared space.', '你是最後一位成員，離開後團隊和它的共享發送空間會一起刪除。') : L('You’ll lose access to this team’s shared space, including what you made there. Anyone in the team can add you back.', '離開後你就看不到這個團隊的共享發送空間，包括你在裡面建立的內容。團隊裡的任何人都能再把你加回來。'),
       rows: [{ k: L('In this space', '空間裡有'), v: what },
              { k: last ? L('After you leave', '離開後') : L('The team keeps', '團隊保留'), v: last ? L('All of it is deleted', '全部刪除') : L('All of it, including what you made', '全部，包括你建立的內容') }],
-      icon: LogOut, tone: 'warn', cancel: L('Stay', '留下'), ok: last ? L('Leave and delete team', '離開並刪除團隊') : L('Leave team', '離開團隊'), danger: true,
+      icon: LogOut, tone: 'warn', cancel: L('Cancel', '取消'), ok: last ? L('Leave and delete team', '離開並刪除團隊') : L('Leave team', '離開團隊'), danger: true,
       run: () => {
         setApp(s => last
           ? { teams: s.teams.filter(t => t.id !== team.id), rows: s.rows.filter(r => r.team !== team.id), groups: s.groups.filter(g => g.team !== team.id), templates: s.templates.filter(t => t.team !== team.id), space: 'me' }
