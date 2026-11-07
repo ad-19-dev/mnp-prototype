@@ -121,8 +121,8 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
 
       <Section eyebrow="3" title="未送出名單與整則訊息的操作">
         <div className="flow-branches">
-          <Card kind="dialog" title="Not sent to" when="點狀態下的 {n} not sent" shots={['dlg-fail']} then="未送出的收件人與原因；按鈕 Resend to n on 通道。" />
-          <Card kind="page" title="重寄" when="名單裡按 Resend to…" shots={['resend']} then="進入發送流程第 1 步，收件人是這些人，通道是這一筆的通道。" />
+          <Card kind="dialog" title="Not sent to" when="點狀態下的 {n} not sent" shots={['dlg-fail']} then="未送出的收件人與原因；按鈕 Resend。" />
+          <Card kind="page" title="重寄" when="名單裡按 Resend" shots={['resend']} then="進入發送流程第 1 步，收件人是這些人，通道是這一筆的通道。" />
           <Card kind="dialog" title="Delete this message?" when="選單 Delete" shots={['dlg-delete']} then="確認後整則訊息（所有通道的紀錄）一起刪除。" />
           <Card kind="dialog" title="Send it now?" when="選單 Send now" shots={['dlg-sendnow']} then="立即送出整則訊息，狀態變成 In progress。" />
           <Card kind="dialog" title="Reschedule" when="選單 Reschedule" shots={['dlg-reschedule']} then="選新的傳送時間，整則訊息一起改，不需要重新核准。" />
@@ -351,7 +351,7 @@ function Actions() {
         [<StatusTag s="expired" />, '✓', '✓', '✓', '✓', '✓', '✓'],
       ]} />
       <SpecTable head={['項目', '做什麼']} nowrap={[0]} rows={[
-        [<Copy en="View details" zh="查看詳情" />, '開詳情面板（同點標題）。'],
+        [<Copy en="View details" zh="查看詳情" />, '開詳情面板（同點標題）。圖示是 i（Info）。'],
         [<Copy en="Edit" zh="編輯" />, '進入發送流程編輯這則訊息。已駁回的，改完重新送審。'],
         [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，確認後立即傳送。'],
         [<Copy en="Reschedule" zh="重新排程" />, '開重新排程對話框，選新的傳送時間；不需要重新核准。'],
@@ -519,7 +519,7 @@ function Modals() {
     <>
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（取消在左、主要動作在右），不放副標。點遮罩、Esc 或右上角關閉都等於取消。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
-          ['未送出名單', '狀態下方 {n} not sent', '760', 'Resend to n on 通道'],
+          ['未送出名單', '狀態下方 {n} not sent', '760', 'Resend'],
           ['刪除', '選單 Delete', '480', 'Delete（紅色）'],
           ['立即傳送', '選單 Send now', '480', 'Send now'],
           ['重新排程', '選單 Reschedule', '480', 'Reschedule'],
@@ -530,11 +530,11 @@ function Modals() {
         <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
           { n: 1, title: '標題', body: <><Copy en="Not sent to" zh="未送達的收件人" />，沒有副標。</> },
           { n: 2, title: '表格', body: '高 380。欄：Audience 240（頭像、姓名、工號 · NT）、Org 112、Reason 300（有 SMS 備援時兩行：推播原因、SMS 原因）。外部聯絡人用地球圖示。' },
-          { n: 3, title: '重寄', body: <><C>Resend to n on 通道</C>：進入發送流程，收件人是這些人，通道是這一筆的通道。</> },
+          { n: 3, title: '重寄', body: <><C>Resend</C>：進入發送流程，收件人是這些人，通道是這一筆的通道。</> },
         ]} />
         <div className="spec-gallery">
           <figure><figcaption><b>Email</b><span>Reason 一行。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 未送出名單" /></div></figure>
-          <figure><figcaption><b>傳送錯誤</b><span>表格上方是錯誤提示（原因與建議）；按鈕同樣是 Resend to n on 通道。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
+          <figure><figcaption><b>傳送錯誤</b><span>表格上方是錯誤提示（原因與建議）；按鈕同樣是 Resend。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
       </Section>
       <Section eyebrow="Confirm" title="刪除與立即傳送" lead="寬 480：標題、一段說明、兩個按鈕。訊息有兩個以上通道時，說明會列出這些通道。">

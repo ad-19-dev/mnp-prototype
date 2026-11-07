@@ -10,7 +10,7 @@ import {
   DescriptionList, DescriptionItem, PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Eye, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Trash2 } from 'lucide-react'
+import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Trash2 } from 'lucide-react'
 import {
   CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
@@ -117,7 +117,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
         <Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + recText(r, x.k).title} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={232}>
-        <DropdownMenuItem startIcon={Eye} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
+        <DropdownMenuItem startIcon={Info} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
         {lite ? null : <>
         {r.status === 'expired' || r.status === 'rejected' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startCompose('edit', r)}>{L('Edit', '編輯')}</DropdownMenuItem> : null}
         {r.status === 'expired' || r.status === 'error' ? <>
@@ -426,7 +426,7 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
             </div>
           </DialogBody>
           <DialogFooter>
-            <Button variant="primary" startIcon={RotateCw} onClick={resend}>{L('Resend to ' + fmtN(list.length) + ' on ' + chName(k), '用' + chName(k) + '重寄給 ' + fmtN(list.length) + ' 人')}</Button>
+            <Button variant="primary" startIcon={RotateCw} onClick={resend}>{L('Resend', '重新寄送')}</Button>
           </DialogFooter>
         </DialogContent>
       ) : null}

@@ -186,9 +186,9 @@ await step('dlg-fail', async () => {
   const d = p.getByRole('dialog'); await shot('dlg-fail', d, [
     [1, d.getByText('Not sent to', { exact: true }), 'tl'],
     [2, d.locator('[role="columnheader"]').filter({ hasText: 'Reason' }), 'tl'],
-    [3, d.getByRole('button', { name: /^Resend to/ }), 'tl'],
+    [3, d.getByRole('button', { name: /^Resend/ }), 'tl'],
   ], 12);
-  await d.getByRole('button', { name: /^Resend to/ }).click(); await wait(1200);
+  await d.getByRole('button', { name: /^Resend/ }).click(); await wait(1200);
   await shot('resend', null);
   await p.getByRole('button', { name: 'Cancel' }).click(); await wait(500);
   const leave = p.getByRole('button', { name: 'Discard' }); if (await leave.count()) await leave.click(); await wait(500);
