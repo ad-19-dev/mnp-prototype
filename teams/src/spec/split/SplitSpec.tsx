@@ -507,10 +507,10 @@ function Blocks() {
           { n: 1, title: '列', body: '左側圖示或頭像；名稱（中等粗細）與一行說明（次要小字）；組織與群組右側是人數連結，點了開成員對話框。' },
         ]} />
         <SpecTable head={['類型', '圖示', '名稱', '說明', '右側']} nowrap={[0]} rows={[
-          ['組織', '大樓', '組織代碼', 'Org · 組織名稱', <>人數連結 <C>21 people</C></>],
-          ['群組', '通訊錄', '群組名稱', 'Audience group', '人數連結'],
-          ['個人', '頭像', '中文名 英文名', '工號 · 組織', '—'],
-          ['外部 Email', '地球', '電子郵件', 'External email · Email only', '—'],
+          ['組織', '大樓', '組織名稱', '組織代碼（英文與數字，例：PLTUX）', <>人數連結 <C>21 people</C></>],
+          ['群組', '兩個人（Users）', '群組名稱', 'Audience group', '人數連結'],
+          ['個人', '頭像', '中文名 英文名', '組織 · NT 帳號 · 工號', '—'],
+          ['外部 Email', '信封（Mail）', '電子郵件', 'External email · Email only', '—'],
           ['外部電話', '電話', '電話號碼', 'External phone · SMS only', '—'],
         ]} />
       </Section>
@@ -534,7 +534,7 @@ function Modals() {
       <Section eyebrow="Not sent" title="未送出名單">
         <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
           { n: 1, title: '標題', body: <><Copy en="Not sent to" zh="未送達的收件人" />，沒有副標。</> },
-          { n: 2, title: '表格', body: '高 380。欄：Audience 240（頭像、姓名、工號 · NT）、Org 112、Reason 300（有 SMS 備援時兩行：推播原因、SMS 原因）。外部聯絡人用地球圖示。' },
+          { n: 2, title: '表格', body: '高 380。欄：Audience 240（頭像、姓名、工號 · NT）、Org 112、Reason 300（有 SMS 備援時兩行：推播原因、SMS 原因）。外部 Email 用信封圖示，外部電話用電話圖示。' },
           { n: 3, title: '重寄', body: <><C>Resend</C>：進入發送流程，收件人是這些人，通道是這一筆的通道。</> },
         ]} />
         <div className="spec-gallery">

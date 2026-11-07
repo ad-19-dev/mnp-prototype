@@ -102,13 +102,13 @@ function RecvTable({ m }: { m: SendCtl }) {
     let label = '', sub = '', ppl: any[] = [], cnt = 1, warn = false, badge = '', badgeBtn = false
     if (t.type === 'person') {
       const p = PMAP[t.id!]; ppl = [p].filter(Boolean)
-      label = p ? p.zh + ' ' + p.en : t.id!; sub = p ? p.nt + ' · ' + p.emp + ' · ' + p.org : ''
+      label = p ? p.zh + ' ' + p.en : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
       const multi = sms && p && p.co && p.pp, unres = multi && !c.pick[t.key], noNum = sms && p && !p.co && !p.pp
       badge = unres ? L('Choose number', '選擇號碼') : noNum ? L('No phone', '無電話') : ''; badgeBtn = !!unres; warn = !!unres
     } else if (t.type === 'group' || t.type === 'org') {
       ppl = flatten([t], app.groups).map(x => PMAP[x.pid]).filter(Boolean); cnt = ppl.length
       if (t.type === 'group') { const g = app.groups.find(x => x.id === t.id); label = g ? g.name : t.id!; sub = g ? g.desc : '' }
-      else { const o = ORGS.find(x => x.code === t.id); label = t.id!; sub = o ? o.name : '' }
+      else { const o = ORGS.find(x => x.code === t.id); label = o ? o.name : t.id!; sub = t.id! }
     } else {
       const ph = isExtPhone(t), on = ph ? c.ch.sms : c.ch.email
       label = t.email!; sub = ph ? L('SMS only', '只收 SMS') : L('Email only', '只收 Email'); warn = !on
@@ -123,7 +123,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   const cols = React.useMemo(() => [
     rcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
-      const Icon = t.type === 'group' ? BookUser : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Globe
+      const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
       return (
         <span className="flex min-w-0 items-center gap-2">
           {p ? <PAvatar p={p} /> : <IconBox icon={Icon} tone={t.type === 'ext' && x.warn ? 'warn' : 'neutral'} />}

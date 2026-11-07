@@ -7,7 +7,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CornerDownRight, CalendarClock, CircleAlert, Globe, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
+import { Building2, CornerDownRight, CalendarClock, CircleAlert, Globe, Mail, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
 import {
   ICSD, ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, membersFor, orgMembers, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Channel, type Fail, type Group, type Row, type Tag as RTag,
@@ -129,16 +129,17 @@ export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }
           if (t.type === 'group' || t.type === 'org') {
             const g = t.type === 'group' ? groups.find(x => x.id === t.id) : null, o = t.type === 'org' ? ORGS.find(x => x.code === t.id) : null
             const people = g ? membersFor(g).map(x => PMAP[x.pid]).filter(Boolean) : orgMembers(t.id!)
-            name = g ? g.name : o ? o.code : t.id!; sub = g ? L('Audience group', '收件群組') : L('Org', '組織') + (o ? ' · ' + o.name : '')
-            lead = icon(g ? BookUser : Building2)
+            // an org: its name, and its code (letters and digits) as the only description
+            name = g ? g.name : o ? o.name : t.id!; sub = g ? L('Audience group', '收件群組') : o ? o.code : t.id!
+            lead = icon(g ? Users : Building2)
             end = <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
               onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people, group: g ? g.id : undefined })}>{P(people.length, 'person', '人', 'people')}</Button>
           } else if (t.type === 'person') {
             const p = PMAP[t.id!]
-            lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.zh + ' ' + p.en : t.id!; sub = p ? p.emp + ' · ' + p.org : ''
+            lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.zh + ' ' + p.en : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
           } else {
             const ph = isExtPhone(t)
-            lead = icon(ph ? Phone : Globe); name = t.email!
+            lead = icon(ph ? Phone : Mail); name = t.email!
             sub = ph ? L('External phone · SMS only', '外部電話・只收 SMS') : L('External email · Email only', '外部 Email・只收 Email')
           }
           return (

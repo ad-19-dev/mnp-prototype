@@ -4,7 +4,7 @@ import {
   Button, Checkbox, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, FileUpload,
   Input, RadioGroup, RadioGroupItem, Tag, Textarea, cn,
 } from '@qijenchen/design-system'
-import { ArrowRight, Building2, ChevronLeft, Copy, Globe, Lock, Phone, Plus, Search, Wand2 } from 'lucide-react'
+import { ArrowRight, Building2, ChevronLeft, Copy, Globe, Lock, Mail, Phone, Plus, Search, Wand2 } from 'lucide-react'
 import { LIM, ME, PEOPLE, PMAP, fmtPhone, maskPhone, plural, splitTokens, tplFormats, LIST_SAMPLES } from '../../lib/data'
 import { effEmailMode, hasNotif, multiPeople, recvFlat, smsOn, tplFit } from '../../lib/compose'
 import { flash, useApp } from '../../lib/store'
@@ -98,7 +98,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
               <ListRow key={i}>
                 <code className="w-32 shrink-0 truncate font-mono text-caption text-fg-secondary">{mm.tok}</code>
                 <ArrowRight className="size-3.5 shrink-0 text-fg-muted" aria-hidden />
-                {mm.kind === 'one' ? <PAvatar p={mm.p} size={20} /> : <IconBox icon={mm.kind === 'org' ? Building2 : (mm as any).email && (mm as any).email.indexOf('@') < 0 ? Phone : Globe} />}
+                {mm.kind === 'one' ? <PAvatar p={mm.p} size={20} /> : <IconBox icon={mm.kind === 'org' ? Building2 : (mm as any).email && (mm as any).email.indexOf('@') < 0 ? Phone : Mail} />}
                 <span className="min-w-0 flex-1 truncate text-body font-medium">{mm.kind === 'one' ? mm.p.zh + ' ' + mm.p.en + ' · ' + mm.p.org : mm.kind === 'org' ? mm.org.code + ' · ' + P(mm.org.count, 'member', '人') : (mm as any).email + ' · ' + L('External', '外部')}</span>
                 <span className="text-caption text-fg-secondary">{tx((mm as any).by)}</span>
               </ListRow>
@@ -223,7 +223,7 @@ export function UnreachDialog({ m }: { m: SendCtl }) {
       foot={<><Button variant="tertiary" onClick={close}>{L('Close', '關閉')}</Button>{rc.viaSms ? <Button variant="secondary" startIcon={Plus} onClick={() => { m.pickChannel('sms'); close() }}>{L('Turn on SMS fallback', '開啟 SMS 備援')}</Button> : null}{rc.viaEmail ? <Button variant="primary" startIcon={Plus} onClick={() => { m.pickChannel('email'); close() }}>{L('Add Email', '加入 Email')}</Button> : null}</>}>
       <ListBox max={380}>
         {rc.unr.map(p => <ListRow key={p.id}><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={p.emp + ' · ' + p.org} strong className="flex-1" /><span className="text-caption text-fg-secondary">{why()}</span></ListRow>)}
-        {rc.flat.ext.filter(x => x.indexOf('@') >= 0 ? rc.unrE : rc.unrP).map(x => { const ph = x.indexOf('@') < 0; return <ListRow key={x}><IconBox icon={ph ? Phone : Globe} /><Two a={x} b={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{ph ? L('SMS only', '只收 SMS') : L('Email only', '只收 Email')}</span></ListRow> })}
+        {rc.flat.ext.filter(x => x.indexOf('@') >= 0 ? rc.unrE : rc.unrP).map(x => { const ph = x.indexOf('@') < 0; return <ListRow key={x}><IconBox icon={ph ? Phone : Mail} /><Two a={x} b={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{ph ? L('SMS only', '只收 SMS') : L('Email only', '只收 Email')}</span></ListRow> })}
       </ListBox>
     </Shell>
   )

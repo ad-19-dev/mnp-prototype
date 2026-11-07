@@ -82,7 +82,7 @@ export function FmtChips({ list }: { list: Fmt[] }) {
 const AV: CategoricalColor[] = ['blue', 'green', 'purple', 'deep-orange', 'turquoise', 'magenta', 'indigo', 'amber']
 export const avColor = (c: number) => AV[c % AV.length]
 export function PAvatar({ p, size = 24 }: { p: Person; size?: number }) {
-  if (p.extKind) return <Avatar size={size} icon={p.extKind === 'phone' ? Hash : Globe} alt={p.value || ''} color="neutral" />
+  if (p.extKind) return <Avatar size={size} icon={p.extKind === 'phone' ? Hash : Mail} alt={p.value || ''} color="neutral" />
   return <Avatar size={size} alt={p.en} color={avColor(p.c)} />
 }
 export const pname = (p: Person) => p.extKind ? (p.value || '') : (p.zh ? p.zh + ' ' + p.en : p.en)
@@ -141,7 +141,7 @@ export const listKindName = (k: ListKind) => ({
 })[k]
 export const listKindExample = (k: ListKind) => ({
   nt: 'gywu, cmchen', emp: '120588, 112306', name: L('陳怡君, Kevin Lin', '陳怡君, Kevin Lin'), email: 'gywu@tsmc.com, partner@example.com',
-  phone: '0918-226-588, 0921660734', mvpn: '61588, 60217', org: 'PLT/UX, F18/MFG3',
+  phone: '0918-226-588, 0921660734', mvpn: '61588, 60217', org: 'PLTUX, F18MFG3',
 })[k]
 export function ListKindField({ id, value, onChange, error }: { id: string; value: ListKind | null; onChange: (k: ListKind) => void; error?: string }) {
   return (

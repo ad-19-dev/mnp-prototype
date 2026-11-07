@@ -31,15 +31,15 @@ interface Opt { item: RiItem; av?: Person; icon?: typeof Users; name: string; su
 // options for the dropdown, plus a format error when the typed value isn't valid
 function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefined, isAdded: (it: RiItem) => boolean) {
   const q = ri.q.trim(), low = q.toLowerCase(), out = { opts: [] as Opt[], err: '', tip: '' }
-  const person = (p: Person, meta?: string): Opt => ({ item: { kind: 'person', id: p.id }, av: p, name: p.zh + ' ' + p.en, sub: p.title + ' · ' + p.org + ' · ' + p.emp, meta: meta || p.nt })
-  const ext = (v: string): Opt => ({ item: { kind: 'ext', value: v }, icon: v.indexOf('@') < 0 ? Phone : Globe, name: v, sub: v.indexOf('@') < 0 ? L('External · SMS only', '外部 · 只收 SMS') : L('External · Email only', '外部 · 只收 Email'), meta: L('External', '外部') })
+  const person = (p: Person, meta?: string): Opt => ({ item: { kind: 'person', id: p.id }, av: p, name: p.zh + ' ' + p.en, sub: [p.org, p.nt, p.emp].filter(Boolean).join(' · '), meta: meta || '' })
+  const ext = (v: string): Opt => ({ item: { kind: 'ext', value: v }, icon: v.indexOf('@') < 0 ? Phone : Mail, name: v, sub: v.indexOf('@') < 0 ? L('External · SMS only', '外部 · 只收 SMS') : L('External · Email only', '外部 · 只收 Email'), meta: L('External', '外部') })
   if (ri.type === 'person') {
     if (!q) out.tip = ''
     else out.opts = PEOPLE.filter(p => [p.zh, p.en, p.nt, p.emp].some(v => v.toLowerCase().indexOf(low) >= 0)).slice(0, 8).map(p => person(p))
   } else if (ri.type === 'org') {
-    out.opts = ORGS.filter(x => !q || x.code.toLowerCase().indexOf(low) >= 0 || x.name.toLowerCase().indexOf(low) >= 0).map(x => ({ item: { kind: 'org', id: x.code }, icon: Building2, name: x.code, sub: x.name, meta: P(x.count, 'member', '人') }))
+    out.opts = ORGS.filter(x => !q || x.code.toLowerCase().indexOf(low) >= 0 || x.name.toLowerCase().indexOf(low) >= 0).map(x => ({ item: { kind: 'org', id: x.code }, icon: Building2, name: x.name, sub: x.code, meta: P(x.count, 'member', '人') }))
   } else if (ri.type === 'group') {
-    out.opts = groups.filter(g => g.id !== excludeGroup && (!q || (g.name + ' ' + g.desc).toLowerCase().indexOf(low) >= 0)).map(g => ({ item: { kind: 'group', id: g.id }, icon: BookUser, name: g.name, sub: g.desc, meta: P(g.count, 'member', '人'), group: g }))
+    out.opts = groups.filter(g => g.id !== excludeGroup && (!q || (g.name + ' ' + g.desc).toLowerCase().indexOf(low) >= 0)).map(g => ({ item: { kind: 'group', id: g.id }, icon: Users, name: g.name, sub: g.desc, meta: P(g.count, 'member', '人'), group: g }))
   } else if (ri.type === 'mvpn') {
     const d = q.replace(/\D/g, '')
     if (!q) out.tip = ''
