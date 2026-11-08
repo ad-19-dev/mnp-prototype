@@ -141,7 +141,7 @@ export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }
             lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.zh + ' ' + p.en : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
           } else {
             const ph = isExtPhone(t)
-            lead = icon(ph ? Phone : Mail); name = t.email!
+            lead = circle(ph ? Phone : Mail); name = t.email!
             sub = ph ? L('External phone · SMS only', '外部電話・只收 SMS') : L('External email · Email only', '外部 Email・只收 Email')
           }
           return (

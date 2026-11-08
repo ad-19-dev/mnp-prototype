@@ -175,8 +175,8 @@ function Step1() {
           ['個人', '人員顯示：頭像、英文名 中文名', '頭像、中文名 英文名；下一行：組織代號 · NT · 工號'],
           ['組織', '大樓圖示（灰色圓底）、組織代號', '同左；下一行：組織代碼'],
           ['群組', '兩個人圖示（灰色圓底）、群組名稱', '同左；下一行：Audience group'],
-          ['外部 Email', '信封圖示（灰色底，一律不變色）、Email', '同左；下一行：External email · Email only'],
-          ['外部電話', '電話圖示（灰色底，一律不變色）、號碼', '同左；下一行：External phone · SMS only'],
+          ['外部 Email', '信封圖示（灰色圓底）、Email', '同左；下一行：External email · Email only'],
+          ['外部電話', '電話圖示（灰色圓底）、號碼', '同左；下一行：External phone · SMS only'],
         ]} />
         <Big name="s1-types" title="各類型收件人在表格中的呈現" sub="個人、組織、群組、外部電話、外部 Email 各一筆" />
         <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人']]} />

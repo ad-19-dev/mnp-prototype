@@ -118,12 +118,11 @@ function RecvTable({ m }: { m: SendCtl }) {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
       const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
       // one line per cell (DS table rule): people use the DS person display (org · NT · ID in its hover card)
-      const round = t.type === 'group' || t.type === 'org'
       return (
         <span className="flex min-w-0 items-center gap-2">
           {p ? <PersonDisplay value={personVal(p)} />
             : <>
-              {round ? <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><Icon className="size-3.5 text-fg-secondary" aria-hidden /></span> : <IconBox icon={Icon} tone="neutral" />}
+              <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><Icon className="size-3.5 text-fg-secondary" aria-hidden /></span>
               <span className="truncate text-body">{x.label}</span>
             </>}
           {x.badgeBtn ? <Button size="xs" variant="secondary" onClick={() => m.openNumbers()}>{x.badge}</Button> : x.badge ? <Tag size="sm">{x.badge}</Tag> : null}
