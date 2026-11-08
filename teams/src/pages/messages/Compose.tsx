@@ -156,27 +156,18 @@ function RecvTable({ m }: { m: SendCtl }) {
 
 function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
   const c = m.s.c, on = !!c.ch[k], meta = CHN[k], hasR = rc.total > 0, id = 'ch-' + k
-  // who this channel actually reaches out of everyone picked, and why the rest can't get it
-  const n = k === 'push' ? rc.push : k === 'desktop' ? rc.desktop : rc.email
-  const why: string[] = []
-  if (k === 'push' && rc.noDev) why.push(L(fmtN(rc.noDev) + ' no registered device', fmtN(rc.noDev) + ' 人沒有註冊裝置'))
-  if (k === 'desktop' && rc.people - rc.desktop) why.push(L(fmtN(rc.people - rc.desktop) + ' no desktop agent', fmtN(rc.people - rc.desktop) + ' 人沒有桌面程式'))
-  if (k !== 'email' && rc.ext) why.push(L(P(rc.ext, 'external contact', '位外部人員', 'external contacts'), rc.ext + ' 位外部人員'))
-  if (k === 'email' && rc.extP) why.push(L(P(rc.extP, 'external phone', '支外部電話', 'external phones'), rc.extP + ' 支外部電話'))
-  const miss = rc.total - n
-  // a single reason doesn't need its count repeated
-  const whyText = why.length === 1 ? why[0].replace(/^[\d,]+ /, '') : why.join(L(', ', '、'))
+  // how many of everyone picked this channel actually reaches (the sender doesn't need the reasons); everyone: green
+  const n = k === 'push' ? rc.push : k === 'desktop' ? rc.desktop : rc.email, all = n === rc.total
   return (
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
       <span className="flex items-start gap-3">
         <IconBox icon={meta.icon} tone={on ? 'info' : 'neutral'} />
-        <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:last-child]:whitespace-normal" />
+        <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:first-child]:font-semibold [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
       {hasR ? (
-        <span className="flex flex-col gap-0.5 border-t border-divider pt-2 pl-9">
-          <span className="text-body"><span className="font-medium tabular-nums">{fmtN(n)} / {fmtN(rc.total)}</span> {L(rc.total === 1 ? 'person can receive' : 'people can receive', '人可收到')}</span>
-          {miss > 0 ? <span className="text-caption text-fg-secondary">{L(fmtN(miss) + ' can’t receive: ', fmtN(miss) + ' 人收不到：') + whyText}</span> : null}
+        <span className={cn('border-t border-divider pt-2 pl-9 text-caption tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>
+          {fmtN(n)} / {fmtN(rc.total)} {L(rc.total === 1 ? 'person can receive' : 'people can receive', '人可收到')}
         </span>
       ) : null}
     </label>
@@ -318,7 +309,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
         {c.ch.desktop ? (
           <FormatBlock title={CHN.desktop.name}>
             {c.ch.push ? null : noNotif}
-            <FormField id="f-dsender" label={L('Sender', '寄件人')} count={c.dSender.length + ' / ' + LIM.sender} over={c.dSender.length > LIM.sender} hint={L('Optional', '選填')} error={edSender}>
+            <FormField id="f-dsender" label={L('Sender (Optional)', '寄件人（選填）')} count={c.dSender.length + ' / ' + LIM.sender} over={c.dSender.length > LIM.sender} error={edSender}>
               <Input id="f-dsender" value={c.dSender} error={!!edSender} onChange={ev => m.setC({ dSender: ev.target.value })} />
             </FormField>
             <FormField id="f-dtitle" label={L('Title', '標題')} required count={c.dTitle.length + ' / ' + LIM.dTitle} over={c.dTitle.length > LIM.dTitle} error={edTitle}>

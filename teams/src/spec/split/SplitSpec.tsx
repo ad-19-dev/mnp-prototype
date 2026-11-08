@@ -515,7 +515,7 @@ function Modals() {
         ]} />
         <div className="spec-gallery">
           <figure><figcaption><b>Email（內部人員與外部聯絡人）</b><span>沒有 SMS 備援，三欄；外部 Email 排在最後，Org 是 External。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 未送出名單" /></div></figure>
-          <figure><figcaption><b>傳送錯誤</b><span>表格上方是錯誤提示（原因與建議）；按鈕同樣是 Resend。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
+          <figure><figcaption><b>傳送錯誤</b><span>表格上方不放錯誤提示，只有名單與原因；按鈕同樣是 Resend。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
       </Section>
       <Section eyebrow="Confirm" title="取消傳送與立即傳送" lead="寬 480：標題、一句說明、兩個按鈕。說明寫出是哪一個通道；只作用在這個通道。">

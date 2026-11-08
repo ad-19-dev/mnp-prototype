@@ -428,7 +428,6 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
           </DialogHeader>
           <DialogBody>
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
-              {r.err ? <Banner tone="error" title={tx(r.err.title)}>{tx(r.err.text)}</Banner> : null}
               <DataTable tableOptions={NO_HIDE} columns={notSentCols(list.some(f => !!f.fallback)) as any} data={list} bordered height="380px" getRowId={(_, i) => String(i)} />
             </div>
           </DialogBody>

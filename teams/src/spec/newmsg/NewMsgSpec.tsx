@@ -224,7 +224,7 @@ function Step1() {
         ]} />
         <Notes items={[
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。有收件人時，卡片下方分隔線之後顯示這個通道實際會送到的人數（勾不勾都顯示，方便選通道）。' },
-          { title: '每個通道收得到幾人', body: <>第一行 <Copy en="n / total people can receive" zh="n / 總人數 人可收到" />（total 是所有收件人，外部人員也算）。有人收不到時第二行 <Copy en="m can’t receive: <原因>" zh="m 人收不到：<原因>" />（次要小字）。原因：Device Notifications 是 no registered device 與 external contacts；Desktop OS 是 no desktop agent 與 external contacts；Email 是 external phones。只有一種原因時不重複寫數字（例如 1 can’t receive: no desktop agent）。</> },
+          { title: '每個通道收得到幾人', body: <>卡片下方一行次要小字 <Copy en="n / total people can receive" zh="n / 總人數 人可收到" />（total 是所有收件人，外部人員也算）；全部收得到時這行是綠色。不寫收不到的原因，寄件人不需要知道。卡片標題用半粗體，比人數明顯。</> },
           { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，通道下方一行：警示三角形圖示加紅字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，後面接藍色連結 <Copy en="See who" zh="查看是誰" />，點了開名單。都收得到時不顯示。</> },
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」「外部人員沒勾對應通道」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點 See who 看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、超過 500 人、沒有通道、緊急送出沒填原因。' },
           { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },
@@ -280,7 +280,7 @@ function Step2() {
           ['Device Notifications', 'Sender', '是', '26', <><Copy en="Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS)." zh="收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。" />{REQ}<Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
           ['', 'Content', '是', '534', <>列表上的標題取內容的第一行。{REQ}</>],
           ['SMS', 'SMS text', '是', '534', <>區塊說明 <Copy en="Sent as a backup via SMS only if the push notification fails to send." zh="只有推播傳送失敗時，才會用 SMS 補送。" />提示 <Copy en="Links won’t open in SMS." zh="SMS 裡的連結無法開啟。" />{REQ}</>],
-          ['Desktop OS', 'Sender', '否', '26', '錯誤同 Device Notifications 的 Sender。'],
+          ['Desktop OS', 'Sender', '否', '26', '欄位標題 Sender (Optional)，下方沒有說明文字。錯誤同 Device Notifications 的 Sender。'],
           ['', 'Title', '是', '20', REQ],
           ['', 'Content', '是', '70', <><Copy en="Supports Chinese, English, and numbers only." zh="僅支援中文、英文、數字。" />{REQ}</>],
           ['Email', 'Subject', '是', '70', REQ],
