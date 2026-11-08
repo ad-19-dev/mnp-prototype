@@ -148,6 +148,12 @@ await step('s1-types', async () => {
   await p.getByRole('heading', { name: 'Audiences' }).scrollIntoViewIfNeeded();
   const sec = p.getByRole('heading', { name: 'Audiences' }).locator('xpath=ancestor::section[1]');
   await shot('s1-types', (await sec.count()) ? sec : null, [], 12);
+  // external contacts whose channel is on: the yellow "your supervisor must approve" box under Channels
+  await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
+  await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
+  await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
+  const chs = p.getByRole('heading', { name: 'Channels' }).locator('xpath=ancestor::section[1]');
+  await shot('s1-ext', (await chs.count()) ? chs : null, [], 12);
 });
 
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
