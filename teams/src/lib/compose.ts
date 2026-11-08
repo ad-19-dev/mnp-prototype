@@ -168,7 +168,8 @@ export function errs(c: Compose, groups: Group[]): Errs {
   return e
 }
 export function stepOk(n: number, e: Errs) {
-  if (n === 1) return !e.recv && !e.ch && !e.ext && !e.extp && !e.urgent
+  // people a channel can't reach are only a notice (the red line under Channels), never a reason to stop on this step
+  if (n === 1) return !e.recv && !e.ch && !e.urgent
   if (n === 2) return !e.sender && !e.title && !e.content && !e.dsender && !e.dtitle && !e.dcontent && !e.sms && !e.subject && !e.body
   return !e.sched
 }

@@ -148,7 +148,7 @@ function Frame() {
         ]} />
         <Notes items={[
           { title: '按鈕樣式', body: 'Cancel、Back 與左側按鈕都是 tertiary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
-          { title: 'Next', body: '按下時檢查這一步，有錯就留在這一步並顯示錯誤。' },
+          { title: 'Next', body: '按下時檢查這一步，有錯就留在這一步並顯示錯誤。「有人收不到訊息」只是提醒，不算錯誤，不擋 Next。' },
           { title: 'Save as group', body: '沒有收件人時停用。' },
           { title: 'Send me a test', body: '內容有錯時不寄，toast：Finish the message first；成功時 toast：Test sent。' },
         ]} />
@@ -225,6 +225,7 @@ function Step1() {
         <Notes items={[
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片內只有名稱與說明，沒有其他提示。' },
           { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，通道下方一行：警示三角形圖示加紅字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，後面接藍色連結 <Copy en="See who" zh="查看是誰" />，點了開名單。都收得到時不顯示。</> },
+          { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」「外部人員沒勾對應通道」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點 See who 看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、超過 500 人、沒有通道、緊急送出沒填原因。' },
           { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },
           { title: '需要主管核准', body: <>外部收件人的對應通道有勾（外部電話看 SMS 備援，外部 Email 看 Email）時，通道下方出現黃色提示框 <Copy en="Includes n external audiences. Your supervisor, <主管>, must approve." zh="包含 n 位外部收件人，需要主管 <主管> 核准。" />。</> },
         ]} />
@@ -249,8 +250,8 @@ function Step1() {
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '收件人表格下方（紅字加警示三角形；搜尋框不變紅）'],
           ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '收件人表格下方；右上角人數變紅'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '通道下方'],
-          ['有外部 Email 但沒勾 Email（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '通道下方'],
-          ['有外部電話但沒勾 SMS 備援（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />, '通道下方'],
+          ['有外部 Email 但沒勾 Email（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現；只提醒，不擋 Next）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '通道下方'],
+          ['有外部電話但沒勾 SMS 備援（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現；只提醒，不擋 Next）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />, '通道下方'],
           ['緊急送出沒填原因', REQ, 'Reason 欄位下方'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道" />
@@ -259,11 +260,11 @@ function Step1() {
       <Section eyebrow="Step 1" title="紅字與提醒一覽" lead="步驟 1 裡所有會出現紅字、黃色提示的情況。紅字都是警示三角形加紅色文字；提示框的顏色看風險：黃色要使用者留意，灰色只是告知。">
         <SpecTable head={['情況', '顯示', '樣式', '位置', '什麼時候出現']} nowrap={[0]} rows={[
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後'],
-          ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '紅字；右上角 n / 500 變紅；搜尋框變紅框', '收件人表格下方', '一超過就出現'],
+          ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '紅字；右上角 n / 500 變紅；搜尋框不變紅', '收件人表格下方', '一超過就出現；會擋 Next'],
           ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後'],
-          ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列'],
-          ['有人所有通道都收不到', <><Copy en="n people can’t get the message" zh="n 人收不到訊息" />＋藍色連結 See who</>, '紅字加藍色連結', '通道下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失'],
+          ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列。只提醒，不擋 Next'],
+          ['有人所有通道都收不到', <><Copy en="n people can’t get the message" zh="n 人收不到訊息" />＋藍色連結 See who</>, '紅字加藍色連結', '通道下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失。只提醒，不擋 Next'],
           ['緊急送出沒填原因、超過 200 字', <><Copy en="This field is required." zh="此欄位為必填。" />　<Copy en="Up to 200 characters." zh="最多 200 字。" /></>, '欄位下方紅字；輸入框紅框；字數變紅', 'Reason 欄位', '必填：按過 Next 之後；超過 200 字：立刻'],
           ['有外部收件人，而且他們需要的通道有勾', <Copy en="Includes n external audiences. Your supervisor, <主管>, must approve." zh="包含 n 位外部收件人，需要主管 <主管> 核准。" />, '黃色提示框', '通道下方', '即時；外部電話看 SMS 備援，外部 Email 看 Email'],
           ['緊急送出，但有外部收件人', <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" />, '灰色提示框', 'SMS 備援的核准提示框裡', '勾了緊急而且有外部收件人時'],
@@ -426,8 +427,8 @@ function Errors() {
         ['1', '沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />],
         ['1', '超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />],
         ['1', '沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />],
-        ['1', '外部 Email 沒有 Email 通道（只在沒選任何通道時單獨出現）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />],
-        ['1', '外部電話沒有 SMS 備援（只在沒選任何通道時單獨出現）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />],
+        ['1', '外部 Email 沒有 Email 通道（只在沒選任何通道時單獨出現；不擋 Next）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />],
+        ['1', '外部電話沒有 SMS 備援（只在沒選任何通道時單獨出現；不擋 Next）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />],
         ['1', '緊急原因', <>{REQ}超過 200 字：Up to 200 characters.</>],
         ['2', '所有必填欄位', REQ],
         ['2', '所有有上限的欄位', <Copy en="Up to n characters." zh="最多 n 字。" />],

@@ -192,7 +192,6 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RecvInput
             id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(g => groupInSpace(g))}
-            bad={total > CAP}
             isAdded={it => c.receivers.some(t => t.key === riKey(it))}
             onAdd={it => { const k = riKey(it); if (it.kind === 'ext') m.addRecv({ key: k, type: 'ext', email: it.value }); else m.addRecv({ key: k, type: it.kind, id: it.id }) }}
             extra={<Button variant="tertiary" startIcon={Upload} onClick={() => m.openImport()}>{L('Batch import', '批次匯入')}</Button>}
