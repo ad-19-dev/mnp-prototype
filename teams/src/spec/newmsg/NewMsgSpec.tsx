@@ -258,17 +258,17 @@ function Step1() {
       </Section>
 
       <Section eyebrow="Step 1" title="紅字與提醒一覽" lead="步驟 1 裡所有會出現紅字、黃色提示的情況。紅字都是警示三角形加紅色文字；提示框的顏色看風險：黃色要使用者留意，灰色只是告知。">
-        <SpecTable head={['情況', '顯示', '樣式', '位置', '什麼時候出現']} nowrap={[0]} rows={[
-          ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後'],
-          ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '紅字；右上角 n / 500 變紅；搜尋框不變紅', '收件人表格下方', '一超過就出現；會擋 Next'],
-          ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻'],
-          ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後'],
-          ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列。只提醒，不擋 Next'],
-          ['有人所有通道都收不到', <><Copy en="n people can’t get the message" zh="n 人收不到訊息" />＋藍色連結 See who</>, '紅字加藍色連結', '通道下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失。只提醒，不擋 Next'],
-          ['緊急送出沒填原因、超過 200 字', <><Copy en="This field is required." zh="此欄位為必填。" />　<Copy en="Up to 200 characters." zh="最多 200 字。" /></>, '欄位下方紅字；輸入框紅框；字數變紅', 'Reason 欄位', '必填：按過 Next 之後；超過 200 字：立刻'],
-          ['有外部收件人，而且他們需要的通道有勾', <Copy en="Includes n external audiences. Your supervisor, <主管>, must approve." zh="包含 n 位外部收件人，需要主管 <主管> 核准。" />, '黃色提示框', '通道下方', '即時；外部電話看 SMS 備援，外部 Email 看 Email'],
-          ['緊急送出，但有外部收件人', <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" />, '灰色提示框', 'SMS 備援的核准提示框裡', '勾了緊急而且有外部收件人時'],
-          ['勾了 SMS 備援，但有人沒有電話', <Copy en="<名字> has no phone number and won’t get SMS." zh="<名字> 沒有電話，收不到 SMS。" />, '灰色提示框', '收件人表格下方', '即時'],
+        <SpecTable head={['情況', '顯示', '樣式', '位置', '什麼時候出現', '擋 Next 嗎']} nowrap={[0]} rows={[
+          ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後', '擋'],
+          ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '紅字；右上角 n / 500 變紅；搜尋框不變紅', '收件人表格下方', '一超過就出現', '擋'],
+          ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻', '不擋；只是這一筆加不進去'],
+          ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後', '擋'],
+          ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列', '不擋（沒選通道本身會擋）'],
+          ['有人所有通道都收不到', <><Copy en="n people can’t get the message" zh="n 人收不到訊息" />＋藍色連結 See who</>, '紅字加藍色連結', '通道下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失', '不擋'],
+          ['緊急送出沒填原因、超過 200 字', <><Copy en="This field is required." zh="此欄位為必填。" />　<Copy en="Up to 200 characters." zh="最多 200 字。" /></>, '欄位下方紅字；輸入框紅框；字數變紅', 'Reason 欄位', '必填：按過 Next 之後；超過 200 字：立刻', '擋'],
+          ['有外部收件人，而且他們需要的通道有勾', <Copy en="Includes n external audiences. Your supervisor, <主管>, must approve." zh="包含 n 位外部收件人，需要主管 <主管> 核准。" />, '黃色提示框', '通道下方', '即時；外部電話看 SMS 備援，外部 Email 看 Email', '不擋'],
+          ['緊急送出，但有外部收件人', <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" />, '灰色提示框', 'SMS 備援的核准提示框裡', '勾了緊急而且有外部收件人時', '不擋'],
+          ['勾了 SMS 備援，但有人沒有電話', <Copy en="<名字> has no phone number and won’t get SMS." zh="<名字> 沒有電話，收不到 SMS。" />, '灰色提示框', '收件人表格下方', '即時', '不擋'],
         ]} />
         <Big name="s1-ext" title="有外部收件人時的黃色提示框" sub="外部 Email 與外部電話，通道都有勾" />
       </Section>
@@ -315,6 +315,15 @@ function Step2() {
           ['只勾 Email', '沒勾 Device Notifications 與 Desktop OS、Email 還是空的，而通知欄位已經填了：用通知的標題與內容預填 Email 主旨與內文。', '—'],
         ]} />
       </Section>
+      <Section eyebrow="Step 2" title="紅字出現的時機">
+        <SpecTable head={['情況', '紅字內容', '什麼時候出現', '擋 Next 嗎']} nowrap={[0]} rows={[
+          ['必填欄位沒填', <Copy en="This field is required." zh="此欄位為必填。" />, '按過 Next 後；按 Send me a test、Save as template 時內容有錯也算', '擋'],
+          ['超過字數上限', <Copy en="Up to n characters." zh="最多 n 字。" />, '即時', '擋'],
+          ['Sender 有不允許的字元', <Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" />, '即時', '擋'],
+          ['Email Content 超過 100 KB', <Copy en="Message content exceeds the 100 KB limit…" zh="訊息內容超過 100 KB 上限…" />, '即時', '擋'],
+          ['Send me a test、Save as template 時內容有錯', <><Copy en="Finish the message first" zh="請先完成訊息內容" />（紅色 toast）</>, '按下按鈕當下', '—'],
+        ]} />
+      </Section>
     </>
   )
 }
@@ -338,6 +347,16 @@ function Step3() {
           { title: '各通道的收件人數', body: 'Device Notifications：有裝置的人。SMS：可以寄 SMS 的人加外部電話。Desktop OS：有桌面程式的人。Email：所有人加外部 Email。' },
           { title: '排程時間', body: '選 Scheduled send 時預設明天 09:00；改回 Send now 欄位隱藏，再選回來保留上次選的時間。時間填錯的錯誤，填了值就顯示，不用等按 Create message。' },
           { title: 'Send me a test', body: '只檢查步驟 2 的內容。有錯時不寄，標記步驟 2 的錯誤並出現紅色 toast；沒錯就寄給自己。' },
+        ]} />
+      </Section>
+      <Section eyebrow="Step 3" title="紅字出現的時機">
+        <SpecTable head={['情況', '紅字內容', '什麼時候出現', '擋 Create message 嗎']} nowrap={[0]} rows={[
+          ['排程時間沒填', <Copy en="This field is required." zh="此欄位為必填。" />, '按 Create message 被帶回這一步後', '擋'],
+          ['排程時間在過去或超過 3 個月', <Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" />, '即時（選了時間就檢查）', '擋'],
+        ]} />
+        <Notes items={[
+          { title: '不是紅字的提醒', body: 'Review 裡的「n people can’t get the message」是黃色警示色，不是錯誤，不擋送出。' },
+          { title: '按 Create message 時', body: '步驟 1 到 3 依序檢查，停在第一個有錯的步驟；那一步當作已經按過 Next，該步驟所有紅字一起出現並捲到第一個錯誤。' },
         ]} />
       </Section>
     </>
@@ -381,6 +400,14 @@ function Dialogs() {
           ['Remove all audiences?', <Copy en="Channels and text stay the same." zh="通道和內容不受影響。" />, 'Cancel、Remove all（紅色）'],
         ]} />
       </Section>
+      <Section eyebrow="Errors" title="對話框裡的紅字出現的時機">
+        <SpecTable head={['對話框', '情況', '紅字內容', '什麼時候出現', '擋什麼']} nowrap={[0]} rows={[
+          ['Save as group、Save as template', '名稱沒填', <Copy en="Enter a name." zh="請輸入名稱。" />, '按 Save 後', '擋 Save'],
+          ['Save as group、Save as template', '名稱超過 50 字、與這個空間已有的重名', <><Copy en="Up to 50 characters." zh="最多 50 字。" />　<Copy en="This name is taken." zh="這個名稱已經有人用了。" /></>, '即時', '擋 Save'],
+          ['Batch import', '有找不到的項目', '紅色標籤 n not found，下方列出每筆的原因', '按 Find matches 後', '不擋；找得到的照樣可以加入'],
+          ['Batch import', '上傳的檔案讀不到', <Copy en="Can’t read that file. Use .csv or .txt." zh="無法讀取檔案，請用 .csv 或 .txt。" />, '上傳當下（紅色 toast）', '—'],
+        ]} />
+      </Section>
     </>
   )
 }
@@ -421,34 +448,6 @@ function After() {
 // ---------- errors ----------
 function Errors() {
   return (
-    <>
-    <Section eyebrow="Timing" title="紅字出現的時機" lead="整個流程所有紅字的情況。「即時」是輸入或勾選當下就出現；「按過 Next 後」是使用者按過 Next（或在後面的步驟按 Create message 被帶回來）才出現；按之前欄位保持平靜，不會一進來就滿版紅字。">
-      <SpecTable head={['位置', '情況', '紅字內容', '什麼時候出現', '擋 Next 嗎']} nowrap={[0]} rows={[
-        ['步驟 1', '沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '按過 Next 後', '擋'],
-        ['步驟 1', '超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '即時', '擋'],
-        ['步驟 1', '搜尋輸入的格式不對、查不到', '見步驟 1「搜尋類型」表', '即時（輸入後）', '不擋；只是這一筆加不進去'],
-        ['步驟 1', '沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '按過 Next 後', '擋'],
-        ['步驟 1', '外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <Copy en="n external emails can only get Email…" zh="n 個外部 Email 只能收 Email…" />, '即時，而且只在一個通道都沒勾時單獨出現', '不擋（沒選通道本身會擋）'],
-        ['步驟 1', '有人所有通道都收不到', <><Copy en="n people can’t get the message" zh="n 人收不到訊息" />＋藍色 See who</>, '即時', '不擋'],
-        ['步驟 1', '緊急送出沒填原因', <Copy en="This field is required." zh="此欄位為必填。" />, '按過 Next 後', '擋'],
-        ['步驟 1', '緊急原因超過 200 字', <Copy en="Up to 200 characters." zh="最多 200 字。" />, '即時', '擋'],
-        ['步驟 2', '必填欄位沒填', <Copy en="This field is required." zh="此欄位為必填。" />, '按過 Next 後；按 Send me a test、Save as template 時內容有錯也算', '擋'],
-        ['步驟 2', '超過字數上限', <Copy en="Up to n characters." zh="最多 n 字。" />, '即時', '擋'],
-        ['步驟 2', 'Sender 有不允許的字元', <Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" />, '即時', '擋'],
-        ['步驟 2', 'Email Content 超過 100 KB', <Copy en="Message content exceeds the 100 KB limit…" zh="訊息內容超過 100 KB 上限…" />, '即時', '擋'],
-        ['步驟 3', '排程時間沒填', <Copy en="This field is required." zh="此欄位為必填。" />, '按 Create message 被帶回來後', '擋 Create message'],
-        ['步驟 3', '排程時間在過去或超過 3 個月', <Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" />, '即時（選了時間就檢查）', '擋 Create message'],
-        ['對話框', 'Save as group、Save as template 名稱沒填', <Copy en="Enter a name." zh="請輸入名稱。" />, '按 Save 後', '擋 Save'],
-        ['對話框', '名稱超過 50 字、與這個空間已有的重名', <><Copy en="Up to 50 characters." zh="最多 50 字。" />　<Copy en="This name is taken." zh="這個名稱已經有人用了。" /></>, '即時', '擋 Save'],
-        ['對話框', 'Batch import 有找不到的項目', '紅色標籤 n not found，下方列出每筆的原因', '按 Find matches 後', '不擋；找得到的照樣可以加入'],
-        ['Toast', 'Send me a test、Save as template 時內容有錯', <Copy en="Finish the message first" zh="請先完成訊息內容" />, '即時', '—'],
-        ['Toast', 'Batch import 上傳的檔案讀不到', <Copy en="Can’t read that file. Use .csv or .txt." zh="無法讀取檔案，請用 .csv 或 .txt。" />, '上傳當下', '—'],
-      ]} />
-      <Notes items={[
-        { title: '按 Create message 時', body: '步驟 1 到 3 依序檢查，停在第一個有錯的步驟；那一步當作已經按過 Next，所有該步驟的紅字一起出現，並捲到第一個錯誤。' },
-        { title: '不是紅字的提醒', body: '步驟 3 Review 裡的「n people can’t get the message」是黃色（警示色）提醒，不是錯誤；步驟 1 的黃色與灰色提示框見步驟 1「紅字與提醒一覽」。' },
-      ]} />
-    </Section>
     <Section eyebrow="Errors" title="錯誤訊息總表" lead="錯誤都顯示在欄位或區塊下方（紅字），欄位變紅框；按 Next 或 Create message 時檢查，之後邊改邊更新。">
       <SpecTable head={['步驟', '欄位或情況', '錯誤訊息']} nowrap={[0, 1]} rows={[
         ['1', '沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />],
@@ -467,6 +466,5 @@ function Errors() {
         ['對話框', 'Save as group、Save as template 的名稱', <><Copy en="Enter a name." zh="請輸入名稱。" />　<Copy en="Up to 50 characters." zh="最多 50 字。" />　<Copy en="This name is taken." zh="這個名稱已經有人用了。" /></>],
       ]} />
     </Section>
-    </>
   )
 }
