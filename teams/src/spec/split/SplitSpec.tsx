@@ -151,7 +151,7 @@ function Overview() {
       <Section eyebrow="Concept" title="一個通道一筆紀錄" lead="發送時可以一次選好幾個通道；訊息紀錄則是每個通道各一筆，每一筆有自己的狀態與收件人數。">
         <SpecTable head={['發送時的選擇', '列表上的紀錄', '通道欄']} nowrap={[0]} rows={[
           ['Device Notifications', '1 筆', '手機圖示'],
-          ['Device Notifications ＋ SMS 備援', '1 筆', '手機＋簡訊圖示'],
+          ['Device Notifications ＋ SMS 備援', '1 筆', '手機圖示（滑過顯示 Device Notifications (SMS)）'],
           ['Desktop OS', '1 筆', '螢幕圖示'],
           ['Email', '1 筆', '信封圖示'],
           ['好幾個通道（例：Device Notifications ＋ SMS 備援 ＋ Email）', '每個通道一筆（此例 2 筆）', '同一則訊息的紀錄排在一起，順序：Device Notifications → Desktop OS → Email'],
@@ -179,7 +179,7 @@ function ListTab() {
     <>
       <Section eyebrow="Page" title="列表" lead="一列一個通道的紀錄。頁首、搜尋與篩選、表格、分頁。">
         <Figure label="個人發送空間" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
-          { n: 1, title: '通道', body: <>只顯示圖示，滑過顯示通道名稱。Device Notifications (SMS) 是手機與簡訊兩個圖示。</> },
+          { n: 1, title: '通道', body: <>只顯示圖示，滑過顯示通道名稱。Device Notifications (SMS) 和 Device Notifications 一樣只顯示手機圖示，不顯示簡訊圖示（SMS 是備援，不鼓勵使用，不給它單獨的圖示）；要找出有 SMS 備援的紀錄，用 Channel 篩選。</> },
           { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開面板）加一行內文，過長截斷，不顯示滑過提示。Email 顯示主旨與內文；Device Notifications (SMS) 顯示 Device Notifications 的文字。</> },
           { n: 3, title: '狀態', body: '這一筆的狀態，見「狀態與合併規則」。' },
           { n: 4, title: '收件人數', body: <>這個通道要寄給的人數，數字與表頭都齊右。<C>Device Notifications (SMS)</C> 用 Device Notifications 的人數。</> },
@@ -206,7 +206,7 @@ function ListTab() {
       <Section eyebrow="Group" title="同一次發送的紀錄" lead="同一個訊息 ID 的紀錄排在一起，但每一列都是獨立的紀錄：欄位都顯示，操作也只作用在那一列。">
         <Figure label="同一個訊息 ID 的兩筆紀錄" sub="Device Notifications (SMS) ＋ Email" shot="group" max={1180} wideNotes notes={[
           { n: 1, title: '寄件人', body: 'Email 沒有寄件人，顯示「—」。' },
-          { n: 2, title: '通道', body: 'Device Notifications (SMS)：手機與簡訊兩個圖示。' },
+          { n: 2, title: '通道', body: 'Device Notifications (SMS)：只有手機圖示，滑過顯示名稱。' },
           { n: 3, title: '狀態與未送出', body: '每一筆各自顯示。' },
           { n: 4, title: '收件人數', body: '每一筆是自己通道的人數。' },
           { n: 5, title: '訊息 ID', body: '兩列的訊息 ID 相同，表示是同一次發送。' },
@@ -227,6 +227,7 @@ function ListTab() {
         </div>
         <Notes items={[
           { title: '搜尋範圍', body: '訊息 ID、標題、內容、寄件人、模板、建立者（各通道自己的文字，例如 Email 的主旨）。' },
+          { title: '載入中', body: <>只有表格的位置在載入：搜尋框與篩選照常顯示，表格換成置中的 <Copy en="Loading messages…" zh="正在載入訊息…" />（旁邊是轉圈圖示），分頁不顯示。</> },
           { title: 'Clear', body: '篩選選單底部。有選項時是藍色可點，沒有選項時停用。' },
         ]} />
       </Section>

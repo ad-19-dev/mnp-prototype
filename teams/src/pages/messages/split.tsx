@@ -85,14 +85,14 @@ export function recText(r: Row, k: Channel) {
 // only Device Notifications and Desktop OS carry a sender name
 const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
 
-// the channel as icons only; its name is in the tooltip and the accessible label
+// the channel as an icon only; its name is in the tooltip and the accessible label. Device Notifications (SMS) shows
+// the phone alone: SMS is a backup that isn't encouraged (it costs extra), so it doesn't get its own icon.
 function ChCell({ k }: { k: Channel }) {
   const I = CHN[k === 'sms' ? 'push' : k].icon
   return (
     <Tip text={chName(k)}>
       <span tabIndex={0} aria-label={chName(k)} className="inline-flex items-center gap-1 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
         <Tag size="sm" color="neutral" icon={I} aria-hidden className="[&_[data-tag-text]]:hidden" />
-        {k === 'sms' ? <Tag size="sm" color="neutral" icon={CHN.sms.icon} aria-hidden className="[&_[data-tag-text]]:hidden" /> : null}
       </span>
     </Tip>
   )
