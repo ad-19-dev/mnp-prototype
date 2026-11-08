@@ -178,7 +178,6 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
         <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
-      {tpl ? <span className={cn('text-caption', tplHas ? 'text-success-text' : 'text-fg-secondary')}>{tplHas ? L('Template has text for this', '模板有這個通道的內容') : L('Template has no text for this', '模板沒有這個通道的內容')}</span> : null}
     </label>
   )
 }
@@ -243,7 +242,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           {ap.mgr ? <Banner tone="warning">{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</Banner> : null}
           {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
           {hasR && anyCh && rc.unrN ? (
-            <div><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</Button></div>
+            <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="text-error-text">{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button></p>
           ) : null}
         </div>
       </Section>
@@ -303,7 +302,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
             <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS).', '收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。')} error={eSender}>
               <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
             </FormField>
-            <FormField id="f-content" label={L('Content', '內容')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} hint={L('Lock screens show about 4 lines.', '鎖定畫面約顯示 4 行。')} error={eContent}>
+            <FormField id="f-content" label={L('Content', '內容')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} error={eContent}>
               <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value, title: pushTitle(ev.target.value) })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
             </FormField>
           </FormatBlock>
@@ -440,7 +439,7 @@ function FootBar({ m }: { m: SendCtl }) {
       <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
         {c.only ? (
           <div className="ml-auto flex flex-wrap gap-2">
-            <Button variant="text" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
+            <Button variant="tertiary" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
             <Button variant="primary" onClick={() => m.saveContent()}>{L('Save', '儲存')}</Button>
           </div>
         ) : <>
@@ -450,7 +449,7 @@ function FootBar({ m }: { m: SendCtl }) {
           {c.step === 3 ? <Button variant="tertiary" onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Button variant="text" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
+          <Button variant="tertiary" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
           {c.step > 1 ? <Button variant="tertiary" onClick={() => m.goStep(c.step - 1)}>{L('Back', '上一步')}</Button> : null}
           {c.step < 3
             ? <Button variant="primary" onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>

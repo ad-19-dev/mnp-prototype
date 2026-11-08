@@ -140,9 +140,7 @@ export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, o
         {typed ? <Button variant="primary" startIcon={Plus} disabled={!first} onClick={() => first && add(first.item)}>{L('Add', '新增')}</Button> : null}
         {extra}
       </div>
-      <span className={cn('text-caption', showErr ? 'text-error-text' : 'text-fg-secondary')}>
-        {showErr ? r.err : r.tip || (typed ? '' : L('Press Enter to add the top match.', '按 Enter 加入第一筆。'))}
-      </span>
+      {showErr ? <span className="text-caption text-error-text">{r.err}</span> : null}
     </div>
   )
 }

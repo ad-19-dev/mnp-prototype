@@ -94,10 +94,10 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
       <Section eyebrow="1" title="步驟 1：收件人與通道" lead={<>規格見「{link('s1', '步驟 1')}」。</>}>
         <div className="flow-branches">
           <Card kind="page" title="空白" when="剛進入" shots={['s1-empty']} then="收件人搜尋、Batch import、三張通道卡片。" />
-          <Card kind="page" title="搜尋收件人" when="在搜尋框輸入" shots={['s1-search']} then="下拉選單列出符合的人；按 Enter 加入第一筆。" />
+          <Card kind="page" title="搜尋收件人" when="在搜尋框輸入" shots={['s1-search']} then="下拉選單列出符合的人；按 Enter 加入第一筆（搜尋框下方沒有說明文字）。" />
           <Card kind="dialog" title="Batch import" when="按 Batch import" shots={['dlg-import', 'dlg-import-result']} then="選資料類型、貼上或上傳名單 → Find matches → 確認後加入。" />
           <Card kind="page" title="選好收件人與通道" when="加入收件人、勾通道" shots={['s1-filled']} then="收件人表格顯示每位能收到哪些通道。" />
-          <Card kind="dialog" title="n people can’t get the message" when="點通道下方的藍字" shots={['s1-unreach', 'dlg-unreach']} then="列出所有選到的通道都收不到的人與原因。" />
+          <Card kind="dialog" title="n people can’t get the message" when="點通道下方的 See who" shots={['s1-unreach', 'dlg-unreach']} then="列出所有選到的通道都收不到的人與原因。" />
           <Card kind="page" title="SMS 備援與緊急送出" when="勾 Device Notifications (SMS)，再勾 It’s urgent" shots={['s1-sms', 's1-urgent']} then="勾了緊急，必填原因。" />
           <Card kind="dialog" title="Save as group" when="頁尾 Save as group" shots={['dlg-save-group']} then="把目前的收件人存成群組。" />
           <Card kind="page" title="驗證錯誤" when="沒有收件人或通道就按 Next" shots={['s1-error']} then="錯誤顯示在對應的區塊下方。" />
@@ -147,7 +147,7 @@ function Frame() {
           ['3', <Copy en="Send me a test" zh="寄測試給我" />, 'Cancel、Back、Create message'],
         ]} />
         <Notes items={[
-          { title: '按鈕樣式', body: 'Cancel 是 text；Back 與左側按鈕是 tertiary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
+          { title: '按鈕樣式', body: 'Cancel、Back 與左側按鈕都是 tertiary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
           { title: 'Next', body: '按下時檢查這一步，有錯就留在這一步並顯示錯誤。' },
           { title: 'Save as group', body: '沒有收件人時停用。' },
           { title: 'Send me a test', body: '內容有錯時不寄，toast：Finish the message first；成功時 toast：Test sent。' },
@@ -165,7 +165,7 @@ function Step1() {
         <Big name="s1-filled" title="選好收件人與通道" sub="1680 寬" />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['類型選單', '搜尋框左側：Person、Org、Group、Phone。決定搜尋框找什麼；外部 Email 直接在 Person 輸入 Email 加入。'],
-          ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；下方說明 <Copy en="Press Enter to add the top match." zh="按 Enter 加入第一筆。" />已在名單上的選項顯示 Already added，不能再選。</>],
+          ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；搜尋框下方沒有說明文字已在名單上的選項顯示 Already added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
           ['收件人表格', '固定行高，每格一行、內容垂直置中（設計系統表格規則）。欄：Audience（個人是設計系統的人員顯示：頭像加姓名，組織、NT 帳號與工號在滑過的人員卡片；其他類型是圖示加名稱）、Type、People（組織與群組是藍字人數，點了看成員）、Can receive（各通道圖示，收不到的是刪除線）。列尾 × 移除。'],
           ['超過 6 筆', '表格上方出現篩選框 Filter audiences 與 Remove all（紅字，會先確認）。'],
@@ -188,8 +188,8 @@ function Step1() {
           [<Copy en="Email" zh="Email" />, <Copy en="Company mailbox, with formatting and files." zh="公司信箱，可加格式與附件。" />],
         ]} />
         <Notes items={[
-          { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。用了模板時，卡片下方寫這個模板有沒有這個通道的內容。' },
-          { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，通道下方一行藍字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，點了開名單。都收得到時不顯示。</> },
+          { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片內只有名稱與說明，沒有其他提示。' },
+          { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，通道下方一行：紅字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，後面接藍色連結 <Copy en="See who" zh="查看是誰" />，點了開名單。都收得到時不顯示。</> },
         ]} />
         <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
@@ -234,7 +234,7 @@ function Step2() {
         ]} />
         <SpecTable head={['區塊', '欄位', '必填', '上限', '說明與錯誤']} nowrap={[0, 1, 2, 3]} rows={[
           ['Device Notifications', 'Sender', '是', '26', <><Copy en="Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS)." zh="收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。" />{REQ}<Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
-          ['', 'Content', '是', '534', <>提示 <Copy en="Lock screens show about 4 lines." zh="鎖定畫面約顯示 4 行。" />列表上的標題取內容的第一行。{REQ}</>],
+          ['', 'Content', '是', '534', <>沒有提示文字。列表上的標題取內容的第一行。{REQ}</>],
           ['SMS', 'SMS text', '是', '534', <>區塊說明 <Copy en="Sent as a backup via SMS only if the push notification fails to send." zh="只有推播傳送失敗時，才會用 SMS 補送。" />提示 <Copy en="Links won’t open in SMS." zh="SMS 裡的連結無法開啟。" />{REQ}</>],
           ['Desktop OS', 'Sender', '否', '26', '錯誤同 Device Notifications 的 Sender。'],
           ['', 'Title', '是', '20', REQ],
@@ -281,7 +281,7 @@ function Dialogs() {
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），按鈕不放圖示，不放副標。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
           ['Batch import', '步驟 1 Batch import', '720', 'Find matches → Add n audiences'],
-          ['n people can’t get the message', '步驟 1 通道下方藍字', '720', '無（Close）'],
+          ['n people can’t get the message', '步驟 1 通道下方 See who', '720', '無（Close）'],
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
           ['Replace your text?', '步驟 2 選模板', '480', 'Replace'],
