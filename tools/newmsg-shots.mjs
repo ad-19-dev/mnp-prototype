@@ -130,6 +130,26 @@ await step('submit', async () => {
   await big(940); await p.screenshot({ path: `${OUT}/after-submit.jpg`, type: 'jpeg', quality: 80 }); marks['after-submit'] = { w: 1680, h: 940, marks: [] };
 });
 
+// one of each audience type on a fresh page, so the table shows every presentation
+await step('s1-types', async () => {
+  await p.goto('http://localhost:4190/index.html'); await wait(1500);
+  await p.getByRole('button', { name: 'New message' }).first().click(); await wait(900);
+  await big(1100);
+  const add = async (label, q) => {
+    if (label) {
+      await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
+      await p.getByRole('option', { name: label, exact: true }).click(); await wait(300);
+    }
+    const box = p.locator('[data-compose]').getByRole('textbox').first();
+    await box.fill(q); await wait(500); await box.press('Enter'); await wait(400);
+    await p.keyboard.press('Escape'); await wait(200);
+  };
+  await add(null, 'Chen'); await add('Org', 'PENG'); await add('Group', ''); await add('Phone', '0987654321'); await add('Email', 'amy@vendor-example.com');
+  await p.getByRole('heading', { name: 'Audiences' }).scrollIntoViewIfNeeded();
+  const sec = p.getByRole('heading', { name: 'Audiences' }).locator('xpath=ancestor::section[1]');
+  await shot('s1-types', (await sec.count()) ? sec : null, [], 12);
+});
+
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
 console.log(errs.length ? 'errors:\n' + errs.join('\n') : 'no errors');
 await b.close();

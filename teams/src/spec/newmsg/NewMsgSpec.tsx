@@ -178,6 +178,7 @@ function Step1() {
           ['外部 Email', '信封圖示、Email', '同左；下一行：External email · Email only'],
           ['外部電話', '電話圖示、號碼', '同左；下一行：External phone · SMS only'],
         ]} />
+        <Big name="s1-types" title="各類型收件人在表格中的呈現" sub="個人、組織、群組、外部電話、外部 Email 各一筆" />
         <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人']]} />
       </Section>
 
