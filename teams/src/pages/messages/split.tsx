@@ -110,8 +110,7 @@ function askCancel(m: SendCtl, x: Rec) {
 // a new message from this channel only: its channel, its text and the audiences it reached
 function duplicateCh(m: SendCtl, x: Rec) {
   const k = x.k
-  m.startCompose('duplicate', x.r, tagsFor(x.r, k))
-  m.setC({ ch: { push: k === 'push' || k === 'sms', desktop: k === 'desktop', email: k === 'email', sms: k === 'sms' } }, true)
+  m.startCompose('duplicate', x.r, tagsFor(x.r, k), k)
 }
 
 // lite: a channel row under its message row, where the message row holds the whole-message actions
@@ -415,8 +414,7 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
     if (!r) return
     const tags: RTag[] = list.map(f => f.ext ? { key: 'e:' + f.ext, type: 'ext' as const, email: f.ext } : { key: 'p:' + f.p!.id, type: 'person' as const, id: f.p!.id })
     close()
-    m.startCompose('resend', r, tags)
-    m.setC({ ch: { push: k === 'push' || k === 'sms', desktop: k === 'desktop', email: k === 'email', sms: k === 'sms' } }, true)
+    m.startCompose('resend', r, tags, k)
   }
   return (
     <Dialog open={!!r} onOpenChange={o => { if (!o) close() }}>

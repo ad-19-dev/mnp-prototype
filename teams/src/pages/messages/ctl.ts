@@ -183,17 +183,20 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     },
 
     // ---------- compose: setup ----------
-    startCompose(mode: Compose['mode'], r?: Row, recv?: Tag[]) {
+    startCompose(mode: Compose['mode'], r?: Row, recv?: Tag[], only?: Channel) {
       const c = blankCompose()
       c.mode = mode || 'new'
       c.htmlKey = (get().c.htmlKey || 0) + 1
       if (r) {
-        c.ch = { push: r.channels.indexOf('push') >= 0, desktop: r.channels.indexOf('desktop') >= 0, email: r.channels.indexOf('email') >= 0, sms: !!r.sms }
+        // one channel's record (Duplicate, Resend): that channel only, with its own text; otherwise every channel of the row
+        c.ch = only ? { push: only === 'push' || only === 'sms', desktop: only === 'desktop', email: only === 'email', sms: only === 'sms' } : { push: r.channels.indexOf('push') >= 0, desktop: r.channels.indexOf('desktop') >= 0, email: r.channels.indexOf('email') >= 0, sms: !!r.sms }
         c.sender = r.sender
         c.tplId = r.tpl || null
         c.smsText = r.smsText || ''
         if (c.ch.push) { c.title = r.title; c.content = r.content }
         if (c.ch.desktop) { const d = r.desk || (c.ch.push ? null : r); c.dSender = d ? d.sender : r.sender; c.dTitle = d ? d.title : r.title; c.dContent = d ? d.content : r.content }
+        // an Email that reuses the notification text starts from it
+        if (c.ch.email && !(r.email && r.email.mode === 'own')) Object.assign(c, seedEmail(c, r.title, textToHtml(r.content)))
         if (r.email && r.email.mode === 'own') {
           c.emailMode = 'own'
           c.subject = r.email.subject || ''
