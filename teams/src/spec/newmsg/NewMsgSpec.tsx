@@ -147,7 +147,7 @@ function Frame() {
           ['3', <Copy en="Send me a test" zh="寄測試給我" />, 'Cancel、Back、Create message'],
         ]} />
         <Notes items={[
-          { title: '按鈕樣式', body: 'Cancel 是 text；Back 與左側按鈕是 tertiary；Next 與 Create message 是 primary。' },
+          { title: '按鈕樣式', body: 'Cancel 是 text；Back 與左側按鈕是 tertiary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
           { title: 'Next', body: '按下時檢查這一步，有錯就留在這一步並顯示錯誤。' },
           { title: 'Save as group', body: '沒有收件人時停用。' },
           { title: 'Send me a test', body: '內容有錯時不寄，toast：Finish the message first；成功時 toast：Test sent。' },
@@ -167,16 +167,16 @@ function Step1() {
           ['類型選單', '搜尋框左側：Person、Org、Group、Phone。決定搜尋框找什麼；外部 Email 直接在 Person 輸入 Email 加入。'],
           ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；下方說明 <Copy en="Press Enter to add the top match." zh="按 Enter 加入第一筆。" />已在名單上的選項顯示 Already added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
-          ['收件人表格', '欄：Audience（頭像或圖示、名稱、說明）、Type、People（組織與群組是藍字人數，點了看成員）、Can receive（各通道圖示，收不到的是刪除線）。列尾 × 移除。'],
+          ['收件人表格', '固定行高，每格一行、內容垂直置中（設計系統表格規則）。欄：Audience（個人是設計系統的人員顯示：頭像加姓名，組織、NT 帳號與工號在滑過的人員卡片；其他類型是圖示加名稱）、Type、People（組織與群組是藍字人數，點了看成員）、Can receive（各通道圖示，收不到的是刪除線）。列尾 × 移除。'],
           ['超過 6 筆', '表格上方出現篩選框 Filter audiences 與 Remove all（紅字，會先確認）。'],
           ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audiences yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
         ]} />
-        <SpecTable head={['收件人類型', 'Audience 欄', '說明']} nowrap={[0]} rows={[
-          ['個人', '頭像、中文名 英文名', '組織代號 · NT · 工號'],
-          ['組織', '大樓圖示（灰色圓底）、組織代號', '組織代碼'],
-          ['群組', '兩個人圖示（灰色圓底）、群組名稱', '群組說明'],
-          ['外部 Email', '信封圖示、Email', 'Email only'],
-          ['外部電話', '電話圖示、號碼', 'SMS only'],
+        <SpecTable head={['收件人類型', '表格 Audience 欄', '詳情面板的收件人列表']} nowrap={[0]} rows={[
+          ['個人', '人員顯示：頭像、英文名 中文名', '頭像、中文名 英文名；下一行：組織代號 · NT · 工號'],
+          ['組織', '大樓圖示（灰色圓底）、組織代號', '同左；下一行：組織代碼'],
+          ['群組', '兩個人圖示（灰色圓底）、群組名稱', '同左；下一行：Audience group'],
+          ['外部 Email', '信封圖示、Email', '同左；下一行：External email · Email only'],
+          ['外部電話', '電話圖示、號碼', '同左；下一行：External phone · SMS only'],
         ]} />
         <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人']]} />
       </Section>

@@ -1,7 +1,7 @@
 // Send flow: 1 Receivers & channels, 2 Message, 3 Review, plus the approval result
 import * as React from 'react'
 import {
-  Button, Checkbox, DataTable, DatePicker, Empty, FileItem, FileUpload, Input, RadioGroup, RadioGroupItem, SegmentedControl, Select,
+  Button, Checkbox, DataTable, DatePicker, Empty, FileItem, FileUpload, Input, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
@@ -23,7 +23,7 @@ import {
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
-import { Banner, CHN, ChIcons, ErrText, FmtChips, FormField, IconBox, KV, Meter, PAvatar, Section, Two } from '../../components/ui'
+import { Banner, CHN, ChIcons, ErrText, FmtChips, FormField, IconBox, KV, Meter, PAvatar, Section, Two, personVal } from '../../components/ui'
 import { RecvInput, riKey } from '../../components/RecvInput'
 import { RichText } from '../../components/RichText'
 import { ChannelPreview, type PreviewChannel } from '../../components/ChannelPreview'
@@ -117,10 +117,15 @@ function RecvTable({ m }: { m: SendCtl }) {
     rcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
       const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
+      // one line per cell (DS table rule): people use the DS person display (org · NT · ID in its hover card)
+      const round = t.type === 'group' || t.type === 'org'
       return (
         <span className="flex min-w-0 items-center gap-2">
-          {p ? <PAvatar p={p} /> : <IconBox icon={Icon} tone={t.type === 'ext' && x.warn ? 'warn' : 'neutral'} />}
-          <Two a={x.label} b={x.sub} strong />
+          {p ? <PersonDisplay value={personVal(p)} />
+            : <>
+              {round ? <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><Icon className="size-3.5 text-fg-secondary" aria-hidden /></span> : <IconBox icon={Icon} tone={x.warn ? 'warn' : 'neutral'} />}
+              <span className="truncate text-body">{x.label}</span>
+            </>}
           {x.badgeBtn ? <Button size="xs" variant="secondary" onClick={() => m.openNumbers()}>{x.badge}</Button> : x.badge ? <Tag size="sm">{x.badge}</Tag> : null}
         </span>
       )
@@ -154,7 +159,7 @@ function RecvTable({ m }: { m: SendCtl }) {
           <Button variant="link" size="sm" danger className="ml-auto" onClick={() => m.askRemoveAll()}>{L('Remove all', '全部移除')}</Button>
         </div>
       ) : null}
-      <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} autoRowHeight getRowId={x => x.t.key}
+      <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
       <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
@@ -440,16 +445,16 @@ function FootBar({ m }: { m: SendCtl }) {
           </div>
         ) : <>
         <div className="flex flex-wrap gap-2">
-          {c.step === 1 ? <Button variant="tertiary" startIcon={UserPlus} disabled={!c.receivers.length} onClick={() => m.set({ sg: { name: '', desc: '', tried: false } })}>{L('Save as group', '存成群組')}</Button> : null}
-          {c.step === 2 ? <Button variant="tertiary" startIcon={LayoutTemplate} onClick={() => m.openSaveTpl()}>{L('Save as template', '存成模板')}</Button> : null}
-          {c.step === 3 ? <Button variant="tertiary" startIcon={FlaskConical} onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
+          {c.step === 1 ? <Button variant="tertiary" disabled={!c.receivers.length} onClick={() => m.set({ sg: { name: '', desc: '', tried: false } })}>{L('Save as group', '存成群組')}</Button> : null}
+          {c.step === 2 ? <Button variant="tertiary" onClick={() => m.openSaveTpl()}>{L('Save as template', '存成模板')}</Button> : null}
+          {c.step === 3 ? <Button variant="tertiary" onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Button variant="text" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
-          {c.step > 1 ? <Button variant="tertiary" startIcon={ChevronLeft} onClick={() => m.goStep(c.step - 1)}>{L('Back', '上一步')}</Button> : null}
+          {c.step > 1 ? <Button variant="tertiary" onClick={() => m.goStep(c.step - 1)}>{L('Back', '上一步')}</Button> : null}
           {c.step < 3
-            ? <Button variant="primary" endIcon={ChevronRight} onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>
-            : <Button variant="primary" startIcon={ap.need ? ShieldCheck : ap.skipped ? ShieldAlert : c.sendMode === 'schedule' ? CalendarClock : Send} onClick={() => m.submit()}>{primary}</Button>}
+            ? <Button variant="primary" onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>
+            : <Button variant="primary" onClick={() => m.submit()}>{primary}</Button>}
         </div>
         </>}
       </div>
