@@ -235,7 +235,7 @@ function Step2() {
         ]} />
         <SpecTable head={['區塊', '欄位', '必填', '上限', '說明與錯誤']} nowrap={[0, 1, 2, 3]} rows={[
           ['Device Notifications', 'Sender', '是', '26', <><Copy en="Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS)." zh="收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。" />{REQ}<Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
-          ['', 'Content', '是', '534', <>沒有提示文字。列表上的標題取內容的第一行。{REQ}</>],
+          ['', 'Content', '是', '534', <>列表上的標題取內容的第一行。{REQ}</>],
           ['SMS', 'SMS text', '是', '534', <>區塊說明 <Copy en="Sent as a backup via SMS only if the push notification fails to send." zh="只有推播傳送失敗時，才會用 SMS 補送。" />提示 <Copy en="Links won’t open in SMS." zh="SMS 裡的連結無法開啟。" />{REQ}</>],
           ['Desktop OS', 'Sender', '否', '26', '錯誤同 Device Notifications 的 Sender。'],
           ['', 'Title', '是', '20', REQ],
@@ -243,7 +243,19 @@ function Step2() {
           ['Email', 'Subject', '是', '70', REQ],
           ['', 'Content', '是', '—', <>文字編輯器（粗體、斜體、底線、連結、清單、清除格式）。提示 <Copy en="Supports text, tables, and images." zh="支援文字、表格、圖片。" />整體超過 100 KB：<Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" />{REQ}</>],
         ]} />
+        <SpecTable head={['區塊', '欄位', '提示文字（placeholder）']} nowrap={[0, 1]} rows={[
+          [<Copy en="Use template" zh="Use template" />, '模板選單', <><Copy en="Choose a template" zh="選擇模板" />；搜不到時顯示 <Copy en="No matching templates" zh="找不到符合的模板" /></>],
+          ['Device Notifications', 'Sender', <Copy en="e.g. IT Service Desk" zh="例如：IT Service Desk" />],
+          ['', 'Content', <Copy en="What’s happening and what to do" zh="發生什麼事、需要做什麼" />],
+          ['SMS', 'SMS text', <Copy en="Short version" zh="簡短版本" />],
+          ['Desktop OS', 'Sender', <Copy en="e.g. IT Service Desk" zh="例如：IT Service Desk" />],
+          ['', 'Title', <Copy en="One line people can act on" zh="一句話說清楚重點" />],
+          ['', 'Content', <Copy en="What’s happening and what to do" zh="發生什麼事、需要做什麼" />],
+          ['Email', 'Subject', <Copy en="Email subject" zh="Email 主旨" />],
+          ['', 'Content', <Copy en="Write the email…" zh="輸入 Email 內文…" />],
+        ]} />
         <Notes items={[
+          { title: '提示文字', body: '提示文字只在欄位是空的時候顯示，用淡灰色；一開始輸入就消失，不取代欄位標題。欄位下方另有說明文字的，見上表「說明與錯誤」。' },
           { title: '字數', body: '欄位右上角 n / 上限；超過時數字變紅，錯誤 Up to n characters.' },
           { title: '必填', body: <>沒填一律顯示 {REQ}</> },
         ]} />
