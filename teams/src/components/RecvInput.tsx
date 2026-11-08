@@ -31,7 +31,7 @@ interface Opt { item: RiItem; av?: Person; icon?: typeof Users; name: string; su
 // options for the dropdown, plus a format error when the typed value isn't valid
 function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefined, isAdded: (it: RiItem) => boolean) {
   const q = ri.q.trim(), low = q.toLowerCase(), out = { opts: [] as Opt[], err: '', tip: '' }
-  const person = (p: Person, meta?: string): Opt => ({ item: { kind: 'person', id: p.id }, av: p, name: p.zh + ' ' + p.en, sub: [p.org, p.nt, p.emp].filter(Boolean).join(' · '), meta: meta || '' })
+  const person = (p: Person, meta?: string): Opt => ({ item: { kind: 'person', id: p.id }, av: p, name: p.en + ' ' + p.zh, sub: [p.org, p.nt, p.emp].filter(Boolean).join(' · '), meta: meta || '' })
   const ext = (v: string): Opt => ({ item: { kind: 'ext', value: v }, icon: v.indexOf('@') < 0 ? Phone : Mail, name: v, sub: v.indexOf('@') < 0 ? L('External · SMS only', '外部 · 只收 SMS') : L('External · Email only', '外部 · 只收 Email'), meta: L('External', '外部') })
   if (ri.type === 'person') {
     if (!q) out.tip = ''

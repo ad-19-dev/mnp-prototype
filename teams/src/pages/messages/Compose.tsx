@@ -95,7 +95,7 @@ function RecvTable({ m }: { m: SendCtl }) {
     let label = '', sub = '', ppl: any[] = [], cnt = 1, warn = false, badge = '', badgeBtn = false
     if (t.type === 'person') {
       const p = PMAP[t.id!]; ppl = [p].filter(Boolean)
-      label = p ? p.zh + ' ' + p.en : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
+      label = p ? p.en + ' ' + p.zh : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
       const unres = false, noNum = sms && p && !p.co && !p.pp
       badge = unres ? L('Choose number', '選擇號碼') : noNum ? L('No phone', '無電話') : ''; badgeBtn = !!unres; warn = !!unres
     } else if (t.type === 'group' || t.type === 'org') {

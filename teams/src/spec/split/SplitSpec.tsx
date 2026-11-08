@@ -485,7 +485,7 @@ function Blocks() {
         <SpecTable head={['類型', '圖示', '名稱', '說明', '右側']} nowrap={[0]} rows={[
           ['組織', '大樓，墊 bg-muted 灰色圓底', '組織代號（純英文、很短，例：PUX）', '組織代碼（以數字為主，例：51031A）', <>人數連結 <C>21 people</C></>],
           ['群組', '兩個人（Users），墊 bg-muted 灰色圓底', '群組名稱', 'Audience group', '人數連結'],
-          ['個人', '頭像', '中文名 英文名', '組織代號 · NT 帳號 · 工號', '—'],
+          ['個人', '大頭照', '英文名 中文名', '組織代號 · NT 帳號 · 工號', '—'],
           ['外部 Email', '信封（Mail）', '電子郵件', 'External email · Email only', '—'],
           ['外部電話', '電話', '電話號碼', 'External phone · SMS only', '—'],
         ]} />

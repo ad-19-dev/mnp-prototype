@@ -23,7 +23,7 @@ import { L, P, niceDT, tx } from '../../lib/i18n'
 export function RecvTag({ t, groups }: { t: RTag; groups: Group[] }) {
   if (t.type === 'person') {
     const p = PMAP[t.id!]
-    return <Tip text={p ? p.nt + ' · ' + p.emp + ' · ' + p.org : ''}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" avatar={p ? <PAvatar p={p} size={16} /> : undefined}>{p ? p.zh + ' ' + p.en : t.id}</Tag></span></Tip>
+    return <Tip text={p ? p.nt + ' · ' + p.emp + ' · ' + p.org : ''}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" avatar={p ? <PAvatar p={p} size={16} /> : undefined}>{p ? p.en + ' ' + p.zh : t.id}</Tag></span></Tip>
   }
   if (t.type === 'group') {
     const g = groups.find(x => x.id === t.id) || { name: t.id, count: 0 }
@@ -138,7 +138,7 @@ export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }
               onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people, group: g ? g.id : undefined })}>{P(people.length, 'person', '人', 'people')}</Button>
           } else if (t.type === 'person') {
             const p = PMAP[t.id!]
-            lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.zh + ' ' + p.en : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
+            lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.en + ' ' + p.zh : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
           } else {
             const ph = isExtPhone(t)
             lead = circle(ph ? Phone : Mail); name = t.email!

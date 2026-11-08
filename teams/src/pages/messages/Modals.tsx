@@ -81,8 +81,8 @@ export function ImportDialog({ m }: { m: SendCtl }) {
             <div className="px-1 text-body text-fg-secondary">{L('“' + a.tok + '” matches ' + a.cands.length + ' people', '「' + a.tok + '」有 ' + a.cands.length + ' 人符合')}</div>
             {a.cands.map(k => (
               <div key={k.p.id} className={cn('flex items-center gap-3 rounded-md px-1 py-1', k.added && 'opacity-60')}>
-                <Checkbox checked={k.on || k.added} disabled={k.added} onCheckedChange={() => m.impPick(a.i, k.p.id)} aria-label={k.p.zh + ' ' + k.p.en} />
-                <PAvatar p={k.p} /><Two a={k.p.zh + ' ' + k.p.en} b={k.p.title + ' · ' + k.p.org + ' · ' + k.p.emp} strong className="flex-1" />
+                <Checkbox checked={k.on || k.added} disabled={k.added} onCheckedChange={() => m.impPick(a.i, k.p.id)} aria-label={k.p.en + ' ' + k.p.zh} />
+                <PAvatar p={k.p} /><Two a={k.p.en + ' ' + k.p.zh} b={k.p.title + ' · ' + k.p.org + ' · ' + k.p.emp} strong className="flex-1" />
                 {k.added ? <Tag size="sm">{L('Already added', '已加入')}</Tag> : null}
               </div>
             ))}
@@ -99,7 +99,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
                 <code className="w-32 shrink-0 truncate font-mono text-caption text-fg-secondary">{mm.tok}</code>
                 <ArrowRight className="size-3.5 shrink-0 text-fg-muted" aria-hidden />
                 {mm.kind === 'one' ? <PAvatar p={mm.p} size={20} /> : <IconBox icon={mm.kind === 'org' ? Building2 : (mm as any).email && (mm as any).email.indexOf('@') < 0 ? Phone : Mail} />}
-                <span className="min-w-0 flex-1 truncate text-body font-medium">{mm.kind === 'one' ? mm.p.zh + ' ' + mm.p.en + ' · ' + mm.p.org : mm.kind === 'org' ? mm.org.code + ' · ' + P(mm.org.count, 'member', '人') : (mm as any).email + ' · ' + L('External', '外部')}</span>
+                <span className="min-w-0 flex-1 truncate text-body font-medium">{mm.kind === 'one' ? mm.p.en + ' ' + mm.p.zh + ' · ' + mm.p.org : mm.kind === 'org' ? mm.org.code + ' · ' + P(mm.org.count, 'member', '人') : (mm as any).email + ' · ' + L('External', '外部')}</span>
                 <span className="text-caption text-fg-secondary">{tx((mm as any).by)}</span>
               </ListRow>
             )
@@ -135,7 +135,7 @@ export function NumbersDialog({ m }: { m: SendCtl }) {
           const key = 'p:' + p.id
           return (
             <div key={p.id} className="flex flex-wrap items-center gap-3 px-3 py-3">
-              <span className="flex min-w-48 flex-1 items-center gap-2"><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={p.title + ' · ' + p.org} strong /></span>
+              <span className="flex min-w-48 flex-1 items-center gap-2"><PAvatar p={p} /><Two a={p.en + ' ' + p.zh} b={p.title + ' · ' + p.org} strong /></span>
               <RadioGroup value={d[key] || ''} onValueChange={v => m.numPick(key, v as 'co' | 'pp')} className="flex flex-wrap gap-4" aria-label={L('SMS number for ', 'SMS 號碼：') + p.en}>
                 <RadioGroupItem value="co" label={<span className="font-mono">{fmtPhone(p.co)}</span>} description={L('Company mobile', '公務手機') + ' · MVPN ' + p.mvpn} />
                 <RadioGroupItem value="pp" label={<span className="font-mono">{maskPhone(p.pp)}</span>} description={L('Personal phone', '私人手機')} />
@@ -222,7 +222,7 @@ export function UnreachDialog({ m }: { m: SendCtl }) {
     <Shell open={open} onClose={close} width={720} title={L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}
       foot={<Button variant="tertiary" onClick={close}>{L('Close', '關閉')}</Button>}>
       <ListBox max={380}>
-        {rc.unr.map(p => <ListRow key={p.id}><PAvatar p={p} /><Two a={p.zh + ' ' + p.en} b={[p.org, p.nt, p.emp].filter(Boolean).join(' · ')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{why()}</span></ListRow>)}
+        {rc.unr.map(p => <ListRow key={p.id}><PAvatar p={p} /><Two a={p.en + ' ' + p.zh} b={[p.org, p.nt, p.emp].filter(Boolean).join(' · ')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{why()}</span></ListRow>)}
         {rc.flat.ext.filter(x => x.indexOf('@') >= 0 ? rc.unrE : rc.unrP).map(x => { const ph = x.indexOf('@') < 0; return <ListRow key={x}><IconBox icon={ph ? Phone : Mail} /><Two a={x} b={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{ph ? L('SMS only', '只收 SMS') : L('Email only', '只收 Email')}</span></ListRow> })}
       </ListBox>
     </Shell>

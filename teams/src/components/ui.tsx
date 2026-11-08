@@ -87,7 +87,7 @@ export function PAvatar({ p, size = 24 }: { p: Person; size?: number }) {
   if (p.extKind) return <Avatar size={size} icon={p.extKind === 'phone' ? Hash : Mail} alt={p.value || ''} color="neutral" />
   return <Avatar size={size} src={avatarUrl(p)} alt={p.en} color={avColor(p.c)} />
 }
-export const pname = (p: Person) => p.extKind ? (p.value || '') : (p.zh ? p.zh + ' ' + p.en : p.en)
+export const pname = (p: Person) => p.extKind ? (p.value || '') : (p.zh ? p.en + ' ' + p.zh : p.en)
 export function Two({ a, b, strong, className }: { a: React.ReactNode; b?: React.ReactNode; strong?: boolean; className?: string }) {
   return (
     <span className={cn('flex min-w-0 flex-col', className)}>

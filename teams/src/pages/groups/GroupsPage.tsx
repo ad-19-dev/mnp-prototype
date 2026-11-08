@@ -385,8 +385,8 @@ function Feedback({ m, ed, fb }: { m: GCtl; ed: Ed; fb: Fb }) {
             </div>
             {cands.map(x => (
               <div key={x.p.id} className={cn('flex items-center gap-3 rounded-md bg-surface px-2 py-1.5', x.added && 'opacity-60')}>
-                <Checkbox checked={x.on || x.added} disabled={x.added} onCheckedChange={() => m.ambPick(a, x.p.id)} aria-label={x.p.zh + ' ' + x.p.en} />
-                <PAvatar p={x.p} /><Two a={x.p.zh + ' ' + x.p.en} b={x.p.title + ' · ' + x.p.org + ' · ' + x.p.emp} strong className="flex-1" />
+                <Checkbox checked={x.on || x.added} disabled={x.added} onCheckedChange={() => m.ambPick(a, x.p.id)} aria-label={x.p.en + ' ' + x.p.zh} />
+                <PAvatar p={x.p} /><Two a={x.p.en + ' ' + x.p.zh} b={x.p.title + ' · ' + x.p.org + ' · ' + x.p.emp} strong className="flex-1" />
                 {x.added ? <Tag size="sm">{L('Already in', '已在群組')}</Tag> : null}
               </div>
             ))}

@@ -30,7 +30,7 @@ function MemberPicker({ exclude, onAdd }: { exclude: string[]; onAdd: (pid: stri
       <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => { if (anchor.current?.contains(e.target as Node)) e.preventDefault() }}>
         {cands.length ? cands.map(p => (
           <button key={p.id} type="button" onClick={() => add(p.id)} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-neutral-hover">
-            <PAvatar p={p} size={28} /><Two a={p.zh + ' ' + p.en} b={p.title + ' · ' + p.org} strong className="flex-1" />
+            <PAvatar p={p} size={28} /><Two a={p.en + ' ' + p.zh} b={p.title + ' · ' + p.org} strong className="flex-1" />
           </button>
         )) : <div className="px-3 py-3 text-body text-fg-secondary">{L('No match for “' + q.trim() + '”.', '找不到「' + q.trim() + '」。')}</div>}
       </PopoverContent>
@@ -47,7 +47,7 @@ function MemberList({ pids, onRemove }: { pids: string[]; onRemove: (pid: string
         return (
           <div key={pid} className="flex min-h-12 items-center gap-3 px-3 py-2">
             <PAvatar p={p} size={28} />
-            <Two a={p.zh + ' ' + p.en + (pid === ME ? L(' (you)', '（你）') : '')} b={p.title + ' · ' + p.org} strong className="flex-1" />
+            <Two a={p.en + ' ' + p.zh + (pid === ME ? L(' (you)', '（你）') : '')} b={p.title + ' · ' + p.org} strong className="flex-1" />
             {pid !== ME ? <Button variant="text" size="sm" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + p.en} onClick={() => onRemove(pid)} /> : <span className="w-7 shrink-0" aria-hidden />}
           </div>
         )
