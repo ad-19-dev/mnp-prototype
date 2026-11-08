@@ -324,7 +324,7 @@ function After() {
         ['排程傳送，不需核准', <Copy en="Scheduled for <時間>" zh="已排程：<時間>" />, <StatusTag s="scheduled" />],
         ['需要核准（SMS 備援或外部收件人）', <Copy en="Sent for approval" zh="已送出審核" />, <StatusTag s="pending" />],
       ]} />
-      <Notes items={[{ title: 'Toast', body: '一行文字，前面不放圖示；右側有關閉鈕。' }]} />
+      <Notes items={[{ title: 'Toast', body: '顯示在畫面下方置中（設計系統 Toaster，position 設為 bottom-center）；一行文字，前面不放圖示；右側有關閉鈕。' }]} />
       <Big name="after-submit" title="回到列表" sub="緊急送出：In progress" />
     </Section>
   )

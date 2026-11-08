@@ -12,7 +12,7 @@ export default function App() {
       <Shell>
         {page === 'send' ? <MessagesPage /> : page === 'groups' ? <GroupsPage /> : <TemplatesPage />}
       </Shell>
-      <Toaster position="top-center" />
+      <Toaster position="bottom-center" />
     </>
   )
 }
