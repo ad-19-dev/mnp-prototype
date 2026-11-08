@@ -236,8 +236,9 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
             </div>
           ) : null}
           {tried[1] && e.ch ? <ErrText>{e.ch}</ErrText> : null}
-          {e.ext ? <ErrText>{e.ext}</ErrText> : null}
-          {e.extp ? <ErrText>{e.extp}</ErrText> : null}
+          {/* external contacts that no chosen channel reaches are counted in the one red line below */}
+          {e.ext && !(hasR && anyCh && rc.unrN) ? <ErrText>{e.ext}</ErrText> : null}
+          {e.extp && !(hasR && anyCh && rc.unrN) ? <ErrText>{e.extp}</ErrText> : null}
           {ap.mgr ? <Banner tone="warning">{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</Banner> : null}
           {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
           {hasR && anyCh && rc.unrN ? (

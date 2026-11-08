@@ -213,8 +213,8 @@ function Step1() {
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '收件人表格下方'],
           ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '收件人表格下方；右上角人數變紅'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '通道下方'],
-          ['有外部 Email 但沒勾 Email', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '通道下方'],
-          ['有外部電話但沒勾 SMS 備援', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />, '通道下方'],
+          ['有外部 Email 但沒勾 Email（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '通道下方'],
+          ['有外部電話但沒勾 SMS 備援（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />, '通道下方'],
           ['緊急送出沒填原因', REQ, 'Reason 欄位下方'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道" />
@@ -339,8 +339,8 @@ function Errors() {
         ['1', '沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />],
         ['1', '超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />],
         ['1', '沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />],
-        ['1', '外部 Email 沒有 Email 通道', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />],
-        ['1', '外部電話沒有 SMS 備援', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />],
+        ['1', '外部 Email 沒有 Email 通道（只在沒選任何通道時單獨出現）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />],
+        ['1', '外部電話沒有 SMS 備援（只在沒選任何通道時單獨出現）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />],
         ['1', '緊急原因', <>{REQ}超過 200 字：Up to 200 characters.</>],
         ['2', '所有必填欄位', REQ],
         ['2', '所有有上限的欄位', <Copy en="Up to n characters." zh="最多 n 字。" />],
