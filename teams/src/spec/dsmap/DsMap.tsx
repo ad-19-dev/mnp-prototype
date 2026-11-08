@@ -75,7 +75,7 @@ export default function DsMap() {
             ['頁尾', comps('Button'), 'Cancel（text）、Back（tertiary）、Next / Create message（primary）。', <Own>固定在畫面底部的頁尾列</Own>],
             ['收件人搜尋', comps('Select', 'Input'), '左側 Select 選類型，右側 Input 搜尋；下拉選單列出符合的人。', <Own>RecvInput：整個搜尋加下拉選單的組合</Own>],
             ['Batch import 按鈕', comps('Button'), 'tertiary，開頭圖示 Upload。', <Own>—</Own>],
-            ['收件人表格', comps('DataTable', 'Avatar', 'Tooltip', 'Empty'), '固定欄寬；Audience 欄放頭像或圖示；Can receive 欄的圖示用 Tooltip；超過 6 筆加篩選與 Remove all。', <Own>Can receive 的圖示樣式（收不到的是刪除線）</Own>],
+            ['收件人表格', comps('DataTable', 'Avatar', 'Tag', 'Tooltip', 'Empty'), '固定欄寬；Audience 欄放頭像或圖示；Can receive 欄的通道圖示用 Tag（neutral、sm）加 Tooltip；超過 6 筆加篩選與 Remove all。', <Own>收不到的通道變淡並加刪除線</Own>],
             ['通道卡片', comps('Checkbox'), '三張卡片，勾選框在右上角。', <Own>整張可點的卡片（藍框、淡藍底）</Own>],
             ['SMS 備援、緊急送出', comps('Checkbox', 'Tag', 'Textarea'), 'Checkbox 加說明；Reason 用 Textarea，必填。', <Own>勾選後出現的提示框</Own>],
             ['收不到的人', comps('Button'), '紅字「n people can’t get the message」加 Button link「See who」。', <Own>—</Own>],

@@ -143,7 +143,7 @@ function RecvTable({ m }: { m: SendCtl }) {
       <span className="flex flex-wrap items-center gap-1.5">
         {i.row.original.can.map(x => {
           const I = CHN[x.k].icon
-          return <Tip key={x.k} text={CHN[x.k].name + (x.of > 1 ? ': ' + x.n + ' / ' + x.of : '')}><span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-caption tabular-nums', x.n ? 'bg-neutral-2 text-foreground' : 'bg-transparent text-fg-disabled line-through')}><I className="size-3.5" aria-hidden />{x.of > 1 ? fmtN(x.n) : null}</span></Tip>
+          return <Tip key={x.k} text={CHN[x.k].name + (x.of > 1 ? ': ' + x.n + ' / ' + x.of : '')}><span className={cn('inline-flex', !x.n && 'opacity-50 [&_[data-tag-text]]:line-through')}><Tag size="sm" color="neutral" icon={I} aria-hidden>{x.of > 1 ? fmtN(x.n) : null}</Tag></span></Tip>
         })}
       </span>
     ) }),
