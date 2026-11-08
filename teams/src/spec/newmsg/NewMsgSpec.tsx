@@ -6,7 +6,7 @@ import { StatusTag } from '../../components/ui'
 import { C, Copy, Notes, Section, Shot, SpecTable } from '../parts'
 
 const PROTO = 'https://claude.ai/artifact/Kq6FnvbagCvdtmoPXiRD91'
-const TABS = [['flow', 'UI Flow'], ['frame', '頁首、步驟與頁尾'], ['s1', '步驟 1 收件人與通道'], ['s2', '步驟 2 訊息內容'], ['s3', '步驟 3 排程與預覽'], ['dialogs', '對話框'], ['after', '送出之後'], ['errors', '錯誤訊息']] as const
+const TABS = [['flow', 'UI Flow'], ['frame', '頁首、步驟與頁尾'], ['s1', '步驟 1 收件人與通道'], ['s2', '步驟 2 訊息內容'], ['s3', '步驟 3 排程與預覽'], ['dialogs', '對話框'], ['after', '送出之後']] as const
 type TabKey = typeof TABS[number][0]
 const isTab = (h: string): h is TabKey => TABS.some(t => t[0] === h)
 
@@ -40,7 +40,6 @@ export default function NewMsgSpec() {
         {tab === 's3' ? <Step3 /> : null}
         {tab === 'dialogs' ? <Dialogs /> : null}
         {tab === 'after' ? <After /> : null}
-        {tab === 'errors' ? <Errors /> : null}
       </main>
     </>
   )
@@ -169,6 +168,7 @@ function Frame() {
           ['Create message', '步驟 1 到 3 依序檢查，停在第一個有錯的步驟並顯示錯誤；全部通過才送出。'],
           ['Cancel、點頁首的空間名稱', '還沒改過任何內容就直接回列表（複製與重寄預填的內容不算改過）；改過就先問 Leave without sending?。Edit content 的標題是 Leave without saving?。'],
           ['改通道、改收件人', '已填的文字都保留。取消勾選的通道，內容留著但不會送出，再勾回來還在。'],
+          ['錯誤的顯示', '錯誤顯示在欄位或區塊下方（紅字加警示三角形）；有輸入框的欄位同時變紅框。按 Next 或 Create message 時一併檢查，之後邊改邊更新；各步驟的錯誤文字與出現時機，見各步驟頁籤。'],
           ['送出後', '回到列表第 1 頁，並清掉搜尋與篩選；新紀錄排在最上方。'],
         ]} />
       </Section>
@@ -245,31 +245,20 @@ function Step1() {
         <Gallery items={[['s1-sms', '勾了 SMS 備援'], ['s1-urgent', '勾了緊急送出', '原因必填']]} />
       </Section>
 
-      <Section eyebrow="Step 1" title="驗證" lead="按 Next 時檢查。">
-        <SpecTable head={['情況', '錯誤訊息', '位置']} nowrap={[0]} rows={[
-          ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '收件人表格下方（紅字加警示三角形；搜尋框不變紅）'],
-          ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '收件人表格下方；右上角人數變紅'],
-          ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '通道下方'],
-          ['有外部 Email 但沒勾 Email（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現；只提醒，不擋 Next）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '通道下方'],
-          ['有外部電話但沒勾 SMS 備援（已選其他通道時，併入「n people can’t get the message」那一行，不另外出現；只提醒，不擋 Next）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />, '通道下方'],
-          ['緊急送出沒填原因', REQ, 'Reason 欄位下方'],
-        ]} />
-        <Big name="s1-error" title="沒有收件人與通道" />
-      </Section>
-
-      <Section eyebrow="Step 1" title="紅字與提醒一覽" lead="步驟 1 裡所有會出現紅字、黃字與提示框的情況。紅字、黃字都是警示三角形加同色文字；顏色看風險：紅色是錯誤，黃色要使用者留意，灰色提示框只是告知。紅字和黃字可以同時出現，各佔一行。">
+      <Section eyebrow="Step 1" title="驗證、紅字與提醒" lead="按 Next 時檢查這一步，列在「擋 Next」的才會停在這一步；其他只是即時提醒。紅字、黃字都是警示三角形加同色文字，顏色看風險：紅色是錯誤，黃色要使用者留意，灰色提示框只是告知。紅字和黃字可以同時出現，各佔一行。">
         <SpecTable head={['情況', '顯示', '樣式', '位置', '什麼時候出現', '擋 Next 嗎']} nowrap={[0]} rows={[
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後', '擋'],
           ['超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />, '紅字；右上角 n / 500 變紅；搜尋框不變紅', '收件人表格下方', '一超過就出現', '擋'],
           ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻', '不擋；只是這一筆加不進去'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後', '擋'],
-          ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列', '不擋（沒選通道本身會擋）'],
+          ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <><Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />　<Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" /></>, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列', '不擋（沒選通道本身會擋）'],
           ['有人所有通道都收不到', <><Copy en="n people can’t get the message" zh="n 人收不到訊息" />＋藍色連結 See who</>, '紅字加藍色連結', '通道下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失', '不擋'],
           ['緊急送出沒填原因、超過 200 字', <><Copy en="This field is required." zh="此欄位為必填。" />　<Copy en="Up to 200 characters." zh="最多 200 字。" /></>, '欄位下方紅字；輸入框紅框；字數變紅', 'Reason 欄位', '必填：按過 Next 之後；超過 200 字：立刻', '擋'],
           ['有外部收件人，而且他們需要的通道有勾', <Copy en="Includes n external audiences. Your supervisor, <主管>, must approve." zh="包含 n 位外部收件人，需要主管 <主管> 核准。" />, '黃字加警示三角形', '通道下方', '即時；外部電話看 SMS 備援，外部 Email 看 Email', '不擋'],
           ['緊急送出，但有外部收件人', <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" />, '灰色提示框', 'SMS 備援的核准提示框裡', '勾了緊急而且有外部收件人時', '不擋'],
           ['勾了 SMS 備援，但有人沒有電話', <Copy en="<名字> has no phone number and won’t get SMS." zh="<名字> 沒有電話，收不到 SMS。" />, '灰色提示框', '收件人表格下方', '即時', '不擋'],
         ]} />
+        <Big name="s1-error" title="沒有收件人與通道（按 Next 之後）" />
         <Big name="s1-ext" title="有外部收件人時的黃字提醒" sub="外部 Email 與外部電話，通道都有勾" />
       </Section>
     </>
@@ -441,30 +430,6 @@ function After() {
       </Section>
       <Notes items={[{ title: 'Toast', body: '顯示在畫面下方置中（設計系統 Toaster，position 設為 bottom-center）；一行文字，前面不放圖示；右側有關閉鈕。' }]} />
       <Big name="after-submit" title="回到列表" sub="緊急送出：In progress" />
-    </Section>
-  )
-}
-
-// ---------- errors ----------
-function Errors() {
-  return (
-    <Section eyebrow="Errors" title="錯誤訊息總表" lead="錯誤都顯示在欄位或區塊下方（紅字），欄位變紅框；按 Next 或 Create message 時檢查，之後邊改邊更新。">
-      <SpecTable head={['步驟', '欄位或情況', '錯誤訊息']} nowrap={[0, 1]} rows={[
-        ['1', '沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />],
-        ['1', '超過 500 人', <Copy en="n over the limit. Remove some, or split into separate messages." zh="超過上限 n 人。請移除部分收件人，或分成多則訊息。" />],
-        ['1', '沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />],
-        ['1', '外部 Email 沒有 Email 通道（只在沒選任何通道時單獨出現；不擋 Next）', <Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />],
-        ['1', '外部電話沒有 SMS 備援（只在沒選任何通道時單獨出現；不擋 Next）', <Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" />],
-        ['1', '緊急原因', <>{REQ}超過 200 字：Up to 200 characters.</>],
-        ['2', '所有必填欄位', REQ],
-        ['2', '所有有上限的欄位', <Copy en="Up to n characters." zh="最多 n 字。" />],
-        ['2', 'Sender（Device Notifications、Desktop OS）', <Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" />],
-        ['2', 'Email Content 超過 100 KB', <Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" />],
-        ['3', '排程時間沒填', REQ],
-        ['3', '排程時間在過去或超過 3 個月', <Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" />],
-        ['1', '搜尋 Phone、Email、MVPN 的格式', '見步驟 1「搜尋類型」表'],
-        ['對話框', 'Save as group、Save as template 的名稱', <><Copy en="Enter a name." zh="請輸入名稱。" />　<Copy en="Up to 50 characters." zh="最多 50 字。" />　<Copy en="This name is taken." zh="這個名稱已經有人用了。" /></>],
-      ]} />
     </Section>
   )
 }
