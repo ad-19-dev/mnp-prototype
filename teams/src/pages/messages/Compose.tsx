@@ -123,7 +123,7 @@ function RecvTable({ m }: { m: SendCtl }) {
         <span className="flex min-w-0 items-center gap-2">
           {p ? <PersonDisplay value={personVal(p)} />
             : <>
-              {round ? <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><Icon className="size-3.5 text-fg-secondary" aria-hidden /></span> : <IconBox icon={Icon} tone={x.warn ? 'warn' : 'neutral'} />}
+              {round ? <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><Icon className="size-3.5 text-fg-secondary" aria-hidden /></span> : <IconBox icon={Icon} tone="neutral" />}
               <span className="truncate text-body">{x.label}</span>
             </>}
           {x.badgeBtn ? <Button size="xs" variant="secondary" onClick={() => m.openNumbers()}>{x.badge}</Button> : x.badge ? <Tag size="sm">{x.badge}</Tag> : null}
@@ -217,7 +217,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <Checkbox
                 checked={c.ch.sms} onCheckedChange={() => m.pickChannel('sms')}
-                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Needs SMS approval', '需 SMS 核准')}</Tag> : null}</span>}
+                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need approval', '需核准')}</Tag> : null}</span>}
                 description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。')}
               />
               {ICSD && c.ch.sms ? (

@@ -175,8 +175,8 @@ function Step1() {
           ['個人', '人員顯示：頭像、英文名 中文名', '頭像、中文名 英文名；下一行：組織代號 · NT · 工號'],
           ['組織', '大樓圖示（灰色圓底）、組織代號', '同左；下一行：組織代碼'],
           ['群組', '兩個人圖示（灰色圓底）、群組名稱', '同左；下一行：Audience group'],
-          ['外部 Email', '信封圖示、Email', '同左；下一行：External email · Email only'],
-          ['外部電話', '電話圖示、號碼', '同左；下一行：External phone · SMS only'],
+          ['外部 Email', '信封圖示（灰色底，一律不變色）、Email', '同左；下一行：External email · Email only'],
+          ['外部電話', '電話圖示（灰色底，一律不變色）、號碼', '同左；下一行：External phone · SMS only'],
         ]} />
         <Big name="s1-types" title="各類型收件人在表格中的呈現" sub="個人、組織、群組、外部電話、外部 Email 各一筆" />
         <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人']]} />
@@ -197,7 +197,7 @@ function Step1() {
 
       <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 才出現。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Needs SMS approval；說明 <Copy en="Send an SMS to anyone the push doesn’t reach." zh="推播沒送到的人，改發 SMS。" /></>],
+          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need approval；說明 <Copy en="Send an SMS to anyone the push doesn’t reach." zh="推播沒送到的人，改發 SMS。" /></>],
           ['核准提示框', <>勾了 SMS 備援後出現。標題 <Copy en="The SMS needs approval before it’s sent" zh="SMS 核准後才會送出" />；勾了緊急後改為 <Copy en="SMS approval will be skipped" zh="將略過 SMS 核准" /></>],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />；說明 <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" /></>],
           ['Reason', <>勾了緊急才出現，必填，上限 200 字，提示文字 <C>e.g. Typhoon warning issued at 07:30; staff must know before commuting.</C> 填的原因會顯示在訊息詳情面板的 Urgent reason。</>],
