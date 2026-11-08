@@ -300,17 +300,17 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
           <FormatBlock title={CHN.push.name}>
             {noNotif}
             <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS).', '收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。')} error={eSender}>
-              <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
+              <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} />
             </FormField>
             <FormField id="f-content" label={L('Content', '內容')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} error={eContent}>
-              <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value, title: pushTitle(ev.target.value) })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
+              <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value, title: pushTitle(ev.target.value) })} />
             </FormField>
           </FormatBlock>
         ) : null}
         {smsOn(c) ? (
           <FormatBlock title="SMS" desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
             <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
-              <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} placeholder={L('Short version', '簡短版本')} />
+              <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} />
             </FormField>
           </FormatBlock>
         ) : null}
@@ -318,13 +318,13 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
           <FormatBlock title={CHN.desktop.name}>
             {c.ch.push ? null : noNotif}
             <FormField id="f-dsender" label={L('Sender', '寄件人')} count={c.dSender.length + ' / ' + LIM.sender} over={c.dSender.length > LIM.sender} hint={L('Optional', '選填')} error={edSender}>
-              <Input id="f-dsender" value={c.dSender} error={!!edSender} onChange={ev => m.setC({ dSender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
+              <Input id="f-dsender" value={c.dSender} error={!!edSender} onChange={ev => m.setC({ dSender: ev.target.value })} />
             </FormField>
             <FormField id="f-dtitle" label={L('Title', '標題')} required count={c.dTitle.length + ' / ' + LIM.dTitle} over={c.dTitle.length > LIM.dTitle} error={edTitle}>
-              <Input id="f-dtitle" value={c.dTitle} error={!!edTitle} onChange={ev => m.setC({ dTitle: ev.target.value })} placeholder={L('One line people can act on', '一句話說清楚重點')} />
+              <Input id="f-dtitle" value={c.dTitle} error={!!edTitle} onChange={ev => m.setC({ dTitle: ev.target.value })} />
             </FormField>
             <FormField id="f-dcontent" label={L('Content', '內容')} required count={fmtN(c.dContent.length) + ' / ' + LIM.desktop} over={c.dContent.length > LIM.desktop} hint={L('Supports Chinese, English, and numbers only.', '僅支援中文、英文、數字。')} error={edContent}>
-              <Textarea id="f-dcontent" rows={3} value={c.dContent} error={!!edContent} onChange={ev => m.setC({ dContent: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
+              <Textarea id="f-dcontent" rows={3} value={c.dContent} error={!!edContent} onChange={ev => m.setC({ dContent: ev.target.value })} />
             </FormField>
           </FormatBlock>
         ) : null}
@@ -341,10 +341,10 @@ function EmailBlock({ m, e, show }: { m: SendCtl; e: Errs; show: (k: keyof Errs,
   return (
     <FormatBlock title="Email">
       <FormField id="f-subject" label={L('Subject', '主旨')} required count={c.subject.length + ' / ' + LIM.subject} over={c.subject.length > LIM.subject} error={eSub}>
-        <Input id="f-subject" value={c.subject} error={!!eSub} onChange={ev => m.setC({ subject: ev.target.value })} placeholder={L('Email subject', 'Email 主旨')} />
+        <Input id="f-subject" value={c.subject} error={!!eSub} onChange={ev => m.setC({ subject: ev.target.value })} />
       </FormField>
       <FormField id="f-body" label={L('Content', '內容')} required hint={L('Supports text, tables, and images.', '支援文字、表格、圖片。')} error={eBody}>
-        <RichText id="f-body" seedKey={'rte-' + c.htmlKey} html={c.html} label={L('Content', '內容')} error={!!eBody} placeholder={L('Write the email…', '輸入 Email 內文…')} onInput={(h, t) => m.onEmailInput(h, t)} />
+        <RichText id="f-body" seedKey={'rte-' + c.htmlKey} html={c.html} label={L('Content', '內容')} error={!!eBody} onInput={(h, t) => m.onEmailInput(h, t)} />
       </FormField>
     </FormatBlock>
   )

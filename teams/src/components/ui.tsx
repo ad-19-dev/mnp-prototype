@@ -230,15 +230,16 @@ export function Meter({ pct, tone, label }: { pct: number; tone?: 'ok' | 'err' |
 export function FormField({ id, label, required, count, over, hint, error, children, className }: {
   id?: string; label?: React.ReactNode; required?: boolean; count?: string; over?: boolean; hint?: React.ReactNode; error?: string; children: React.ReactNode; className?: string
 }) {
-  // the character counter sits top-right, level with the label
+  // the character counter sits under the field, right-aligned on the same row as the help text / error
+  const hasNote = !!(error || hint)
   return (
-    <div className={cn('relative', className)}>
-      {count ? <span className={cn('absolute right-0 top-0 text-caption leading-5 tabular-nums', over ? 'font-medium text-error-text' : 'text-fg-muted')}>{count}</span> : null}
+    <div className={cn('relative', count && !hasNote && 'pb-5', className)}>
+      {count ? <span className={cn('absolute bottom-0 right-0 text-caption leading-5 tabular-nums', over ? 'font-medium text-error-text' : 'text-fg-muted')}>{count}</span> : null}
       <Field id={id} required={required} invalid={!!error}>
         {label ? <FieldLabel htmlFor={id} required={required}>{label}</FieldLabel> : null}
         {children}
-        {hint && !error ? <FieldDescription>{hint}</FieldDescription> : null}
-        {error ? <FieldError>{error}</FieldError> : null}
+        {hint && !error ? <FieldDescription className={count ? 'pr-16' : undefined}>{hint}</FieldDescription> : null}
+        {error ? <FieldError className={count ? 'pr-16' : undefined}>{error}</FieldError> : null}
       </Field>
     </div>
   )

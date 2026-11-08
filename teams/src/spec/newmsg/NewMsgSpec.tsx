@@ -243,20 +243,9 @@ function Step2() {
           ['Email', 'Subject', '是', '70', REQ],
           ['', 'Content', '是', '—', <>文字編輯器（粗體、斜體、底線、連結、清單、清除格式）。提示 <Copy en="Supports text, tables, and images." zh="支援文字、表格、圖片。" />整體超過 100 KB：<Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" />{REQ}</>],
         ]} />
-        <SpecTable head={['區塊', '欄位', '提示文字（placeholder）']} nowrap={[0, 1]} rows={[
-          [<Copy en="Use template" zh="Use template" />, '模板選單', <><Copy en="Choose a template" zh="選擇模板" />；搜不到時顯示 <Copy en="No matching templates" zh="找不到符合的模板" /></>],
-          ['Device Notifications', 'Sender', <Copy en="e.g. IT Service Desk" zh="例如：IT Service Desk" />],
-          ['', 'Content', <Copy en="What’s happening and what to do" zh="發生什麼事、需要做什麼" />],
-          ['SMS', 'SMS text', <Copy en="Short version" zh="簡短版本" />],
-          ['Desktop OS', 'Sender', <Copy en="e.g. IT Service Desk" zh="例如：IT Service Desk" />],
-          ['', 'Title', <Copy en="One line people can act on" zh="一句話說清楚重點" />],
-          ['', 'Content', <Copy en="What’s happening and what to do" zh="發生什麼事、需要做什麼" />],
-          ['Email', 'Subject', <Copy en="Email subject" zh="Email 主旨" />],
-          ['', 'Content', <Copy en="Write the email…" zh="輸入 Email 內文…" />],
-        ]} />
         <Notes items={[
-          { title: '提示文字', body: '提示文字只在欄位是空的時候顯示，用淡灰色；一開始輸入就消失，不取代欄位標題。欄位下方另有說明文字的，見上表「說明與錯誤」。' },
-          { title: '字數', body: '欄位右上角 n / 上限；超過時數字變紅，錯誤 Up to n characters.' },
+          { title: '提示文字', body: <>第二步的文字欄位都沒有提示文字（placeholder），欄位標題已經說明要填什麼。只有模板選單有：<Copy en="Choose a template" zh="選擇模板" />，搜不到時顯示 <Copy en="No matching templates" zh="找不到符合的模板" />。</> },
+          { title: '字數', body: '字數 n / 上限在欄位下方右側，跟說明文字或錯誤訊息同一列；超過時數字變紅，錯誤 Up to n characters.' },
           { title: '必填', body: <>沒填一律顯示 {REQ}</> },
         ]} />
         <Gallery items={[['s2-empty', '空白'], ['s2-error', '沒填就按 Next']]} />

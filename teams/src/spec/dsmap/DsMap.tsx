@@ -85,7 +85,7 @@ export default function DsMap() {
         <Section eyebrow="New message" title="步驟 2 與步驟 3">
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['New / Use template', comps('RadioGroup', 'Select'), '兩個選項；模板選單可搜尋。', <Own>—</Own>],
-            ['文字欄位', comps('Input', 'Textarea'), '每個欄位：標題、右上角字數、說明、錯誤訊息。', <Own>FormField：欄位標題加字數加說明加錯誤的組合</Own>],
+            ['文字欄位', comps('Input', 'Textarea'), '每個欄位：標題、說明或錯誤訊息，字數在欄位下方右側與說明同一列。', <Own>FormField：欄位標題加字數加說明加錯誤的組合</Own>],
             ['Email 內容', comps('Button'), '工具列的按鈕用 Button（含 ButtonDivider）。', <Own>RichText：整個文字編輯器（contentEditable，設計系統沒有）</Own>],
             ['通道區塊分隔', '—', '設計系統沒有現成的區塊分隔元件。', <Own>通道區塊之間的分隔線（border-t，divider 顏色）</Own>],
             ['Schedule', comps('RadioGroup'), '兩張選項卡片，RadioGroupItem 帶圖示與說明。', <Own>卡片外框樣式</Own>],
