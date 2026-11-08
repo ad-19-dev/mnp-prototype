@@ -125,13 +125,11 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
       <DropdownMenuContent align="end" minWidth={232}>
         <DropdownMenuItem startIcon={Info} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
         {lite ? null : <>
-        {st === 'expired' || st === 'rejected' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startEditContent(r, x.k)}>{L('Edit content', '編輯內容')}</DropdownMenuItem> : null}
-        {st === 'expired' || st === 'error' ? <>
-          <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, x)}>{L('Send now', '立即傳送')}</DropdownMenuItem>
-          <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r, x.k)}>{L('Reschedule', '重新排程')}</DropdownMenuItem>
-        </> : null}
+        {st === 'expired' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startEditContent(r, x.k)}>{L('Edit content', '編輯內容')}</DropdownMenuItem> : null}
+        {st === 'expired' || st === 'error' ? <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, x)}>{L('Send now', '立即傳送')}</DropdownMenuItem> : null}
+        {st === 'expired' || st === 'error' || st === 'scheduled' ? <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r, x.k)}>{L('Reschedule', '重新排程')}</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
-        {st === 'expired' || st === 'rejected' || st === 'error' ? <>
+        {st === 'expired' || st === 'error' || st === 'scheduled' || st === 'pending' ? <>
           <DropdownMenuSeparator />
           <DropdownMenuItem startIcon={Ban} className="text-error-text" onSelect={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</DropdownMenuItem>
         </> : null}

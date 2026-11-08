@@ -121,12 +121,9 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       if (k === 'desktop') { const d = { sender: c.dSender.trim(), title: c.dTitle.trim(), content: c.dContent.trim() }; if (r.channels.indexOf('push') >= 0) p.desk = d; else { p.sender = d.sender; p.title = d.title; p.content = d.content } }
       if (k === 'email') p.email = m.emailOut() as any
       patchRow(id, p)
-      // a rejected channel goes back for approval with its new text
-      const recSt = (r.chSt && r.chSt[k === 'sms' ? 'push' : k]) || r.status
       set({ view: 'list', cf: null, c: blankCompose() })
       scrollTop()
-      if (recSt === 'rejected') { m.setCh(id, k, 'pending'); flash(L('Sent for approval', '已送出審核'), 'ok') }
-      else flash(L('Content saved', '已儲存內容'), 'ok')
+      flash(L('Content saved', '已儲存內容'), 'ok')
     },
     sendNowCh(id: string, k: Channel) {
       const r = app().rows.find(x => x.id === id)!, ks: Channel[] = k === 'sms' ? ['push', 'sms'] : [k]

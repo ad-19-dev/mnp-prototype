@@ -138,6 +138,7 @@ const menuShot = async (name, text, nth = 0) => {
   });
 };
 await menuShot('menu-sent', 'Team lunch moves to 12:30');
+await menuShot('menu-pending', 'Atlas demo moves');
 await menuShot('menu-scheduled', 'out of office');
 await menuShot('menu-expired', 'UX sync moves');
 await menuShot('menu-rejected', 'Reminder: badge photo');

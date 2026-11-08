@@ -103,9 +103,9 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="搜尋或篩選沒有結果" when="沒有符合的紀錄" shots={['empty']} then="表格框內顯示空狀態與 Clear filters。" />
           <Card kind="page" title="還沒有任何訊息" when="空間裡沒有訊息" shots={['empty-first']} then="頁面層級的空狀態：No messages yet 與 New message 按鈕。" />
           <Card kind="menu" title="列選單：已送出" when="狀態 Sent" shots={['menu-sent']} then="View details、Duplicate to new message" />
-          <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="View details、Duplicate to new message" />
+          <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="View details、Reschedule、Duplicate to new message、Cancel sending" />
           <Card kind="menu" title="列選單：排程已過期" when="狀態 Scheduled expired" shots={['menu-expired']} then="View details、Edit content、Send now、Reschedule、Duplicate to new message、Cancel sending" />
-          <Card kind="menu" title="列選單：已駁回" when="狀態 Rejected" shots={['menu-rejected']} then="View details、Edit content、Duplicate to new message、Cancel sending" />
+          <Card kind="menu" title="列選單：已駁回" when="狀態 Rejected" shots={['menu-rejected']} then="View details、Duplicate to new message" />
           <Card kind="menu" title="列選單：傳送錯誤" when="狀態 Error" shots={['menu-error']} then="View details、Send now、Reschedule、Duplicate to new message、Cancel sending" />
         </div>
       </Section>
@@ -310,18 +310,18 @@ function Actions() {
         ['⋮', '列選單（DropdownMenu）。選單包含所有操作，所以 View details 也在選單裡（設計系統表格的列操作規則）。'],
       ]} />
       <SpecTable head={['狀態', 'View details', 'Edit content', 'Send now', 'Reschedule', 'Duplicate to new message', 'Cancel sending']} nowrap={[0, 1, 2, 3, 4, 5, 6]} rows={[
-        [<StatusTag s="pending" />, '✓', '', '', '', '✓', ''],
-        [<StatusTag s="scheduled" />, '✓', '', '', '', '✓', ''],
+        [<StatusTag s="pending" />, '✓', '', '', '', '✓', '✓'],
+        [<StatusTag s="scheduled" />, '✓', '', '', '✓', '✓', '✓'],
         [<StatusTag s="progress" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="sent" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="error" />, '✓', '', '✓', '✓', '✓', '✓'],
-        [<StatusTag s="rejected" />, '✓', '✓', '', '', '✓', '✓'],
+        [<StatusTag s="rejected" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="expired" />, '✓', '✓', '✓', '✓', '✓', '✓'],
         [<StatusTag s="canceled" />, '✓', '', '', '', '✓', ''],
       ]} />
       <SpecTable head={['項目', '做什麼']} nowrap={[0]} rows={[
         [<Copy en="View details" zh="查看詳情" />, '開詳情面板（同點標題、同列尾的 ⓘ）。圖示是 i（Info）。'],
-        [<Copy en="Edit content" zh="編輯內容" />, '開 Edit content 畫面：只有這個通道的內容欄位，不回到發送流程，不能改通道、收件人或其他通道的內容。已駁回的，Save 後重新送審（Pending approval）。'],
+        [<Copy en="Edit content" zh="編輯內容" />, '開 Edit content 畫面：只有這個通道的內容欄位，不回到發送流程，不能改通道、收件人或其他通道的內容。Save 後回到列表，toast：Content saved。'],
         [<Copy en="Send now" zh="立即傳送" />, '開確認對話框，確認後這個通道立即傳送。'],
         [<Copy en="Reschedule" zh="重新排程" />, '開重新排程對話框，替這個通道選新的傳送時間；不需要重新核准。'],
         [<Copy en="Duplicate to new message" zh="複製為新訊息" />, '進入發送流程，只帶入這個通道：通道、它的內容與它的收件人。'],
@@ -329,6 +329,7 @@ function Actions() {
       ]} />
       <div className="spec-gallery">
         <figure><figcaption><b>已送出</b></figcaption><div className="spec-canvas"><Shot name="menu-sent" alt="已送出的選單" /></div></figure>
+        <figure><figcaption><b>待核准</b></figcaption><div className="spec-canvas"><Shot name="menu-pending" alt="待核准的選單" /></div></figure>
         <figure><figcaption><b>已排程</b></figcaption><div className="spec-canvas"><Shot name="menu-scheduled" alt="已排程的選單" /></div></figure>
         <figure><figcaption><b>排程已過期</b></figcaption><div className="spec-canvas"><Shot name="menu-expired" alt="排程已過期的選單" /></div></figure>
         <figure><figcaption><b>已駁回</b></figcaption><div className="spec-canvas"><Shot name="menu-rejected" alt="已駁回的選單" /></div></figure>
@@ -375,14 +376,14 @@ function StatusTab() {
         ['收件人數', '顯示'],
         ['未送出人數', '不顯示'],
         ['傳送時間', '排程時間；立即傳送的是建立時間'],
-        ['列選單', 'View details、Duplicate to new message'],
+        ['列選單', 'View details、Duplicate to new message、Cancel sending'],
         ['面板', panel('SMS fallback 不顯示人數。')],
       ]} />
       <StatusSpec id="已排程" s="scheduled" tagDesc="已核准或不需核准，等排程時間到。" shots={['st-scheduled']} panel="detail-scheduled" urg="urg-scheduled" rows={[
         ['收件人數', '顯示'],
         ['未送出人數', '不顯示'],
         ['傳送時間', '排程時間'],
-        ['列選單', 'View details、Duplicate to new message'],
+        ['列選單', 'View details、Reschedule、Duplicate to new message、Cancel sending'],
         ['面板', panel('')],
       ]} />
       <StatusSpec id="傳送中" s="progress" tagDesc="已開始傳送，各通道各自進行。" shots={['st-progress']} panel="detail-progress" urg="urg-progress" rows={[
@@ -411,7 +412,7 @@ function StatusTab() {
         ['收件人數', '顯示'],
         ['未送出人數', '不顯示'],
         ['傳送時間', '建立時間'],
-        ['列選單', 'View details、Edit content、Duplicate to new message、Cancel sending'],
+        ['列選單', 'View details、Duplicate to new message'],
         ['面板', panel('駁回原因在 Approval Center。')],
       ]} />
       <StatusSpec id="排程已過期" s="expired" tagDesc="核准時已超過排程時間，沒有送出。" shots={['st-expired']} panel="detail-expired" urg="urg-expired" rows={[

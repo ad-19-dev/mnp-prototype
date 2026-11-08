@@ -111,9 +111,14 @@
   "h": 149,
   "marks": []
  },
+ "menu-pending": {
+  "w": 1402,
+  "h": 198,
+  "marks": []
+ },
  "menu-scheduled": {
   "w": 1402,
-  "h": 149,
+  "h": 230,
   "marks": []
  },
  "menu-expired": {
@@ -123,7 +128,7 @@
  },
  "menu-rejected": {
   "w": 1402,
-  "h": 230,
+  "h": 149,
   "marks": []
  },
  "menu-error": {
