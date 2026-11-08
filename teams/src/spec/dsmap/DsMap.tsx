@@ -78,7 +78,7 @@ export default function DsMap() {
             ['收件人表格', comps('DataTable', 'Avatar', 'Tag', 'Tooltip', 'Empty'), '固定欄寬；Audience 欄放頭像或圖示；Can receive 欄的通道圖示用 Tag（neutral、sm）加 Tooltip；超過 6 筆加篩選與 Remove all。', <Own>收不到的通道變淡並加刪除線</Own>],
             ['通道卡片', comps('Checkbox'), '三張卡片，勾選框在右上角。', <Own>整張可點的卡片（藍框、淡藍底）</Own>],
             ['SMS 備援、緊急送出', comps('Checkbox', 'Tag', 'Textarea'), 'Checkbox 加說明；Reason 用 Textarea，必填。', <Own>勾選後出現的提示框</Own>],
-            ['收不到的人', comps('Button'), '紅字「n people can’t get the message」加 Button link「See who」。', <Own>—</Own>],
+            ['收不到的人', comps('Button'), '警示三角形圖示加紅字「n people can’t get the message」，後接 Button link「See who」。', <Own>—</Own>],
           ]} />
         </Section>
 

@@ -190,7 +190,7 @@ function Step1() {
         ]} />
         <Notes items={[
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片內只有名稱與說明，沒有其他提示。' },
-          { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，通道下方一行：紅字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，後面接藍色連結 <Copy en="See who" zh="查看是誰" />，點了開名單。都收得到時不顯示。</> },
+          { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，通道下方一行：警示三角形圖示加紅字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，後面接藍色連結 <Copy en="See who" zh="查看是誰" />，點了開名單。都收得到時不顯示。</> },
         ]} />
         <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
