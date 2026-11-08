@@ -131,9 +131,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
 function Frame() {
   return (
     <>
-      <Section eyebrow="Header" title="頁首" lead="頁首只有麵包屑：空間名稱 › New message。點空間名稱等同 Cancel：已經填了內容時，先確認是否離開。右側沒有標籤；需不需要核准，在步驟 1 的 SMS 備援提示框、步驟 3 的 Create message 與送出後的 toast 說明。">
-        <span className="text-body text-fg-secondary">麵包屑用設計系統 Breadcrumb，分隔符號是 ChevronRight（不用 / 字元）。</span>
-      </Section>
+      <Section eyebrow="Header" title="頁首" lead="頁首是麵包屑：空間名稱 › New message。點空間名稱等同 Cancel：已經填了內容時，先確認是否離開。右側沒有標籤；需不需要核准，在步驟 1 的 SMS 備援提示框、步驟 3 的 Create message 與送出後的 toast 說明。">{null}</Section>
       <Section eyebrow="Steps" title="步驟列" lead="設計系統 Steps（水平）。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['步驟名稱', <><Copy en="Audiences & channels" zh="收件人與通道" />、<Copy en="Message" zh="訊息內容" />、<Copy en="Schedule & preview" zh="排程與預覽" /></>],
