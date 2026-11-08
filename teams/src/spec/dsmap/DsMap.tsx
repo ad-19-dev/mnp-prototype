@@ -49,7 +49,7 @@ export default function DsMap() {
             ['訊息 ID', comps('Tag'), 'size sm、neutral。', <Own>放在標題前、tabular 數字</Own>],
             ['通道', comps('Tag', 'Tooltip'), '只有圖示的 Tag（文字隱藏），Device Notifications (SMS) 兩個圖示；Tooltip 顯示通道名稱。', <Own>隱藏 Tag 文字的樣式</Own>],
             ['狀態', comps('Tag'), 'size sm，顏色與圖示依狀態（見規格頁的狀態表）。', <Own>狀態下方的 {'{n}'} not sent 連結（Button link）</Own>],
-            ['建立者', comps('Avatar'), '頭像加姓名，DS 的人員顯示（PersonDisplay）。', <Own>—</Own>],
+            ['建立者', comps('Avatar'), '大頭照加姓名，DS 的人員顯示（PersonDisplay，照片網址放 avatarUrl；沒有照片時退回姓名第一個字母）。', <Own>—</Own>],
             ['列尾按鈕', comps('Button', 'DropdownMenu'), 'ⓘ：Button text、xs、iconOnly，pressed 時為 checked。⋮：DropdownMenu，項目依狀態。', <Own>選單項目依狀態顯示的規則</Own>],
             ['分頁', comps('Pagination'), '頁碼與每頁筆數；沒有筆數文字。', <Own>以訊息為單位分頁</Own>],
             ['空狀態', comps('Empty'), '表格內：Empty 加 Clear filters。第一次使用：頁面層級的 Empty 加 New message 按鈕。', <Own>第一次使用時不顯示搜尋、篩選與表格</Own>],

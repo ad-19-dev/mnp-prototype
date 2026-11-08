@@ -1,5 +1,6 @@
 // Small building blocks shared by every page. All of them are thin compositions of DS components,
 // so the look and behaviour come from @qijenchen/design-system.
+import { avatarUrl } from '../lib/avatar'
 import * as React from 'react'
 import {
   Alert, Avatar, Badge, Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
@@ -15,7 +16,7 @@ import { L } from '../lib/i18n'
 // A person as the DS DataTable's `person` column type wants it: avatar and one name, with the profile card
 // (employee ID, NT account) on hover. Use it with `meta: { type: 'person' }` and no custom cell.
 export function personVal(p: Person, you?: boolean): PersonData {
-  return { name: p.extKind ? p.value || '' : p.en + ' ' + p.zh + (you ? L(' (you)', '（你）') : ''), id: p.extKind ? undefined : p.nt, employeeNumber: p.extKind ? undefined : p.emp }
+  return { name: p.extKind ? p.value || '' : p.en + ' ' + p.zh + (you ? L(' (you)', '（你）') : ''), avatarUrl: p.extKind ? undefined : avatarUrl(p), id: p.extKind ? undefined : p.nt, employeeNumber: p.extKind ? undefined : p.emp }
 }
 
 // ---------- channels and statuses ----------
@@ -84,7 +85,7 @@ const AV: CategoricalColor[] = ['blue', 'green', 'purple', 'deep-orange', 'turqu
 export const avColor = (c: number) => AV[c % AV.length]
 export function PAvatar({ p, size = 24 }: { p: Person; size?: number }) {
   if (p.extKind) return <Avatar size={size} icon={p.extKind === 'phone' ? Hash : Mail} alt={p.value || ''} color="neutral" />
-  return <Avatar size={size} alt={p.en} color={avColor(p.c)} />
+  return <Avatar size={size} src={avatarUrl(p)} alt={p.en} color={avColor(p.c)} />
 }
 export const pname = (p: Person) => p.extKind ? (p.value || '') : (p.zh ? p.zh + ' ' + p.en : p.en)
 export function Two({ a, b, strong, className }: { a: React.ReactNode; b?: React.ReactNode; strong?: boolean; className?: string }) {
