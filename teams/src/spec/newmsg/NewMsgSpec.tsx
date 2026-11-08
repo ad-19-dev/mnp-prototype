@@ -95,7 +95,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="空白" when="剛進入" shots={['s1-empty']} then="收件人搜尋、Batch import、三張通道卡片。" />
           <Card kind="page" title="搜尋收件人" when="在搜尋框輸入" shots={['s1-search']} then="下拉選單列出符合的人；按 Enter 加入第一筆（搜尋框下方沒有說明文字）。" />
           <Card kind="dialog" title="Batch import" when="按 Batch import" shots={['dlg-import', 'dlg-import-result']} then="選資料類型、貼上或上傳名單 → Find matches → 確認後加入。" />
-          <Card kind="page" title="選好收件人與通道" when="加入收件人、勾通道" shots={['s1-filled']} then="收件人表格顯示每位能收到哪些通道。" />
+          <Card kind="page" title="選好收件人與通道" when="加入收件人、勾通道" shots={['s1-filled']} then="收件人表格只列出選了誰；每張通道卡片顯示實際收得到的人數。" />
           <Card kind="dialog" title="n people can’t get the message" when="點通道下方的 See who" shots={['s1-unreach', 'dlg-unreach']} then="列出所有選到的通道都收不到的人與原因。" />
           <Card kind="page" title="SMS 備援與緊急送出" when="勾 Device Notifications (SMS)，再勾 It’s urgent" shots={['s1-sms', 's1-urgent']} then="勾了緊急，必填原因。" />
           <Card kind="dialog" title="Save as group" when="頁尾 Save as group" shots={['dlg-save-group']} then="把目前的收件人存成群組。" />
@@ -186,7 +186,7 @@ function Step1() {
           ['類型選單', '搜尋框左側：Person、Org、Group、Phone、Email、MVPN。決定搜尋框找什麼，各類型見下表。'],
           ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；搜尋框下方沒有說明文字。已在名單上的選項顯示 Added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
-          ['收件人表格', '固定行高，每格一行、內容垂直置中（設計系統表格規則）。欄：Audience（個人是設計系統的人員顯示：頭像加姓名，組織、NT 帳號與工號在滑過的人員卡片；其他類型是圖示加名稱）、Type、People（組織與群組是藍字人數，點了看成員）、Can receive（各通道圖示放在灰底 Tag 裡，收不到的變淡並加刪除線）。列尾 × 移除。'],
+          ['收件人表格', '只回答「選了誰」：只有一欄 Audience，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名，組織、NT 帳號與工號在滑過的人員卡片）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、External phone、External email）；組織與群組後面接藍字總人數 n people，點了看成員。不顯示每個通道收得到幾人（改在通道卡片上）。列尾 × 移除。'],
           ['超過 6 筆', '表格上方出現篩選框 Filter audiences 與 Remove all（紅字，會先確認）。'],
           ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audiences yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
         ]} />
@@ -207,10 +207,10 @@ function Step1() {
         ]} />
         <SpecTable head={['收件人類型', '表格 Audience 欄', '詳情面板的收件人列表']} nowrap={[0]} rows={[
           ['個人', '人員顯示：大頭照、英文名 中文名', '大頭照、英文名 中文名；下一行：組織代號 · NT · 工號'],
-          ['組織', '大樓圖示（灰色圓底）、組織代號', '同左；下一行：組織代碼'],
-          ['群組', '兩個人圖示（灰色圓底）、群組名稱', '同左；下一行：Audience group'],
-          ['外部 Email', '信封圖示（灰色圓底）、Email', '同左；下一行：External email · Email only'],
-          ['外部電話', '電話圖示（灰色圓底）、號碼', '同左；下一行：External phone · SMS only'],
+          ['組織', '大樓圖示（灰色圓底）、組織代號、Tag Org、藍字 n people', '大樓圖示、組織代號；下一行：組織代碼'],
+          ['群組', '兩個人圖示（灰色圓底）、群組名稱、Tag Group、藍字 n people', '兩個人圖示、群組名稱；下一行：Audience group'],
+          ['外部 Email', '信封圖示（灰色圓底）、Email、Tag External email', '信封圖示、Email；下一行：External email · Email only'],
+          ['外部電話', '電話圖示（灰色圓底）、號碼、Tag External phone', '電話圖示、號碼；下一行：External phone · SMS only'],
         ]} />
         <Big name="s1-types" title="各類型收件人在表格中的呈現" sub="個人、組織、群組、外部電話、外部 Email 各一筆" />
         <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人']]} />
@@ -223,7 +223,8 @@ function Step1() {
           [<Copy en="Email" zh="Email" />, <Copy en="Company mailbox, with formatting and files." zh="公司信箱，可加格式與附件。" />],
         ]} />
         <Notes items={[
-          { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片內只有名稱與說明，沒有其他提示。' },
+          { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。有收件人時，卡片下方分隔線之後顯示這個通道實際會送到的人數（勾不勾都顯示，方便選通道）。' },
+          { title: '每個通道收得到幾人', body: <>第一行 <Copy en="n / total people can receive" zh="n / 總人數 人可收到" />（total 是所有收件人，外部人員也算）。有人收不到時第二行 <Copy en="m can’t receive: <原因>" zh="m 人收不到：<原因>" />（次要小字）。原因：Device Notifications 是 no registered device 與 external contacts；Desktop OS 是 no desktop agent 與 external contacts；Email 是 external phones。只有一種原因時不重複寫數字（例如 1 can’t receive: no desktop agent）。</> },
           { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，通道下方一行：警示三角形圖示加紅字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，後面接藍色連結 <Copy en="See who" zh="查看是誰" />，點了開名單。都收得到時不顯示。</> },
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」「外部人員沒勾對應通道」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點 See who 看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、超過 500 人、沒有通道、緊急送出沒填原因。' },
           { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },

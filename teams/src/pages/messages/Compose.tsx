@@ -113,10 +113,13 @@ function RecvTable({ m }: { m: SendCtl }) {
     return { t, label, sub, kind: recvKind(t), cnt, can, warn, badge, badgeBtn, ppl }
   }).filter(x => !q || (x.label + ' ' + x.sub + ' ' + x.kind).toLowerCase().indexOf(q) >= 0)
 
+  // the audience list only answers "who did I pick": one column, with the type and (for orgs and groups) the
+  // head count beside the name; what each channel reaches is shown on the channel cards below
   const cols = React.useMemo(() => [
     rcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
       const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
+      const many = t.type === 'group' || t.type === 'org'
       // one line per cell (DS table rule): people use the DS person display (org · NT · ID in its hover card)
       return (
         <span className="flex min-w-0 items-center gap-2">
@@ -124,28 +127,14 @@ function RecvTable({ m }: { m: SendCtl }) {
             : <>
               <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><Icon className="size-3.5 text-fg-secondary" aria-hidden /></span>
               <span className="truncate text-body">{x.label}</span>
+              <Tag size="sm" color="neutral">{x.kind}</Tag>
             </>}
+          {/* an org or group's head count opens its member list */}
+          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl, group: t.type === 'group' ? t.id : undefined })}>{P(x.cnt, 'person', '人', 'people')}</Button> : null}
           {x.badgeBtn ? <Button size="xs" variant="secondary" onClick={() => m.openNumbers()}>{x.badge}</Button> : x.badge ? <Tag size="sm">{x.badge}</Tag> : null}
         </span>
       )
     } }),
-    rcol.accessor('kind', { header: L('Type', '類型'), meta: { width: 112 } }),
-    // a group or org's count opens its member list
-    // (the DS link button has a 56px min width with its text centred; !min-w-0 keeps the number flush right)
-    rcol.accessor('cnt', { header: L('People', '人數'), meta: { width: 88, align: 'right' }, cell: i => {
-      const x = i.row.original
-      return x.t.type === 'group' || x.t.type === 'org'
-        ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl, group: x.t.type === 'group' ? x.t.id : undefined })}>{fmtN(x.cnt)}</Button>
-        : <span className="tabular-nums">{fmtN(i.getValue())}</span>
-    } }),
-    rcol.display({ id: 'can', header: L('Can receive', '可收到的通道'), meta: { width: 240 }, cell: i => (
-      <span className="flex flex-wrap items-center gap-1.5">
-        {i.row.original.can.map(x => {
-          const I = CHN[x.k].icon
-          return <Tip key={x.k} text={CHN[x.k].name + (x.of > 1 ? ': ' + x.n + ' / ' + x.of : '')}><span className={cn('inline-flex', !x.n && 'opacity-50 [&_[data-tag-text]]:line-through')}><Tag size="sm" color="neutral" icon={I} aria-hidden>{x.of > 1 ? fmtN(x.n) : null}</Tag></span></Tip>
-        })}
-      </span>
-    ) }),
   ], [m, app.lang])
 
   if (!c.receivers.length) return <Empty icon={Users} title={L('No audiences yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
@@ -158,7 +147,7 @@ function RecvTable({ m }: { m: SendCtl }) {
           <Button variant="link" size="sm" danger className="ml-auto" onClick={() => m.askRemoveAll()}>{L('Remove all', '全部移除')}</Button>
         </div>
       ) : null}
-      <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} getRowId={x => x.t.key}
+      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
       <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
@@ -166,10 +155,17 @@ function RecvTable({ m }: { m: SendCtl }) {
 }
 
 function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
-  const c = m.s.c, on = !!c.ch[k], meta = CHN[k], n = (rc as any)[k] as number, hasR = rc.total > 0
-  const tpl = c.tplId ? m.tplById(c.tplId) : null
-  const tplHas = !tpl ? false : k === 'email' ? (tpl.email.mode === 'own' || tplHasNotif(tpl)) : tplHasNotif(tpl)
-  const pct = Math.round(n / Math.max(1, rc.total) * 100), id = 'ch-' + k
+  const c = m.s.c, on = !!c.ch[k], meta = CHN[k], hasR = rc.total > 0, id = 'ch-' + k
+  // who this channel actually reaches out of everyone picked, and why the rest can't get it
+  const n = k === 'push' ? rc.push : k === 'desktop' ? rc.desktop : rc.email
+  const why: string[] = []
+  if (k === 'push' && rc.noDev) why.push(L(fmtN(rc.noDev) + ' no registered device', fmtN(rc.noDev) + ' 人沒有註冊裝置'))
+  if (k === 'desktop' && rc.people - rc.desktop) why.push(L(fmtN(rc.people - rc.desktop) + ' no desktop agent', fmtN(rc.people - rc.desktop) + ' 人沒有桌面程式'))
+  if (k !== 'email' && rc.ext) why.push(L(P(rc.ext, 'external contact', '位外部人員', 'external contacts'), rc.ext + ' 位外部人員'))
+  if (k === 'email' && rc.extP) why.push(L(P(rc.extP, 'external phone', '支外部電話', 'external phones'), rc.extP + ' 支外部電話'))
+  const miss = rc.total - n
+  // a single reason doesn't need its count repeated
+  const whyText = why.length === 1 ? why[0].replace(/^[\d,]+ /, '') : why.join(L(', ', '、'))
   return (
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
       <span className="flex items-start gap-3">
@@ -177,6 +173,12 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
         <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
+      {hasR ? (
+        <span className="flex flex-col gap-0.5 border-t border-divider pt-2 pl-9">
+          <span className="text-body"><span className="font-medium tabular-nums">{fmtN(n)} / {fmtN(rc.total)}</span> {L(rc.total === 1 ? 'person can receive' : 'people can receive', '人可收到')}</span>
+          {miss > 0 ? <span className="text-caption text-fg-secondary">{L(fmtN(miss) + ' can’t receive: ', fmtN(miss) + ' 人收不到：') + whyText}</span> : null}
+        </span>
+      ) : null}
     </label>
   )
 }
