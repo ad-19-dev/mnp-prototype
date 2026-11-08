@@ -1,6 +1,6 @@
 # MNP prototype：團隊版（發送空間）
 
-以雙語版為基礎，加上「發送空間」：每則訊息、每個收件群組、每個模板都只屬於一個空間。
+加上「發送空間」：每則訊息、每個收件群組、每個模板都只屬於一個空間。
 規則寫在 `src/lib/teams.ts`，建立與設定團隊（同一個對話框）在 `src/components/TeamPanels.tsx`，
 側欄、空間標題與分頁在 `src/components/shell.tsx`。
 
@@ -28,4 +28,4 @@
 | SMS 核准 | 畫面上不出現審核單位的名稱，一律寫「SMS approval / SMS 核准」和「the SMS reviewer / SMS 審核人員」；機制（SMS 需核准、緊急可略過並留紀錄）都保留 |
 | SMS 備援 | 詳情的各通道裡排在 Device Notifications 正下方、縮排；Device Notifications 的失敗名單標出「Delivered via SMS」 |
 
-執行方式與雙語版相同：`npm install --legacy-peer-deps` 後 `npm run dev`。
+執行方式：`npm install --legacy-peer-deps` 後 `npm run dev`。

@@ -1,12 +1,12 @@
 // Builds a password-locked single-file page from a Vite dist folder.
 // The app's CSS + JS are encrypted (PBKDF2-SHA256 → AES-GCM); the page only holds ciphertext
 // and a small unlock form, so the prototype can't be read from the source without the password.
-// usage: node tools/lock.mjs <password> <out.html> [project dir: bilingual | english] [title]
+// usage: node tools/lock.mjs <password> <out.html> [project dir, e.g. teams or teams/split-spec] [title]
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { webcrypto as crypto } from 'node:crypto'
 
-const [pw, out, proj = 'bilingual', title = 'MNP Bilingual Prototype'] = process.argv.slice(2)
+const [pw, out, proj = 'teams', title = 'MNP Prototype'] = process.argv.slice(2)
 const dir = proj + '/dist/assets/'
 const pick = ext => readFileSync(dir + readdirSync(dir).find(f => f.endsWith(ext)), 'utf8')
 const payload = JSON.stringify({ css: pick('.css'), js: pick('.js') })
