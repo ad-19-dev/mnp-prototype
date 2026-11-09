@@ -221,9 +221,6 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           />
           <RecvTable m={m} />
           {tried[1] && !hasR ? <ErrText>{L('Add at least one audience.', '請加入至少一位收件人。')}</ErrText> : null}
-          {/* external contacts that no chosen channel reaches are counted in the summary's red line */}
-          {e.ext && !(hasR && anyCh && rc.unrN) ? <ErrText>{e.ext}</ErrText> : null}
-          {e.extp && !(hasR && anyCh && rc.unrN) ? <ErrText>{e.extp}</ErrText> : null}
         </div>
       </Section>
 

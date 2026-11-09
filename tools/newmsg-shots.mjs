@@ -152,15 +152,15 @@ await step('s1-types', async () => {
     await box.fill(q); await wait(500); await box.press('Enter'); await wait(400);
     await p.keyboard.press('Escape'); await wait(200);
   };
+  // channels come first, as a sender would do it
+  await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
+  await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
   await add(null, 'Chen'); await add('Org', 'PENG'); await add('Group', ''); await add('Phone', '0987654321'); await add('Email', 'amy@vendor-example.com');
   await p.getByRole('heading', { name: 'Audience', exact: true }).scrollIntoViewIfNeeded();
   const sec = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-types', (await sec.count()) ? sec : null, [], 12);
-  // external contacts whose channel is on: the yellow "your supervisor must approve" box under Channels
-  await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
-  await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
+  // SMS fallback on: the audience list gets the phone columns
   await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
-  // the audience list now has the SMS phone columns; the summary below shows the yellow approval line
   await p.getByRole('checkbox', { name: 'Personal phone' }).nth(1).click(); await wait(300);
   await big(2200);
   const aud = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');

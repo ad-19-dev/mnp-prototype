@@ -319,7 +319,7 @@ function Step1() {
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片只用來選通道，不顯示人數。' },
           { title: '順序', body: '步驟 1 由上而下：Channels → Audience。先選通道，收件人表格才知道要不要顯示 SMS 的手機欄位；加了收件人之後，上方通道卡片的人數會跟著更新。' },
           { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，Audience Reach by Channel 框的下方一行：警示三角形圖示加紅字 <Copy en="n messages can’t be sent" zh="n 則訊息無法送出" />，後面接藍色連結 <Copy en="See detail" zh="查看詳情" />，點了開名單。都收得到時不顯示。</> },
-          { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」「外部人員沒勾對應通道」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點 See who 看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道。' },
+          { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點 See detail 看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道。' },
           { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
           { title: 'Audience Reach by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Reach by Channel" zh="各通道觸及人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列：圖示、通道名稱、右側 n / total（不寫 people；全部收得到時綠色）；SMS 那一列寫 <Copy en="SMS (when the push doesn’t reach)" zh="SMS（推播沒送到時）" />，右側是寄到幾支公務手機、私人手機、外部電話。框下方只有紅字 n messages can’t be sent 加 See detail；不放黃字。</> },
@@ -343,7 +343,6 @@ function Step1() {
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後', '擋'],
           ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻', '不擋；只是這一筆加不進去'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後', '擋'],
-          ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <><Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />　<Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" /></>, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列', '不擋（沒選通道本身會擋）'],
           ['有人所有通道都收不到', <><Copy en="n messages can’t be sent" zh="n 則訊息無法送出" />＋藍色連結 See detail</>, '紅字加藍色連結', 'Audience Reach by Channel 下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失', '不擋'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道（按 Next 之後）" />
