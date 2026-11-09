@@ -102,7 +102,7 @@ export default function DsMap() {
             ['確認對話框', comps('Dialog', 'Button'), '寬 480；標題、一句說明、兩個按鈕；危險動作用 danger。', <Own>Confirm：把標題、說明、按鈕組成共用的確認元件</Own>],
             ['Batch import', comps('Dialog', 'Select', 'Textarea', 'FileUpload'), '先選 Data type，再貼上或上傳；比對結果分組顯示。', <Own>比對結果的分組列表</Own>],
             ['Not sent to', comps('Dialog', 'DataTable', 'Avatar'), '單行儲存格；內部人員用 DS 人員顯示，外部用圖示加地址。', <Own>—</Own>],
-            ['Toast', comps('Toast'), 'Toaster position=bottom-center；一則一行。', <Own>隱藏 Toast 前面的圖示（CSS）</Own>],
+            ['Toast', comps('Toast'), 'Toaster position=bottom-center、offset=48（比預設 24px 高一點）；一則一行。', <Own>隱藏 Toast 前面的圖示（CSS）</Own>],
           ]} />
           <Notes items={[{ title: '載入中', body: <>列表載入用 {link('CircularProgress')} 加 Empty；規格見 Storybook。</> }]} />
         </Section>

@@ -512,7 +512,7 @@ function After() {
           ['Edit content 儲存', <Copy en="Content saved" zh="已儲存內容" />],
         ]} />
       </Section>
-      <Notes items={[{ title: 'Toast', body: '顯示在畫面下方置中（設計系統 Toaster，position 設為 bottom-center）；一行文字，前面不放圖示；右側有關閉鈕。' }]} />
+      <Notes items={[{ title: 'Toast', body: '顯示在畫面下方置中（設計系統 Toaster，position 設為 bottom-center，離底部 48px）；一行文字，前面不放圖示；右側有關閉鈕。' }]} />
       <Big name="after-submit" title="回到列表" sub="緊急送出：In progress" />
     </Section>
   )

@@ -12,7 +12,8 @@ export default function App() {
       <Shell>
         {page === 'send' ? <MessagesPage /> : page === 'groups' ? <GroupsPage /> : <TemplatesPage />}
       </Shell>
-      <Toaster position="bottom-center" />
+      {/* a little higher than the default 24px so toasts are easier to notice (2026-11-09); the DS passes offset on to sonner */}
+      <Toaster position="bottom-center" {...({ offset: 48 } as object)} />
     </>
   )
 }
