@@ -6,4 +6,5 @@
 - The New message UI flow and design spec of that version is `teams/newmsg-spec.html` (`teams/src/spec/newmsg/`, screenshots by `tools/newmsg-shots.mjs`).
 - The phone-number de-duplication study is `teams/phone-dedupe.html` (`teams/src/spec/phone/`).
 - The DS component map for developers is `teams/dsmap.html` (`teams/src/spec/dsmap/`).
+- The "which phone gets the SMS" comparison for PM is `teams/smsphone.html` (`teams/src/spec/smsphone/`); it does not change the prototype.
 - The lock password is never written into this repo.
