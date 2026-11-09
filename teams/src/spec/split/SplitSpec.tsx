@@ -273,7 +273,7 @@ function Detail() {
           { n: 2, title: '基本欄位', body: FIELDS + '。' },
           { n: 3, title: 'Device Notifications', body: '收合列：名稱與 n / m sent；展開是寄出的內容。' },
           { n: 4, title: 'SMS fallback', body: '收合列：名稱與 n / m sent；展開是簡訊內文。不需要 SMS 時寫 Not needed。' },
-          { n: 5, title: 'Audiences', body: '收件人列表；組織與群組的人數可以點開看成員。' },
+          { n: 5, title: 'Audience', body: '收件人列表；組織與群組的人數可以點開看成員。' },
         ]} />
       </Section>
       <Section eyebrow="Variants" title="各種紀錄的面板">
@@ -293,7 +293,7 @@ function Detail() {
           ['Status', '每一筆都有，和列表上這一筆相同；有 SMS 備援時以 Device Notifications 的狀態為主。'],
           ['View in Approval Center', <>放在基本欄位下方（tight 間距），沒有欄位名稱。這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。連結文字 <Copy en="View in Approval Center" zh="到 Approval Center 查看" />；審核進度與駁回原因都在 Approval Center。</>],
           ['Content', '預設收合，可同時展開多項；換一筆紀錄時回到收合。Device Notifications (SMS) 兩項，其他一項。'],
-          ['Audiences', '只列這個通道寄得到的人：外部 Email 只在 Email，外部電話只在 Device Notifications (SMS)。'],
+          ['Audience', '只列這個通道寄得到的人：外部 Email 只在 Email，外部電話只在 Device Notifications (SMS)。'],
           ['列表上的對應列', '面板開著時，那一筆列尾的 ⓘ 是 checked 樣式（淺藍底、藍色圖示）；列表本身不變色。'],
         ]} />
       </Section>
@@ -438,13 +438,13 @@ function StatusTab() {
 function Blocks() {
   return (
     <>
-      <Section eyebrow="Panel" title="面板的版面" lead="設計系統 AppShellAside：靠右的常駐欄，視窗窄於 768 px 時改為 Sheet。由上到下：標題列、基本欄位、Content、Audiences。">
+      <Section eyebrow="Panel" title="面板的版面" lead="設計系統 AppShellAside：靠右的常駐欄，視窗窄於 768 px 時改為 Sheet。由上到下：標題列、基本欄位、Content、Audience。">
         <Figure label="Device Notifications (SMS)" sub="所有區塊" shot="detail-fb" max={440} notes={[
           { n: 1, title: '標題列', body: <>標題 <C>Message detail</C>，右上角關閉（Esc 也可關閉）。</> },
           { n: 2, title: '基本欄位', body: '垂直的 DescriptionList。' },
           { n: 3, title: 'Content', body: '區塊標題與收合列。' },
           { n: 4, title: 'SMS fallback', body: '有 SMS 備援時的第二個收合列。' },
-          { n: 5, title: 'Audiences', body: '區塊標題與收件人列表。' },
+          { n: 5, title: 'Audience', body: '區塊標題與收件人列表。' },
         ]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['寬度', '400；xl 視窗 480'],
@@ -476,7 +476,7 @@ function Blocks() {
         ]} />
         <Notes items={[{ title: '內容框', body: '白底、細框線、圓角、內距 12，保留換行。' }]} />
       </Section>
-      <Section eyebrow="Block 3" title="Audiences" lead="這個通道寄得到的收件人，一列一個，順序：組織、群組、個人、外部聯絡人。">
+      <Section eyebrow="Block 3" title="Audience" lead="這個通道寄得到的收件人，一列一個，順序：組織、群組、個人、外部聯絡人。">
         <Figure label="多種收件人" sub="組織、群組、個人、外部" shot="detail-mixed" max={420} notes={[
           { n: 1, title: '列', body: '左側圖示或頭像（都是 24）；名稱（中等粗細）與一行說明（次要小字）；組織與群組右側是人數連結，點了開成員對話框。' },
         ]} />

@@ -59,7 +59,7 @@ export function ComposeView({ m }: { m: SendCtl }) {
 
 function StepBar({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, narrow = useIsNarrowViewport()
-  const steps = [L('Channels & audiences', '通道與收件人'), L('Message', '訊息內容'), L('Schedule & preview', '排程與預覽')]
+  const steps = [L('Channels & audience', '通道與收件人'), L('Message', '訊息內容'), L('Schedule & preview', '排程與預覽')]
   const done = [1, 2, 3].filter(n => n !== c.step && n <= c.maxStep && stepOk(n, e)).map(n => 's' + n)
   // on a phone the three steps don't fit side by side
   if (narrow) return (
@@ -157,12 +157,12 @@ function RecvTable({ m }: { m: SendCtl }) {
     ] : []),
   ], [m, app.lang, sms, c.smsCO, c.smsPP, c.receivers])
 
-  if (!c.receivers.length) return <Empty icon={Users} title={L('No audiences yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
+  if (!c.receivers.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
     <div className="flex flex-col gap-2">
       {c.receivers.length > 6 ? (
         <div className="flex items-center gap-2">
-          <div className="w-64"><Input size="sm" startIcon={Search} type="search" placeholder={L('Filter audiences', '篩選收件人')} aria-label={L('Filter audiences', '篩選收件人')} value={s.rf} onChange={ev => m.set({ rf: ev.target.value })} /></div>
+          <div className="w-64"><Input size="sm" startIcon={Search} type="search" placeholder={L('Filter audience', '篩選收件人')} aria-label={L('Filter audience', '篩選收件人')} value={s.rf} onChange={ev => m.set({ rf: ev.target.value })} /></div>
           {rows.length !== c.receivers.length ? <span className="text-caption text-fg-secondary">{rows.length} / {c.receivers.length}</span> : null}
           <Button variant="link" size="sm" danger className="ml-auto" onClick={() => m.askRemoveAll()}>{L('Remove all', '全部移除')}</Button>
         </div>
@@ -218,7 +218,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         </div>
       </Section>
 
-      <Section title={L('Audiences', '收件人')}>
+      <Section title={L('Audience', '收件人')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RecvInput
             id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(g => groupInSpace(g))}
@@ -276,7 +276,7 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
         </div>
         {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
         {rc.unrN ? (
-          <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="inline-flex items-center gap-1 text-error-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button></p>
+          <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="inline-flex items-center gap-1 text-error-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(rc.unrN, 'message', '', 'messages') + ' can’t be sent', rc.unrN + ' 則訊息無法送出')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See detail', '查看詳情')}</Button></p>
         ) : null}
       </div>
     </Section>
@@ -500,7 +500,7 @@ function ResultView({ m }: { m: SendCtl }) {
     { k: L('Channels', '通道'), v: r.chs.map(k => CHN[k].name).join(L(', ', '、')) },
     { k: L('Submitted', '送出時間'), v: r.when },
     { k: L('Sends', '傳送時間'), v: r.sends },
-    { k: L('Audiences', '收件人'), v: fmtN(r.total) },
+    { k: L('Audience', '收件人'), v: fmtN(r.total) },
   ]
   const text = both ? L('Your supervisor reviews it first, then the SMS reviewer. We’ll notify you at each step.', '先由主管審核，再由 SMS 審核人員審核，每一步都會通知你。')
     : ap.icsd ? L('The SMS reviewer will review it. We’ll notify you when it’s approved.', 'SMS 審核人員審核後會通知你。')

@@ -390,7 +390,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
           </Accordion>
         </Part>
 
-        <Part title={L('Audiences', '收件人')}>
+        <Part title={L('Audience', '收件人')}>
           {tags.length ? <AudienceList tags={tags} groups={app.groups} /> : <span className="text-body text-fg-secondary">—</span>}
         </Part>
       </div>

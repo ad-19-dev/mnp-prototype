@@ -62,7 +62,7 @@ export default function DsMap() {
             ['基本欄位', comps('DescriptionList', 'Tag'), 'vertical；Status 的值放 Tag。', <Own>View in Approval Center 連結（Button link）放在欄位下方</Own>],
             ['內容收合列', comps('Accordion'), '預設收合，可同時展開多項；標題列顯示名稱與 n / m sent。', <Own>各通道內容框的樣式（白底、細框線、圓角、內距 12）</Own>],
             ['Email 內容', comps('FileItem'), '附件用 FileItem 列出名稱與大小。', <Own>Email 內文的 HTML 顯示框</Own>],
-            ['Audiences', comps('Avatar', 'Button'), '個人用 Avatar；人數連結是 Button link。', <Own>整個收件人列表（列的結構、組織與群組的 bg-muted 圓底圖示、排序）</Own>],
+            ['Audience', comps('Avatar', 'Button'), '個人用 Avatar；人數連結是 Button link。', <Own>整個收件人列表（列的結構、組織與群組的 bg-muted 圓底圖示、排序）</Own>],
             ['成員對話框', comps('Dialog', 'DataTable'), '寬 640，表格列出成員，有搜尋。', <Own>—</Own>],
           ]} />
         </Section>
@@ -79,8 +79,8 @@ export default function DsMap() {
             ['通道卡片', comps('Checkbox'), '三張卡片，勾選框在右上角；在收件人之前選，只用來選通道，不顯示人數。', <Own>整張可點的卡片（藍框、淡藍底）</Own>],
             ['SMS 備援、緊急送出', comps('Checkbox', 'Tag'), 'SMS 備援是 Checkbox 加說明與 Need ICSD Approval 標籤；緊急送出是縮排在下方的 Checkbox，沒有原因欄位。', <Own>—</Own>],
             ['SMS 寄到哪支手機', comps('DataTable', 'Checkbox'), '勾了 SMS 備援時，收件人表格多兩欄 Company phone、Personal phone：每格一個 Checkbox，表頭 Checkbox 可全選（半選用 indeterminate）。', <Own>每列預設勾公務手機的規則</Own>],
-            ['Audience Reach by Channel', '—', '設計系統沒有現成元件。', <Own>收件人下方的人數框：每個通道一列（圖示、名稱、n / total，全收得到時綠色），框下方紅字加 See who</Own>],
-            ['收不到的人', comps('Button'), '警示三角形圖示加紅字「n people can’t get the message」，後接 Button link「See who」。', <Own>—</Own>],
+            ['Audience Reach by Channel', '—', '設計系統沒有現成元件。', <Own>收件人下方的人數框：每個通道一列（圖示、名稱、n / total，全收得到時綠色），框下方紅字加 See detail</Own>],
+            ['收不到的人', comps('Button'), '警示三角形圖示加紅字「n messages can’t be sent」，後接 Button link「See detail」。', <Own>—</Own>],
           ]} />
         </Section>
 

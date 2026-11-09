@@ -154,7 +154,7 @@ await step('detail-fb', async () => {
     [2, a.getByText('Channel', { exact: true }).first(), 'tl'],
     [3, a.getByText('Device Notifications', { exact: true }).first(), 'tl'],
     [4, a.getByText('SMS fallback', { exact: true }).first(), 'tl'],
-    [5, a.getByText('Audiences', { exact: true }), 'tl'],
+    [5, a.getByText('Audience', { exact: true }), 'tl'],
   ]);
   await panel('detail-fb-open', [], true);
   await closeAside();

@@ -147,7 +147,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Sub id="1-6" title="看每個通道收得到幾人" start="有收件人、有選通道" items={[
             N('Audience Reach by Channel', 's1-ext', '收件人下方；每個通道 n / total，SMS 寫寄到幾支公務、私人手機'),
             F(['都收得到', R('人數綠色，沒有提醒')],
-              ['有人所有通道都收不到', N('紅字 n people can’t get the message', 's1-unreach'), E('See who'), D('收不到的人', 'dlg-unreach', '只有 Close')]),
+              ['有人所有通道都收不到', N('紅字 n messages can’t be sent', 's1-unreach'), E('See detail'), D('收不到的人', 'dlg-unreach', '只有 Close')]),
           ]} />
           <Sub id="1-7" title="存成群組" start="頁尾 Save as group（有收件人才可按）" items={[
             D('Save as group', 'dlg-save-group'),
@@ -228,7 +228,7 @@ function Frame() {
       <Section eyebrow="Header" title="頁首" lead="頁首是麵包屑：空間名稱 › New message。點空間名稱等同 Cancel：已經填了內容時，先確認是否離開。右側沒有標籤；需不需要核准，在步驟 1 的 SMS 備援提示框、步驟 3 的 Create message 與送出後的 toast 說明。">{null}</Section>
       <Section eyebrow="Steps" title="步驟列" lead="設計系統 Steps（水平）。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['步驟名稱', <><Copy en="Channels & audiences" zh="通道與收件人" />、<Copy en="Message" zh="訊息內容" />、<Copy en="Schedule & preview" zh="排程與預覽" /></>],
+          ['步驟名稱', <><Copy en="Channels & audience" zh="通道與收件人" />、<Copy en="Message" zh="訊息內容" />、<Copy en="Schedule & preview" zh="排程與預覽" /></>],
           ['完成的步驟', '打勾；可以點回去。'],
           ['還沒到的步驟', '停用；只能點下一步。'],
           ['手機寬度', '只顯示目前步驟：圓形數字、步驟名稱與 Step n of 3。'],
@@ -275,15 +275,15 @@ function Frame() {
 function Step1() {
   return (
     <>
-      <Section eyebrow="Step 1" title="收件人" lead={<>區塊標題 Audiences，沒有說明文字；右上角不顯示總人數；沒有人數上限。</>}>
+      <Section eyebrow="Step 1" title="收件人" lead={<>區塊標題 Audience，沒有說明文字；右上角不顯示總人數；沒有人數上限。</>}>
         <Big name="s1-filled" title="選好通道與收件人" sub="1680 寬" />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['類型選單', '搜尋框左側：Person、Org、Group、Phone、Email、MVPN。決定搜尋框找什麼，各類型見下表。'],
           ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；搜尋框下方沒有說明文字。已在名單上的選項顯示 Added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
           ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、External phone、External email）；組織與群組後面接藍字總人數 n people，點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。'],
-          ['超過 6 筆', '表格上方出現篩選框 Filter audiences 與 Remove all（紅字，會先確認）。'],
-          ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audiences yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
+          ['超過 6 筆', '表格上方出現篩選框 Filter audience 與 Remove all（紅字，會先確認）。'],
+          ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audience yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
         ]} />
         <SpecTable head={['搜尋類型', '輸入', '下拉選單與加入方式', '錯誤與找不到']} nowrap={[0]} rows={[
           ['Person', '姓名、NT 帳號或工號', '輸入後列出符合的人（最多 8 筆）：大頭照、英文名 中文名、組織代號 · NT · 工號。點選，或按 Enter 加入第一筆。', <><Copy en="No match for “<輸入>”. Contractors? Switch to Phone or Email." zh="找不到「<輸入>」。外包人員請改選電話或 Email。" /></>],
@@ -295,7 +295,7 @@ function Step1() {
         ]} />
         <Notes items={[
           { title: '錯誤顯示位置', body: '下拉選單關著時，錯誤在搜尋框下方（紅字）；下拉選單開著時，錯誤在選單裡（紅色圖示加文字）。' },
-          { title: '人數計算', body: <>Audiences 右上角不顯示總人數。人數（Audience Reach by Channel 裡的 total）是展開之後的人數：組織與群組展開成人，同一個人不管從哪裡加入只算一次；外部 Email 與外部電話各算 1；群組裡存的外包人員算外部。沒有人數上限。</> },
+          { title: '人數計算', body: <>Audience 右上角不顯示總人數。人數（Audience Reach by Channel 裡的 total）是展開之後的人數：組織與群組展開成人，同一個人不管從哪裡加入只算一次；外部 Email 與外部電話各算 1；群組裡存的外包人員算外部。沒有人數上限。</> },
           { title: '人員名稱', body: '到處都是英文名在前、中文名在後（Grace Wu 吳佳穎）：表格、搜尋下拉、對話框的清單、詳情面板的收件人與建立者都一樣。' },
           { title: '大頭照', body: '內部人員顯示大頭照（設計系統人員顯示的 avatarUrl，沒有照片時退回姓名第一個字母）；本頁的示意圖是範例。外部電話與外部 Email 沒有大頭照，一律是灰色圓底的圖示。' },
           { title: '重複加入', body: '同一個項目已在名單上時不會重複加入（下拉選單裡顯示 Added）。' },
@@ -319,12 +319,12 @@ function Step1() {
         ]} />
         <Notes items={[
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片只用來選通道，不顯示人數。' },
-          { title: '順序', body: '步驟 1 由上而下：Channels → Audiences。先選通道，收件人表格才知道要不要顯示 SMS 的手機欄位；加了收件人之後，上方通道卡片的人數會跟著更新。' },
-          { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，Audience Reach by Channel 框的下方一行：警示三角形圖示加紅字 <Copy en="n people can’t get the message" zh="n 人收不到訊息" />，後面接藍色連結 <Copy en="See who" zh="查看是誰" />，點了開名單。都收得到時不顯示。</> },
+          { title: '順序', body: '步驟 1 由上而下：Channels → Audience。先選通道，收件人表格才知道要不要顯示 SMS 的手機欄位；加了收件人之後，上方通道卡片的人數會跟著更新。' },
+          { title: '收不到的人', body: <>有人所有勾選的通道都收不到時，Audience Reach by Channel 框的下方一行：警示三角形圖示加紅字 <Copy en="n messages can’t be sent" zh="n 則訊息無法送出" />，後面接藍色連結 <Copy en="See detail" zh="查看詳情" />，點了開名單。都收得到時不顯示。</> },
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」「外部人員沒勾對應通道」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點 See who 看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道。' },
           { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
-          { title: 'Audience Reach by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Reach by Channel" zh="各通道觸及人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列：圖示、通道名稱、右側 n / total（不寫 people；全部收得到時綠色）；SMS 那一列寫 <Copy en="SMS (when the push doesn’t reach)" zh="SMS（推播沒送到時）" />，右側是寄到幾支公務手機、私人手機、外部電話。框下方只有紅字 n people can’t get the message 加 See who；不放黃字。</> },
+          { title: 'Audience Reach by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Reach by Channel" zh="各通道觸及人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列：圖示、通道名稱、右側 n / total（不寫 people；全部收得到時綠色）；SMS 那一列寫 <Copy en="SMS (when the push doesn’t reach)" zh="SMS（推播沒送到時）" />，右側是寄到幾支公務手機、私人手機、外部電話。框下方只有紅字 n messages can’t be sent 加 See detail；不放黃字。</> },
         ]} />
         <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
@@ -346,7 +346,7 @@ function Step1() {
           ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻', '不擋；只是這一筆加不進去'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後', '擋'],
           ['外部 Email 沒勾 Email、外部電話沒勾 SMS 備援', <><Copy en="n external emails can only get Email. Turn on Email or remove them." zh="n 個外部 Email 只能收 Email。請開啟 Email 或移除。" />　<Copy en="n external phones can only get SMS. Turn on SMS fallback or remove them." zh="n 支外部電話只能收 SMS。請開啟 SMS 備援或移除。" /></>, '紅字', '通道下方', '只在一個通道都沒勾時單獨出現（不用等 Next）；已選其他通道時併入下一列', '不擋（沒選通道本身會擋）'],
-          ['有人所有通道都收不到', <><Copy en="n people can’t get the message" zh="n 人收不到訊息" />＋藍色連結 See who</>, '紅字加藍色連結', 'Audience Reach by Channel 下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失', '不擋'],
+          ['有人所有通道都收不到', <><Copy en="n messages can’t be sent" zh="n 則訊息無法送出" />＋藍色連結 See detail</>, '紅字加藍色連結', 'Audience Reach by Channel 下方', '有收件人、有選通道，而且有人收不到時，隨勾選即時更新；都收得到就消失', '不擋'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道（按 Next 之後）" />
         <Big name="s1-phones" title="勾了 SMS 備援時的收件人表格" sub="Company phone、Personal phone 兩欄" />
@@ -447,7 +447,7 @@ function Dialogs() {
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），按鈕不放圖示，不放副標。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
           ['Batch import', '步驟 1 Batch import', '720', 'Find matches → Add n audiences'],
-          ['n people can’t get the message', '步驟 1 Audience Reach by Channel 下方的 See who', '720', '無（Close）'],
+          ['n messages can’t be sent', '步驟 1 Audience Reach by Channel 下方的 See detail', '720', '無（Close）'],
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
           ['Replace your text?', '步驟 2 選模板', '480', 'Replace'],
@@ -466,13 +466,13 @@ function Dialogs() {
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
-        <Gallery items={[['dlg-unreach', 'n people can’t get the message', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因（Device Notifications 只有 App unregistered；勾了 SMS 備援再加 no phone number）；只有 Close'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
+        <Gallery items={[['dlg-unreach', 'n messages can’t be sent', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因（Device Notifications 只有 App unregistered；勾了 SMS 備援再加 no phone number）；只有 Close'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
         <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-urgent', 'Send without SMS approval?'], ['dlg-leave', 'Leave without sending?']]} max={520} />
         <SpecTable head={['對話框', '說明', '按鈕']} nowrap={[0]} rows={[
           ['Leave without sending?', <Copy en="What you’ve written won’t be kept." zh="你填寫的內容不會保留。" />, 'Cancel、Discard（紅色）'],
-          ['Replace your text?', <Copy en="“<模板>” will replace what you’ve written. Audiences and channels stay the same." zh="「<模板>」會取代你寫的內容，收件人和通道不變。" />, 'Cancel、Replace'],
+          ['Replace your text?', <Copy en="“<模板>” will replace what you’ve written. Audience and channels stay the same." zh="「<模板>」會取代你寫的內容，收件人和通道不變。" />, 'Cancel、Replace'],
           ['Send without SMS approval?', <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" />, 'Cancel、Skip approval and send（紅色）。說明下方兩列：Logged as（姓名與時間）、Notified（SMS 審核人員和主管）'],
           ['Remove all audiences?', <Copy en="Channels and text stay the same." zh="通道和內容不受影響。" />, 'Cancel、Remove all（紅色）'],
         ]} />
