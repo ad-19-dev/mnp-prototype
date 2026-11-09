@@ -214,14 +214,12 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
               {ICSD && c.ch.sms ? (
                 <div className="ml-7 flex flex-col gap-[var(--layout-space-tight)]">
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
-                    label={L('It’s urgent: send without waiting for SMS approval', '這是緊急訊息，不等 SMS 核准直接傳送')}
-                    description={L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。')} />
+                    label={L('It’s urgent: send without waiting for SMS approval', '這是緊急訊息，不等 SMS 核准直接傳送')} />
                   {c.urgent ? (
                     <FormField id="f-urgent" label={L('Reason', '原因')} required count={c.urgentReason.length + ' / 200'} over={c.urgentReason.length > 200} error={tried[1] || c.urgentReason.length > 200 ? e.urgent : ''}>
                       <Textarea id="f-urgent" rows={2} value={c.urgentReason} error={!!(tried[1] && e.urgent)} onChange={ev => m.setC({ urgentReason: ev.target.value })} placeholder={L('e.g. Typhoon warning issued at 07:30; staff must know before commuting.', '例如：07:30 發布颱風警報，員工必須在通勤前得知。')} />
                     </FormField>
                   ) : null}
-                  {ap.mgr && c.urgent ? <Banner tone="neutral">{L('Your supervisor still has to approve it, because it goes outside the company.', '因為有外部收件人，仍需要主管核准。')}</Banner> : null}
                 </div>
               ) : null}
             </div>
