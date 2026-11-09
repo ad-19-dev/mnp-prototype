@@ -85,7 +85,7 @@ export const ORGS: Org[] = [
 function initials(en: string) { const a = en.split(' '); return ((a[0] || '').charAt(0) + (a[1] || '').charAt(0)).toUpperCase() }
 type PRow = [string, string, string, string, string, string, string, string, string, string, number, number]
 function mkP(a: PRow, i: number): Person {
-  return { id: a[0], zh: a[1], en: a[2], nt: a[3], emp: a[4], org: a[5], title: a[6], mvpn: a[7], co: a[8], pp: a[9], dev: !!a[10], desk: !!a[11], c: i % 8, ini: initials(a[2]) }
+  return { id: a[0], zh: a[1], en: a[2], nt: a[3], emp: a[4], org: a[5], title: a[6], mvpn: a[7] ? '88' + a[7] : '', co: a[8], pp: a[9], dev: !!a[10], desk: !!a[11], c: i % 8, ini: initials(a[2]) }
 }
 export const PEOPLE: Person[] = ([
   ['p01','吳佳穎','Grace Wu','gywu','120588','PENG','Senior Engineer','61588','0918226588','0912337415',1,1],
@@ -181,7 +181,7 @@ export function genPerson(key: string, org?: string | null): Person {
   const id = 'x' + key
   if (PMAP[id]) return PMAP[id]
   const h = hsh(key), su = SUR[h % SUR.length], gv = GIV[(h >>> 7) % GIV.length], hasCo = (h % 3) !== 0
-  const p: Person = { id, zh: su[0] + gv[0], en: gv[1] + ' ' + su[1], nt: (gv[1].charAt(0) + su[1]).toLowerCase() + ((h >>> 13) % 90 + 10), emp: String(100000 + (h % 30000)), org: org || ORGS[(h >>> 3) % ORGS.length].code, title: TITLES[(h >>> 17) % TITLES.length], mvpn: hasCo ? String(60000 + (h % 9999)) : '', co: hasCo ? '0918' + String(100000 + (h % 899999)) : '', pp: (h % 4) === 0 ? '09' + String(10000000 + (h % 89999999)) : '', dev: (h % 9) !== 0, desk: (h % 6) !== 0, c: h % 8, gen: true, ini: '' }
+  const p: Person = { id, zh: su[0] + gv[0], en: gv[1] + ' ' + su[1], nt: (gv[1].charAt(0) + su[1]).toLowerCase() + ((h >>> 13) % 90 + 10), emp: String(100000 + (h % 30000)), org: org || ORGS[(h >>> 3) % ORGS.length].code, title: TITLES[(h >>> 17) % TITLES.length], mvpn: hasCo ? '88' + String(60000 + (h % 9999)) : '', co: hasCo ? '0918' + String(100000 + (h % 899999)) : '', pp: (h % 4) === 0 ? '09' + String(10000000 + (h % 89999999)) : '', dev: (h % 9) !== 0, desk: (h % 6) !== 0, c: h % 8, gen: true, ini: '' }
   p.ini = initials(p.en)
   PMAP[id] = p
   return p
@@ -249,7 +249,7 @@ export function matchOne(tok: string, opts: { allowExt?: boolean; extWhy?: strin
     return opts.allowExt ? { kind: 'ext', email: low, by: 'External email' } : { kind: 'miss', why: opts.extWhy || 'External addresses can’t be group members' }
   }
   if (/^\d{6}$/.test(t)) { const p = PEOPLE.find(x => x.emp === t); return p ? { kind: 'one', p, by: 'Employee ID' } : { kind: 'miss', why: 'No employee with this ID' } }
-  if (/^\d{5}$/.test(t)) { const p = PEOPLE.find(x => x.mvpn === t); return p ? { kind: 'one', p, by: 'MVPN' } : { kind: 'miss', why: 'No one uses this MVPN' } }
+  if (/^\d{7}$/.test(t)) { const p = PEOPLE.find(x => x.mvpn === t); return p ? { kind: 'one', p, by: 'MVPN' } : { kind: 'miss', why: 'No one uses this MVPN' } }
   if (/^[\d\s+()-]+$/.test(t) && /^09\d{8}$/.test(digits)) {
     const p = PEOPLE.find(x => x.co === digits || x.pp === digits)
     if (p) return { kind: 'one', p, by: opts.phoneBy || (p.co === digits ? 'Company mobile' : 'Personal phone') }
@@ -278,7 +278,7 @@ export function parseList(text: string, opts: { allowExt?: boolean; extWhy?: str
   return out
 }
 // A pasted list holds one kind of data, chosen before pasting: every entry is matched as that kind only,
-// so "61588" can't be read as an MVPN in one list and an employee ID in another.
+// so "8861588" can't be read as an MVPN in one list and an employee ID in another.
 export type ListKind = 'nt' | 'emp' | 'name' | 'email' | 'phone' | 'mvpn' | 'org'
 export const LIST_KINDS: ListKind[] = ['nt', 'emp', 'name', 'email', 'phone', 'mvpn', 'org']
 export const LIST_SAMPLES: Record<ListKind, string> = {
@@ -287,7 +287,7 @@ export const LIST_SAMPLES: Record<ListKind, string> = {
   name: '陳怡君\nKevin Lin\nGrace Wu\n王小明',
   email: 'gywu@tsmc.com, cmchen@tsmc.com\npartner@example.com\nnobody@tsmc.com, not-an-email',
   phone: '0918-226-588\n0921660734\n0988-000-111\n0900-000-000',
-  mvpn: '61588, 60217, 68842\n66904, 99999',
+  mvpn: '8861588, 8860217, 8868842\n8866904, 9999999',
   org: 'PUX\nFMFG\nXYZ/123',
 }
 export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string }): Match {
@@ -302,7 +302,7 @@ export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean;
     const p = PEOPLE.find(x => x.emp === t); return p ? { kind: 'one', p, by: 'Employee ID' } : { kind: 'miss', why: 'No employee with this ID' }
   }
   if (kind === 'mvpn') {
-    if (!/^\d{5}$/.test(t)) return { kind: 'miss', why: 'Not a 5-digit MVPN' }
+    if (!/^\d{7}$/.test(t)) return { kind: 'miss', why: 'Not a 7-digit MVPN' }
     const p = PEOPLE.find(x => x.mvpn === t); return p ? { kind: 'one', p, by: 'MVPN' } : { kind: 'miss', why: 'No one uses this MVPN' }
   }
   if (kind === 'email') {

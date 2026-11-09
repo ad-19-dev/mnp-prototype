@@ -143,7 +143,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
               ['有外部人員，且其通道有勾', N('黃字：需要主管核准', 's1-ext')]),
           ]} />
           <Sub id="1-5" title="SMS 備援與緊急送出" start="勾了 Device Notifications" items={[
-            E('勾 Device Notifications (SMS)'), N('核准提示框', 's1-sms'), E('勾 It’s urgent'), N('Reason 必填', 's1-urgent'),
+            E('勾 Device Notifications (SMS)'), N('SMS 寄到：公務機固定、私人手機可選', 's1-sms'), F(['全部加寄私人手機', R('勾 Personal phone')], ['只加寄部分', E('Choose per audience'), D('Personal phones', 'dlg-sms-phone', '逐列勾選，Save')]), E('勾 It’s urgent'), N('Reason 必填', 's1-urgent'),
             F(['有外部收件人', R('灰框：仍需主管核准')], ['有人沒電話', R('灰框：<名字> 收不到 SMS')]),
           ]} />
           <Sub id="1-6" title="存成群組" start="頁尾 Save as group（有收件人才可按）" items={[
@@ -187,7 +187,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
             F(['選到過去或 3 個月後', X('欄位下方紅字', 's3-error')], ['時間正確', R('下方顯示 Sends <時間>')]),
           ]} />
           <Sub id="3-2" title="預覽各通道" start="Review 的 Preview" items={[
-            E('切換通道'), N('這個通道的收件人數與預覽', 's3-preview-email'),
+            E('切換通道'), N('這個通道的預覽', 's3-preview-email', '預覽下方有免責說明'),
           ]} />
           <Sub id="3-3" title="寄測試給自己" start="頁尾 Send me a test" items={[
             F(['內容有錯', T('Finish the message first', '紅色')], ['內容沒錯', T('Test sent')]),
@@ -288,7 +288,7 @@ function Step1() {
           ['Group', '群組名稱', '沒輸入時，標題 Your groups 下列出這個空間的群組：名稱、說明、人數。加入後下拉選單不關。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
           ['Phone', '手機號碼，例如 0912-345-678', '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。', <Copy en="Enter 8–15 digits." zh="請輸入 8–15 碼數字。" />],
           ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" /></>],
-          ['MVPN', '5 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。', <><Copy en="MVPN is up to 5 digits." zh="MVPN 最多 5 碼。" />　<Copy en="No one has this MVPN." zh="沒有人用這個 MVPN。" /></>],
+          ['MVPN', '7 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。', <><Copy en="MVPN is up to 7 digits." zh="MVPN 最多 7 碼。" />　<Copy en="No one has this MVPN." zh="沒有人用這個 MVPN。" /></>],
         ]} />
         <Notes items={[
           { title: '錯誤顯示位置', body: '下拉選單關著時，錯誤在搜尋框下方（紅字）；下拉選單開著時，錯誤在選單裡（紅色圖示加文字）。' },
@@ -327,12 +327,13 @@ function Step1() {
 
       <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 才出現。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need approval；說明 <Copy en="Send an SMS to anyone the push doesn’t reach." zh="推播沒送到的人，改發 SMS。" /></>],
-          ['核准提示框', <>勾了 SMS 備援後出現。標題 <Copy en="The SMS needs approval before it’s sent" zh="SMS 核准後才會送出" />；勾了緊急後改為 <Copy en="SMS approval will be skipped" zh="將略過 SMS 核准" /></>],
+          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need ICSD Approval；說明 <Copy en="Send an SMS to anyone the push doesn’t reach." zh="推播沒送到的人，改發 SMS。" /></>],
+          ['核准提示框', <>勾了 SMS 備援後出現。標題 <Copy en="The SMS needs ICSD approval before it’s sent" zh="SMS 經 ICSD 核准後才會送出" />；勾了緊急後改為 <Copy en="SMS approval will be skipped" zh="將略過 SMS 核准" /></>],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />；說明 <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" /></>],
           ['Reason', <>勾了緊急才出現，必填，上限 200 字，提示文字 <C>e.g. Typhoon warning issued at 07:30; staff must know before commuting.</C> 填的原因會顯示在訊息詳情面板的 Urgent reason。</>],
           ['有外部收件人', <>緊急送出仍要主管核准，框內顯示 <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" /></>],
-          ['SMS 寄到哪支手機', '由系統決定，寄件人不用選：有公務手機寄公務手機，沒有才寄私人手機。'],
+          ['SMS 寄到哪支手機', <>勾了 SMS 備援後，下方一行 <Copy en="Send the SMS to" zh="SMS 寄到" />：<Copy en="Company phone (always)" zh="公務手機（一律）" />（勾選且不能取消）、<Copy en="Personal phone" zh="私人手機" />（預設不勾，勾了所有收件人都加寄私人手機；只勾了部分收件人時是半選）、藍色連結 <Copy en="Choose per audience" zh="逐一選擇" />（開 Personal phones 對話框，逐列勾選；組織與群組整列一起勾）。沒有公務手機的人一律寄私人手機；兩支都沒有的收不到。</>],
+          ['SMS 人數說明', <>選項下方一行次要小字，例如 <Copy en="SMS to 52 company phones, + 48 personal phones, 3 personal phones (no company phone), 1 external phone. 1 person has no phone." zh="SMS 寄到：公務手機 52 支、加寄私人手機 48 支、私人手機 3 支（沒有公務手機）、外部電話 1 支。1 人沒有電話。" />；沒有的項目不寫。每個人都收得到推播時：<Copy en="Everyone can get the push, so no SMS goes out for now." zh="目前每個人都收得到推播，不會寄出 SMS。" /></>],
           ['沒有電話的人', <>提示 <Copy en="<名字> has no phone number and won’t get SMS." zh="<名字> 沒有電話，收不到 SMS。" /></>],
         ]} />
         <Gallery items={[['s1-sms', '勾了 SMS 備援'], ['s1-urgent', '勾了緊急送出', '原因必填']]} />
@@ -366,7 +367,7 @@ function Step2() {
         <Big name="s2-filled" title="填好的內容" sub="Device Notifications、SMS、Email" />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['New / Use template', '兩個選項。選 Use template 後，右側的模板選單可用（可搜尋）。選了模板會先確認是否取代目前的內容。'],
-          ['通道區塊', '每個勾選的通道一個區塊，順序：Device Notifications、SMS、Desktop OS、Email。區塊上方有分隔線；區塊標題中等粗細。'],
+          ['通道區塊', '每個勾選的通道一個有框的區塊，順序：Device Notifications、SMS、Desktop OS、Email。區塊頂端是標題列（淺灰底、下方分隔線）：通道圖示加通道名稱（半粗體），SMS 下面再一行說明；欄位在框內。區塊之間留大間距，一眼分得出哪段是哪個通道。'],
         ]} />
         <SpecTable head={['區塊', '欄位', '必填', '上限', '說明與錯誤']} nowrap={[0, 1, 2, 3]} rows={[
           ['Device Notifications', 'Sender', '是', '26', <><Copy en="Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS)." zh="收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。" />{REQ}<Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
@@ -419,14 +420,13 @@ function Step3() {
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['Schedule', <>區塊說明 Taipei time (GMT+8)。兩張選項卡片：<Copy en="Send now" zh="立即傳送" />、<Copy en="Scheduled send" zh="排程傳送" />（說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />）。</>],
           ['Date and time', '選 Scheduled send 才出現；預設隔天 09:00。欄位下方提示 Sends <日期時間>；需要核准時加 if approved by then。'],
-          ['Review', <>一個 Preview 框：右上角切換通道（Device Notifications、SMS、Desktop OS、Email）；標題下方 <Copy en="Audience: n people" zh="收件人：n 人" />，是這個通道的人數；下方是預覽。</>],
+          ['Review', <>一個 Preview 框：右上角切換通道（Device Notifications、SMS、Desktop OS、Email）；下方是預覽，不顯示人數。預覽框下方一行次要小字 <Copy en="Preview only. The message may look different depending on each recipient’s device and settings." zh="僅供參考。實際呈現會因收件人的裝置與設定而不同。" /></>],
           ['警告', <>有人所有通道都收不到時，Preview 上方一列 <Copy en="n people can’t get the message" zh="n 人收不到訊息" /></>],
         ]} />
         <Gallery items={[['s3-schedule', '排程傳送'], ['s3-error', '日期錯誤'], ['s3-preview-email', '預覽 Email']]} />
         <Notes items={[
           { title: '排程錯誤', body: <>選到過去或超過 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" /></> },
           { title: '預覽', body: 'Device Notifications 的預覽只有寄件人與內容（沒有標題欄位）；Email 預覽主旨與內文。只有一個通道時不顯示切換，只顯示通道名稱。' },
-          { title: '各通道的收件人數', body: 'Device Notifications：有裝置的人。SMS：可以寄 SMS 的人加外部電話。Desktop OS：有桌面程式的人。Email：所有人加外部 Email。' },
           { title: '排程時間', body: '選 Scheduled send 時預設明天 09:00；改回 Send now 欄位隱藏，再選回來保留上次選的時間。時間填錯的錯誤，填了值就顯示，不用等按 Create message。' },
           { title: 'Send me a test', body: '只檢查步驟 2 的內容。有錯時不寄，標記步驟 2 的錯誤並出現紅色 toast；沒錯就寄給自己。' },
         ]} />
@@ -459,6 +459,7 @@ function Dialogs() {
           ['Send without SMS approval?', '步驟 3 緊急送出時 Create message', '480', 'Skip approval and send（紅色）'],
           ['Leave without sending?', '任何步驟 Cancel', '480', 'Discard（紅色）'],
           ['Remove all audiences?', '步驟 1 Remove all', '480', 'Remove all（紅色）'],
+          ['Personal phones', '步驟 1 SMS 備援的 Choose per audience', '560', 'Save'],
         ]} />
       </Section>
       <Section eyebrow="Import" title="Batch import" lead="兩個階段：輸入名單 → 比對結果。">
@@ -471,7 +472,7 @@ function Dialogs() {
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
-        <Gallery items={[['dlg-unreach', 'n people can’t get the message', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因；只有 Close'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
+        <Gallery items={[['dlg-unreach', 'n people can’t get the message', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因；只有 Close'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字'], ['dlg-sms-phone', 'Personal phones', '公務手機一律會收到；勾選的收件人也寄到私人手機。表頭可全選；Cancel、Save']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
         <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-urgent', 'Send without SMS approval?'], ['dlg-leave', 'Leave without sending?']]} max={520} />

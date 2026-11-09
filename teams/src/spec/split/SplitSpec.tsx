@@ -67,7 +67,7 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Message ID、Channel、Status；緊急送出的加 Urgent reason；需要核准的，欄位下方有 View in Approval Center 連結'
+const FIELDS = 'Message ID、Channel、Status（緊急送出的原因不顯示，那是給 ICSD 審核看的）；需要核准的，欄位下方有 View in Approval Center 連結'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
@@ -114,7 +114,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         <div className="flow-branches">
           <Card kind="page" title="Device Notifications (SMS)" when="點這種紀錄的標題" shots={['detail-fb']} then={'欄位：' + FIELDS + '。內容兩項（Device Notifications、SMS fallback），預設收合。'} />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、Device Notifications" shots={['detail-email', 'detail-push']} then="內容一項；收件人只列這個通道寄得到的人。" />
-          <Card kind="page" title="緊急送出的訊息" when="寄件人勾了「It’s urgent」" shots={['detail-urgent']} then="多一個 Urgent reason 欄位，顯示寄件人填的原因。" />
+          <Card kind="page" title="緊急送出的訊息" when="寄件人勾了「It’s urgent」" shots={['detail-urgent']} then="欄位與一般訊息相同；不顯示寄件人填的緊急原因（原因只給 ICSD 審核看）。" />
           <Card kind="action" title="Approval Center" when="點 View in Approval Center" then="開啟內部的 Approval Center（prototype 只顯示提示）。" />
         </div>
       </Section>
@@ -278,7 +278,7 @@ function Detail() {
       </Section>
       <Section eyebrow="Variants" title="各種紀錄的面板">
         <div className="spec-gallery">
-          <figure><figcaption><b>緊急送出</b><span>多一個 Urgent reason 欄位，是寄件人填的原因。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="緊急送出" max={420} /></div></figure>
+          <figure><figcaption><b>緊急送出</b><span>和一般訊息相同，不顯示緊急原因（原因只給 ICSD 審核看）。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="緊急送出" max={420} /></div></figure>
           <figure><figcaption><b>Email</b><span>主旨、有格式的內文與附件。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email" max={420} /></div></figure>
           <figure><figcaption><b>Device Notifications</b><span>內容一項（圖為展開）。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="Device Notifications" max={420} /></div></figure>
           <figure><figcaption><b>不需要 SMS</b><span>推播全部送到，SMS fallback 寫 Not needed。</span></figcaption><div className="spec-canvas"><Shot name="detail-sms-notneeded" alt="不需要 SMS" max={420} /></div></figure>
@@ -291,7 +291,6 @@ function Detail() {
           ['Message ID', '每一筆都有；同一次發送的各通道相同。'],
           ['Channel', '每一筆都有。'],
           ['Status', '每一筆都有，和列表上這一筆相同；有 SMS 備援時以 Device Notifications 的狀態為主。'],
-          ['Urgent reason', '緊急送出的訊息才有；同一則訊息的每一筆（含 Email）都顯示。'],
           ['View in Approval Center', <>放在基本欄位下方（tight 間距），沒有欄位名稱。這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。連結文字 <Copy en="View in Approval Center" zh="到 Approval Center 查看" />；審核進度與駁回原因都在 Approval Center。</>],
           ['Content', '預設收合，可同時展開多項；換一筆紀錄時回到收合。Device Notifications (SMS) 兩項，其他一項。'],
           ['Audiences', '只列這個通道寄得到的人：外部 Email 只在 Email，外部電話只在 Device Notifications (SMS)。'],
@@ -351,7 +350,7 @@ function StatusSpec({ id, s, tagDesc, rows, shots, panel, urg }: { id: string; s
       <SpecTable head={['項目', '規格']} nowrap={[0]} rows={rows} />
       <div className="spec-gallery">
         <figure><figcaption><b>面板</b></figcaption><div className="spec-canvas"><Shot name={panel} max={380} alt={id + ' 的面板'} /></div></figure>
-        {urg ? <figure><figcaption><b>面板（緊急送出）</b><span>多 Urgent reason 欄位。</span></figcaption><div className="spec-canvas"><Shot name={urg} max={380} alt={id + ' 的面板（緊急送出）'} /></div></figure> : null}
+        {urg ? <figure><figcaption><b>面板（緊急送出）</b><span>和一般訊息相同，不顯示緊急原因。</span></figcaption><div className="spec-canvas"><Shot name={urg} max={380} alt={id + ' 的面板（緊急送出）'} /></div></figure> : null}
       </div>
     </Section>
   )
@@ -460,7 +459,6 @@ function Blocks() {
           ['Message ID', '訊息 ID（例：MSG-10154），同一次發送的各通道相同', '每一筆'],
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤', '每一筆'],
-          ['Urgent reason', '寄件人填的原因全文，保留換行', '緊急送出的訊息'],
         ]} />
         <Notes items={[{ title: 'View in Approval Center', body: <>連結按鈕（sm，外連圖示），在基本欄位下方、tight 間距，沒有欄位名稱。出現條件：Device Notifications (SMS)，或需要核准的訊息。</> }]} />
         <div className="spec-gallery"><figure><figcaption><b>所有欄位與連結都出現</b><span>緊急送出的 Device Notifications (SMS)。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="四個欄位" max={440} /></div></figure></div>

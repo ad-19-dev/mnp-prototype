@@ -82,6 +82,11 @@ await step('s1-filled', async () => {
 await step('s1-sms', async () => {
   await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
   await page('s1-sms');
+  // personal phones per audience row
+  await p.getByRole('button', { name: 'Choose per audience' }).click(); await wait(500);
+  await dlg().getByRole('checkbox', { name: /Personal phone: Grace/ }).click(); await wait(200);
+  await shot('dlg-sms-phone', dlg(), [], 12);
+  await dlg().getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(300);
 });
 await step('s1-urgent', async () => {
   await p.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(400);

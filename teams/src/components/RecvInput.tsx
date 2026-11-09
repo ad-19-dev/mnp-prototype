@@ -22,7 +22,7 @@ function riType(k: RiType) {
     group: { label: L('Group', '群組'), ph: L('Group name', '群組名稱') },
     phone: { label: L('Phone', '電話'), ph: L('Mobile number, e.g. 0912-345-678', '手機號碼，例如 0912-345-678') },
     email: { label: 'Email', ph: L('Email address, e.g. name@vendor.com', 'Email，例如 name@vendor.com') },
-    mvpn: { label: 'MVPN', ph: L('5-digit MVPN', '5 碼 MVPN') },
+    mvpn: { label: 'MVPN', ph: L('7-digit MVPN', '7 碼 MVPN') },
   }[k]
 }
 
@@ -43,7 +43,7 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
   } else if (ri.type === 'mvpn') {
     const d = q.replace(/\D/g, '')
     if (!q) out.tip = ''
-    else if (!/^\d{1,5}$/.test(q)) out.err = L('MVPN is up to 5 digits.', 'MVPN 最多 5 碼。')
+    else if (!/^\d{1,7}$/.test(q)) out.err = L('MVPN is up to 7 digits.', 'MVPN 最多 7 碼。')
     else out.opts = PEOPLE.filter(p => p.mvpn && p.mvpn.indexOf(d) === 0).slice(0, 8).map(p => person(p, 'MVPN ' + p.mvpn))
     if (q && !out.err && !out.opts.length) out.err = L('No one has this MVPN.', '沒有人用這個 MVPN。')
   } else if (ri.type === 'phone') {

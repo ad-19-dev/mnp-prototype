@@ -59,7 +59,7 @@ export default function DsMap() {
         <Section eyebrow="Panel" title="訊息詳情面板">
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['面板外殼', comps('AppShell'), 'AppShellAside，寬 400（xl 480），標題 Message detail，右上角關閉。', <Own>—</Own>],
-            ['基本欄位', comps('DescriptionList', 'Tag'), 'vertical；Status 的值放 Tag；Urgent reason 值是文字。', <Own>View in Approval Center 連結（Button link）放在欄位下方</Own>],
+            ['基本欄位', comps('DescriptionList', 'Tag'), 'vertical；Status 的值放 Tag。', <Own>View in Approval Center 連結（Button link）放在欄位下方</Own>],
             ['內容收合列', comps('Accordion'), '預設收合，可同時展開多項；標題列顯示名稱與 n / m sent。', <Own>各通道內容框的樣式（白底、細框線、圓角、內距 12）</Own>],
             ['Email 內容', comps('FileItem'), '附件用 FileItem 列出名稱與大小。', <Own>Email 內文的 HTML 顯示框</Own>],
             ['Audiences', comps('Avatar', 'Button'), '個人用 Avatar；人數連結是 Button link。', <Own>整個收件人列表（列的結構、組織與群組的 bg-muted 圓底圖示、排序）</Own>],
@@ -78,6 +78,7 @@ export default function DsMap() {
             ['收件人表格', comps('DataTable', 'Avatar', 'Tag', 'Empty'), '只有一欄 Audience：人員用 DS 人員顯示；其他是圖示、名稱、類型 Tag，組織與群組後接 Button link 的總人數。', <Own>灰色圓底圖示</Own>],
             ['通道卡片', comps('Checkbox'), '三張卡片，勾選框在右上角；有收件人時卡片下方顯示 n / total people can receive（全部收得到時綠色）。', <Own>整張可點的卡片（藍框、淡藍底）與可收到人數區</Own>],
             ['SMS 備援、緊急送出', comps('Checkbox', 'Tag', 'Textarea'), 'Checkbox 加說明；Reason 用 Textarea，必填。', <Own>勾選後出現的提示框</Own>],
+            ['SMS 寄到哪支手機', comps('Checkbox', 'Button', 'Dialog'), 'Company phone 是勾選且停用的 Checkbox；Personal phone 是可半選的 Checkbox；Choose per audience 是 Button link，開 Dialog 逐列勾選。', <Own>人數說明那一行</Own>],
             ['收不到的人', comps('Button'), '警示三角形圖示加紅字「n people can’t get the message」，後接 Button link「See who」。', <Own>—</Own>],
           ]} />
         </Section>
@@ -87,7 +88,7 @@ export default function DsMap() {
             ['New / Use template', comps('RadioGroup', 'Select'), '兩個選項；模板選單可搜尋。', <Own>—</Own>],
             ['文字欄位', comps('Input', 'Textarea'), '每個欄位：標題、說明或錯誤訊息，字數在欄位下方右側與說明同一列。', <Own>FormField：欄位標題加字數加說明加錯誤的組合</Own>],
             ['Email 內容', comps('Button'), '工具列的按鈕用 Button（含 ButtonDivider）。', <Own>RichText：整個文字編輯器（contentEditable，設計系統沒有）</Own>],
-            ['通道區塊分隔', '—', '設計系統沒有現成的區塊分隔元件。', <Own>通道區塊之間的分隔線（border-t，divider 顏色）</Own>],
+            ['通道區塊', '—', '設計系統沒有現成的卡片元件。', <Own>每個通道一個有框的區塊：rounded-lg、divider 色框線；標題列淺灰底（bg-neutral-1）加下框線，放通道圖示與名稱</Own>],
             ['Schedule', comps('RadioGroup'), '兩張選項卡片，RadioGroupItem 帶圖示與說明。', <Own>卡片外框樣式</Own>],
             ['日期時間', comps('DatePicker'), 'showTime、typeable；錯誤顯示在欄位下方。', <Own>—</Own>],
             ['預覽', comps('SegmentedControl'), '切換通道。', <Own>ChannelPreview：各通道的預覽畫面</Own>],

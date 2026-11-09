@@ -15,6 +15,8 @@ export interface Compose {
   maxStep: number
   receivers: Tag[]
   pick: Record<string, 'co' | 'pp'>
+  // SMS fallback: the company phone always gets it; these audience rows (keys) also get it on personal phones
+  smsPP: Record<string, boolean>
   ch: Record<Channel, boolean>
   tplId: string | null
   // who the message belongs to: a team (all its members see it) or null for personal
@@ -37,7 +39,7 @@ export interface Approval { icsd: boolean; skipped: boolean; mgr: boolean; ext: 
 export function blankCompose(): Compose {
   return {
     mode: 'new', editId: null, only: null, step: 1, maxStep: 1,
-    receivers: [], pick: {},
+    receivers: [], pick: {}, smsPP: {},
     ch: { push: false, desktop: false, email: false, sms: false },
     tplId: null, team: null, sender: '', title: '', content: '', smsText: '', dSender: '', dTitle: '', dContent: '',
     emailMode: 'same', subject: '', html: '', bodyText: '', htmlKey: 0, atts: [], attErr: '',
@@ -211,4 +213,15 @@ export function reachNote(k: Channel, rc: Reach, c: Compose) {
   if (miss) parts.push(k === 'push' ? L(P(miss, 'person', '', 'people') + ' without a device', miss + ' 人沒有裝置') : L(P(miss, 'person', '', 'people') + ' without the agent', miss + ' 人沒裝桌面程式'))
   if (rc.ext) parts.push(L(P(rc.ext, 'external audience', '', 'external audiences') + ' can’t get it', rc.ext + ' 位外部收件人收不到'))
   return parts.length ? parts.join(L('; ', '；')) : L('Everyone can get it', '每個人都收得到')
+}
+
+// SMS fallback goes to the people the push can't reach: always their company phone; their personal phone too
+// when their audience row is ticked for it (or when they have no company phone at all)
+export function smsPhones(c: Compose, groups: Group[]) {
+  const sel: Record<string, boolean> = {}
+  c.receivers.forEach(t => { if (t.type !== 'ext' && c.smsPP[t.key]) flatten([t], groups).forEach(x => { sel[x.pid] = true }) })
+  const f = recvFlat(c, groups), miss = f.people.filter(p => !p.dev)
+  let co = 0, pp = 0, auto = 0, none = 0
+  miss.forEach(p => { if (p.co) { co++; if (p.pp && sel[p.id]) pp++ } else if (p.pp) auto++; else none++ })
+  return { miss: miss.length, co, pp, auto, none, ext: f.ext.filter(x => x.indexOf('@') < 0).length }
 }

@@ -1,7 +1,7 @@
 // Send flow: 1 Receivers & channels, 2 Message, 3 Review, plus the approval result
 import * as React from 'react'
 import {
-  Button, Checkbox, DataTable, DatePicker, Empty, FileItem, FileUpload, Input, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
+  Button, Checkbox, DataTable, DatePicker, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Empty, FileItem, FileUpload, Input, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
@@ -18,7 +18,7 @@ import {
   ME,
 } from '../../lib/data'
 import {
-  SENDER_RE, approval, effEmailMode, emailTooBig, hasNotif, multiPeople, noNumber, pushTitle, reachNote, smsCoverText, smsOn, stepOk, unresolved,
+  SENDER_RE, approval, effEmailMode, emailTooBig, hasNotif, multiPeople, noNumber, pushTitle, reachNote, smsCoverText, smsOn, smsPhones, stepOk, unresolved,
   type Compose, type Errs, type Reach,
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
@@ -174,6 +174,91 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
   )
 }
 
+// Where the SMS fallback goes: the company phone always; personal phones on top for everyone (the switch) or for
+// some audience rows (Choose per audience). Orgs and groups are ticked as a whole, as in GMC.
+function SmsPhonePick({ m }: { m: SendCtl }) {
+  const app = useApp(), c = m.s.c, rows = c.receivers.filter(t => t.type !== 'ext')
+  const [open, setOpen] = React.useState(false)
+  const on = rows.filter(t => c.smsPP[t.key]).length, all = !!rows.length && on === rows.length
+  const n = smsPhones(c, app.groups)
+  const setAll = (v: boolean) => m.setC({ smsPP: Object.fromEntries(rows.map(t => [t.key, v])) })
+  return (
+    <div className="ml-7 flex flex-col gap-2">
+      <span className="text-body font-medium">{L('Send the SMS to', 'SMS 寄到')}</span>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <Checkbox checked disabled label={L('Company phone (always)', '公務手機（一律）')} />
+        <Checkbox checked={all ? true : on ? 'indeterminate' : false} disabled={!rows.length} onCheckedChange={() => setAll(!all)} label={L('Personal phone', '私人手機')} />
+        <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" disabled={!rows.length} onClick={() => setOpen(true)}>{L('Choose per audience', '逐一選擇')}</Button>
+      </div>
+      {c.receivers.length && !n.miss && !n.ext ? <span className="text-caption text-fg-secondary">{L('Everyone can get the push, so no SMS goes out for now.', '目前每個人都收得到推播，不會寄出 SMS。')}</span> : null}
+      {n.miss || n.ext ? (
+        <span className="text-caption text-fg-secondary">
+          {(() => {
+            // who gets the SMS where; people with no company phone always get it on their personal phone
+            const parts = [
+              n.co ? L(P(n.co, 'company phone', '', 'company phones'), '公務手機 ' + n.co + ' 支') : '',
+              n.pp ? L('+ ' + P(n.pp, 'personal phone', '', 'personal phones'), '加寄私人手機 ' + n.pp + ' 支') : '',
+              n.auto ? L(P(n.auto, 'personal phone', '', 'personal phones') + ' (no company phone)', '私人手機 ' + n.auto + ' 支（沒有公務手機）') : '',
+              n.ext ? L(P(n.ext, 'external phone', '', 'external phones'), '外部電話 ' + n.ext + ' 支') : '',
+            ].filter(Boolean)
+            return L('SMS to ', 'SMS 寄到：') + parts.join(L(', ', '、')) + (n.none ? L('. ' + P(n.none, 'person has', '', 'people have') + ' no phone.', '。' + n.none + ' 人沒有電話。') : L('.', '。'))
+          })()}
+        </span>
+      ) : null}
+      <SmsPhoneDialog m={m} open={open} onClose={() => setOpen(false)} />
+    </div>
+  )
+}
+
+function SmsPhoneDialog({ m, open, onClose }: { m: SendCtl; open: boolean; onClose: () => void }) {
+  const app = useApp(), c = m.s.c, rows = c.receivers.filter(t => t.type !== 'ext')
+  const [draft, setDraft] = React.useState<Record<string, boolean>>({})
+  React.useEffect(() => { if (open) setDraft({ ...c.smsPP }) }, [open])
+  const on = rows.filter(t => draft[t.key]).length, all = !!rows.length && on === rows.length
+  const name = (t: RTag) => {
+    if (t.type === 'person') { const p = PMAP[t.id!]; return p ? p.en + ' ' + p.zh : t.id! }
+    if (t.type === 'group') { const g = app.groups.find(x => x.id === t.id); return g ? g.name : t.id! }
+    return t.id!
+  }
+  const Icon = (t: RTag) => t.type === 'group' ? Users : Building2
+  return (
+    <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
+      <DialogContent maxWidth={560} height="hug">
+        <DialogHeader>
+          <DialogTitle>{L('Personal phones', '私人手機')}</DialogTitle>
+          <DialogDescription className="sr-only">{L('Choose who also gets the SMS on a personal phone', '選擇哪些收件人也寄到私人手機')}</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="flex flex-col gap-2">
+            <span className="text-body text-fg-secondary">{L('The company phone always gets the SMS. Tick who also gets it on a personal phone.', '公務手機一律會收到。勾選的收件人也會寄到私人手機。')}</span>
+            <div className="max-h-80 overflow-auto rounded-md border border-divider">
+              <div className="flex items-center gap-3 border-b border-divider bg-neutral-1 px-3 py-2 text-body font-medium text-fg-secondary">
+                <span className="flex-1">{L('Audience', '收件人')}</span>
+                <Checkbox checked={all ? true : on ? 'indeterminate' : false} onCheckedChange={() => setDraft(Object.fromEntries(rows.map(t => [t.key, !all])))} label={L('Personal phone', '私人手機')} />
+              </div>
+              {rows.map(t => {
+                const p = t.type === 'person' ? PMAP[t.id!] : null, I = Icon(t)
+                return (
+                  <div key={t.key} className="flex items-center gap-3 border-b border-divider px-3 py-2 last:border-b-0">
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      {p ? <PersonDisplay value={personVal(p)} /> : <><span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><I className="size-3.5 text-fg-secondary" aria-hidden /></span><span className="truncate text-body">{name(t)}</span><Tag size="sm" color="neutral">{t.type === 'group' ? L('Group', '群組') : L('Org', '組織')}</Tag></>}
+                    </span>
+                    <span className="flex w-[118px] justify-start"><Checkbox checked={!!draft[t.key]} onCheckedChange={v => setDraft({ ...draft, [t.key]: !!v })} aria-label={L('Personal phone: ', '私人手機：') + name(t)} /></span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="tertiary" onClick={onClose}>{L('Cancel', '取消')}</Button>
+          <Button variant="primary" onClick={() => { m.setC({ smsPP: draft }); onClose() }}>{L('Save', '儲存')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const tpl = c.tplId ? m.tplById(c.tplId) : null, ap = approval(c), sms = smsOn(c)
@@ -208,12 +293,13 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <Checkbox
                 checked={c.ch.sms} onCheckedChange={() => m.pickChannel('sms')}
-                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need approval', '需核准')}</Tag> : null}</span>}
+                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD Approval', '需 ICSD 核准')}</Tag> : null}</span>}
                 description={L('Send an SMS to anyone the push doesn’t reach.', '推播沒送到的人，改發 SMS。')}
               />
+              {c.ch.sms ? <SmsPhonePick m={m} /> : null}
               {ICSD && c.ch.sms ? (
                 <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
-                  <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('SMS approval will be skipped', '將略過 SMS 核准') : L('The SMS needs approval before it’s sent', 'SMS 核准後才會送出')}</span>
+                  <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('SMS approval will be skipped', '將略過 SMS 核准') : L('The SMS needs ICSD approval before it’s sent', 'SMS 經 ICSD 核准後才會送出')}</span>
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
                     label={L('It’s urgent: send without waiting for SMS approval', '這是緊急訊息，不等 SMS 核准直接傳送')}
                     description={L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。')} />
@@ -243,15 +329,19 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 }
 
 // ---------- step 2 ----------
-function FormatBlock({ title, desc, uses, children }: { title: string; desc?: string; uses?: React.ReactNode; children: React.ReactNode }) {
+function FormatBlock({ title, desc, icon: I, uses, children }: { title: string; desc?: string; icon?: typeof Mail; uses?: React.ReactNode; children: React.ReactNode }) {
+  // each channel's content in its own framed block with a header (icon and name), so the channels read apart
   return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)] border-t border-divider pt-[var(--layout-space-loose)]">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex flex-col gap-0.5"><span className="text-body font-semibold">{title}</span>{desc ? <span className="text-body text-fg-secondary">{desc}</span> : null}</span>
+    <section className="flex flex-col rounded-lg border border-divider" aria-label={title}>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-divider bg-neutral-1 px-[var(--layout-space-tight)] py-3">
+        <span className="flex items-center gap-3">
+          {I ? <IconBox icon={I} tone="neutral" /> : null}
+          <span className="flex flex-col gap-0.5"><span className="text-body font-semibold">{title}</span>{desc ? <span className="text-caption text-fg-secondary">{desc}</span> : null}</span>
+        </span>
         {uses ? <span className="flex flex-wrap items-center gap-1.5">{uses}</span> : null}
       </div>
-      {children}
-    </div>
+      <div className="flex flex-col gap-[var(--layout-space-tight)] p-[var(--layout-space-loose)]">{children}</div>
+    </section>
   )
 }
 
@@ -289,7 +379,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
       <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)]">
         {c.only ? null : <TplChoice m={m} />}
         {c.ch.push ? (
-          <FormatBlock title={CHN.push.name}>
+          <FormatBlock title={CHN.push.name} icon={CHN.push.icon}>
             {noNotif}
             <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS).', '收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。')} error={eSender}>
               <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} />
@@ -300,14 +390,14 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
           </FormatBlock>
         ) : null}
         {smsOn(c) ? (
-          <FormatBlock title="SMS" desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
+          <FormatBlock title="SMS" icon={CHN.sms.icon} desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
             <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
               <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} />
             </FormField>
           </FormatBlock>
         ) : null}
         {c.ch.desktop ? (
-          <FormatBlock title={CHN.desktop.name}>
+          <FormatBlock title={CHN.desktop.name} icon={CHN.desktop.icon}>
             {c.ch.push ? null : noNotif}
             <FormField id="f-dsender" label={L('Sender (Optional)', '寄件人（選填）')} count={c.dSender.length + ' / ' + LIM.sender} over={c.dSender.length > LIM.sender} error={edSender}>
               <Input id="f-dsender" value={c.dSender} error={!!edSender} onChange={ev => m.setC({ dSender: ev.target.value })} />
@@ -331,7 +421,7 @@ function EmailBlock({ m, e, show }: { m: SendCtl; e: Errs; show: (k: keyof Errs,
   const tried2 = !!(c.tried || {})[2]
   const eSub = show('subject', c.subject, LIM.subject), bodyN = c.bodyText.trim().length, eBody = e.body && (tried2 || emailTooBig(c)) ? e.body : ''
   return (
-    <FormatBlock title="Email">
+    <FormatBlock title="Email" icon={CHN.email.icon}>
       <FormField id="f-subject" label={L('Subject', '主旨')} required count={c.subject.length + ' / ' + LIM.subject} over={c.subject.length > LIM.subject} error={eSub}>
         <Input id="f-subject" value={c.subject} error={!!eSub} onChange={ev => m.setC({ subject: ev.target.value })} />
       </FormField>
@@ -374,8 +464,8 @@ function Preview({ c, counts }: { c: Compose; counts: Partial<Record<PreviewChan
           </SegmentedControl>
         ) : <span className="text-body text-fg-secondary">{CHN[k].name}</span>}
       </div>
-      <span className="text-body text-fg-secondary">{L('Audience: ', '收件人：') + P(counts[k] || 0, 'person', '人', 'people')}</span>
       <div className="rounded-md bg-neutral-1 p-[var(--layout-space-loose)]"><ChannelPreview ch={k} msg={msg} zh={L('en', 'zh') === 'zh'} /></div>
+      <span className="text-caption text-fg-secondary">{L('Preview only. The message may look different depending on each recipient’s device and settings.', '僅供參考。實際呈現會因收件人的裝置與設定而不同。')}</span>
     </div>
   )
 }
