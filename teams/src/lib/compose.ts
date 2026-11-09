@@ -15,8 +15,9 @@ export interface Compose {
   maxStep: number
   receivers: Tag[]
   pick: Record<string, 'co' | 'pp'>
-  // SMS fallback: the company phone always gets it; these audience rows (keys) also get it on personal phones
-  smsPP: Record<string, boolean>
+  // SMS fallback, per audience row (key), as in GMC: the company phone is ticked by default (smsCO false = unticked),
+  // the personal phone only when ticked
+  smsCO: Record<string, boolean>; smsPP: Record<string, boolean>
   ch: Record<Channel, boolean>
   tplId: string | null
   // who the message belongs to: a team (all its members see it) or null for personal
@@ -39,7 +40,7 @@ export interface Approval { icsd: boolean; skipped: boolean; mgr: boolean; ext: 
 export function blankCompose(): Compose {
   return {
     mode: 'new', editId: null, only: null, step: 1, maxStep: 1,
-    receivers: [], pick: {}, smsPP: {},
+    receivers: [], pick: {}, smsCO: {}, smsPP: {},
     ch: { push: false, desktop: false, email: false, sms: false },
     tplId: null, team: null, sender: '', title: '', content: '', smsText: '', dSender: '', dTitle: '', dContent: '',
     emailMode: 'same', subject: '', html: '', bodyText: '', htmlKey: 0, atts: [], attErr: '',
@@ -215,13 +216,22 @@ export function reachNote(k: Channel, rc: Reach, c: Compose) {
   return parts.length ? parts.join(L('; ', '；')) : L('Everyone can get it', '每個人都收得到')
 }
 
-// SMS fallback goes to the people the push can't reach: always their company phone; their personal phone too
-// when their audience row is ticked for it (or when they have no company phone at all)
+// SMS fallback goes to the people the push can't reach, on the phones ticked for their audience row(s). With the
+// company phone ticked, someone who has none gets it on their personal phone instead.
 export function smsPhones(c: Compose, groups: Group[]) {
-  const sel: Record<string, boolean> = {}
-  c.receivers.forEach(t => { if (t.type !== 'ext' && c.smsPP[t.key]) flatten([t], groups).forEach(x => { sel[x.pid] = true }) })
+  const co: Record<string, boolean> = {}, pp: Record<string, boolean> = {}
+  c.receivers.forEach(t => {
+    if (t.type === 'ext') return
+    const ids = flatten([t], groups).map(x => x.pid)
+    if (c.smsCO[t.key] !== false) ids.forEach(id => { co[id] = true })
+    if (c.smsPP[t.key]) ids.forEach(id => { pp[id] = true })
+  })
   const f = recvFlat(c, groups), miss = f.people.filter(p => !p.dev)
-  let co = 0, pp = 0, auto = 0, none = 0
-  miss.forEach(p => { if (p.co) { co++; if (p.pp && sel[p.id]) pp++ } else if (p.pp) auto++; else none++ })
-  return { miss: miss.length, co, pp, auto, none, ext: f.ext.filter(x => x.indexOf('@') < 0).length }
+  let nCo = 0, nPp = 0, auto = 0, none = 0, off = 0
+  miss.forEach(p => {
+    if (pp[p.id] && p.pp) nPp++
+    if (co[p.id]) { if (p.co) nCo++; else if (p.pp && !pp[p.id]) auto++; else if (!p.pp) none++ }
+    else if (!pp[p.id]) off++
+  })
+  return { miss: miss.length, co: nCo, pp: nPp, auto, none, off, ext: f.ext.filter(x => x.indexOf('@') < 0).length }
 }

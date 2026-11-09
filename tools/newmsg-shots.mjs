@@ -82,11 +82,6 @@ await step('s1-filled', async () => {
 await step('s1-sms', async () => {
   await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
   await page('s1-sms');
-  // personal phones per audience row
-  await p.getByRole('button', { name: 'Choose per audience' }).click(); await wait(500);
-  await dlg().getByRole('checkbox', { name: /Personal phone: Grace/ }).click(); await wait(200);
-  await shot('dlg-sms-phone', dlg(), [], 12);
-  await dlg().getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(300);
 });
 await step('s1-urgent', async () => {
   await p.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(400);
@@ -166,8 +161,13 @@ await step('s1-types', async () => {
   await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
   await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
   await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
-  const chs = p.getByRole('heading', { name: 'Channels' }).locator('xpath=ancestor::section[1]');
-  await shot('s1-ext', (await chs.count()) ? chs : null, [], 12);
+  // the audience list now has the SMS phone columns; the summary below shows the yellow approval line
+  await p.getByRole('checkbox', { name: 'Personal phone' }).nth(1).click(); await wait(300);
+  await big(2200);
+  const aud = p.getByRole('heading', { name: 'Audiences' }).locator('xpath=ancestor::section[1]');
+  await shot('s1-phones', (await aud.count()) ? aud : null, [], 12);
+  const sum = p.getByRole('heading', { name: 'Who gets it' }).locator('xpath=ancestor::section[1]');
+  await shot('s1-ext', (await sum.count()) ? sum : null, [], 12);
   // Remove all shows once there are more than 6 audiences; it asks first
   await add('Person', 'Lee'); await add('Person', 'Wang'); await add('Org', 'PDEV');
   await p.getByRole('button', { name: 'Remove all' }).click(); await wait(500);
