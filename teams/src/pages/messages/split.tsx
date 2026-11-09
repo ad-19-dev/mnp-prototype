@@ -273,7 +273,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.display({ id: 'status', header: L('Status', '狀態'), meta: { width: 168, maxWidth: 168 }, cell: i => { const g = i.row.original; return g.hdr ? <StatusTag s={g.r.status} /> : <StatusCell m={m} x={g} /> } }),
     // this channel's audience only (how many it goes to); failures sit under the status
     col.display({ id: 'aud', header: L('Audience', '收件人數'), enableSorting: true, meta: { width: 88, maxWidth: 96, align: 'right' }, cell: i => i.row.original.hdr ? null : <AudienceN x={i.row.original} /> }),
-    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 140, maxWidth: 140 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
+    col.accessor(x => m.tplName(x.r.tpl), { id: 'tpl', header: L('Template', '模板'), meta: { width: 176, maxWidth: 176 }, cell: i => !shared(i.row.original) ? null : i.getValue() ? <Trunc text={i.getValue()} /> : <span className="text-fg-muted">—</span> }),
     col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 116, maxWidth: 124 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // send now goes out at its created time, so it never shows a dash here
     col.accessor(x => (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116, maxWidth: 124 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
