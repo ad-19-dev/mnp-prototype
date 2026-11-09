@@ -45,7 +45,7 @@ export default function DsMap() {
             ['空間頁籤', comps('Tabs'), 'Send messages / Audience groups / Templates，放在頁首第二列。', <Own>—</Own>],
             ['搜尋框', comps('Input'), 'type=search，開頭圖示 Search；寬 480。', <Own>寬度 480 是我們定的</Own>],
             ['Status / Channel 篩選', comps('Button', 'DropdownMenu'), 'Button 開 DropdownMenu，選項是 checkbox item；選了之後按鈕變藍並顯示數量；底部 Clear 有選項時為藍色。', <Own>FilterMenu：把按鈕、角標、選項、Clear 組成一個元件</Own>],
-            ['表格', comps('DataTable'), 'bordered、固定高度；欄位用 meta.width；列尾 rowActions；排序用 manualSorting。', <Own>各欄的 cell 內容（見下）；欄寬</Own>],
+            ['表格', comps('DataTable'), 'bordered、固定高度；欄位用 meta.width，Title / Content 以外的欄再設 meta.maxWidth，多出的寬度才會全給 Title / Content；列尾 rowActions；排序用 manualSorting。', <Own>各欄的 cell 內容（見下）；欄寬</Own>],
             ['訊息 ID', comps('Tag'), 'size sm、neutral。', <Own>放在標題前、tabular 數字</Own>],
             ['通道', comps('Tag', 'Tooltip'), '只有圖示的 Tag（文字隱藏），Device Notifications (SMS) 兩個圖示；Tooltip 顯示通道名稱。', <Own>隱藏 Tag 文字的樣式</Own>],
             ['狀態', comps('Tag'), 'size sm，顏色與圖示依狀態（見規格頁的狀態表）。', <Own>狀態下方的 {'{n}'} not sent 連結（Button link）</Own>],

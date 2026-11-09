@@ -189,17 +189,17 @@ function ListTab() {
           { n: 8, title: '通道篩選', body: <>多選：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊是數量。</> },
         ]} />
       </Section>
-      <Section eyebrow="Columns" title="欄位" lead="寬度單位 px，都是 4 的倍數。Title / Content 是最小寬度，表格多出的寬度都給它。">
+      <Section eyebrow="Columns" title="欄位" lead="寬度單位 px，都是 4 的倍數。除了 Title / Content，每一欄都設了最大寬度（設計系統表格的 meta.maxWidth），所以表格多出的寬度全部給 Title / Content，讓標題與內容顯示得更完整。">
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
-          [<Copy en="Sender" zh="寄件人" />, '140', 'Device Notifications 與 Desktop OS 的寄件人；Email 沒有寄件人，顯示「—」。每一列都顯示。', '可'],
-          [<Copy en="Channel" zh="通道" />, '96', '通道圖示', '—'],
-          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320', '訊息 ID 標籤（Tag sm、neutral，例：MSG-10154），後面是標題；下一行是內文', '—'],
-          [<Copy en="Status" zh="狀態" />, '168', '狀態標籤；下方是 {n} not sent', '—'],
-          [<Copy en="Audience" zh="收件人數" />, '88', '人數，齊右', '可'],
-          [<Copy en="Template" zh="模板" />, '140', '模板名稱；沒用模板顯示「—」。', '可'],
-          [<Copy en="Created" zh="建立時間" />, '116', '日期、時間兩行。', '可'],
-          [<Copy en="Send time" zh="傳送時間" />, '116', '這個通道的傳送時間：排程的是排程時間（單獨重新排程後是新的時間），立即傳送的是建立時間。', '可'],
-          [<Copy en="Created by" zh="建立者" />, '200', '人員（大頭照與姓名；沒有照片時是姓名第一個字母）。只在團隊空間顯示。', '可'],
+          [<Copy en="Sender" zh="寄件人" />, '140（固定）', 'Device Notifications 與 Desktop OS 的寄件人；Email 沒有寄件人，顯示「—」。每一列都顯示。', '可'],
+          [<Copy en="Channel" zh="通道" />, '96（固定；同一次發送有標題列時 128）', '通道圖示', '—'],
+          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320，其餘寬度都給它', '訊息 ID 標籤（Tag sm、neutral，例：MSG-10154），後面是標題；下一行是內文', '—'],
+          [<Copy en="Status" zh="狀態" />, '168（固定）', '狀態標籤；下方是 {n} not sent', '—'],
+          [<Copy en="Audience" zh="收件人數" />, '88，最多 96', '人數，齊右', '可'],
+          [<Copy en="Template" zh="模板" />, '140（固定）', '模板名稱；沒用模板顯示「—」。', '可'],
+          [<Copy en="Created" zh="建立時間" />, '116，最多 124', '日期、時間兩行。', '可'],
+          [<Copy en="Send time" zh="傳送時間" />, '116，最多 124', '這個通道的傳送時間：排程的是排程時間（單獨重新排程後是新的時間），立即傳送的是建立時間。', '可'],
+          [<Copy en="Created by" zh="建立者" />, '200，最多 220', '人員（大頭照與姓名；沒有照片時是姓名第一個字母）。只在團隊空間顯示。', '可'],
           ['（列尾）', '依內容', 'ⓘ 與 ⋮ 兩個圖示按鈕（xs）', '—'],
         ]} />
       </Section>
