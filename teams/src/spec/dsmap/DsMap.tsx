@@ -76,9 +76,10 @@ export default function DsMap() {
             ['收件人搜尋', comps('Select', 'Input'), '左側 Select 選類型，右側 Input 搜尋；下拉選單列出符合的人。', <Own>RecvInput：整個搜尋加下拉選單的組合</Own>],
             ['Batch import 按鈕', comps('Button'), 'tertiary，開頭圖示 Upload。', <Own>—</Own>],
             ['收件人表格', comps('DataTable', 'Avatar', 'Tag', 'Empty'), '只有一欄 Audience：人員用 DS 人員顯示；其他是圖示、名稱、類型 Tag，組織與群組後接 Button link 的總人數。', <Own>灰色圓底圖示</Own>],
-            ['通道卡片', comps('Checkbox'), '三張卡片，勾選框在右上角；在收件人之前選。有收件人之後，卡片下方顯示 n / total people can receive（全部收得到時綠色）。', <Own>整張可點的卡片（藍框、淡藍底）與人數那一行</Own>],
-            ['SMS 備援、緊急送出', comps('Checkbox', 'Tag', 'Textarea'), 'Checkbox 加說明；Reason 用 Textarea，必填。', <Own>—</Own>],
+            ['通道卡片', comps('Checkbox'), '三張卡片，勾選框在右上角；在收件人之前選，只用來選通道，不顯示人數。', <Own>整張可點的卡片（藍框、淡藍底）</Own>],
+            ['SMS 備援、緊急送出', comps('Checkbox', 'Tag'), 'SMS 備援是 Checkbox 加說明與 Need ICSD Approval 標籤；緊急送出是縮排在下方的 Checkbox，沒有原因欄位。', <Own>—</Own>],
             ['SMS 寄到哪支手機', comps('DataTable', 'Checkbox'), '勾了 SMS 備援時，收件人表格多兩欄 Company phone、Personal phone：每格一個 Checkbox，表頭 Checkbox 可全選（半選用 indeterminate）。', <Own>每列預設勾公務手機的規則</Own>],
+            ['Audience Reach by Channel', '—', '設計系統沒有現成元件。', <Own>收件人下方的人數框：每個通道一列（圖示、名稱、n / total，全收得到時綠色），框下方紅字加 See who</Own>],
             ['收不到的人', comps('Button'), '警示三角形圖示加紅字「n people can’t get the message」，後接 Button link「See who」。', <Own>—</Own>],
           ]} />
         </Section>

@@ -163,10 +163,6 @@ export function errs(c: Compose, groups: Group[]): Errs {
     if (!d) e.sched = req
     else if (d < now || d > new Date(now.getFullYear(), now.getMonth() + 3, now.getDate(), now.getHours(), now.getMinutes())) e.sched = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。')
   }
-  if (ICSD && c.ch.sms && c.urgent) {
-    if (!c.urgentReason.trim()) e.urgent = req
-    else if (c.urgentReason.length > 200) e.urgent = tooLong(200)
-  }
   return e
 }
 export function stepOk(n: number, e: Errs) {

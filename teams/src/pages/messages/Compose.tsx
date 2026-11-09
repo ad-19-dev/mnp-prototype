@@ -174,10 +174,9 @@ function RecvTable({ m }: { m: SendCtl }) {
   )
 }
 
-// the cards double as the overview: once there are audiences, each shows how many of them it reaches (green: all)
-function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
-  const c = m.s.c, on = !!c.ch[k], meta = CHN[k], hasR = rc.total > 0, id = 'ch-' + k
-  const n = k === 'push' ? rc.push : k === 'desktop' ? rc.desktop : rc.email, all = n === rc.total
+// Channels only picks channels; what each reaches is in Audience Reach by Channel below the audiences
+function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
+  const c = m.s.c, on = !!c.ch[k], meta = CHN[k], id = 'ch-' + k
   return (
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
       <span className="flex items-start gap-3">
@@ -185,17 +184,12 @@ function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
         <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:first-child]:font-semibold [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
-      {hasR ? (
-        <span className={cn('border-t border-divider pt-2 pl-9 text-caption tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>
-          {fmtN(n)} / {fmtN(rc.total)} {L(rc.total === 1 ? 'person can receive' : 'people can receive', '人可收到')}
-        </span>
-      ) : null}
     </label>
   )
 }
 
 // Channels first (so the audience table can offer the SMS phone columns when SMS fallback is on), then audiences,
-// then a summary of who each channel reaches, which needs both.
+// then Audience Reach by Channel, which needs both.
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const ap = approval(c), sms = smsOn(c), noNum = noNumber(c), anyCh = c.ch.push || c.ch.desktop || c.ch.email
@@ -203,7 +197,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
     <>
       <Section title={L('Channels', '通道')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
-          <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} rc={rc} />)}</div>
+          <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} />)}</div>
           {c.ch.push ? (
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <Checkbox
@@ -211,26 +205,20 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
                 label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD Approval', '需 ICSD 核准')}</Tag> : null}</span>}
                 description={L('Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below.', '推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。')}
               />
+              {/* urgent send belongs to SMS fallback: one indented checkbox, no reason to fill in */}
               {ICSD && c.ch.sms ? (
-                <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
+                <div className="ml-7">
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
                     label={L('It’s urgent: send without waiting for SMS approval', '這是緊急訊息，不等 SMS 核准直接傳送')} />
-                  {c.urgent ? (
-                    <FormField id="f-urgent" label={L('Reason', '原因')} required count={c.urgentReason.length + ' / 200'} over={c.urgentReason.length > 200} error={tried[1] || c.urgentReason.length > 200 ? e.urgent : ''}>
-                      <Textarea id="f-urgent" rows={2} value={c.urgentReason} error={!!(tried[1] && e.urgent)} onChange={ev => m.setC({ urgentReason: ev.target.value })} placeholder={L('e.g. Typhoon warning issued at 07:30; staff must know before commuting.', '例如：07:30 發布颱風警報，員工必須在通勤前得知。')} />
-                    </FormField>
-                  ) : null}
                 </div>
               ) : null}
             </div>
           ) : null}
           {tried[1] && e.ch ? <ErrText>{e.ch}</ErrText> : null}
-          {hasR && anyCh ? <Notices m={m} rc={rc} noNum={noNum.map(p => p.en)} /> : null}
         </div>
       </Section>
 
-      <Section title={L('Audiences', '收件人')} sub={L('Add contractors by phone or email.', '外包人員可用電話或 Email 加入。')}
-        actions={hasR ? <span className="shrink-0 text-body tabular-nums text-fg-secondary" aria-label={L('Audience count', '收件人數')}>{P(total, 'person', '人', 'people')}</span> : undefined}>
+      <Section title={L('Audiences', '收件人')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RecvInput
             id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(g => groupInSpace(g))}
@@ -246,22 +234,52 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         </div>
       </Section>
 
+      {hasR && anyCh ? <ReachByChannel m={m} rc={rc} /> : null}
     </>
   )
 }
 
-// the notices under the channels: approval and unticked phones (yellow), can't get it (red)
-function Notices({ m, rc, noNum }: { m: SendCtl; rc: Reach; noNum: string[] }) {
-  const app = useApp(), c = m.s.c, ap = approval(c), n = smsPhones(c, app.groups), sms = smsOn(c)
+// Audience Reach by Channel: how many of everyone picked each chosen channel reaches (green: all of them), where
+// the SMS goes, and the one red line for people no channel reaches
+function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
+  const app = useApp(), c = m.s.c, n = smsPhones(c, app.groups)
+  const line = (k: Channel, got: number) => {
+    const I = CHN[k].icon, all = got === rc.total
+    return (
+      <div key={k} className="flex items-center gap-3 px-3 py-2">
+        <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+        <span className="flex-1 text-body">{CHN[k].name}</span>
+        <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)}</span>
+      </div>
+    )
+  }
+  const smsParts = [
+    n.co ? L(P(n.co, 'company phone', '', 'company phones'), '公務手機 ' + n.co + ' 支') : '',
+    n.pp ? L(P(n.pp, 'personal phone', '', 'personal phones'), '私人手機 ' + n.pp + ' 支') : '',
+    n.auto ? L(P(n.auto, 'personal phone', '', 'personal phones') + ' (no company phone)', '私人手機 ' + n.auto + ' 支（沒有公務手機）') : '',
+    n.ext ? L(P(n.ext, 'external phone', '', 'external phones'), '外部電話 ' + n.ext + ' 支') : '',
+  ].filter(Boolean)
   return (
-    <>
-      {sms && n.off ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(n.off, 'person has', '', 'people have') + ' neither phone ticked and won’t get the SMS.', n.off + ' 人兩支手機都沒勾，收不到 SMS。')}</p> : null}
-      {ap.mgr ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</p> : null}
-      {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
-      {rc.unrN ? (
-        <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="inline-flex items-center gap-1 text-error-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button></p>
-      ) : null}
-    </>
+    <Section title={L('Audience Reach by Channel', '各通道觸及人數')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
+      <div className="flex flex-col gap-[var(--layout-space-tight)]">
+        <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+          {c.ch.push ? line('push', rc.push) : null}
+          {smsOn(c) ? (
+            <div className="flex items-center gap-3 px-3 py-2">
+              <MessageSquareText className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+              <span className="flex-1 text-body">{L('SMS (when the push doesn’t reach)', 'SMS（推播沒送到時）')}</span>
+              <span className="text-body text-fg-secondary">{smsParts.length ? smsParts.join(L(', ', '、')) : L('No one needs it for now', '目前不需要')}</span>
+            </div>
+          ) : null}
+          {c.ch.desktop ? line('desktop', rc.desktop) : null}
+          {c.ch.email ? line('email', rc.email) : null}
+        </div>
+        {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
+        {rc.unrN ? (
+          <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="inline-flex items-center gap-1 text-error-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button></p>
+        ) : null}
+      </div>
+    </Section>
   )
 }
 
@@ -328,7 +346,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
         ) : null}
         {smsOn(c) ? (
           <FormatBlock title="SMS" icon={CHN.sms.icon} desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
-            <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} hint={L('Links won’t open in SMS.', 'SMS 裡的連結無法開啟。')} error={eSms}>
+            <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} error={eSms}>
               <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} />
             </FormField>
           </FormatBlock>
@@ -393,15 +411,13 @@ function Preview({ c, counts }: { c: Compose; counts: Partial<Record<PreviewChan
   const d = k === 'desktop', msg = { sender: (d ? c.dSender : c.sender).trim(), title: d ? c.dTitle.trim() : '', content: (d ? c.dContent : c.content).trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-md border border-divider p-[var(--layout-space-tight)]">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-h6 font-bold">{L('Preview', '預覽')}</span>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         {chs.length > 1 ? (
           <SegmentedControl size="sm" value={k} onValueChange={v => v && setCur(v as PreviewChannel)} aria-label={L('Preview channel', '預覽通道')}>
             {chs.map(x => <SegmentedControlItem key={x} value={x}>{x === 'sms' ? 'SMS' : CHN[x].name}</SegmentedControlItem>)}
           </SegmentedControl>
         ) : <span className="text-body text-fg-secondary">{CHN[k].name}</span>}
       </div>
-      <span className="-mt-1 text-caption text-fg-secondary">{L('Preview only. The message may look different depending on each recipient’s device and settings.', '僅供參考。實際呈現會因收件人的裝置與設定而不同。')}</span>
       <div className="rounded-md bg-neutral-1 p-[var(--layout-space-loose)]"><ChannelPreview ch={k} msg={msg} zh={L('en', 'zh') === 'zh'} /></div>
     </div>
   )
@@ -413,7 +429,6 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const rows: React.ReactNode[] = []
   // the audience of each channel sits with its preview
   const counts: Partial<Record<PreviewChannel, number>> = { push: rc.push, sms: rc.smsable + rc.extP, desktop: rc.desktop, email: rc.email }
-  if (rc.unrN) rows.push(<RvRow key="u" icon={AlertTriangle} warn k={L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')} v={L('None of your channels reach them.', '你選的通道都送不到他們。')} />)
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
     ['now', Zap, L('Send now', '立即傳送'), undefined],
@@ -438,11 +453,8 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
           ) : null}
         </div>
       </Section>
-      <Section title={L('Review', '確認內容')}>
-        <div className="flex flex-col gap-[var(--layout-space-tight)]">
-          {rows.length ? <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">{rows}</div> : null}
-          <Preview c={c} counts={counts} />
-        </div>
+      <Section title={L('Preview', '預覽')} sub={L('For reference only. Actual appearance may vary depending on recipient’s device and settings.', '僅供參考。實際呈現會因收件人的裝置與設定而不同。')}>
+        <Preview c={c} counts={counts} />
       </Section>
     </>
   )

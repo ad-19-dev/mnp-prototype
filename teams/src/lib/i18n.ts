@@ -29,7 +29,7 @@ export function niceDT(d: Date) {
 
 // System text that lives in the sample data (delivery reasons, match results)
 const ZH: Record<string, string> = {
-  'No registered device': '沒有註冊裝置',
+  'App unregistered': 'App 未註冊',
   'Device unreachable for 72+ hours': '裝置超過 72 小時未連線',
   'Notifications turned off on the device': '裝置關閉了通知',
   'Desktop agent offline for 7+ days': '桌面程式超過 7 天未連線',
@@ -41,8 +41,8 @@ const ZH: Record<string, string> = {
   'Not delivered (MNP-4102)': '未送達（MNP-4102）',
   'Not delivered': '未送達',
   'Recipient address rejected (550)': '收件地址被拒（550）',
-  'No registered device, and no phone number for SMS': '沒有註冊裝置，也沒有電話可收 SMS',
-  'No registered device and no desktop agent': '沒有註冊裝置，也沒有桌面程式',
+  'App unregistered, and no phone number for SMS': 'App 未註冊，也沒有電話可收 SMS',
+  'App unregistered and no desktop agent': 'App 未註冊，也沒有桌面程式',
   'No desktop agent': '沒有桌面程式',
   'The dispatch service timed out at 08:36.': '派送服務在 08:36 逾時。',
   'No one received this message. The platform team was alerted automatically, and you can retry now.': '所有人都沒收到。平台團隊已收到警示，你可以現在重試。',
