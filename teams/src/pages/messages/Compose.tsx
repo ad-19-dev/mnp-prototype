@@ -174,8 +174,10 @@ function RecvTable({ m }: { m: SendCtl }) {
   )
 }
 
-function ChCard({ m, k }: { m: SendCtl; k: Channel; rc?: Reach }) {
-  const c = m.s.c, on = !!c.ch[k], meta = CHN[k], id = 'ch-' + k
+// the cards double as the overview: once there are audiences, each shows how many of them it reaches (green: all)
+function ChCard({ m, k, rc }: { m: SendCtl; k: Channel; rc: Reach }) {
+  const c = m.s.c, on = !!c.ch[k], meta = CHN[k], hasR = rc.total > 0, id = 'ch-' + k
+  const n = k === 'push' ? rc.push : k === 'desktop' ? rc.desktop : rc.email, all = n === rc.total
   return (
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
       <span className="flex items-start gap-3">
@@ -183,6 +185,11 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel; rc?: Reach }) {
         <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:first-child]:font-semibold [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
+      {hasR ? (
+        <span className={cn('border-t border-divider pt-2 pl-9 text-caption tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>
+          {fmtN(n)} / {fmtN(rc.total)} {L(rc.total === 1 ? 'person can receive' : 'people can receive', '人可收到')}
+        </span>
+      ) : null}
     </label>
   )
 }
@@ -196,7 +203,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
     <>
       <Section title={L('Channels', '通道')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
-          <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} />)}</div>
+          <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} rc={rc} />)}</div>
           {c.ch.push ? (
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <Checkbox
@@ -204,6 +211,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
                 label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD Approval', '需 ICSD 核准')}</Tag> : null}</span>}
                 description={L('Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below.', '推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。')}
               />
+              {c.ch.sms && hasR ? <SmsLine m={m} /> : null}
               {ICSD && c.ch.sms ? (
                 <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
                   <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('SMS approval will be skipped', '將略過 SMS 核准') : L('The SMS needs ICSD approval before it’s sent', 'SMS 經 ICSD 核准後才會送出')}</span>
@@ -221,11 +229,12 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
             </div>
           ) : null}
           {tried[1] && e.ch ? <ErrText>{e.ch}</ErrText> : null}
+          {hasR && anyCh ? <Notices m={m} rc={rc} noNum={noNum.map(p => p.en)} /> : null}
         </div>
       </Section>
 
-      <Section title={L('Audiences', '收件人')} sub={L('Up to ' + CAP + ' people. Add contractors by phone or email.', '最多 ' + CAP + ' 人。外包人員可用電話或 Email 加入。')}
-        actions={<span className={cn('shrink-0 text-body tabular-nums', total > CAP ? 'font-medium text-error-text' : 'text-fg-secondary')} aria-label={L('Audience count', '收件人數')}>{fmtN(total)} / {fmtN(CAP)}</span>}>
+      <Section title={L('Audiences', '收件人')} sub={L('Add contractors by phone or email.', '外包人員可用電話或 Email 加入。')}
+        actions={hasR ? <span className="shrink-0 text-body tabular-nums text-fg-secondary" aria-label={L('Audience count', '收件人數')}>{P(total, 'person', '人', 'people')}</span> : undefined}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RecvInput
             id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(g => groupInSpace(g))}
@@ -235,63 +244,43 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           />
           <RecvTable m={m} />
           {tried[1] && !hasR ? <ErrText>{L('Add at least one audience.', '請加入至少一位收件人。')}</ErrText> : null}
-          {total > CAP ? <ErrText>{L(fmtN(total - CAP) + ' over the limit. Remove some, or split into separate messages.', '超過上限 ' + fmtN(total - CAP) + ' 人。請移除部分收件人，或分成多則訊息。')}</ErrText> : null}
           {/* external contacts that no chosen channel reaches are counted in the summary's red line */}
           {e.ext && !(hasR && anyCh && rc.unrN) ? <ErrText>{e.ext}</ErrText> : null}
           {e.extp && !(hasR && anyCh && rc.unrN) ? <ErrText>{e.extp}</ErrText> : null}
         </div>
       </Section>
 
-      {hasR && anyCh ? <ReachSummary m={m} rc={rc} noNum={noNum.map(p => p.en)} /> : null}
     </>
   )
 }
 
-// Who each chosen channel actually reaches, out of everyone picked; then the notices (approval, can't get it)
-function ReachSummary({ m, rc, noNum }: { m: SendCtl; rc: Reach; noNum: string[] }) {
-  const app = useApp(), c = m.s.c, ap = approval(c), n = smsPhones(c, app.groups)
-  const line = (k: Channel, got: number) => {
-    const I = CHN[k].icon, all = got === rc.total
-    return (
-      <div key={k} className="flex items-center gap-3 px-3 py-2">
-        <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-        <span className="flex-1 text-body">{CHN[k].name}</span>
-        <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)} {L(rc.total === 1 ? 'person' : 'people', '人')}</span>
-      </div>
-    )
-  }
-  const smsParts = [
+// under the SMS fallback checkbox: where the SMS goes, from the phone ticks in the audience list
+function SmsLine({ m }: { m: SendCtl }) {
+  const app = useApp(), n = smsPhones(m.s.c, app.groups)
+  const parts = [
     n.co ? L(P(n.co, 'company phone', '', 'company phones'), '公務手機 ' + n.co + ' 支') : '',
     n.pp ? L(P(n.pp, 'personal phone', '', 'personal phones'), '私人手機 ' + n.pp + ' 支') : '',
     n.auto ? L(P(n.auto, 'personal phone', '', 'personal phones') + ' (no company phone)', '私人手機 ' + n.auto + ' 支（沒有公務手機）') : '',
     n.ext ? L(P(n.ext, 'external phone', '', 'external phones'), '外部電話 ' + n.ext + ' 支') : '',
   ].filter(Boolean)
+  return <span className="ml-7 text-caption text-fg-secondary">{parts.length ? L('SMS to ', 'SMS 寄到：') + parts.join(L(', ', '、')) + L('.', '。') : L('Everyone can get the push, so no SMS goes out for now.', '目前每個人都收得到推播，不會寄出 SMS。')}</span>
+}
+
+// the notices under the channels: no phone (gray), approval and unticked phones (yellow), can't get it (red)
+function Notices({ m, rc, noNum }: { m: SendCtl; rc: Reach; noNum: string[] }) {
+  const app = useApp(), c = m.s.c, ap = approval(c), n = smsPhones(c, app.groups), sms = smsOn(c)
   return (
-    <Section title={L('Who gets it', '誰會收到')} sub={L('What each channel reaches, out of everyone above.', '每個通道實際會送到的人數（以上方所有收件人計算）。')}>
-      <div className="flex flex-col gap-[var(--layout-space-tight)]">
-        <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
-          {c.ch.push ? line('push', rc.push) : null}
-          {smsOn(c) ? (
-            <div className="flex items-center gap-3 px-3 py-2">
-              <MessageSquareText className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-              <span className="flex-1 text-body">{L('SMS (when the push doesn’t reach)', 'SMS（推播沒送到時）')}</span>
-              <span className="text-body text-fg-secondary">{smsParts.length ? smsParts.join(L(', ', '、')) : L('No one needs it for now', '目前不需要')}</span>
-            </div>
-          ) : null}
-          {c.ch.desktop ? line('desktop', rc.desktop) : null}
-          {c.ch.email ? line('email', rc.email) : null}
-        </div>
-        {smsOn(c) && (n.none || noNum.length) ? <Banner tone="neutral">{noNum.length && noNum.length >= n.none
-          ? L(joinL(noNum) + (noNum.length === 1 ? ' has' : ' have') + ' no phone number and won’t get SMS.', joinL(noNum) + ' 沒有電話，收不到 SMS。')
-          : L(P(n.none, 'person has', '', 'people have') + ' no phone number and won’t get SMS.', n.none + ' 人沒有電話，收不到 SMS。')}</Banner> : null}
-        {smsOn(c) && n.off ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(n.off, 'person has', '', 'people have') + ' neither phone ticked and won’t get the SMS.', n.off + ' 人兩支手機都沒勾，收不到 SMS。')}</p> : null}
-        {ap.mgr ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</p> : null}
-        {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
-        {rc.unrN ? (
-          <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="inline-flex items-center gap-1 text-error-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button></p>
-        ) : null}
-      </div>
-    </Section>
+    <>
+      {sms && (n.none || noNum.length) ? <Banner tone="neutral">{noNum.length && noNum.length >= n.none
+        ? L(joinL(noNum) + (noNum.length === 1 ? ' has' : ' have') + ' no phone number and won’t get SMS.', joinL(noNum) + ' 沒有電話，收不到 SMS。')
+        : L(P(n.none, 'person has', '', 'people have') + ' no phone number and won’t get SMS.', n.none + ' 人沒有電話，收不到 SMS。')}</Banner> : null}
+      {sms && n.off ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(n.off, 'person has', '', 'people have') + ' neither phone ticked and won’t get the SMS.', n.off + ' 人兩支手機都沒勾，收不到 SMS。')}</p> : null}
+      {ap.mgr ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</p> : null}
+      {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
+      {rc.unrN ? (
+        <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="inline-flex items-center gap-1 text-error-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(rc.unrN, 'person', '', 'people') + ' can’t get the message', rc.unrN + ' 人收不到訊息')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See who', '查看是誰')}</Button></p>
+      ) : null}
+    </>
   )
 }
 
@@ -431,8 +420,8 @@ function Preview({ c, counts }: { c: Compose; counts: Partial<Record<PreviewChan
           </SegmentedControl>
         ) : <span className="text-body text-fg-secondary">{CHN[k].name}</span>}
       </div>
+      <span className="-mt-1 text-caption text-fg-secondary">{L('Preview only. The message may look different depending on each recipient’s device and settings.', '僅供參考。實際呈現會因收件人的裝置與設定而不同。')}</span>
       <div className="rounded-md bg-neutral-1 p-[var(--layout-space-loose)]"><ChannelPreview ch={k} msg={msg} zh={L('en', 'zh') === 'zh'} /></div>
-      <span className="text-caption text-fg-secondary">{L('Preview only. The message may look different depending on each recipient’s device and settings.', '僅供參考。實際呈現會因收件人的裝置與設定而不同。')}</span>
     </div>
   )
 }

@@ -123,7 +123,6 @@ export function errs(c: Compose, groups: Group[]): Errs {
   const req = L('This field is required.', '此欄位為必填。')
   // 1. Receivers and channels
   if (!c.receivers.length) e.recv = L('Add at least one audience.', '請加入至少一位收件人。')
-  else if (totalN > CAP) e.recv = L('Over the ' + CAP + '-audience limit.', '超過 ' + CAP + ' 人上限。')
   const extP = c.receivers.filter(t => isExtPhone(t)).length, extE = c.receivers.filter(t => t.type === 'ext').length - extP
   if (!c.ch.push && !c.ch.desktop && !c.ch.email) e.ch = L('Pick at least one channel.', '請選擇至少一個通道。')
   if (extE && !c.ch.email) e.ext = L(P(extE, 'external email', '', 'external emails') + ' can only get Email. Turn on Email or remove ' + (extE === 1 ? 'it' : 'them') + '.', extE + ' 個外部 Email 只能收 Email。請開啟 Email，或移除它們。')
