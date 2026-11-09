@@ -56,26 +56,50 @@ const Big = ({ name, title, sub }: { name: string; title: string; sub?: string }
 )
 
 // ---------- UI flow ----------
-type Kind = 'page' | 'dialog' | 'action'
-const KIND: Record<Kind, string> = { page: '畫面', dialog: '對話框', action: '操作' }
-const KCLS: Record<Kind, string> = { page: 'is-done', dialog: 'is-dialog', action: 'is-action' }
-function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; when: React.ReactNode; shots?: string[]; then?: React.ReactNode }) {
+// Each small flow is a row read left to right: screen → (action) → screen. A fork stacks its branches, each
+// opened by its condition. Screens are thumbnails of the prototype (click to enlarge).
+type SKind = 'page' | 'dialog' | 'toast' | 'error' | 'end'
+type SNode = { t: string; s?: string; k: SKind; d?: string }
+type SEdge = { a: string }
+type SFork = { fork: { when: string; path: SItem[] }[] }
+type SItem = SNode | SEdge | SFork
+const SK: Record<SKind, string> = { page: '畫面', dialog: '對話框', toast: 'Toast', error: '錯誤', end: '結果' }
+const N = (t: string, s?: string, d?: string): SNode => ({ t, s, d, k: 'page' })
+const D = (t: string, s?: string, d?: string): SNode => ({ t, s, d, k: 'dialog' })
+const T = (t: string, d?: string): SNode => ({ t, d, k: 'toast' })
+const X = (t: string, s?: string, d?: string): SNode => ({ t, s, d, k: 'error' })
+const R = (t: string, d?: string): SNode => ({ t, d, k: 'end' })
+const E = (a: string): SEdge => ({ a })
+const F = (...b: [string, ...SItem[]][]): SFork => ({ fork: b.map(([when, ...path]) => ({ when, path })) })
+
+function SPath({ items }: { items: SItem[] }) {
   return (
-    <article className="flow-branch">
-      <header><span className={'flow-kind ' + KCLS[kind]}>{KIND[kind]}</span><b>{title}</b></header>
-      <span className="flow-when">{when}</span>
-      {shots && shots.length ? <div className={shots.length > 1 ? 'flow-pair' : undefined}>{shots.map(n => <div key={n} className="spec-canvas"><Shot name={n} alt={title} pins={false} /></div>)}</div> : null}
-      {then ? <span className="flow-then">{then}</span> : null}
-    </article>
+    <div className="sf-path">
+      {items.map((x, i) => 'a' in x
+        ? <div key={i} className="sf-edge"><span>{x.a}</span><i aria-hidden>→</i></div>
+        : 'fork' in x
+          ? <div key={i} className="sf-fork">{x.fork.map((b, j) => <div key={j} className="sf-branch"><span className="sf-when">{b.when}</span><SPath items={b.path} /></div>)}</div>
+          : <div key={i} className={'sf-node is-' + x.k + (x.s ? '' : ' is-text')}>
+              <span className="sf-kind">{SK[x.k]}</span><b>{x.t}</b>
+              {x.s ? <div className="spec-canvas"><Shot name={x.s} alt={x.t} pins={false} /></div> : null}
+              {x.d ? <span className="sf-d">{x.d}</span> : null}
+            </div>)}
+    </div>
   )
 }
+const Sub = ({ id, title, start, items }: { id: string; title: string; start: string; items: SItem[] }) => (
+  <article className="sf" aria-label={id + ' ' + title}>
+    <header><span className="sf-id">{id}</span><b>{title}</b><span className="sf-start">從：{start}</span></header>
+    <div className="sf-scroll"><SPath items={items} /></div>
+  </article>
+)
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   const link = (k: TabKey, t: string) => <button type="button" className="flow-spec-link" onClick={() => go(k)}>{t}</button>
   return (
     <>
-      <Section eyebrow="Flow" title="發送一則訊息" lead="從訊息列表右上角的 New message 進入，三個步驟，最後回到列表。可以隨時按頁尾的 Back 回到上一步，或點步驟列回到已經過的步驟。">
+      <Section eyebrow="Flow" title="發送一則訊息" lead="從訊息列表右上角的 New message 進入，三個步驟，最後回到列表。每個步驟裡的小流程拆在下方，一列一個流程，從左讀到右：畫面 →（操作）→ 下一個畫面；有分支時，分支上下排列，每條分支前面寫它的條件。截圖點一下可以放大。">
         <div className="flow-map" role="list">
           <Stop sub="列表右上角 New message">開始</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="收件人與通道">步驟 1</Stop><span className="flow-arrow" aria-hidden>→</span>
@@ -83,43 +107,111 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Stop sub="排程與預覽">步驟 3</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="toast 顯示結果">回到列表</Stop>
         </div>
-        <div className="flow-legend">
-          <span><i className="flow-key" style={{ background: 'var(--flow-done)' }} />畫面</span>
-          <span><i className="flow-key" style={{ background: 'var(--spec-muted)' }} />操作</span>
-          <span><i className="flow-key" style={{ background: 'var(--flow-branch)' }} />對話框</span>
+        <div className="sf-legend">
+          <span><i style={{ background: 'var(--flow-done)' }} />畫面</span>
+          <span><i style={{ background: 'var(--flow-branch)' }} />對話框</span>
+          <span><i style={{ background: 'var(--spec-muted)' }} />Toast</span>
+          <span><i style={{ background: 'var(--flow-error)' }} />錯誤</span>
+          <span><i style={{ background: 'var(--flow-main)' }} />結果</span>
+          <span><b style={{ color: 'var(--flow-branch)' }}>藍字 →</b>分支的條件</span>
         </div>
       </Section>
 
-      <Section eyebrow="1" title="步驟 1：收件人與通道" lead={<>規格見「{link('s1', '步驟 1')}」。</>}>
-        <div className="flow-branches">
-          <Card kind="page" title="空白" when="剛進入" shots={['s1-empty']} then="收件人搜尋、Batch import、三張通道卡片。" />
-          <Card kind="page" title="搜尋收件人" when="在搜尋框輸入" shots={['s1-search']} then="下拉選單列出符合的人；按 Enter 加入第一筆（搜尋框下方沒有說明文字）。" />
-          <Card kind="dialog" title="Batch import" when="按 Batch import" shots={['dlg-import', 'dlg-import-result']} then="選資料類型、貼上或上傳名單 → Find matches → 確認後加入。" />
-          <Card kind="page" title="選好收件人與通道" when="加入收件人、勾通道" shots={['s1-filled']} then="收件人表格只列出選了誰；每張通道卡片顯示實際收得到的人數。" />
-          <Card kind="dialog" title="n people can’t get the message" when="點通道下方的 See who" shots={['s1-unreach', 'dlg-unreach']} then="列出所有選到的通道都收不到的人與原因。" />
-          <Card kind="page" title="SMS 備援與緊急送出" when="勾 Device Notifications (SMS)，再勾 It’s urgent" shots={['s1-sms', 's1-urgent']} then="勾了緊急，必填原因。" />
-          <Card kind="dialog" title="Save as group" when="頁尾 Save as group" shots={['dlg-save-group']} then="把目前的收件人存成群組。" />
-          <Card kind="page" title="驗證錯誤" when="沒有收件人或通道就按 Next" shots={['s1-error']} then="錯誤顯示在對應的區塊下方。" />
+      <Section eyebrow="Step 1" title="步驟 1：收件人與通道" lead={<>規格見「{link('s1', '步驟 1')}」。</>}>
+        <div className="sf-list">
+          <Sub id="1-1" title="搜尋並加入收件人" start="步驟 1 空白" items={[
+            N('空白', 's1-empty'), E('選類型、輸入'), N('下拉選單', 's1-search'),
+            F(['找到', E('點選或按 Enter'), N('加入表格', 's1-types', '組織、群組可以連續加入')],
+              ['格式不對、找不到', X('紅字在搜尋框下方', undefined, '這一筆加不進去')],
+              ['已在名單上', R('選項顯示 Added', '不能再選')]),
+          ]} />
+          <Sub id="1-2" title="批次匯入" start="Batch import 按鈕" items={[
+            D('選資料類型', 'dlg-import'), E('貼上或上傳 .csv、.txt'), D('名單', 'dlg-import-list'), E('Find matches'), D('比對結果', 'dlg-import-result'),
+            F(['有同名', E('勾選要的人'), R('一起加入')],
+              ['全部找得到', E('Add n audiences'), T('Added n audiences', '回到步驟 1')],
+              ['有找不到', E('Add n audiences'), R('其他人先加入', '找不到的放回輸入框，修正後再比對')],
+              ['檔案讀不到', T('Can’t read that file…', '紅色')]),
+          ]} />
+          <Sub id="1-3" title="移除收件人" start="收件人表格" items={[
+            F(['單筆', E('列尾 ×'), R('直接移除')],
+              ['超過 6 筆時 Remove all', D('Remove all audiences?', 'dlg-removeall'), F(['Remove all', R('清空表格', '通道與內容不變')], ['Cancel', R('不變')])]),
+          ]} />
+          <Sub id="1-4" title="選通道" start="通道卡片" items={[
+            N('勾卡片', 's1-filled', '每張卡片顯示 n / total people can receive'),
+            F(['都收得到', R('沒有提醒')],
+              ['有人所有通道都收不到', N('紅字 n people can’t get the message', 's1-unreach'), E('See who'), D('收不到的人', 'dlg-unreach', '只有 Close')],
+              ['有外部人員，且其通道有勾', N('黃字：需要主管核准', 's1-ext')]),
+          ]} />
+          <Sub id="1-5" title="SMS 備援與緊急送出" start="勾了 Device Notifications" items={[
+            E('勾 Device Notifications (SMS)'), N('核准提示框', 's1-sms'), E('勾 It’s urgent'), N('Reason 必填', 's1-urgent'),
+            F(['有外部收件人', R('灰框：仍需主管核准')], ['有人沒電話', R('灰框：<名字> 收不到 SMS')]),
+          ]} />
+          <Sub id="1-6" title="存成群組" start="頁尾 Save as group（有收件人才可按）" items={[
+            D('Save as group', 'dlg-save-group'),
+            F(['名稱空白、太長、重名', X('欄位下方紅字', undefined, '不能存')], ['Save', T('Group saved', '回到步驟 1')]),
+          ]} />
+          <Sub id="1-7" title="前往步驟 2" start="頁尾 Next" items={[
+            F(['沒收件人、沒通道、超過 500 人、緊急沒填原因', X('留在步驟 1', 's1-error', '紅字一起出現')],
+              ['其他（含有人收不到）', R('進入步驟 2')]),
+          ]} />
         </div>
       </Section>
 
-      <Section eyebrow="2" title="步驟 2：訊息內容" lead={<>規格見「{link('s2', '步驟 2')}」。</>}>
-        <div className="flow-branches">
-          <Card kind="page" title="空白" when="進入步驟 2" shots={['s2-empty']} then="每個勾選的通道一個區塊，區塊之間有分隔線。" />
-          <Card kind="page" title="驗證錯誤" when="欄位沒填就按 Next" shots={['s2-error']} then="沒填的欄位顯示 This field is required." />
-          <Card kind="page" title="填好" when="填完所有欄位" shots={['s2-filled']} />
-          <Card kind="dialog" title="Save as template" when="頁尾 Save as template" shots={['dlg-save-tpl']} then="把目前的內容存成模板。" />
+      <Section eyebrow="Step 2" title="步驟 2：訊息內容" lead={<>規格見「{link('s2', '步驟 2')}」。</>}>
+        <div className="sf-list">
+          <Sub id="2-1" title="從空白開始寫" start="進入步驟 2" items={[
+            N('每個勾選的通道一個區塊', 's2-empty'), E('填寫'), N('填好', 's2-filled'),
+          ]} />
+          <Sub id="2-2" title="使用模板" start="選 Use template" items={[
+            E('從模板選單選一個'),
+            F(['還沒填任何內容', T('Template applied', '內容換成模板的')],
+              ['已經填了內容', D('Replace your text?', 'dlg-replace'), F(['Replace', T('Template applied')], ['Cancel', R('保持原樣')])]),
+          ]} />
+          <Sub id="2-3" title="取消模板" start="套用模板後選回 New" items={[
+            T('Template removed. Your text stays.', '內容保留，只是不再連結模板'),
+          ]} />
+          <Sub id="2-4" title="存成模板" start="頁尾 Save as template" items={[
+            F(['內容有錯', T('Finish the message first', '紅色；欄位標出錯誤')],
+              ['內容沒錯', D('Save as template', 'dlg-save-tpl'), F(['名稱空白、太長、重名', X('欄位下方紅字')], ['Save', T('Template saved')])]),
+          ]} />
+          <Sub id="2-5" title="前往步驟 3" start="頁尾 Next" items={[
+            F(['必填沒填、字數超過、格式不對', X('留在步驟 2', 's2-error')], ['都沒問題', R('進入步驟 3')]),
+          ]} />
         </div>
       </Section>
 
-      <Section eyebrow="3" title="步驟 3：排程與預覽" lead={<>規格見「{link('s3', '步驟 3')}」。</>}>
-        <div className="flow-branches">
-          <Card kind="page" title="立即傳送" when="進入步驟 3（預設）" shots={['s3-now']} then="Schedule 與 Review（預覽）。" />
-          <Card kind="page" title="排程傳送" when="選 Scheduled send" shots={['s3-schedule', 's3-error']} then="出現日期時間欄位；選到過去或超過 3 個月時顯示錯誤。" />
-          <Card kind="page" title="預覽各通道" when="切換 Preview 的通道" shots={['s3-preview-email']} then="顯示這個通道的收件人數與預覽。" />
-          <Card kind="dialog" title="Send without SMS approval?" when="緊急送出時按 Create message" shots={['dlg-urgent']} then="確認後送出，不等 SMS 核准。" />
-          <Card kind="action" title="回到列表" when="Create message" shots={['after-submit']} then="toast 顯示結果；新訊息出現在列表最上方。" />
-          <Card kind="dialog" title="Leave without sending?" when="任何步驟按頁尾 Cancel" shots={['dlg-leave']} then="Discard 回到列表，內容不保留。" />
+      <Section eyebrow="Step 3" title="步驟 3：排程與預覽" lead={<>規格見「{link('s3', '步驟 3')}」。</>}>
+        <div className="sf-list">
+          <Sub id="3-1" title="選傳送時間" start="進入步驟 3" items={[
+            N('Send now（預設）', 's3-now'), E('選 Scheduled send'), N('日期時間，預設明天 09:00', 's3-schedule'),
+            F(['選到過去或 3 個月後', X('欄位下方紅字', 's3-error')], ['時間正確', R('下方顯示 Sends <時間>')]),
+          ]} />
+          <Sub id="3-2" title="預覽各通道" start="Review 的 Preview" items={[
+            E('切換通道'), N('這個通道的收件人數與預覽', 's3-preview-email'),
+          ]} />
+          <Sub id="3-3" title="寄測試給自己" start="頁尾 Send me a test" items={[
+            F(['內容有錯', T('Finish the message first', '紅色')], ['內容沒錯', T('Test sent')]),
+          ]} />
+          <Sub id="3-4" title="送出" start="頁尾 Create message" items={[
+            F(['任何一步有錯', X('帶回第一個有錯的步驟', undefined, '紅字一起出現')],
+              ['勾了緊急送出', D('Send without SMS approval?', 'dlg-urgent'), F(['Skip approval and send', R('送出')], ['Cancel', R('留在步驟 3')])],
+              ['需要核准（SMS 備援或外部收件人）', T('Sent for approval', '列表：Pending approval')],
+              ['排程傳送', T('Scheduled for <時間>', '列表：Scheduled')],
+              ['立即傳送', N('回到列表', 'after-submit', 'Toast：Sending to n audiences；列表：In progress')]),
+          ]} />
+        </div>
+      </Section>
+
+      <Section eyebrow="Anytime" title="任何步驟">
+        <div className="sf-list">
+          <Sub id="0-1" title="離開" start="頁尾 Cancel 或點頁首的空間名稱" items={[
+            F(['還沒改過任何內容', R('直接回列表')],
+              ['改過內容', D('Leave without sending?', 'dlg-leave'), F(['Discard', R('回列表，內容不保留')], ['Cancel', R('留在原步驟')])]),
+          ]} />
+          <Sub id="0-2" title="在步驟間移動" start="Back 或步驟列" items={[
+            F(['往前（Back、點前面的步驟）', R('直接回去，不檢查', '內容都保留')],
+              ['往後（點後面的步驟）', R('依序檢查', '停在第一個有錯的步驟')]),
+          ]} />
         </div>
       </Section>
     </>

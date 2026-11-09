@@ -104,6 +104,15 @@ await step('s2-filled', async () => {
   await p.locator('#f-body [contenteditable="true"], #f-body').first().click(); await p.keyboard.type('Hi all, the office network will be down tonight from 22:00 to 23:00. Please save your work before 22:00.');
   await wait(400); await page('s2-filled');
 });
+// picking a template when something is written already: it asks before replacing
+await step('dlg-replace', async () => {
+  await p.getByRole('radio', { name: 'Use template' }).click(); await wait(300);
+  await p.locator('#f-tpl').click(); await wait(400);
+  await p.getByRole('option').first().click(); await wait(500);
+  await shot('dlg-replace', dlg(), [], 12);
+  await dlg().getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(300);
+  await p.getByRole('radio', { name: 'New' }).click(); await wait(300);
+});
 await step('dlg-save-tpl', async () => {
   await foot('Save as template').click(); await wait(500);
   await shot('dlg-save-tpl', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
@@ -154,6 +163,11 @@ await step('s1-types', async () => {
   await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
   const chs = p.getByRole('heading', { name: 'Channels' }).locator('xpath=ancestor::section[1]');
   await shot('s1-ext', (await chs.count()) ? chs : null, [], 12);
+  // Remove all shows once there are more than 6 audiences; it asks first
+  await add('Person', 'Lee'); await add('Person', 'Wang'); await add('Org', 'PDEV');
+  await p.getByRole('button', { name: 'Remove all' }).click(); await wait(500);
+  await shot('dlg-removeall', dlg(), [], 12);
+  await dlg().getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(300);
 });
 
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));

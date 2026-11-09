@@ -146,3 +146,34 @@
 /* list view: the sheet is part of the page, so it flattens */
 .flow-stage .flow-sheet { padding: 24px; }
 @media (max-width: 760px) { .flow-stage .flow-sheet, .spec-main > .flow-sheet { padding: 16px; border-width: 1px; } .flow-sheet-head b { font-size: 22px; line-height: 30px; } }
+
+/* ---- sub-flows (New message spec): each small flow is one row read left to right: a screen, the action that
+   moves on (a labelled arrow), the next screen; a fork stacks its branches, each opened by its condition */
+.sf-list { display: flex; flex-direction: column; gap: 16px; }
+.sf { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 14px; border: 1px solid var(--spec-line); border-radius: 10px; background: var(--spec-surface); }
+.sf > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.sf-id { font: 600 12px/16px var(--spec-font); color: var(--spec-pin); font-variant-numeric: tabular-nums; }
+.sf > header b { font: 600 15px/22px var(--spec-font); }
+.sf-start { font: 400 13px/20px var(--spec-font); color: var(--spec-muted); }
+.sf-scroll { overflow-x: auto; padding-bottom: 6px; }
+.sf-path { display: flex; align-items: center; width: max-content; }
+.sf-node { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--spec-line); border-top: 3px solid var(--flow-done); border-radius: 8px; background: var(--spec-surface); }
+.sf-node.is-text { width: 160px; }
+.sf-node.is-dialog { border-top-color: var(--flow-branch); }
+.sf-node.is-toast { border-top-color: var(--spec-muted); }
+.sf-node.is-error { border-top-color: var(--flow-error); }
+.sf-node.is-end { border-top-color: var(--flow-main); }
+.sf-kind { font: 600 11px/16px var(--spec-font); letter-spacing: 0.04em; color: var(--spec-muted); }
+.sf-node b { font: 600 13px/18px var(--spec-font); }
+.sf-d { font: 400 12px/18px var(--spec-font); color: var(--spec-muted); }
+.sf-node .spec-canvas { padding: 6px; }
+.sf-edge { width: 116px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 8px; text-align: center; }
+.sf-edge span { font: 400 12px/16px var(--spec-font); color: var(--spec-ink); }
+.sf-edge i { font: 400 20px/1 var(--spec-font); font-style: normal; color: var(--flow-main); }
+.sf-fork { display: flex; flex-direction: column; gap: 12px; padding: 4px 0 4px 12px; border-left: 2px solid var(--spec-line); }
+.sf-branch { display: flex; align-items: center; }
+.sf-when { width: 116px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 8px; text-align: center; font: 600 12px/16px var(--spec-font); color: var(--flow-branch); }
+.sf-when::after { content: "→"; font: 400 20px/1 var(--spec-font); color: var(--flow-branch); }
+.sf-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font: 400 13px/20px var(--spec-font); color: var(--spec-muted); }
+.sf-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sf-legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
