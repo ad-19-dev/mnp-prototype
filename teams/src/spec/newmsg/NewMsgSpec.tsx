@@ -141,8 +141,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
               ['檔案讀不到', T('Can’t read that file…', '紅色')]),
           ]} />
           <Sub id="1-5" title="移除收件人" start="收件人表格" items={[
-            F(['單筆', E('列尾 ×'), R('直接移除')],
-              ['超過 6 筆時 Remove all', D('Remove all audiences?', 'dlg-removeall'), F(['Remove all', R('清空表格', '通道與內容不變')], ['Cancel', R('不變')])]),
+            E('列尾 ×'), R('直接移除這一列', '沒有篩選，也沒有全部移除'),
           ]} />
           <Sub id="1-6" title="看每個通道收得到幾人" start="有收件人、有選通道" items={[
             N('Audience Reach by Channel', 's1-ext', '收件人下方；每個通道 n / total，SMS 寫寄到幾支公務、私人手機'),
@@ -282,7 +281,6 @@ function Step1() {
           ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；搜尋框下方沒有說明文字。已在名單上的選項顯示 Added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
           ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、External phone、External email）；組織與群組後面接藍字總人數 n people，點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。'],
-          ['超過 6 筆', '表格上方出現篩選框 Filter audience 與 Remove all（紅字，會先確認）。'],
           ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audience yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
         ]} />
         <SpecTable head={['搜尋類型', '輸入', '下拉選單與加入方式', '錯誤與找不到']} nowrap={[0]} rows={[
@@ -453,7 +451,6 @@ function Dialogs() {
           ['Replace your text?', '步驟 2 選模板', '480', 'Replace'],
           ['Send without SMS approval?', '步驟 3 緊急送出時 Create message', '480', 'Skip approval and send（紅色）'],
           ['Leave without sending?', '任何步驟 Cancel', '480', 'Discard（紅色）'],
-          ['Remove all audiences?', '步驟 1 Remove all', '480', 'Remove all（紅色）'],
         ]} />
       </Section>
       <Section eyebrow="Import" title="Batch import" lead="兩個階段：輸入名單 → 比對結果。">

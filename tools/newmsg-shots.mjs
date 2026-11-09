@@ -167,11 +167,6 @@ await step('s1-types', async () => {
   await shot('s1-phones', (await aud.count()) ? aud : null, [], 12);
   const reachSec = p.getByRole('heading', { name: 'Audience Reach by Channel' }).locator('xpath=ancestor::section[1]');
   await shot('s1-ext', (await reachSec.count()) ? reachSec : null, [], 12);
-  // Remove all shows once there are more than 6 audiences; it asks first
-  await add('Person', 'Lee'); await add('Person', 'Wang'); await add('Org', 'PDEV');
-  await p.getByRole('button', { name: 'Remove all' }).click(); await wait(500);
-  await shot('dlg-removeall', dlg(), [], 12);
-  await dlg().getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(300);
 });
 
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));

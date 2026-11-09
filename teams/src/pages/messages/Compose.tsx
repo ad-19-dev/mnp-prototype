@@ -104,7 +104,7 @@ function PhoneHead({ m, k, label }: { m: SendCtl; k: 'co' | 'pp'; label: string 
 }
 
 function RecvTable({ m }: { m: SendCtl }) {
-  const app = useApp(), s = m.s, c = s.c, q = (s.rf || '').trim().toLowerCase(), sms = smsOn(c)
+  const app = useApp(), s = m.s, c = s.c, sms = smsOn(c)
   const [mem, setMem] = React.useState<MemberSet | null>(null)
   const rows: RRow[] = c.receivers.map(t => {
     let label = '', sub = '', ppl: any[] = [], cnt = 1, warn = false, badge = '', badgeBtn = false
@@ -126,7 +126,7 @@ function RecvTable({ m }: { m: SendCtl }) {
       ? [{ k: (isExtPhone(t) ? 'sms' : 'email') as Channel, n: 1, of: 1 }]
       : [{ k: 'push' as Channel, n: internal.filter(p => p.dev).length, of: cnt }, { k: 'desktop' as Channel, n: internal.filter(p => p.desk).length, of: cnt }, { k: 'email' as Channel, n: internal.length + xe, of: cnt }, { k: 'sms' as Channel, n: internal.filter(p => p.co || p.pp).length + xp, of: cnt }]
     return { t, label, sub, kind: recvKind(t), cnt, can, warn, badge, badgeBtn, ppl }
-  }).filter(x => !q || (x.label + ' ' + x.sub + ' ' + x.kind).toLowerCase().indexOf(q) >= 0)
+  })
 
   // the audience list only answers "who did I pick": one column, with the type and (for orgs and groups) the
   // head count beside the name; what each channel reaches is shown on the channel cards below
@@ -160,13 +160,6 @@ function RecvTable({ m }: { m: SendCtl }) {
   if (!c.receivers.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
     <div className="flex flex-col gap-2">
-      {c.receivers.length > 6 ? (
-        <div className="flex items-center gap-2">
-          <div className="w-64"><Input size="sm" startIcon={Search} type="search" placeholder={L('Filter audience', '篩選收件人')} aria-label={L('Filter audience', '篩選收件人')} value={s.rf} onChange={ev => m.set({ rf: ev.target.value })} /></div>
-          {rows.length !== c.receivers.length ? <span className="text-caption text-fg-secondary">{rows.length} / {c.receivers.length}</span> : null}
-          <Button variant="link" size="sm" danger className="ml-auto" onClick={() => m.askRemoveAll()}>{L('Remove all', '全部移除')}</Button>
-        </div>
-      ) : null}
       <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
       <MembersDialog set={mem} onClose={() => setMem(null)} />
