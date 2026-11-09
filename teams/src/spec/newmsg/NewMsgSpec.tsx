@@ -333,7 +333,7 @@ function Step1() {
       <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 才出現。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need ICSD Approval；說明 <Copy en="Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below." zh="推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。" /></>],
-          ['緊急送出的位置', '勾了 SMS 備援後，緊急送出勾選框直接縮排在 SMS 備援下方，沒有外框，也沒有「需要 ICSD 核准」的標題（SMS 備援旁的 Need ICSD Approval 標籤已經說明）。'],
+          ['緊急送出的位置', '勾了 SMS 備援後，下方一個有框的區塊（divider 色框線、圓角），裡面是緊急送出勾選框，勾了才出現 Reason；區塊沒有標題（SMS 備援旁的 Need ICSD Approval 標籤已經說明）。'],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />，下方沒有說明文字（「僅限緊急、會留存紀錄」的說明放在送出前的確認對話框）。</>],
           ['Reason', <>勾了緊急才出現，必填，上限 200 字，提示文字 <C>e.g. Typhoon warning issued at 07:30; staff must know before commuting.</C> 填的原因會顯示在訊息詳情面板的 Urgent reason。</>],
           ['有外部收件人', '緊急送出只略過 ICSD，仍要主管核准；畫面上不另外提示（通道下方的黃字已經說明需要主管核准）。'],

@@ -212,7 +212,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
                 description={L('Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below.', '推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。')}
               />
               {ICSD && c.ch.sms ? (
-                <div className="ml-7 flex flex-col gap-[var(--layout-space-tight)]">
+                <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
                     label={L('It’s urgent: send without waiting for SMS approval', '這是緊急訊息，不等 SMS 核准直接傳送')} />
                   {c.urgent ? (
