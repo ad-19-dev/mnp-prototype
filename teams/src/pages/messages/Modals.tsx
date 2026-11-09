@@ -217,7 +217,7 @@ export function TplPickerDialog({ m }: { m: SendCtl }) {
 export function UnreachDialog({ m }: { m: SendCtl }) {
   const s = m.s, open = s.unr, close = () => m.set({ unr: false })
   const c = s.c, rc = m.reach()
-  const why = () => { const w: string[] = []; if (c.ch.push) w.push(c.ch.sms ? L('App unregistered, no phone number', 'App 未註冊、沒有電話') : L('App unregistered', 'App 未註冊')); if (c.ch.desktop) w.push(L('no desktop agent', '沒有桌面程式')); return w.join(L(', ', '、')).replace(/^./, x => x.toUpperCase()) }
+  const why = () => { const w: string[] = []; if (c.ch.push) w.push(L('App unregistered', 'App 未註冊')); if (c.ch.desktop) w.push(L('no desktop agent', '沒有桌面程式')); return w.join(L(', ', '、')).replace(/^./, x => x.toUpperCase()) }
   return (
     <Shell open={open} onClose={close} width={720} title={L(P(rc.unrN, 'message', '', 'messages') + ' can’t be sent', rc.unrN + ' 則訊息無法送出')}
       foot={<Button variant="tertiary" onClick={close}>{L('Close', '關閉')}</Button>}>

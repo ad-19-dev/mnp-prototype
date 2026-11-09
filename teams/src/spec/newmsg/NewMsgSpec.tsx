@@ -466,7 +466,7 @@ function Dialogs() {
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
-        <Gallery items={[['dlg-unreach', 'n messages can’t be sent', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因（Device Notifications 只有 App unregistered；勾了 SMS 備援再加 no phone number）；只有 Close'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
+        <Gallery items={[['dlg-unreach', 'n messages can’t be sent', '每人一列：頭像、姓名、組織代號 · NT · 工號，右側原因（Device Notifications 只有 App unregistered 一種）；只有 Close'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
         <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-urgent', 'Send without SMS approval?'], ['dlg-leave', 'Leave without sending?']]} max={520} />

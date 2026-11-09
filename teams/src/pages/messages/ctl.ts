@@ -381,7 +381,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
         smsText: smsOn(c) ? c.smsText.trim() : '', channels, sms: smsOn(c), email: em,
         bypass: smsOn(c) && c.urgent ? { by: ME, at: fmtDT(now), reason: c.urgentReason.trim() } : null,
         total: rc.total, ok: 0, aud: tagsToAud(c.receivers), fresh: Date.now(), _f: null, err: null, byCh: null,
-        fw: rc.unr.map(p => p.id), fr: [[reason + (smsOn(c) ? ', and no phone number for SMS' : '')]],
+        fw: rc.unr.map(p => p.id), fr: [[reason]],
         status: review ? 'pending' : schedD ? 'scheduled' : 'progress', sched: schedD ? fmtDT(schedD) : null, review: review || null,
       }
       let id: string
