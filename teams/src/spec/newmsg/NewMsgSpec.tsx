@@ -125,7 +125,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
               ['只勾其他通道', R('收件人表格只有 Audience 一欄')]),
           ]} />
           <Sub id="1-2" title="緊急送出" start="勾了 SMS 備援" items={[
-            N('ICSD 核准提示框', 's1-sms'), E('勾 It’s urgent'), N('Reason 必填', 's1-urgent'),
+            N('SMS 備援下方出現緊急送出勾選框', 's1-sms'), E('勾 It’s urgent'), N('Reason 必填', 's1-urgent'),
             F(['有外部收件人', R('灰框：仍需主管核准')]),
           ]} />
           <Sub id="1-3" title="搜尋並加入收件人" start="步驟 1 空白" items={[
@@ -334,12 +334,11 @@ function Step1() {
       <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 才出現。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need ICSD Approval；說明 <Copy en="Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below." zh="推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。" /></>],
-          ['核准提示框', <>勾了 SMS 備援後出現。標題 <Copy en="The SMS needs ICSD approval before it’s sent" zh="SMS 經 ICSD 核准後才會送出" />；勾了緊急後改為 <Copy en="SMS approval will be skipped" zh="將略過 SMS 核准" /></>],
+          ['緊急送出的位置', '勾了 SMS 備援後，緊急送出勾選框直接縮排在 SMS 備援下方，沒有外框，也沒有「需要 ICSD 核准」的標題（SMS 備援旁的 Need ICSD Approval 標籤已經說明）。'],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />；說明 <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" /></>],
           ['Reason', <>勾了緊急才出現，必填，上限 200 字，提示文字 <C>e.g. Typhoon warning issued at 07:30; staff must know before commuting.</C> 填的原因會顯示在訊息詳情面板的 Urgent reason。</>],
           ['有外部收件人', <>緊急送出仍要主管核准，框內顯示 <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" /></>],
-          ['SMS 寄到哪支手機', <>和 GMC 一樣，在收件人表格裡逐列選：勾了 SMS 備援後，表格多出 <Copy en="Company phone" zh="公務手機" />、<Copy en="Personal phone" zh="私人手機" /> 兩欄（各 176 寬，固定）。每列預設勾公務手機、不勾私人手機；表頭的勾選框可全選、全不選，部分勾選時是半選。組織與群組是整列一起勾。外部電話與外部 Email 這兩欄顯示「—」。勾公務手機但這個人沒有公務手機時，改寄私人手機；兩支都不勾的列收不到 SMS（通道區塊下方出現黃字提醒）。SMS 備援勾選框下方一行次要小字，寫 SMS 會寄到幾支公務手機、私人手機（沒有公務手機的另外註明）、外部電話；每個人都收得到推播時寫 Everyone can get the push, so no SMS goes out for now.。</>],
-          ['沒有電話的人', <>提示 <Copy en="<名字> has no phone number and won’t get SMS." zh="<名字> 沒有電話，收不到 SMS。" /></>],
+          ['SMS 寄到哪支手機', <>和 GMC 一樣，在收件人表格裡逐列選：勾了 SMS 備援後，表格多出 <Copy en="Company phone" zh="公務手機" />、<Copy en="Personal phone" zh="私人手機" /> 兩欄（各 176 寬，固定）。每列預設勾公務手機、不勾私人手機；表頭的勾選框可全選、全不選，部分勾選時是半選。組織與群組是整列一起勾。外部電話與外部 Email 這兩欄顯示「—」。勾公務手機但這個人沒有公務手機時，改寄私人手機；兩支都不勾的列收不到 SMS（通道區塊下方出現黃字提醒）。。</>],
         ]} />
         <Gallery items={[['s1-sms', '勾了 SMS 備援'], ['s1-urgent', '勾了緊急送出', '原因必填']]} />
       </Section>
@@ -355,7 +354,6 @@ function Step1() {
           ['有外部收件人，而且他們需要的通道有勾', <Copy en="Includes n external audiences. Your supervisor, <主管>, must approve." zh="包含 n 位外部收件人，需要主管 <主管> 核准。" />, '黃字加警示三角形', '通道區塊最下方', '即時；外部電話看 SMS 備援，外部 Email 看 Email', '不擋'],
           ['緊急送出，但有外部收件人', <Copy en="Your supervisor still has to approve it, because it goes outside the company." zh="因為有外部收件人，仍需要主管核准。" />, '灰色提示框', 'SMS 備援的核准提示框裡', '勾了緊急而且有外部收件人時', '不擋'],
           ['某列兩支手機都沒勾', <Copy en="n people have neither phone ticked and won’t get the SMS." zh="n 人兩支手機都沒勾，收不到 SMS。" />, '黃字加警示三角形', '通道區塊最下方', '即時', '不擋'],
-          ['勾了 SMS 備援，但有人沒有電話', <Copy en="<名字> has no phone number and won’t get SMS." zh="<名字> 沒有電話，收不到 SMS。" />, '灰色提示框', '通道區塊最下方', '即時', '不擋'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道（按 Next 之後）" />
         <Big name="s1-phones" title="勾了 SMS 備援時的收件人表格" sub="Company phone、Personal phone 兩欄" />

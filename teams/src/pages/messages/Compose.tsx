@@ -211,10 +211,8 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
                 label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD Approval', '需 ICSD 核准')}</Tag> : null}</span>}
                 description={L('Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below.', '推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。')}
               />
-              {c.ch.sms && hasR ? <SmsLine m={m} /> : null}
               {ICSD && c.ch.sms ? (
-                <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider p-[var(--layout-space-tight)]">
-                  <span className="flex items-center gap-2 text-body font-medium"><ShieldCheck className="size-4 text-warning-text" aria-hidden />{c.urgent ? L('SMS approval will be skipped', '將略過 SMS 核准') : L('The SMS needs ICSD approval before it’s sent', 'SMS 經 ICSD 核准後才會送出')}</span>
+                <div className="ml-7 flex flex-col gap-[var(--layout-space-tight)]">
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}
                     label={L('It’s urgent: send without waiting for SMS approval', '這是緊急訊息，不等 SMS 核准直接傳送')}
                     description={L('Only for urgent, important messages. This request will be kept on record.', '僅限緊急且重要的訊息，此次申請將會留存紀錄。')} />
@@ -254,26 +252,11 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   )
 }
 
-// under the SMS fallback checkbox: where the SMS goes, from the phone ticks in the audience list
-function SmsLine({ m }: { m: SendCtl }) {
-  const app = useApp(), n = smsPhones(m.s.c, app.groups)
-  const parts = [
-    n.co ? L(P(n.co, 'company phone', '', 'company phones'), '公務手機 ' + n.co + ' 支') : '',
-    n.pp ? L(P(n.pp, 'personal phone', '', 'personal phones'), '私人手機 ' + n.pp + ' 支') : '',
-    n.auto ? L(P(n.auto, 'personal phone', '', 'personal phones') + ' (no company phone)', '私人手機 ' + n.auto + ' 支（沒有公務手機）') : '',
-    n.ext ? L(P(n.ext, 'external phone', '', 'external phones'), '外部電話 ' + n.ext + ' 支') : '',
-  ].filter(Boolean)
-  return <span className="ml-7 text-caption text-fg-secondary">{parts.length ? L('SMS to ', 'SMS 寄到：') + parts.join(L(', ', '、')) + L('.', '。') : L('Everyone can get the push, so no SMS goes out for now.', '目前每個人都收得到推播，不會寄出 SMS。')}</span>
-}
-
-// the notices under the channels: no phone (gray), approval and unticked phones (yellow), can't get it (red)
+// the notices under the channels: approval and unticked phones (yellow), can't get it (red)
 function Notices({ m, rc, noNum }: { m: SendCtl; rc: Reach; noNum: string[] }) {
   const app = useApp(), c = m.s.c, ap = approval(c), n = smsPhones(c, app.groups), sms = smsOn(c)
   return (
     <>
-      {sms && (n.none || noNum.length) ? <Banner tone="neutral">{noNum.length && noNum.length >= n.none
-        ? L(joinL(noNum) + (noNum.length === 1 ? ' has' : ' have') + ' no phone number and won’t get SMS.', joinL(noNum) + ' 沒有電話，收不到 SMS。')
-        : L(P(n.none, 'person has', '', 'people have') + ' no phone number and won’t get SMS.', n.none + ' 人沒有電話，收不到 SMS。')}</Banner> : null}
       {sms && n.off ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(n.off, 'person has', '', 'people have') + ' neither phone ticked and won’t get the SMS.', n.off + ' 人兩支手機都沒勾，收不到 SMS。')}</p> : null}
       {ap.mgr ? <p className="flex items-center gap-1 text-body text-warning-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L('Includes ' + P(ap.ext, 'external audience', '') + '. Your supervisor, ' + SUPERVISOR + ', must approve.', '包含 ' + ap.ext + ' 位外部收件人，需要主管 ' + SUPERVISOR + ' 核准。')}</p> : null}
       {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
