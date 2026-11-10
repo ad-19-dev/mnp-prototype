@@ -20,7 +20,19 @@ export function personVal(p: Person, you?: boolean): PersonData {
 }
 
 // ---------- channels and statuses ----------
-const CH_ICON: Record<Channel, LucideIcon> = { push: Smartphone, desktop: Monitor, email: Mail, sms: MessageSquareText }
+// Device Notifications (SMS): a phone with a small envelope, so it reads apart from Device Notifications. Neither the
+// DS nor lucide has one, so it's drawn here on lucide's 24px grid and 2px stroke, and takes the same props.
+const SmartphoneMail = React.forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement> & { size?: number | string }>(({ size = 24, className, ...rest }, ref) => {
+  const id = 'pm' + React.useId().replace(/:/g, '')
+  return (
+    <svg ref={ref} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={cn('lucide', className)} {...rest}>
+      <mask id={id}><rect width="24" height="24" fill="white" /><rect x="10" y="10" width="14" height="12" rx="2" fill="black" stroke="none" /></mask>
+      <g mask={'url(#' + id + ')'}><rect x="3" y="2" width="12" height="20" rx="2" /><path d="M9 18h.01" /></g>
+      <rect x="12" y="12" width="10" height="8" rx="1.5" /><path d="m12.5 13 4.5 3.5 4.5-3.5" />
+    </svg>
+  )
+}) as unknown as LucideIcon
+const CH_ICON: Record<Channel, LucideIcon> = { push: Smartphone, desktop: Monitor, email: Mail, sms: SmartphoneMail }
 export function chn(k: Channel) {
   const names: Record<Channel, [string, string, string, string, string, string]> = {
     push: ['Device Notifications', 'Device Notifications', 'Device', 'Device', 'Push to the app on company phones.', '推播到公司手機的 App。'],
@@ -139,7 +151,7 @@ export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }
 // What a pasted list holds; chosen before pasting, one kind per list
 export const listKindName = (k: ListKind) => ({
   nt: L('NT accounts', 'NT 帳號'), emp: L('Employee IDs', '工號'), name: L('Names', '姓名'), email: L('Emails', 'Email'),
-  phone: L('Mobile numbers', '手機號碼'), mvpn: L('MVPN', 'MVPN'), org: L('Org codes', '組織代碼'),
+  phone: L('Phone numbers', '電話號碼'), mvpn: L('MVPN', 'MVPN'), org: L('Org codes', '組織代碼'),
 })[k]
 export const listKindExample = (k: ListKind) => ({
   nt: 'gywu, cmchen', emp: '120588, 112306', name: L('陳怡君, Kevin Lin', '陳怡君, Kevin Lin'), email: 'gywu@tsmc.com, partner@example.com',

@@ -48,7 +48,7 @@ export default function DsMap() {
             ['Status / Channel 篩選', comps('Button', 'DropdownMenu'), 'Button 開 DropdownMenu，選項是 checkbox item；選了之後按鈕變藍並顯示數量；底部 Clear 有選項時為藍色。', <Own>FilterMenu：把按鈕、角標、選項、Clear 組成一個元件</Own>],
             ['表格', comps('DataTable'), 'bordered、固定高度；欄位用 meta.width，Title / Content 以外的欄再設 meta.maxWidth，多出的寬度才會全給 Title / Content；列尾 rowActions；排序用 manualSorting。', <Own>各欄的 cell 內容（見下）；欄寬</Own>],
             ['訊息 ID', comps('Tag'), 'size sm、neutral。', <Own>放在標題前、tabular 數字</Own>],
-            ['通道', comps('Tag', 'Tooltip'), '只有圖示的 Tag（文字隱藏），Device Notifications (SMS) 兩個圖示；Tooltip 顯示通道名稱。', <Own>隱藏 Tag 文字的樣式</Own>],
+            ['通道', comps('Tag', 'Tooltip'), '只有圖示的 Tag（文字隱藏），Tooltip 顯示通道名稱。', <Own>隱藏 Tag 文字的樣式；Device Notifications (SMS) 的「手機加小信封」圖示（DS 與 lucide 都沒有，自己畫）</Own>],
             ['狀態', comps('Tag'), 'size sm，顏色與圖示依狀態（見規格頁的狀態表）。', <Own>狀態下方的 {'{n}'} not sent 連結（Button link）</Own>],
             ['建立者', comps('Avatar'), '大頭照加姓名，DS 的人員顯示（PersonDisplay，照片網址放 avatarUrl；沒有照片時退回姓名第一個字母）。', <Own>—</Own>],
             ['列尾按鈕', comps('Button', 'DropdownMenu'), 'ⓘ：Button text、xs、iconOnly，pressed 時為 checked。⋮：DropdownMenu，項目依狀態。', <Own>選單項目依狀態顯示的規則</Own>],
@@ -60,7 +60,7 @@ export default function DsMap() {
         <Section eyebrow="Panel" title="訊息詳情面板">
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['面板外殼', comps('AppShell'), 'AppShellAside，寬 400（xl 480），標題 Message detail，右上角關閉。', <Own>—</Own>],
-            ['基本欄位', comps('DescriptionList', 'Tag'), 'vertical；Status 的值放 Tag。', <Own>View in Approval Center 連結（Button link）放在欄位下方</Own>],
+            ['基本欄位', comps('DescriptionList', 'Tag'), 'vertical；Status 的值放 Tag。', <Own>需要核准時，下方另一個區塊 Approval record，裡面是 View in Approval Center（Button link）</Own>],
             ['內容收合列', comps('Accordion'), '預設收合，可同時展開多項；標題列顯示名稱與 n / m sent。', <Own>各通道內容框的樣式（白底、細框線、圓角、內距 12）</Own>],
             ['Email 內容', comps('FileItem'), '附件用 FileItem 列出名稱與大小。', <Own>Email 內文的 HTML 顯示框</Own>],
             ['Audience', comps('Avatar', 'Button'), '個人用 Avatar；人數連結是 Button link。', <Own>整個收件人列表（列的結構、組織與群組的 bg-muted 圓底圖示、排序）</Own>],

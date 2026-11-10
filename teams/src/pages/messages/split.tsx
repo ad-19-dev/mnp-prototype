@@ -85,10 +85,10 @@ export function recText(r: Row, k: Channel) {
 // only Device Notifications and Desktop OS carry a sender name
 const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
 
-// the channel as an icon only; its name is in the tooltip and the accessible label. Device Notifications (SMS) shows
-// the phone alone: SMS is a backup that isn't encouraged (it costs extra), so it doesn't get its own icon.
+// the channel as an icon only; its name is in the tooltip and the accessible label. Device Notifications (SMS) has
+// a phone with a small envelope, apart from Device Notifications' plain phone.
 function ChCell({ k }: { k: Channel }) {
-  const I = CHN[k === 'sms' ? 'push' : k].icon
+  const I = CHN[k].icon
   return (
     <Tip text={chName(k)}>
       <span tabIndex={0} aria-label={chName(k)} className="inline-flex items-center gap-1 rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]">
@@ -243,7 +243,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const clearAll = () => m.set({ fs: [], fch: [], fd: 0, q: '', page: 1 })
   const flip = <K,>(list: K[], k: K) => (list.indexOf(k) >= 0 ? list.filter(x => x !== k) : list.concat([k]))
   const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.st === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.st === k).length }))
-  const chOpts = REC_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k === 'sms' ? 'push' : k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
+  const chOpts = REC_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
 
   // the cells every record of a message shares: once per message when merged, on the message row with a header
   const shared = (g: GRow) => (hdrs ? !!g.hdr || g.n === 1 : group === 'merge' ? g.pos === 'solo' || g.pos === 'first' : true)
@@ -382,7 +382,7 @@ function Item({ value, title, part, children }: { value: string; title: string; 
 }
 
 function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
-  const app = useApp(), r = x.r, k = x.k, I = CHN[k === 'sms' ? 'push' : k].icon
+  const app = useApp(), r = x.r, k = x.k, I = CHN[k].icon
   const tags = tagsFor(r, k), urgent = ICSD && !!r.bypass, approval = (ICSD && k === 'sms') || !!r.review || urgent
   return (
     <div className="flex min-h-full flex-col">
@@ -394,8 +394,10 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
           <DescriptionItem label={L('Channel', '通道')}><span className="inline-flex items-center gap-1.5"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></DescriptionItem>
           <DescriptionItem label={L('Status', '狀態')}><StatusTag s={x.fb && x.pst ? x.pst : x.st} /></DescriptionItem>
         </DescriptionList>
-        {approval ? <Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval Center', '前往 Approval Center'), 'ok')}>{L('View in Approval Center', '到 Approval Center 查看')}</Button> : null}
         </div>
+
+        {/* where the approval stands is in the Approval Center: its own section under the basics */}
+        {approval ? <Part title={L('Approval record', '核准紀錄')}><Button variant="link" size="sm" startIcon={ExternalLink} className="!h-auto !min-w-0 !justify-start !p-0" onClick={() => flash(L('Opens the Approval Center', '前往 Approval Center'), 'ok')}>{L('View in Approval Center', '到 Approval Center 查看')}</Button></Part> : null}
 
         <Part title={L('Content', '內容')}>
           <Accordion type="multiple" className="rounded-md border border-divider">

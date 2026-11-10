@@ -237,8 +237,8 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
   const app = useApp(), c = m.s.c, sms = smsOn(c)
   const [open, setOpen] = React.useState<CoverCh | null>(null)
   const line = (k: CoverCh) => {
-    const I = CHN[k].icon, miss = notCovered(c, app.groups, k).length, got = rc.total - miss, all = !miss
     const merged = k === 'push' && sms
+    const I = CHN[merged ? 'sms' : k].icon, miss = notCovered(c, app.groups, k).length, got = rc.total - miss, all = !miss
     return (
       // one line: icon, name, n / total right after it (like an org's head count in the audience table), then on
       // the right the link to who can't get it

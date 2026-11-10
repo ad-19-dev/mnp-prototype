@@ -280,7 +280,8 @@ export function parseList(text: string, opts: { allowExt?: boolean; extWhy?: str
 // A pasted list holds one kind of data, chosen before pasting: every entry is matched as that kind only,
 // so "8861588" can't be read as an MVPN in one list and an employee ID in another.
 export type ListKind = 'nt' | 'emp' | 'name' | 'email' | 'phone' | 'mvpn' | 'org'
-export const LIST_KINDS: ListKind[] = ['nt', 'emp', 'name', 'email', 'phone', 'mvpn', 'org']
+// no Names: with over 100,000 employees, many share the exact same name
+export const LIST_KINDS: ListKind[] = ['nt', 'emp', 'email', 'phone', 'mvpn', 'org']
 export const LIST_SAMPLES: Record<ListKind, string> = {
   nt: 'gywu, cmchen, ytchang, celee\nsywangd, psyang, a19999',
   emp: '120588, 112306, 110958, 114389\n999999, 12345',

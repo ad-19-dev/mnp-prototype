@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, go, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
+import { Banner, CHN, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RichText } from '../../components/RichText'
 import { L, P } from '../../lib/i18n'
@@ -194,7 +194,7 @@ function TplEditor({ m }: { m: TCtl }) {
                 <Textarea id="t-content" rows={4} disabled={ro} value={ed.content} error={!!show('content')} onChange={ev => m.setEd({ content: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
               </FormField>
             </Block>
-            <Block icon={MessageSquareText} tone="warn" title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
+            <Block icon={CHN.sms.icon} tone="warn" title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
               <FormField id="t-sms" label={L('SMS text', 'SMS 內容')} count={ed.sms.length + ' / ' + LIM.sms} over={ed.sms.length > LIM.sms} error={show('sms')}>
                 <Textarea id="t-sms" rows={2} disabled={ro} value={ed.sms} error={!!show('sms')} onChange={ev => m.setEd({ sms: ev.target.value })} placeholder={L('Short version for SMS fallback', 'SMS 備援用的簡短版本')} />
               </FormField>

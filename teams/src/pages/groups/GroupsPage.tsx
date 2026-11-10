@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, ConfirmDialog, FormField, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
+import { Banner, CHN, ConfirmDialog, FormField, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RecvInput, type RiItem, type RiState } from '../../components/RecvInput'
 import { L, P, tx } from '../../lib/i18n'
@@ -221,7 +221,7 @@ function GroupEditor({ m }: { m: GCtl }) {
     { key: 'dev' as const, label: L('Device Notifications', 'Device Notifications'), icon: Smartphone, ok: plist.filter(p => p.dev).length, word: L('no device', '沒有裝置') },
     { key: 'desk' as const, label: L('Desktop OS', '桌面通知'), icon: Monitor, ok: plist.filter(p => p.desk).length, word: L('no desktop agent', '沒有桌面程式') },
     { key: 'email' as const, label: 'Email', icon: Mail, ok: plist.filter(p => p.extKind !== 'phone').length, word: L('no email', '沒有 Email') },
-    { key: 'sms' as const, label: L('Device Notifications (SMS)', 'Device Notifications（SMS）'), icon: MessageSquareText, ok: plist.filter(p => p.co || p.pp).length, word: L('no phone', '沒有電話') },
+    { key: 'sms' as const, label: L('Device Notifications (SMS)', 'Device Notifications（SMS）'), icon: CHN.sms.icon, ok: plist.filter(p => p.co || p.pp).length, word: L('no phone', '沒有電話') },
   ]
   let filt = plist
   if (ed.mf === 'dev') filt = filt.filter(p => !p.dev)

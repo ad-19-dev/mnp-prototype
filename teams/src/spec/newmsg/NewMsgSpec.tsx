@@ -456,7 +456,7 @@ function Dialogs() {
       <Section eyebrow="Import" title="Batch import" lead="兩個階段：輸入名單 → 比對結果。">
         <Gallery items={[['dlg-import', '輸入名單', '先選資料類型'], ['dlg-import-list', '貼上名單'], ['dlg-import-result', '比對結果']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['Data type', '必填，名單裡每一筆都要是這個類型：NT account、Employee ID、Name、Email、Phone、MVPN、Org code。'],
+          ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
           ['List', <>多行輸入，提示 <Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />右上角顯示筆數。下方 Upload .csv or .txt 與 Try a sample。</>],
           ['比對結果', '數量標籤：n ready（綠）、n to choose（黃）、n not found（紅）、n already added（灰）。下方分組：Who do you mean?（同名，勾選）、Ready to add、Not found。'],
           ['按鈕', '輸入階段：Cancel、Find matches；結果階段：Edit list（回到輸入）、Add n audiences（沒有可加入的時是 Nothing to add；只剩找不到的時是 Fix entries not found）。'],
