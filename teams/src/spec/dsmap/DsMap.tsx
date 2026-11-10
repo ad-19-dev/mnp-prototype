@@ -44,6 +44,7 @@ export default function DsMap() {
             ['整頁外殼', comps('AppShell', 'Sidebar'), '左側 Sidebar（發送空間）、頁首、主區、右側 AppShellAside（詳情面板）。', <Own>—</Own>],
             ['空間頁籤', comps('Tabs'), 'Send messages / Audience groups / Templates，放在頁首第二列。', <Own>—</Own>],
             ['搜尋框', comps('Input'), 'type=search，開頭圖示 Search；寬 480。', <Own>寬度 480 是我們定的</Own>],
+            ['建立日期篩選', comps('DatePicker'), 'DatePicker.Range、clearable，外層寬 280；預設最近兩週。清除後顯示全部日期。', <Own>依 Created 日期篩選</Own>],
             ['Status / Channel 篩選', comps('Button', 'DropdownMenu'), 'Button 開 DropdownMenu，選項是 checkbox item；選了之後按鈕變藍並顯示數量；底部 Clear 有選項時為藍色。', <Own>FilterMenu：把按鈕、角標、選項、Clear 組成一個元件</Own>],
             ['表格', comps('DataTable'), 'bordered、固定高度；欄位用 meta.width，Title / Content 以外的欄再設 meta.maxWidth，多出的寬度才會全給 Title / Content；列尾 rowActions；排序用 manualSorting。', <Own>各欄的 cell 內容（見下）；欄寬</Own>],
             ['訊息 ID', comps('Tag'), 'size sm、neutral。', <Own>放在標題前、tabular 數字</Own>],
@@ -80,7 +81,7 @@ export default function DsMap() {
             ['SMS 備援、緊急送出', comps('Checkbox', 'Tag'), 'SMS 備援是 Checkbox 加說明與 Need ICSD Approval 標籤；緊急送出是縮排在下方的 Checkbox，沒有原因欄位。', <Own>—</Own>],
             ['SMS 寄到哪支手機', comps('DataTable', 'Checkbox'), '勾了 SMS 備援時，收件人表格多兩欄 Company phone、Personal phone：每格一個 Checkbox，表頭 Checkbox 可全選（半選用 indeterminate）。', <Own>每列預設勾公務手機的規則</Own>],
             ['Audience Coverage by Channel', '—', '設計系統沒有現成元件。', <Own>收件人下方的人數框：每個通道一行（圖示、名稱、緊接在後的 n / total，全收得到時綠色，最右側收不到的連結）；開 SMS 時 Device Notifications (SMS) 合成一列</Own>],
-            ['收不到的人', comps('Button', 'Dialog', 'DataTable', 'Pagination'), '通道列最右側 Button link「N messages can’t be sent」；點了開 Dialog：搜尋 Input、DataTable（Name、Source、Reason）、超過 10 人時 Pagination、只有 Close。', <Own>展開組織與群組並去重、算出 Source 與 Reason</Own>],
+            ['收不到的人', comps('Button', 'Dialog', 'DataTable', 'Pagination'), '通道列最右側 Button link「N messages can’t be sent」；點了開 Dialog：搜尋 Input、DataTable（Audience、Type、Reason；Type 用 Tag）、超過 10 人時 Pagination、只有 Close。', <Own>展開組織與群組並去重、算出 Type 與 Reason</Own>],
           ]} />
         </Section>
 

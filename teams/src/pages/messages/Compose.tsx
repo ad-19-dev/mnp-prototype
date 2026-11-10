@@ -85,7 +85,7 @@ type RRow = { t: RTag; label: string; sub: string; kind: string; cnt: number; ca
 const rcol = createColumnHelper<RRow>()
 
 function recvKind(t: RTag) {
-  return t.type === 'person' ? L('Person', '人員') : t.type === 'org' ? L('Org', '組織') : t.type === 'group' ? L('Group', '群組') : isExtPhone(t) ? L('External phone', '外部電話') : L('External email', '外部 Email')
+  return t.type === 'person' ? L('Person', '人員') : t.type === 'org' ? L('Org', '組織') : t.type === 'group' ? L('Group', '群組') : isExtPhone(t) ? L('Phone', '電話') : L('Email', 'Email')
 }
 
 // the phone ticks of one audience row; external contacts don't have them (a phone number gets the SMS itself)
@@ -196,7 +196,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
               <Checkbox
                 checked={c.ch.sms} onCheckedChange={() => m.pickChannel('sms')}
                 label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD Approval', '需 ICSD 核准')}</Tag> : null}</span>}
-                description={L('Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below.', '推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。')}
+                description={<><strong className="font-semibold text-fg">{L('Push notifications are prioritized, with SMS as a backup if the device is unreachable via PNS.', '優先傳送推播通知；裝置無法透過 PNS 收到時，改以 SMS 備援。')}</strong><br />{L('(Note: Requires ICSD approval upon submission, which takes 3 working days.)', '（注意：送出後需經 ICSD 核准，約需 3 個工作天。）')}</>}
               />
               {/* urgent send belongs to SMS fallback: one indented checkbox, no reason to fill in */}
               {ICSD && c.ch.sms ? (
@@ -274,8 +274,9 @@ function NotCoveredDialog({ k, name, list, onClose }: { k: CoverCh | null; name:
   const t = q.trim().toLowerCase(), rows = list.filter(x => !t || x.name.toLowerCase().indexOf(t) >= 0)
   const shown = rows.slice((page - 1) * NC_PER, page * NC_PER)
   const cols = React.useMemo(() => [
-    ncol.display({ id: 'n', header: L('Name', '姓名'), meta: { width: 260 }, cell: i => { const x = i.row.original; return x.p ? <PersonDisplay value={personVal(x.p)} /> : <span className="flex min-w-0 items-center gap-2"><span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">{x.name.indexOf('@') >= 0 ? <Mail className="size-3.5 text-fg-secondary" aria-hidden /> : <Phone className="size-3.5 text-fg-secondary" aria-hidden />}</span><span className="truncate text-body">{x.name}</span></span> } }),
-    ncol.display({ id: 's', header: L('Source', '來源'), meta: { width: 180 }, cell: i => <span className="truncate">{i.row.original.source}</span> }),
+    ncol.display({ id: 'n', header: L('Audience', '收件人'), meta: { width: 280 }, cell: i => { const x = i.row.original; return x.p ? <PersonDisplay value={personVal(x.p)} /> : <span className="flex min-w-0 items-center gap-2"><span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">{x.name.indexOf('@') >= 0 ? <Mail className="size-3.5 text-fg-secondary" aria-hidden /> : <Phone className="size-3.5 text-fg-secondary" aria-hidden />}</span><span className="truncate text-body">{x.name}</span></span> } }),
+    // how they were added: Person, Org or Group (someone added more than one way shows each), or Phone / Email for external contacts
+    ncol.display({ id: 't', header: L('Type', '類型'), meta: { width: 180 }, cell: i => <span className="flex flex-wrap gap-1">{i.row.original.types.map(t => <Tag key={t} size="sm" color="neutral">{t}</Tag>)}</span> }),
     ncol.display({ id: 'r', header: L('Reason', '原因'), meta: { width: 160 }, cell: i => i.row.original.reason }),
   ], [])
   return (

@@ -302,8 +302,8 @@ function Step1() {
           ['個人', '人員顯示：大頭照、英文名 中文名', '大頭照、英文名 中文名；下一行：組織代號 · NT · 工號'],
           ['組織', '大樓圖示（灰色圓底）、組織代號、Tag Org、藍字 n people', '大樓圖示、組織代號；下一行：組織代碼'],
           ['群組', '兩個人圖示（灰色圓底）、群組名稱、Tag Group、藍字 n people', '兩個人圖示、群組名稱；下一行：Audience group'],
-          ['外部 Email', '信封圖示（灰色圓底）、Email、Tag External email', '信封圖示、Email；下一行：External email · Email only'],
-          ['外部電話', '電話圖示（灰色圓底）、號碼、Tag External phone', '電話圖示、號碼；下一行：External phone · SMS only'],
+          ['外部 Email', '信封圖示（灰色圓底）、Email、Tag Email', '信封圖示、Email；下一行：External email · Email only'],
+          ['外部電話', '電話圖示（灰色圓底）、號碼、Tag Phone', '電話圖示、號碼；下一行：External phone · SMS only'],
         ]} />
         <Big name="s1-types" title="各類型收件人在表格中的呈現" sub="個人、組織、群組、外部電話、外部 Email 各一筆" />
         <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人']]} />
@@ -329,7 +329,7 @@ function Step1() {
 
       <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 才出現。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need ICSD Approval；說明 <Copy en="Send an SMS to anyone the push doesn’t reach. Choose company or personal phones in the audience list below." zh="推播沒送到的人，改發 SMS。在下方收件人列表選擇寄到公務或私人手機。" /></>],
+          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need ICSD Approval；說明兩行：第一行粗體 <Copy en="Push notifications are prioritized, with SMS as a backup if the device is unreachable via PNS." zh="優先傳送推播通知；裝置無法透過 PNS 收到時，改以 SMS 備援。" />，第二行一般字重 <Copy en="(Note: Requires ICSD approval upon submission, which takes 3 working days.)" zh="（注意：送出後需經 ICSD 核准，約需 3 個工作天。）" /></>],
           ['緊急送出的位置', '勾了 SMS 備援後，緊急送出勾選框縮排在 SMS 備援下方，沒有外框、沒有標題，也不用填原因。'],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />，下方沒有說明文字（「僅限緊急、會留存紀錄」的說明放在送出前的確認對話框）。</>],
           ['有外部收件人', '緊急送出只略過 ICSD，仍要主管核准；步驟 1 不另外提示。'],
@@ -463,7 +463,7 @@ function Dialogs() {
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
-        <Gallery items={[['dlg-unreach', '{Channel}: N messages can’t be sent', '唯讀名單：Name、Source（組織或群組名稱；直接加入寫 Direct；外部寫 External）、Reason（Device Notifications 為 App unregistered、Desktop OS 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
+        <Gallery items={[['dlg-unreach', '{Channel}: N messages can’t be sent', '唯讀名單：Audience、Type（Tag：Person、Org、Group；外部人員是 Phone 或 Email；同一人用多種方式加入時每種一個 Tag）、Reason（Device Notifications 為 App unregistered、Desktop OS 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
         <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-urgent', 'Send without SMS approval?'], ['dlg-leave', 'Leave without sending?']]} max={520} />
