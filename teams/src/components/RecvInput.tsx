@@ -134,7 +134,7 @@ export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, o
               </React.Fragment>
             ))}
             {r.err ? <div className="flex items-center gap-1 px-3 py-3 text-body text-error-text"><CircleAlert className="size-4" aria-hidden />{r.err}</div> : null}
-            {!r.opts.length && !r.err && ri.q.trim() ? <div className="px-3 py-3 text-body text-fg-secondary">{L('No match for “' + ri.q.trim() + '”.', '找不到「' + ri.q.trim() + '」。')}{ri.type === 'person' ? L(' Contractors? Switch to Phone or Email.', '外包人員請改選電話或 Email。') : ''}</div> : null}
+            {!r.opts.length && !r.err && ri.q.trim() ? <div className="px-3 py-3 text-body text-fg-secondary">{ri.type === 'person' ? L('No one named “' + ri.q.trim() + '” found.', '找不到叫「' + ri.q.trim() + '」的人。') : L('No match for “' + ri.q.trim() + '”.', '找不到「' + ri.q.trim() + '」。')}</div> : null}
           </PopoverContent>
         </Popover>
         {typed ? <Button variant="primary" startIcon={Plus} disabled={!first} onClick={() => first && add(first.item)}>{L('Add', '新增')}</Button> : null}

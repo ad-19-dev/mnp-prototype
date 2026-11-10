@@ -79,8 +79,8 @@ export default function DsMap() {
             ['通道卡片', comps('Checkbox'), '三張卡片，勾選框在右上角；在收件人之前選，只用來選通道，不顯示人數。', <Own>整張可點的卡片（藍框、淡藍底）</Own>],
             ['SMS 備援、緊急送出', comps('Checkbox', 'Tag'), 'SMS 備援是 Checkbox 加說明與 Need ICSD Approval 標籤；緊急送出是縮排在下方的 Checkbox，沒有原因欄位。', <Own>—</Own>],
             ['SMS 寄到哪支手機', comps('DataTable', 'Checkbox'), '勾了 SMS 備援時，收件人表格多兩欄 Company phone、Personal phone：每格一個 Checkbox，表頭 Checkbox 可全選（半選用 indeterminate）。', <Own>每列預設勾公務手機的規則</Own>],
-            ['Audience Reach by Channel', '—', '設計系統沒有現成元件。', <Own>收件人下方的人數框：每個通道一列（圖示、名稱、n / total，全收得到時綠色），框下方紅字加 See detail</Own>],
-            ['收不到的人', comps('Button'), '警示三角形圖示加紅字「n messages can’t be sent」，後接 Button link「See detail」。', <Own>—</Own>],
+            ['Audience Coverage by Channel', '—', '設計系統沒有現成元件。', <Own>收件人下方的人數框：每個通道一列（圖示、名稱、n / total，全涵蓋時綠色）；開 SMS 時 Device Notifications (SMS) 合成一列</Own>],
+            ['不在涵蓋範圍的人', comps('Button', 'Dialog', 'DataTable', 'Pagination'), '通道列下方 Button link「N people not covered by this channel」；點了開 Dialog：搜尋 Input、DataTable（Name、Source、Reason）、超過 10 人時 Pagination、只有 Close。', <Own>展開組織與群組並去重、算出 Source 與 Reason</Own>],
           ]} />
         </Section>
 

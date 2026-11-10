@@ -15,7 +15,7 @@ import { DetailSheet, NotSentDialog, RescheduleDialog } from './Detail'
 import { SplitDetailSheet, SplitFailDialog, SplitList } from './split'
 import { SPLIT } from '../../lib/data'
 import { ComposeView } from './Compose'
-import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog, UnreachDialog } from './Modals'
+import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog } from './Modals'
 
 export function MessagesPage() {
   const app = useApp()
@@ -54,7 +54,6 @@ export function MessagesPage() {
       <SaveGroupDialog m={m} />
       <SaveTplDialog m={m} />
       <TplPickerDialog m={m} />
-      <UnreachDialog m={m} />
       <ConfirmDialog cf={s.cf} onClose={() => m.set({ cf: null })} />
     </>
   )

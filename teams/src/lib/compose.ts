@@ -114,7 +114,7 @@ export const emailTooBig = (c: Compose) => new Blob([c.html || '']).size > LIM.m
 // Device Notifications has no title: where one is still needed (the list), it's the first line of the content
 export const pushTitle = (content: string) => content.split('\n').map(x => x.trim()).find(Boolean) || ''
 
-export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'dsender' | 'dtitle' | 'dcontent' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent', string>>
+export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'dsender' | 'dtitle' | 'dcontent' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent' | 'phone', string>>
 export function errs(c: Compose, groups: Group[]): Errs {
   const e: Errs = {}, lim = LIM.push, total = recvFlat(c, groups)
   const totalN = total.people.length + total.ext.length
@@ -125,6 +125,8 @@ export function errs(c: Compose, groups: Group[]): Errs {
   if (!c.receivers.length) e.recv = L('Add at least one audience.', '請加入至少一位收件人。')
   const extP = c.receivers.filter(t => isExtPhone(t)).length, extE = c.receivers.filter(t => t.type === 'ext').length - extP
   if (!c.ch.push && !c.ch.desktop && !c.ch.email) e.ch = L('Pick at least one channel.', '請選擇至少一個通道。')
+  // SMS fallback on: every audience row needs at least one phone ticked
+  if (smsOn(c) && noPhoneRows(c).length) e.phone = L('Choose at least one phone for each audience.', '每一列收件人至少要選一支手機。')
   // 2. Message
   // a sender name is required on Device Notifications, optional on Desktop OS, and Email has none
   if (c.ch.push) {
@@ -165,7 +167,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
 }
 export function stepOk(n: number, e: Errs) {
   // people a channel can't reach are only a notice (the red line under Channels), never a reason to stop on this step
-  if (n === 1) return !e.recv && !e.ch && !e.urgent
+  if (n === 1) return !e.recv && !e.ch && !e.urgent && !e.phone
   if (n === 2) return !e.sender && !e.title && !e.content && !e.dsender && !e.dtitle && !e.dcontent && !e.sms && !e.subject && !e.body
   return !e.sched
 }
@@ -227,4 +229,42 @@ export function smsPhones(c: Compose, groups: Group[]) {
     else if (!pp[p.id]) off++
   })
   return { miss: miss.length, co: nCo, pp: nPp, auto, none, off, ext: f.ext.filter(x => x.indexOf('@') < 0).length }
+}
+
+// audience rows (not external contacts) with neither phone ticked while SMS fallback is on
+export const noPhoneRows = (c: Compose) => c.receivers.filter(t => t.type !== 'ext' && c.smsCO[t.key] === false && !c.smsPP[t.key])
+
+// Audience Coverage by Channel: everyone a channel doesn't cover, expanded from orgs and groups and de-duplicated.
+// Source is where they came from (org code, group name, Direct, or External); with SMS fallback on, Device
+// Notifications counts the people the SMS reaches as covered.
+export type NotCovered = { id: string; p: Person | null; name: string; source: string; reason: string }
+export type CoverCh = 'push' | 'desktop' | 'email'
+export function notCovered(c: Compose, groups: Group[], k: CoverCh): NotCovered[] {
+  const src: Record<string, string[]> = {}, co: Record<string, boolean> = {}, pp: Record<string, boolean> = {}
+  const add = (id: string, s: string) => { const l = src[id] || (src[id] = []); if (l.indexOf(s) < 0) l.push(s) }
+  c.receivers.forEach(t => {
+    if (t.type === 'ext') { add('x:' + t.email, L('External', '外部')); return }
+    const name = t.type === 'person' ? L('Direct', '直接加入') : t.type === 'org' ? t.id! : (groups.find(g => g.id === t.id) || { name: t.id! }).name
+    flatten([t], groups).forEach(({ pid }) => {
+      const p = PMAP[pid]; if (!p) return
+      if (p.extKind) { add('x:' + p.value, L('External', '外部')); return }
+      add(pid, name)
+      if (c.smsCO[t.key] !== false) co[pid] = true
+      if (c.smsPP[t.key]) pp[pid] = true
+    })
+  })
+  const sms = smsOn(c), out: NotCovered[] = []
+  Object.keys(src).forEach(id => {
+    const source = src[id].join(', ')
+    if (id.indexOf('x:') === 0) {
+      const v = id.slice(2), ph = v.indexOf('@') < 0
+      const ok = k === 'email' ? !ph : k === 'push' ? sms && ph : false
+      if (!ok) out.push({ id, p: null, name: v, source, reason: ph ? L('Phone only', '只有電話') : L('Email only', '只有 Email') })
+      return
+    }
+    const p = PMAP[id]
+    if (k === 'push' && !p.dev && !(sms && ((co[id] && (p.co || p.pp)) || (pp[id] && p.pp)))) out.push({ id, p, name: p.en + ' ' + p.zh, source, reason: L('App unregistered', 'App 未註冊') })
+    if (k === 'desktop' && !p.desk) out.push({ id, p, name: p.en + ' ' + p.zh, source, reason: L('No desktop agent', '沒有桌面程式') })
+  })
+  return out
 }

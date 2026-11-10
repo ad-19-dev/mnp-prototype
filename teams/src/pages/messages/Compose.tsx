@@ -1,7 +1,7 @@
 // Send flow: 1 Receivers & channels, 2 Message, 3 Review, plus the approval result
 import * as React from 'react'
 import {
-  Button, Checkbox, DataTable, DatePicker, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Empty, FileItem, FileUpload, Input, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
+  Button, Checkbox, DataTable, DatePicker, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Empty, FileItem, FileUpload, Input, Pagination, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
@@ -19,7 +19,7 @@ import {
 } from '../../lib/data'
 import {
   SENDER_RE, approval, effEmailMode, emailTooBig, hasNotif, multiPeople, noNumber, pushTitle, reachNote, smsCoverText, smsOn, smsPhones, stepOk, unresolved,
-  type Compose, type Errs, type Reach,
+  notCovered, type Compose, type CoverCh, type Errs, type NotCovered, type Reach,
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
@@ -167,7 +167,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   )
 }
 
-// Channels only picks channels; what each reaches is in Audience Reach by Channel below the audiences
+// Channels only picks channels; what each reaches is in Audience Coverage by Channel below the audiences
 function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
   const c = m.s.c, on = !!c.ch[k], meta = CHN[k], id = 'ch-' + k
   return (
@@ -182,7 +182,7 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
 }
 
 // Channels first (so the audience table can offer the SMS phone columns when SMS fallback is on), then audiences,
-// then Audience Reach by Channel, which needs both.
+// then Audience Coverage by Channel, which needs both.
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const ap = approval(c), sms = smsOn(c), noNum = noNumber(c), anyCh = c.ch.push || c.ch.desktop || c.ch.email
@@ -221,6 +221,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           />
           <RecvTable m={m} />
           {tried[1] && !hasR ? <ErrText>{L('Add at least one audience.', '請加入至少一位收件人。')}</ErrText> : null}
+          {tried[1] && e.phone ? <ErrText>{e.phone}</ErrText> : null}
         </div>
       </Section>
 
@@ -229,47 +230,73 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   )
 }
 
-// Audience Reach by Channel: how many of everyone picked each chosen channel reaches (green: all of them), where
-// the SMS goes, and the one red line for people no channel reaches
+// Audience Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
+// SMS fallback on, Device Notifications and its SMS are one row, counted together. Under a row that misses people,
+// a link opens that channel's list (not on the SMS row).
 function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
-  const app = useApp(), c = m.s.c, n = smsPhones(c, app.groups)
-  const line = (k: Channel, got: number) => {
-    const I = CHN[k].icon, all = got === rc.total
+  const app = useApp(), c = m.s.c, sms = smsOn(c)
+  const [open, setOpen] = React.useState<CoverCh | null>(null)
+  const line = (k: CoverCh) => {
+    const I = CHN[k].icon, miss = notCovered(c, app.groups, k).length, got = rc.total - miss, all = !miss
+    const merged = k === 'push' && sms
     return (
-      <div key={k} className="flex items-center gap-3 px-3 py-2">
-        <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-        <span className="flex-1 text-body">{CHN[k].name}</span>
-        <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)}</span>
+      <div key={k} className="flex flex-col gap-1 px-3 py-2">
+        <div className="flex items-center gap-3">
+          <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+          <span className="flex-1 text-body">{merged ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : CHN[k].name}</span>
+          <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)}</span>
+        </div>
+        {miss && !merged ? (
+          <Button variant="link" size="sm" className="!h-auto !min-w-0 self-start !p-0 ml-7" onClick={() => setOpen(k)}>{L(P(miss, 'person', '', 'people') + ' not covered by this channel', miss + ' 人不在這個通道的涵蓋範圍')}</Button>
+        ) : null}
       </div>
     )
   }
-  const smsParts = [
-    n.co ? L(P(n.co, 'company phone', '', 'company phones'), '公務手機 ' + n.co + ' 支') : '',
-    n.pp ? L(P(n.pp, 'personal phone', '', 'personal phones'), '私人手機 ' + n.pp + ' 支') : '',
-    n.auto ? L(P(n.auto, 'personal phone', '', 'personal phones') + ' (no company phone)', '私人手機 ' + n.auto + ' 支（沒有公務手機）') : '',
-    n.ext ? L(P(n.ext, 'external phone', '', 'external phones'), '外部電話 ' + n.ext + ' 支') : '',
-  ].filter(Boolean)
   return (
-    <Section title={L('Audience Reach by Channel', '各通道觸及人數')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
-      <div className="flex flex-col gap-[var(--layout-space-tight)]">
-        <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
-          {c.ch.push ? line('push', rc.push) : null}
-          {smsOn(c) ? (
-            <div className="flex items-center gap-3 px-3 py-2">
-              <MessageSquareText className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-              <span className="flex-1 text-body">{L('SMS (when the push doesn’t reach)', 'SMS（推播沒送到時）')}</span>
-              <span className="text-body text-fg-secondary">{smsParts.length ? smsParts.join(L(', ', '、')) : L('No one needs it for now', '目前不需要')}</span>
-            </div>
-          ) : null}
-          {c.ch.desktop ? line('desktop', rc.desktop) : null}
-          {c.ch.email ? line('email', rc.email) : null}
-        </div>
-        {/* one line: who can't get it, as a link to the list; no suggestions to add channels */}
-        {rc.unrN ? (
-          <p className="flex flex-wrap items-center gap-x-2 text-body"><span className="inline-flex items-center gap-1 text-error-text"><AlertTriangle className="size-4 shrink-0" aria-hidden />{L(P(rc.unrN, 'message', '', 'messages') + ' can’t be sent', rc.unrN + ' 則訊息無法送出')}</span><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => m.set({ unr: true })}>{L('See detail', '查看詳情')}</Button></p>
-        ) : null}
+    <Section title={L('Audience Coverage by Channel', '各通道涵蓋人數')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
+      <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+        {c.ch.push ? line('push') : null}
+        {c.ch.desktop ? line('desktop') : null}
+        {c.ch.email ? line('email') : null}
       </div>
+      <NotCoveredDialog k={open} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
     </Section>
+  )
+}
+
+// one channel's people not covered: read-only, searchable by name, paged
+const ncol = createColumnHelper<NotCovered>()
+const NC_PER = 10
+function NotCoveredDialog({ k, list, onClose }: { k: CoverCh | null; list: NotCovered[]; onClose: () => void }) {
+  const [q, setQ] = React.useState(''), [page, setPage] = React.useState(1)
+  React.useEffect(() => { setQ(''); setPage(1) }, [k])
+  const t = q.trim().toLowerCase(), rows = list.filter(x => !t || x.name.toLowerCase().indexOf(t) >= 0)
+  const shown = rows.slice((page - 1) * NC_PER, page * NC_PER)
+  const cols = React.useMemo(() => [
+    ncol.display({ id: 'n', header: L('Name', '姓名'), meta: { width: 260 }, cell: i => { const x = i.row.original; return x.p ? <PersonDisplay value={personVal(x.p)} /> : <span className="flex min-w-0 items-center gap-2"><span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">{x.name.indexOf('@') >= 0 ? <Mail className="size-3.5 text-fg-secondary" aria-hidden /> : <Phone className="size-3.5 text-fg-secondary" aria-hidden />}</span><span className="truncate text-body">{x.name}</span></span> } }),
+    ncol.display({ id: 's', header: L('Source', '來源'), meta: { width: 180 }, cell: i => <span className="truncate">{i.row.original.source}</span> }),
+    ncol.display({ id: 'r', header: L('Reason', '原因'), meta: { width: 160 }, cell: i => i.row.original.reason }),
+  ], [])
+  return (
+    <Dialog open={!!k} onOpenChange={o => { if (!o) onClose() }}>
+      {k ? (
+        <DialogContent maxWidth={720} height="hug">
+          <DialogHeader>
+            <DialogTitle>{L(CHN[k].name + ': ' + P(list.length, 'person', '', 'people') + ' not covered', CHN[k].name + '：' + list.length + ' 人不在涵蓋範圍')}</DialogTitle>
+            <DialogDescription className="sr-only">{L('People this channel doesn’t cover', '這個通道涵蓋不到的人')}</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <div className="flex flex-col gap-[var(--layout-space-tight)]">
+              <div className="w-72 max-w-full"><Input size="sm" type="search" startIcon={Search} value={q} onChange={ev => { setQ(ev.target.value); setPage(1) }} placeholder={L('Search name', '搜尋姓名')} aria-label={L('Search name', '搜尋姓名')} /></div>
+              <DataTable tableOptions={NO_HIDE} columns={cols as any} data={shown} bordered getRowId={x => x.id}
+                emptyState={<Empty title={L('No matching people', '找不到符合的人')} description={L('Try another name.', '換個姓名試試。')} />} />
+              {rows.length > NC_PER ? <div className="flex justify-end"><Pagination total={rows.length} pageSize={NC_PER} page={page} onPageChange={setPage} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} /></div> : null}
+            </div>
+          </DialogBody>
+          <DialogFooter><Button variant="tertiary" onClick={onClose}>{L('Close', '關閉')}</Button></DialogFooter>
+        </DialogContent>
+      ) : null}
+    </Dialog>
   )
 }
 

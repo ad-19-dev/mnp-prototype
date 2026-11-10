@@ -213,18 +213,3 @@ export function TplPickerDialog({ m }: { m: SendCtl }) {
   )
 }
 
-// ---------- receivers no channel reaches ----------
-export function UnreachDialog({ m }: { m: SendCtl }) {
-  const s = m.s, open = s.unr, close = () => m.set({ unr: false })
-  const c = s.c, rc = m.reach()
-  const why = () => { const w: string[] = []; if (c.ch.push) w.push(L('App unregistered', 'App 未註冊')); if (c.ch.desktop) w.push(L('no desktop agent', '沒有桌面程式')); return w.join(L(', ', '、')).replace(/^./, x => x.toUpperCase()) }
-  return (
-    <Shell open={open} onClose={close} width={720} title={L(P(rc.unrN, 'message', '', 'messages') + ' can’t be sent', rc.unrN + ' 則訊息無法送出')}
-      foot={<Button variant="tertiary" onClick={close}>{L('Close', '關閉')}</Button>}>
-      <ListBox max={380}>
-        {rc.unr.map(p => <ListRow key={p.id}><PAvatar p={p} /><Two a={p.en + ' ' + p.zh} b={[p.org, p.nt, p.emp].filter(Boolean).join(' · ')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{why()}</span></ListRow>)}
-        {rc.flat.ext.filter(x => x.indexOf('@') >= 0 ? rc.unrE : rc.unrP).map(x => { const ph = x.indexOf('@') < 0; return <ListRow key={x}><IconBox icon={ph ? Phone : Mail} /><Two a={x} b={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')} strong className="flex-1" /><span className="text-caption text-fg-secondary">{ph ? L('SMS only', '只收 SMS') : L('Email only', '只收 Email')}</span></ListRow> })}
-      </ListBox>
-    </Shell>
-  )
-}
