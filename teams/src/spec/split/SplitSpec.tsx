@@ -67,7 +67,7 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Message ID、Channel、Status（緊急送出的原因不顯示，那是給 ICSD 審核看的）；需要核准的，下方另有 Approval record 區塊，裡面是 View in Approval Center 連結'
+const FIELDS = 'Message ID、Channel、Status（緊急送出的原因不顯示，那是給 ICSD 審核看的）；需要核准的，Status 下方多一個欄位 Approval record，值是 View in Approval Center 連結'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
@@ -284,7 +284,7 @@ function Detail() {
           <figure><figcaption><b>Email</b><span>主旨、有格式的內文與附件。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email" max={420} /></div></figure>
           <figure><figcaption><b>Device Notifications</b><span>內容一項（圖為展開）。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="Device Notifications" max={420} /></div></figure>
           <figure><figcaption><b>不需要 SMS</b><span>推播全部送到，SMS fallback 寫 Not needed。</span></figcaption><div className="spec-canvas"><Shot name="detail-sms-notneeded" alt="不需要 SMS" max={420} /></div></figure>
-          <figure><figcaption><b>等待核准</b><span>Status 是 Pending approval；下方 Approval record 區塊有 View in Approval Center 連結。</span></figcaption><div className="spec-canvas"><Shot name="detail-pending" alt="等待核准" max={420} /></div></figure>
+          <figure><figcaption><b>等待核准</b><span>Status 是 Pending approval；下方欄位 Approval record 是 View in Approval Center 連結。</span></figcaption><div className="spec-canvas"><Shot name="detail-pending" alt="等待核准" max={420} /></div></figure>
           <figure><figcaption><b>多種收件人</b><span>組織、群組、個人與外部聯絡人。</span></figcaption><div className="spec-canvas"><Shot name="detail-mixed" alt="多種收件人" max={420} /></div></figure>
         </div>
       </Section>
@@ -293,7 +293,7 @@ function Detail() {
           ['Message ID', '每一筆都有；同一次發送的各通道相同。'],
           ['Channel', '每一筆都有。'],
           ['Status', '每一筆都有，和列表上這一筆相同；有 SMS 備援時以 Device Notifications 的狀態為主。'],
-          ['Approval record', <>從基本欄位拿出來，自成一個區塊，標題 <Copy en="Approval record" zh="核准紀錄" />（和 Content 等區塊同樣的標題樣式），放在基本欄位與 Content 之間，裡面只有 View in Approval Center 連結。這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。連結文字 <Copy en="View in Approval Center" zh="到 Approval Center 查看" />；審核進度與駁回原因都在 Approval Center。</>],
+          ['Approval record', <>不再放在 Status 的值裡，而是 Status 下方自己一個欄位：欄位名稱 <Copy en="Approval record" zh="核准紀錄" />（和 Message ID、Channel、Status 同樣的欄位名稱樣式），值是 View in Approval Center 連結。這一筆是 Device Notifications (SMS)，或這則訊息需要核准（含緊急送出）時才有。連結文字 <Copy en="View in Approval Center" zh="到 Approval Center 查看" />；審核進度與駁回原因都在 Approval Center。</>],
           ['Content', '預設收合，可同時展開多項；換一筆紀錄時回到收合。Device Notifications (SMS) 兩項，其他一項。'],
           ['Audience', '只列這個通道寄得到的人：外部 Email 只在 Email，外部電話只在 Device Notifications (SMS)。'],
           ['列表上的對應列', '面板開著時，那一筆列尾的 ⓘ 是 checked 樣式（淺藍底、藍色圖示）；列表本身不變色。'],
@@ -462,7 +462,7 @@ function Blocks() {
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤', '每一筆'],
         ]} />
-        <Notes items={[{ title: 'Approval record', body: <>獨立區塊，標題 Approval record；內容是連結按鈕 View in Approval Center（sm，外連圖示）。出現條件：Device Notifications (SMS)，或需要核准的訊息。</> }]} />
+        <Notes items={[{ title: 'Approval record', body: <>基本欄位的最後一個欄位，欄位名稱 Approval record；值是連結按鈕 View in Approval Center（sm，外連圖示）。出現條件：Device Notifications (SMS)，或需要核准的訊息。</> }]} />
         <div className="spec-gallery"><figure><figcaption><b>所有欄位與連結都出現</b><span>緊急送出的 Device Notifications (SMS)。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="四個欄位" max={440} /></div></figure></div>
       </Section>
       <Section eyebrow="Block 2" title="Content" lead="設計系統 Accordion，外框細線圓角，預設收合。">

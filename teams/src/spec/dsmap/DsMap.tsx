@@ -60,7 +60,7 @@ export default function DsMap() {
         <Section eyebrow="Panel" title="訊息詳情面板">
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['面板外殼', comps('AppShell'), 'AppShellAside，寬 400（xl 480），標題 Message detail，右上角關閉。', <Own>—</Own>],
-            ['基本欄位', comps('DescriptionList', 'Tag'), 'vertical；Status 的值放 Tag。', <Own>需要核准時，下方另一個區塊 Approval record，裡面是 View in Approval Center（Button link）</Own>],
+            ['基本欄位', comps('DescriptionList', 'Tag'), 'vertical；Status 的值放 Tag。', <Own>需要核准時多一個 DescriptionItem「Approval record」，值是 View in Approval Center（Button link）</Own>],
             ['內容收合列', comps('Accordion'), '預設收合，可同時展開多項；標題列顯示名稱與 n / m sent。', <Own>各通道內容框的樣式（白底、細框線、圓角、內距 12）</Own>],
             ['Email 內容', comps('FileItem'), '附件用 FileItem 列出名稱與大小。', <Own>Email 內文的 HTML 顯示框</Own>],
             ['Audience', comps('Avatar', 'Button'), '個人用 Avatar；人數連結是 Button link。', <Own>整個收件人列表（列的結構、組織與群組的 bg-muted 圓底圖示、排序）</Own>],

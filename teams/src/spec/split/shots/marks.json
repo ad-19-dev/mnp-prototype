@@ -143,32 +143,32 @@
  },
  "detail-fb": {
   "w": 480,
-  "h": 766,
+  "h": 758,
   "marks": [
    {
     "n": 1,
     "x": 3.54,
-    "y": 1.5
+    "y": 1.52
    },
    {
     "n": 2,
     "x": 3.54,
-    "y": 15.15
+    "y": 15.3
    },
    {
     "n": 3,
     "x": 6.25,
-    "y": 45.98
+    "y": 45.47
    },
    {
     "n": 4,
     "x": 6.25,
-    "y": 53.04
+    "y": 52.59
    },
    {
     "n": 5,
     "x": 3.54,
-    "y": 60.09
+    "y": 59.71
    }
   ]
  },
@@ -189,17 +189,17 @@
  },
  "detail-pending": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "detail-mixed": {
   "w": 480,
-  "h": 827,
+  "h": 820,
   "marks": [
    {
     "n": 1,
     "x": 3.54,
-    "y": 32.48
+    "y": 31.4
    }
   ]
  },
@@ -291,12 +291,12 @@
  },
  "detail-expired": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "detail-rejected": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "detail-scheduled": {
@@ -306,7 +306,7 @@
  },
  "detail-progress": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "detail-error": {
@@ -316,12 +316,12 @@
  },
  "detail-sent-fb": {
   "w": 480,
-  "h": 827,
+  "h": 820,
   "marks": []
  },
  "detail-canceled": {
   "w": 480,
-  "h": 588,
+  "h": 581,
   "marks": []
  },
  "edit-content": {
@@ -331,47 +331,47 @@
  },
  "urg-pending": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "urg-scheduled": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "urg-progress": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "urg-sent": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "urg-error": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "urg-rejected": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "urg-expired": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "detail-sms-notneeded": {
   "w": 480,
-  "h": 581,
+  "h": 574,
   "marks": []
  },
  "detail-urgent": {
   "w": 480,
-  "h": 766,
+  "h": 758,
   "marks": []
  },
  "dlg-members": {
