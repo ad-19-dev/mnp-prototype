@@ -70,7 +70,7 @@ await step('dlg-import', async () => {
 await step('dlg-unreach', async () => {
   await p.getByRole('checkbox', { name: 'Desktop OS', exact: true }).click(); await wait(400);
   await page('s1-unreach');
-  await p.getByRole('button', { name: /not covered by this channel/ }).first().click(); await wait(600);
+  await p.getByRole('button', { name: /can’t be sent/ }).first().click(); await wait(600);
   await shot('dlg-unreach', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
   await p.getByRole('checkbox', { name: 'Desktop OS', exact: true }).click(); await wait(300);
 });

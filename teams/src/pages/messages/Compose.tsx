@@ -231,8 +231,8 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 }
 
 // Audience Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
-// SMS fallback on, Device Notifications and its SMS are one row, counted together. Under a row that misses people,
-// a link opens that channel's list (not on the SMS row).
+// SMS fallback on, Device Notifications and its SMS are one row, counted together. A row that misses people has
+// "n messages can't be sent" on its right, opening that channel's list (not on the SMS row).
 function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
   const app = useApp(), c = m.s.c, sms = smsOn(c)
   const [open, setOpen] = React.useState<CoverCh | null>(null)
@@ -240,14 +240,14 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
     const I = CHN[k].icon, miss = notCovered(c, app.groups, k).length, got = rc.total - miss, all = !miss
     const merged = k === 'push' && sms
     return (
-      <div key={k} className="flex flex-col gap-1 px-3 py-2">
-        <div className="flex items-center gap-3">
-          <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-          <span className="flex-1 text-body">{merged ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : CHN[k].name}</span>
-          <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)}</span>
-        </div>
+      // one line: icon, name (fixed width so the counts line up), n / total, then on the right the link to who can't get it
+      <div key={k} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+        <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+        <span className="w-60 shrink-0 text-body">{merged ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : CHN[k].name}</span>
+        <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)}</span>
+        <span className="flex-1" />
         {miss && !merged ? (
-          <Button variant="link" size="sm" className="!h-auto !min-w-0 self-start !p-0 ml-7" onClick={() => setOpen(k)}>{L(P(miss, 'person', '', 'people') + ' not covered by this channel', miss + ' 人不在這個通道的涵蓋範圍')}</Button>
+          <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOpen(k)}>{L(P(miss, 'message', '', 'messages') + ' can’t be sent', miss + ' 則訊息無法送出')}</Button>
         ) : null}
       </div>
     )
@@ -282,7 +282,7 @@ function NotCoveredDialog({ k, list, onClose }: { k: CoverCh | null; list: NotCo
       {k ? (
         <DialogContent maxWidth={720} height="hug">
           <DialogHeader>
-            <DialogTitle>{L(CHN[k].name + ': ' + P(list.length, 'person', '', 'people') + ' not covered', CHN[k].name + '：' + list.length + ' 人不在涵蓋範圍')}</DialogTitle>
+            <DialogTitle>{L(CHN[k].name + ': ' + P(list.length, 'message', '', 'messages') + ' can’t be sent', CHN[k].name + '：' + list.length + ' 則訊息無法送出')}</DialogTitle>
             <DialogDescription className="sr-only">{L('People this channel doesn’t cover', '這個通道涵蓋不到的人')}</DialogDescription>
           </DialogHeader>
           <DialogBody>

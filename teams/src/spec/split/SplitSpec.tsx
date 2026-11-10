@@ -103,7 +103,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="搜尋或篩選沒有結果" when="沒有符合的紀錄" shots={['empty']} then="表格框內顯示空狀態與 Clear filters。" />
           <Card kind="page" title="還沒有任何訊息" when="空間裡沒有訊息" shots={['empty-first']} then="頁面層級的空狀態：No messages yet 與 New message 按鈕。" />
           <Card kind="menu" title="列選單：已送出" when="狀態 Sent" shots={['menu-sent']} then="View details、Duplicate to new message" />
-          <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="View details、Reschedule、Duplicate to new message、Cancel sending" />
+          <Card kind="menu" title="列選單：已排程" when="狀態 Scheduled" shots={['menu-scheduled']} then="View details、Edit content、Reschedule、Duplicate to new message、Cancel sending" />
           <Card kind="menu" title="列選單：排程已過期" when="狀態 Scheduled expired" shots={['menu-expired']} then="View details、Edit content、Send now、Reschedule、Duplicate to new message、Cancel sending" />
           <Card kind="menu" title="列選單：已駁回" when="狀態 Rejected" shots={['menu-rejected']} then="View details、Duplicate to new message" />
           <Card kind="menu" title="列選單：傳送錯誤" when="狀態 Error" shots={['menu-error']} then="View details、Send now、Reschedule、Duplicate to new message、Cancel sending" />
@@ -311,7 +311,7 @@ function Actions() {
       ]} />
       <SpecTable head={['狀態', 'View details', 'Edit content', 'Send now', 'Reschedule', 'Duplicate to new message', 'Cancel sending']} nowrap={[0, 1, 2, 3, 4, 5, 6]} rows={[
         [<StatusTag s="pending" />, '✓', '', '', '', '✓', '✓'],
-        [<StatusTag s="scheduled" />, '✓', '', '', '✓', '✓', '✓'],
+        [<StatusTag s="scheduled" />, '✓', '✓', '', '✓', '✓', '✓'],
         [<StatusTag s="progress" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="sent" />, '✓', '', '', '', '✓', ''],
         [<StatusTag s="error" />, '✓', '', '✓', '✓', '✓', '✓'],

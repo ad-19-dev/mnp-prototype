@@ -146,7 +146,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Sub id="1-6" title="看每個通道收得到幾人" start="有收件人、有選通道" items={[
             N('Audience Coverage by Channel', 's1-ext', '收件人下方；每個通道 n / total，開 SMS 時 Device Notifications (SMS) 合成一列'),
             F(['都收得到', R('人數綠色，沒有提醒')],
-              ['某個通道有人不在涵蓋範圍', N('通道列下方藍字 n people not covered by this channel', 's1-unreach'), E('點連結'), D('{Channel}: n people not covered', 'dlg-unreach', '唯讀，只有 Close')]),
+              ['某個通道有人不在涵蓋範圍', N('通道列右側藍字 n messages can’t be sent', 's1-unreach'), E('點連結'), D('{Channel}: n messages can’t be sent', 'dlg-unreach', '唯讀，只有 Close')]),
           ]} />
           <Sub id="1-7" title="存成群組" start="頁尾 Save as group（有收件人才可按）" items={[
             D('Save as group', 'dlg-save-group'),
@@ -251,7 +251,7 @@ function Frame() {
           ['新訊息', '列表右上角 New message', 'New message', '全部空白，從步驟 1 開始。'],
           ['複製', '列表選單 Duplicate to new message（單一通道的紀錄）', 'Duplicate message', '只有那一個通道（SMS 的紀錄會勾 Device Notifications 加 SMS 備援）、它的內容與模板；收件人是這個通道收得到的人（外部電話只跟 SMS 的紀錄，外部 Email 只跟 Email 的紀錄）。傳送時間不帶入，預設立即傳送。三個步驟都已解鎖，可以直接點步驟列。'],
           ['重寄', 'Not sent to 對話框的 Resend to n', 'Resend to missed audiences', '同一個通道與內容；收件人只有沒收到的人（含外部）。三個步驟都已解鎖。'],
-          ['編輯內容', '列表選單 Edit content（只有 Scheduled expired）', 'Edit content', '只有那一個通道的內容欄位，沒有步驟列與模板選項，頁尾只有 Cancel、Save。細節見「Send messages 設計規格」。'],
+          ['編輯內容', '列表選單 Edit content（Scheduled 與 Scheduled expired）', 'Edit content', '只有那一個通道的內容欄位，沒有步驟列與模板選項，頁尾只有 Cancel、Save。細節見「Send messages 設計規格」。'],
         ]} />
       </Section>
       <Section eyebrow="Rules" title="移動與離開的規則">
@@ -318,13 +318,13 @@ function Step1() {
         <Notes items={[
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片只用來選通道，不顯示人數。' },
           { title: '順序', body: '步驟 1 由上而下：Channels → Audience。先選通道，收件人表格才知道要不要顯示 SMS 的手機欄位；加了收件人之後，上方通道卡片的人數會跟著更新。' },
-          { title: '不在涵蓋範圍的人', body: <>某個通道的 n（分子）小於 total（分母）時，那一列下方顯示藍色連結 <Copy en="N people not covered by this channel" zh="N 人不在這個通道的涵蓋範圍" />，N = total − n；n = total 時不顯示。Device Notifications (SMS) 合併列不顯示。點了開這個通道的名單。框下方不再有統一的紅字警告列。</> },
+          { title: '收不到的人', body: <>某個通道的 n（分子）小於 total（分母）時，那一列最右側顯示藍色連結 <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />（1 時用單數 message），N = total − n；n = total 時不顯示。Device Notifications (SMS) 合併列不顯示。點了開這個通道的名單。框下方沒有統一的警告列。</> },
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點各通道下方的連結看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道、開 SMS 時有一列公務手機和私人手機都沒勾。' },
           { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
-          { title: 'Audience Coverage by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Coverage by Channel" zh="各通道涵蓋人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列：圖示、通道名稱、右側 n / total（不寫 people；全部收得到時綠色）；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人不在涵蓋範圍時，該列下方加藍色連結（見上一則）。不放紅字、黃字。</> },
+          { title: 'Audience Coverage by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Coverage by Channel" zh="各通道涵蓋人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱（固定寬度，讓各列的數字對齊）、緊接著 n / total（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
         ]} />
-        <Gallery items={[['s1-unreach', '有人不在涵蓋範圍', '只勾 Desktop OS 時'], ['dlg-unreach', '不在涵蓋範圍的人']]} />
+        <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
 
       <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 才出現。">
@@ -343,7 +343,7 @@ function Step1() {
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後', '擋'],
           ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻', '不擋；只是這一筆加不進去'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後', '擋'],
-          ['某個通道有人不在涵蓋範圍', <Copy en="N people not covered by this channel" zh="N 人不在這個通道的涵蓋範圍" />, '藍色連結', 'Audience Coverage by Channel 該通道列下方', '分子小於分母時，隨勾選即時更新；SMS 合併列不顯示', '不擋'],
+          ['某個通道有人收不到', <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />, '藍色連結', 'Audience Coverage by Channel 該通道列最右側', '分子小於分母時，隨勾選即時更新；SMS 合併列不顯示', '不擋'],
           ['開 SMS 時有一列沒勾任何手機', <Copy en="Choose at least one phone for each audience." zh="每一列收件人至少要選一支手機。" />, '紅字', '收件人表格下方', '按過 Next 之後', '擋'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道（按 Next 之後）" />
@@ -445,7 +445,7 @@ function Dialogs() {
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），按鈕不放圖示，不放副標。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
           ['Batch import', '步驟 1 Batch import', '720', 'Find matches → Add n audiences'],
-          ['{Channel}: N people not covered', '步驟 1 Audience Coverage by Channel 各通道列下方的連結', '720', '無（Close）'],
+          ['{Channel}: N messages can’t be sent', '步驟 1 Audience Coverage by Channel 各通道列右側的連結', '720', '無（Close）'],
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
           ['Replace your text?', '步驟 2 選模板', '480', 'Replace'],
@@ -463,7 +463,7 @@ function Dialogs() {
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
-        <Gallery items={[['dlg-unreach', '{Channel}: N people not covered', '唯讀名單：Name、Source（組織或群組名稱；直接加入寫 Direct；外部寫 External）、Reason（Device Notifications 為 App unregistered、Desktop OS 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
+        <Gallery items={[['dlg-unreach', '{Channel}: N messages can’t be sent', '唯讀名單：Name、Source（組織或群組名稱；直接加入寫 Direct；外部寫 External）、Reason（Device Notifications 為 App unregistered、Desktop OS 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
         <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-urgent', 'Send without SMS approval?'], ['dlg-leave', 'Leave without sending?']]} max={520} />
