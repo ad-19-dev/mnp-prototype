@@ -96,7 +96,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           { n: 6, title: '列尾按鈕', body: 'ⓘ 開關詳情面板；⋮ 是列選單，項目依狀態不同。' },
           { n: 7, title: '狀態篩選', body: '多選。' },
           { n: 8, title: '通道篩選', body: '多選。' },
-          { n: 9, title: '建立日期篩選', body: '日期區間，預設最近兩週（今天往前 13 天到今天）。' },
+          { n: 9, title: '建立日期篩選', body: '單選，預設 Last 2 weeks。' },
         ]} />
         <div className="flow-branches">
           <h3>從列表可以</h3>
@@ -187,7 +187,7 @@ function ListTab() {
           { n: 5, title: '{n} not sent', body: '紅色文字連結，在狀態標籤下方，點了開名單。有 SMS 備援的，只算推播與 SMS 都沒送到的人。' },
           { n: 6, title: '列尾按鈕', body: <>ⓘ（View details）開關詳情面板，開著時是 checked 樣式；⋮ 是列選單，見「列選單」。</> },
           { n: 7, title: '狀態篩選', body: '多選；只列出這個空間有的狀態與數量，依生命週期排序。' },
-          { n: 9, title: '建立日期篩選', body: <>DatePicker.Range，在 Status 左邊、寬 280。依 Created 的日期篩選，頭尾兩天都包含；預設最近兩週（今天往前 13 天到今天）。可以清除，清除後顯示所有日期；空狀態的 Clear filters 也會一併清除日期。</> },
+          { n: 9, title: '建立日期篩選', body: <>Select，在 Status 左邊、寬 160。依 Created 篩選，今天也算在內。選項：<C>Last 7 days</C>、<C>Last 2 weeks</C>（預設）、<C>Last 30 days</C>、<C>Last 3 months</C>、<C>All time</C>。空狀態的 Clear filters 會改成 All time。</> },
           { n: 8, title: '通道篩選', body: <>多選：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊是數量。</> },
         ]} />
       </Section>

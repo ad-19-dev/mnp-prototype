@@ -44,7 +44,7 @@ export default function DsMap() {
             ['整頁外殼', comps('AppShell', 'Sidebar'), '左側 Sidebar（發送空間）、頁首、主區、右側 AppShellAside（詳情面板）。', <Own>—</Own>],
             ['空間頁籤', comps('Tabs'), 'Send messages / Audience groups / Templates，放在頁首第二列。', <Own>—</Own>],
             ['搜尋框', comps('Input'), 'type=search，開頭圖示 Search；寬 480。', <Own>寬度 480 是我們定的</Own>],
-            ['建立日期篩選', comps('DatePicker'), 'DatePicker.Range、clearable，外層寬 280；預設最近兩週。清除後顯示全部日期。', <Own>依 Created 日期篩選</Own>],
+            ['建立日期篩選', comps('Select'), 'Select 單選，外層寬 160：Last 7 days、Last 2 weeks（預設）、Last 30 days、Last 3 months、All time。', <Own>依 Created 日期篩選</Own>],
             ['Status / Channel 篩選', comps('Button', 'DropdownMenu'), 'Button 開 DropdownMenu，選項是 checkbox item；選了之後按鈕變藍並顯示數量；底部 Clear 有選項時為藍色。', <Own>FilterMenu：把按鈕、角標、選項、Clear 組成一個元件</Own>],
             ['表格', comps('DataTable'), 'bordered、固定高度；欄位用 meta.width，Title / Content 以外的欄再設 meta.maxWidth，多出的寬度才會全給 Title / Content；列尾 rowActions；排序用 manualSorting。', <Own>各欄的 cell 內容（見下）；欄寬</Own>],
             ['訊息 ID', comps('Tag'), 'size sm、neutral。', <Own>放在標題前、tabular 數字</Own>],

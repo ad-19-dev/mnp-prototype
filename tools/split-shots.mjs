@@ -74,10 +74,10 @@ await step('list', async () => {
     [6, main.getByRole('button', { name: /^Actions for/ }).first(), 'c'],
     [7, main.getByRole('button', { name: /^Status/ }), 'tl'],
     [8, main.getByRole('button', { name: /^Channel/ }), 'tl'],
-    [9, main.locator('[aria-label="Created date"]'), 'tl'],
+    [9, main.getByRole('combobox', { name: 'Created date' }), 'tl'],
   ]);
   // the rest of the shots use sample messages of any date: clear the default last-two-weeks range
-  await main.locator('[aria-label="Created date"]').hover(); await main.locator('[aria-label="Created date"] button').last().click(); await wait(400);
+  await main.getByRole('combobox', { name: 'Created date' }).click(); await wait(300); await p.getByRole('option', { name: 'All time' }).click(); await wait(400);
 });
 await step('group', async () => {
   await find('Design review');

@@ -23,8 +23,8 @@ export interface SendState {
   view: 'list' | 'compose'
   // fs / fch: the Status and Channels filter buttons; sender, template and creator are found by search
   q: string; fs: Status[]; fch: Channel[]; page: number
-  // fd: the Created date filter, [from, to] as YYYY-MM-DD (either end open); the last two weeks by default
-  fd: [string | null, string | null] | null
+  // fd: the Created date filter, as the last n days (today included); 0 is any date. The last two weeks by default
+  fd: number
   det: string | null; ns: string | null; cf: Confirm | null
   // reschedule a message whose approval came after its scheduled time
   rs: { id: string; at: string; tried: boolean; k?: Channel } | null
@@ -38,11 +38,8 @@ export interface SendState {
   unr: boolean
   gp: { q: string; tab: 'all' | 'mine' | 'shared'; sel: Record<string, boolean> } | null
 }
-const isoDay = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
-// the last two weeks, today included
-export const twoWeeks = (): [string, string] => { const t = new Date(); return [isoDay(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 13)), isoDay(t)] }
 export const initSend = (): SendState => ({
-  view: 'list', q: '', fs: [], fch: [], fd: twoWeeks(), page: 1, det: null, ns: null, cf: null, rs: null,
+  view: 'list', q: '', fs: [], fch: [], fd: 14, page: 1, det: null, ns: null, cf: null, rs: null,
   c: blankCompose(), ri: { type: 'person', q: '', open: false, exp: null }, rf: '',
   imp: null, num: null, sg: null, stpl: null, tp: null, unr: false, gp: null,
 })

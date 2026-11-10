@@ -7,7 +7,7 @@
 // which records went out together.
 import * as React from 'react'
 import {
-  Button, DataTable, DatePicker, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
+  Button, DataTable, Select, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
   DescriptionList, DescriptionItem, PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
@@ -186,6 +186,17 @@ function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   return s.desc ? out.reverse() : out
 }
 
+// the Created date filter's choices, as the last n days (0: any date)
+const DATE_OPTS = [
+  { d: 7, label: () => L('Last 7 days', '最近 7 天') },
+  { d: 14, label: () => L('Last 2 weeks', '最近 2 週') },
+  { d: 30, label: () => L('Last 30 days', '最近 30 天') },
+  { d: 90, label: () => L('Last 3 months', '最近 3 個月') },
+  { d: 0, label: () => L('All time', '全部時間') },
+]
+// the first day of the last n days, as YYYY/MM/DD like a record's created time
+const since = (n: number) => { const t = new Date(), d = new Date(t.getFullYear(), t.getMonth(), t.getDate() - n + 1); return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') }
+
 export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: React.ReactNode; group?: GroupStyle }) {
   const [per, setPer] = React.useState(20)
   const s = m.s, app = useApp(), vis = React.useMemo(() => recordsOf(m, m.visible()), [m, app.rows, app.space])
@@ -193,10 +204,8 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   const rows = vis.filter(x => {
     if (s.fs.length && s.fs.indexOf(x.st) < 0) return false
     if (s.fch.length && s.fch.indexOf(x.k) < 0) return false
-    // Created date, by day (both ends included)
-    const day = x.r.created.slice(0, 10).replace(/\//g, '-')
-    if (s.fd && s.fd[0] && day < s.fd[0]) return false
-    if (s.fd && s.fd[1] && day > s.fd[1]) return false
+    // Created date: within the last n days, today included
+    if (s.fd && x.r.created.slice(0, 10) < since(s.fd)) return false
     if (!q) return true
     const cr = PMAP[x.r.creator] || ({} as any), t = recText(x.r, x.k)
     return [msgId(x.r), recSender(x.r, x.k), m.tplName(x.r.tpl), t.title, t.content, cr.en, cr.zh].join(' ').toLowerCase().indexOf(q) >= 0
@@ -231,7 +240,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   }, [grouped, hdrs, group, msgs, sorted, st, per, opened])
   const [loading, setLoading] = React.useState(true)
   React.useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 700); return () => clearTimeout(t) }, [app.space])
-  const clearAll = () => m.set({ fs: [], fch: [], fd: null, q: '', page: 1 })
+  const clearAll = () => m.set({ fs: [], fch: [], fd: 0, q: '', page: 1 })
   const flip = <K,>(list: K[], k: K) => (list.indexOf(k) >= 0 ? list.filter(x => x !== k) : list.concat([k]))
   const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.st === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.st === k).length }))
   const chOpts = REC_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k === 'sms' ? 'push' : k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
@@ -304,9 +313,9 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             <Input startIcon={Search} type="search" placeholder={L('Search message ID, title, content, sender, template or creator', '搜尋訊息 ID、標題、內容、寄件人、模板或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            {/* Created date: the last two weeks by default; clearing it shows every date */}
-            <div className="w-[280px] shrink-0"><DatePicker.Range clearable locale={L('en-US', 'zh-TW')} aria-label={L('Created date', '建立日期')} placeholder={[L('Start date', '開始日期'), L('End date', '結束日期')]}
-              value={s.fd} onChange={v => m.set({ fd: v && (v[0] || v[1]) ? v : null, page: 1 })} /></div>
+            {/* Created date: a few fixed ranges, the last two weeks by default */}
+            <div className="w-40 shrink-0"><Select aria-label={L('Created date', '建立日期')} value={String(s.fd)} onChange={v => m.set({ fd: Number(v), page: 1 })}
+              options={DATE_OPTS.map(o => ({ value: String(o.d), label: o.label() }))} /></div>
             <FilterMenu<Status> label={L('Status', '狀態')} opts={stOpts} sel={s.fs} toggle={k => m.set({ fs: flip(s.fs, k), page: 1 })} clear={() => m.set({ fs: [], page: 1 })} />
             <FilterMenu<Channel> label={L('Channel', '通道')} opts={chOpts} sel={s.fch} toggle={k => m.set({ fch: flip(s.fch, k), page: 1 })} clear={() => m.set({ fch: [], page: 1 })} />
           </div>
