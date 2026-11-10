@@ -232,7 +232,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 
 // Audience Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
 // SMS fallback on, Device Notifications and its SMS are one row, counted together. A row that misses people has
-// "n messages can't be sent" on its right, opening that channel's list (not on the SMS row).
+// "n messages can't be sent" on its right, opening that channel's list.
 function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
   const app = useApp(), c = m.s.c, sms = smsOn(c)
   const [open, setOpen] = React.useState<CoverCh | null>(null)
@@ -240,13 +240,14 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
     const I = CHN[k].icon, miss = notCovered(c, app.groups, k).length, got = rc.total - miss, all = !miss
     const merged = k === 'push' && sms
     return (
-      // one line: icon, name (fixed width so the counts line up), n / total, then on the right the link to who can't get it
+      // one line: icon, name, n / total right after it (like an org's head count in the audience table), then on
+      // the right the link to who can't get it
       <div key={k} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
         <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-        <span className="w-60 shrink-0 text-body">{merged ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : CHN[k].name}</span>
+        <span className="text-body">{merged ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : CHN[k].name}</span>
         <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)}</span>
         <span className="flex-1" />
-        {miss && !merged ? (
+        {miss ? (
           <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOpen(k)}>{L(P(miss, 'message', '', 'messages') + ' can’t be sent', miss + ' 則訊息無法送出')}</Button>
         ) : null}
       </div>
@@ -259,7 +260,7 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
         {c.ch.desktop ? line('desktop') : null}
         {c.ch.email ? line('email') : null}
       </div>
-      <NotCoveredDialog k={open} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
+      <NotCoveredDialog k={open} name={open === 'push' && sms ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : open ? CHN[open].name : ''} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
     </Section>
   )
 }
@@ -267,7 +268,7 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
 // one channel's people not covered: read-only, searchable by name, paged
 const ncol = createColumnHelper<NotCovered>()
 const NC_PER = 10
-function NotCoveredDialog({ k, list, onClose }: { k: CoverCh | null; list: NotCovered[]; onClose: () => void }) {
+function NotCoveredDialog({ k, name, list, onClose }: { k: CoverCh | null; name: string; list: NotCovered[]; onClose: () => void }) {
   const [q, setQ] = React.useState(''), [page, setPage] = React.useState(1)
   React.useEffect(() => { setQ(''); setPage(1) }, [k])
   const t = q.trim().toLowerCase(), rows = list.filter(x => !t || x.name.toLowerCase().indexOf(t) >= 0)
@@ -282,7 +283,7 @@ function NotCoveredDialog({ k, list, onClose }: { k: CoverCh | null; list: NotCo
       {k ? (
         <DialogContent maxWidth={720} height="hug">
           <DialogHeader>
-            <DialogTitle>{L(CHN[k].name + ': ' + P(list.length, 'message', '', 'messages') + ' can’t be sent', CHN[k].name + '：' + list.length + ' 則訊息無法送出')}</DialogTitle>
+            <DialogTitle>{L(name + ': ' + P(list.length, 'message', '', 'messages') + ' can’t be sent', name + '：' + list.length + ' 則訊息無法送出')}</DialogTitle>
             <DialogDescription className="sr-only">{L('People this channel doesn’t cover', '這個通道涵蓋不到的人')}</DialogDescription>
           </DialogHeader>
           <DialogBody>

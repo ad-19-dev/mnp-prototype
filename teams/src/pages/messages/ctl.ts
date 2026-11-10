@@ -402,11 +402,9 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     },
     sendTest() {
       if (msgErr(m.errs())) { m.setC({ tried: { ...get().c.tried, 2: true } }, true); flash(L('Finish the message first', '請先完成訊息內容'), 'err'); return }
-      const c = get().c, where: string[] = []
-      if (c.ch.push) where.push(L('your phone', '你的手機'))
-      if (c.ch.desktop) where.push(L('your PC', '你的電腦'))
-      if (c.ch.email) where.push('gywu@' + DOMAIN)
-      flash(L('Test sent', '已寄出測試'), 'ok')
+      // counts each channel the test goes out on (SMS fallback counts as one)
+      const c = get().c, n = selChs(c).filter(k => k !== 'sms' || smsOn(c)).length
+      flash(L('Test sent via ' + P(n, 'channel', '', 'channels'), '已透過 ' + n + ' 個通道寄出測試'), 'ok')
     },
     openSaveTpl() {
       if (msgErr(m.errs())) { m.setC({ tried: { ...get().c.tried, 2: true } }, true); flash(L('Finish the message first', '請先完成訊息內容'), 'err'); return }

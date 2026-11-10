@@ -192,7 +192,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
             E('切換通道'), N('這個通道的預覽', 's3-preview-email', 'Preview 標題正下方有免責說明'),
           ]} />
           <Sub id="3-3" title="寄測試給自己" start="頁尾 Send me a test" items={[
-            F(['內容有錯', T('Finish the message first', '紅色')], ['內容沒錯', T('Test sent')]),
+            F(['內容有錯', T('Finish the message first', '紅色')], ['內容沒錯', T('Test sent via n channels')]),
           ]} />
           <Sub id="3-4" title="送出" start="頁尾 Create message" items={[
             F(['任何一步有錯', X('帶回第一個有錯的步驟', undefined, '紅字一起出現')],
@@ -243,7 +243,7 @@ function Frame() {
           { title: '按鈕樣式', body: 'Cancel、Back 與左側按鈕都是 tertiary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
           { title: 'Next', body: '按下時檢查這一步，有錯就留在這一步並顯示錯誤。「有人收不到訊息」只是提醒，不算錯誤，不擋 Next。' },
           { title: 'Save as group', body: '沒有收件人時停用。' },
-          { title: 'Send me a test', body: '內容有錯時不寄，toast：Finish the message first；成功時 toast：Test sent。' },
+          { title: 'Send me a test', body: '內容有錯時不寄，toast：Finish the message first；成功時 toast：Test sent via n channels（n 是這次測試用到的通道數，SMS 備援算一個；1 時用單數 channel）。' },
         ]} />
       </Section>
       <Section eyebrow="Entry" title="進入方式" lead="同一個畫面有四種進入方式，頁首標題與預填的內容不同。">
@@ -318,11 +318,11 @@ function Step1() {
         <Notes items={[
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片只用來選通道，不顯示人數。' },
           { title: '順序', body: '步驟 1 由上而下：Channels → Audience。先選通道，收件人表格才知道要不要顯示 SMS 的手機欄位；加了收件人之後，上方通道卡片的人數會跟著更新。' },
-          { title: '收不到的人', body: <>某個通道的 n（分子）小於 total（分母）時，那一列最右側顯示藍色連結 <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />（1 時用單數 message），N = total − n；n = total 時不顯示。Device Notifications (SMS) 合併列不顯示。點了開這個通道的名單。框下方沒有統一的警告列。</> },
+          { title: '收不到的人', body: <>某個通道的 n（分子）小於 total（分母）時，那一列最右側顯示藍色連結 <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />（1 時用單數 message），N = total − n；n = total 時不顯示。Device Notifications (SMS) 合併列也一樣顯示。點了開這個通道的名單。框下方沒有統一的警告列。</> },
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點各通道下方的連結看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道、開 SMS 時有一列公務手機和私人手機都沒勾。' },
           { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
-          { title: 'Audience Coverage by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Coverage by Channel" zh="各通道涵蓋人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱（固定寬度，讓各列的數字對齊）、緊接著 n / total（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
+          { title: 'Audience Coverage by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Coverage by Channel" zh="各通道涵蓋人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的 n / total（像收件人表格裡組織名稱後面接人數）（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
         ]} />
         <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
@@ -343,7 +343,7 @@ function Step1() {
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後', '擋'],
           ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻', '不擋；只是這一筆加不進去'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後', '擋'],
-          ['某個通道有人收不到', <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />, '藍色連結', 'Audience Coverage by Channel 該通道列最右側', '分子小於分母時，隨勾選即時更新；SMS 合併列不顯示', '不擋'],
+          ['某個通道有人收不到', <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />, '藍色連結', 'Audience Coverage by Channel 該通道列最右側', '分子小於分母時，隨勾選即時更新；SMS 合併列也顯示', '不擋'],
           ['開 SMS 時有一列沒勾任何手機', <Copy en="Choose at least one phone for each audience." zh="每一列收件人至少要選一支手機。" />, '紅字', '收件人表格下方', '按過 Next 之後', '擋'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道（按 Next 之後）" />
@@ -507,7 +507,7 @@ function After() {
           ['選回 New 取消模板', <Copy en="Template removed. Your text stays." zh="已取消模板，內容保留。" />],
           ['存成模板', <Copy en="Template saved" zh="已存成模板" />],
           ['存成群組', <Copy en="Group saved" zh="已存成群組" />],
-          ['Send me a test 成功', <Copy en="Test sent" zh="已寄出測試" />],
+          ['Send me a test 成功', <Copy en="Test sent via n channels" zh="已透過 n 個通道寄出測試" />],
           ['Send me a test、Save as template 時內容有錯（紅色）', <Copy en="Finish the message first" zh="請先完成訊息內容" />],
           ['Batch import 上傳的檔案讀不到（紅色）', <Copy en="Can’t read that file. Use .csv or .txt." zh="無法讀取檔案，請用 .csv 或 .txt。" />],
           ['Edit content 儲存', <Copy en="Content saved" zh="已儲存內容" />],
