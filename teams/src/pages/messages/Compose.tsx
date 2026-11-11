@@ -193,9 +193,11 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} />)}</div>
           {c.ch.push ? (
             // Device Notifications' delivery method: one of two, SMS fallback being the second (2026-11-11)
-            <div className="flex flex-col gap-2">
-              <span className="text-body font-medium">{L('Delivery method', '傳送方式')}</span>
-              <RadioGroup value={c.ch.sms ? 'sms' : 'pns'} onValueChange={v => { if ((v === 'sms') !== !!c.ch.sms) m.pickChannel('sms') }} aria-label={L('Delivery method', '傳送方式')} className="flex flex-col gap-3">
+            // option B (2026-11-11): a light grey frame headed with the Device Notifications icon and name, so it reads
+            // as that channel's setting
+            <div className="flex flex-col gap-3 rounded-lg border border-divider bg-[var(--color-neutral-1)] p-[var(--layout-space-tight)]">
+              <span className="flex items-center gap-2">{React.createElement(CHN.push.icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}<span className="text-body font-medium">{L('Device Notifications · Delivery method', 'Device Notifications · 傳送方式')}</span></span>
+              <RadioGroup value={c.ch.sms ? 'sms' : 'pns'} onValueChange={v => { if ((v === 'sms') !== !!c.ch.sms) m.pickChannel('sms') }} aria-label={L('Device Notifications delivery method', 'Device Notifications 傳送方式')} className="flex flex-col gap-3">
                 <RadioGroupItem value="pns" label={L('PNS only', '只用 PNS')}
                   description={L('Send a push notification via PNS only. No SMS if the device is unreachable.', '只透過 PNS 傳送推播通知；裝置收不到時不改發 SMS。')} />
                 <RadioGroupItem value="sms"

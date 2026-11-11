@@ -329,7 +329,7 @@ function Step1() {
 
       <Section eyebrow="Step 1" title="Delivery method 與緊急送出" lead="勾了 Device Notifications 才出現，在通道卡片下方。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['Delivery method', <>標題 <Copy en="Delivery method" zh="傳送方式" />（中等粗細），下方二選一（設計系統 RadioGroup，直向）。預設 PNS only。</>],
+          ['Delivery method', <>淺灰底（neutral-1）、細框線、圓角的區塊，內距 tight，在三張通道卡片下方、同寬。區塊標題是 Device Notifications 的手機圖示加 <Copy en="Device Notifications · Delivery method" zh="Device Notifications · 傳送方式" />（中等粗細），讓人看得出這是 Device Notifications 的設定；下方二選一（設計系統 RadioGroup，直向）。預設 PNS only。</>],
           ['選項一', <><Copy en="PNS only" zh="只用 PNS" />；說明 <Copy en="Send a push notification via PNS only. No SMS if the device is unreachable." zh="只透過 PNS 傳送推播通知；裝置收不到時不改發 SMS。" /></>],
           ['選項二', <><Copy en="PNS + SMS fallback" zh="PNS + SMS 備援" />，旁邊 amber 標籤 <Copy en="Need ICSD approval" zh="需 ICSD 核准" />；說明 <Copy en="PNS is prioritized, with SMS as a backup if the device is unreachable via PNS. (Requires ICSD approval upon submission — takes 3 working days.)" zh="優先使用 PNS；裝置無法透過 PNS 收到時，改以 SMS 備援。（送出後需經 ICSD 核准，約 3 個工作天。）" /></>],
           ['緊急送出的位置', '選了 PNS + SMS fallback 後，緊急送出勾選框縮排在第二個選項下方，沒有外框、沒有標題，也不用填原因。'],
