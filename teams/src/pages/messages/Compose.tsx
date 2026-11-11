@@ -167,7 +167,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   )
 }
 
-// Channels only picks channels; what each reaches is in Audience Coverage by Channel below the audiences
+// Channels only picks channels; what each reaches is in Message Coverage by Channel below the audiences
 function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
   const c = m.s.c, on = !!c.ch[k], meta = CHN[k], id = 'ch-' + k
   return (
@@ -182,7 +182,7 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
 }
 
 // Channels first (so the audience table can offer the SMS phone columns when SMS fallback is on), then audiences,
-// then Audience Coverage by Channel, which needs both.
+// then Message Coverage by Channel, which needs both.
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const ap = approval(c), sms = smsOn(c), noNum = noNumber(c), anyCh = c.ch.push || c.ch.desktop || c.ch.email
@@ -193,15 +193,14 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} />)}</div>
           {c.ch.push ? (
             // Device Notifications' delivery method: one of two, SMS fallback being the second (2026-11-11)
-            // option B (2026-11-11): a light grey frame headed with the Device Notifications icon and name, so it reads
-            // as that channel's setting
+            // option B (2026-11-11): a light grey frame under the cards; its title and the option names semibold
             <div className="flex flex-col gap-3 rounded-lg border border-divider bg-[var(--color-neutral-1)] p-[var(--layout-space-tight)]">
-              <span className="flex items-center gap-2">{React.createElement(CHN.push.icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}<span className="text-body font-medium">{L('Device Notifications · Delivery method', 'Device Notifications · 傳送方式')}</span></span>
+              <span className="text-body font-semibold">{L('Delivery method', '傳送方式')}</span>
               <RadioGroup value={c.ch.sms ? 'sms' : 'pns'} onValueChange={v => { if ((v === 'sms') !== !!c.ch.sms) m.pickChannel('sms') }} aria-label={L('Device Notifications delivery method', 'Device Notifications 傳送方式')} className="flex flex-col gap-3">
-                <RadioGroupItem value="pns" label={L('PNS only', '只用 PNS')}
+                <RadioGroupItem value="pns" label={<span className="font-semibold">{L('PNS only', '只用 PNS')}</span>}
                   description={L('Send a push notification via PNS only. No SMS if the device is unreachable.', '只透過 PNS 傳送推播通知；裝置收不到時不改發 SMS。')} />
                 <RadioGroupItem value="sms"
-                  label={<span className="inline-flex items-center gap-2">{L('PNS + SMS fallback', 'PNS + SMS 備援')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD approval', '需 ICSD 核准')}</Tag> : null}</span>}
+                  label={<span className="inline-flex items-center gap-2"><span className="font-semibold">{L('PNS + SMS fallback', 'PNS + SMS 備援')}</span>{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD approval', '需 ICSD 核准')}</Tag> : null}</span>}
                   description={L('PNS is prioritized, with SMS as a backup if the device is unreachable via PNS. (Requires ICSD approval upon submission — takes 3 working days.)', '優先使用 PNS；裝置無法透過 PNS 收到時，改以 SMS 備援。（送出後需經 ICSD 核准，約 3 個工作天。）')} />
               </RadioGroup>
               {/* urgent send belongs to SMS fallback: one indented checkbox under the second option, no reason to fill in */}
@@ -236,7 +235,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   )
 }
 
-// Audience Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
+// Message Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
 // SMS fallback on, Device Notifications and its SMS are one row, counted together. A row that misses people has
 // "n messages can't be sent" on its right, opening that channel's list.
 function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
@@ -260,7 +259,7 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
     )
   }
   return (
-    <Section title={L('Audience Coverage by Channel', '各通道涵蓋人數')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
+    <Section title={L('Message Coverage by Channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
       <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
         {c.ch.push ? line('push') : null}
         {c.ch.desktop ? line('desktop') : null}
@@ -282,7 +281,8 @@ function NotCoveredDialog({ k, name, list, onClose }: { k: CoverCh | null; name:
   const cols = React.useMemo(() => [
     ncol.display({ id: 'n', header: L('Audience', '收件人'), meta: { width: 280 }, cell: i => { const x = i.row.original; return x.p ? <PersonDisplay value={personVal(x.p)} /> : <span className="flex min-w-0 items-center gap-2"><span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">{x.name.indexOf('@') >= 0 ? <Mail className="size-3.5 text-fg-secondary" aria-hidden /> : <Phone className="size-3.5 text-fg-secondary" aria-hidden />}</span><span className="truncate text-body">{x.name}</span></span> } }),
     // how they were added: Person, Org or Group (someone added more than one way shows each), or Phone / Email for external contacts
-    ncol.display({ id: 't', header: L('Type', '類型'), meta: { width: 180 }, cell: i => <span className="flex flex-wrap gap-1">{i.row.original.types.map(t => <Tag key={t} size="sm" color="neutral">{t}</Tag>)}</span> }),
+    // where they came from: the org or group's name and its type tag; a type tag alone when added on their own
+    ncol.display({ id: 't', header: L('Source', '來源'), meta: { width: 220 }, cell: i => <span className="flex flex-col gap-1">{i.row.original.srcs.map(x => <span key={(x.name || '') + x.tag} className="flex min-w-0 items-center gap-1.5">{x.name ? <span className="truncate text-body">{x.name}</span> : null}<Tag size="sm" color="neutral">{x.tag}</Tag></span>)}</span> }),
     ncol.display({ id: 'r', header: L('Reason', '原因'), meta: { width: 160 }, cell: i => i.row.original.reason }),
   ], [])
   return (

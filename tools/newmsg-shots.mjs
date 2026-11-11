@@ -165,7 +165,7 @@ await step('s1-types', async () => {
   await big(2200);
   const aud = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-phones', (await aud.count()) ? aud : null, [], 12);
-  const reachSec = p.getByRole('heading', { name: 'Audience Coverage by Channel' }).locator('xpath=ancestor::section[1]');
+  const reachSec = p.getByRole('heading', { name: 'Message Coverage by Channel' }).locator('xpath=ancestor::section[1]');
   await shot('s1-ext', (await reachSec.count()) ? reachSec : null, [], 12);
 });
 

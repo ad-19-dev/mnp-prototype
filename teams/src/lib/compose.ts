@@ -235,37 +235,39 @@ export function smsPhones(c: Compose, groups: Group[]) {
 export const noPhoneRows = (c: Compose) => c.receivers.filter(t => t.type !== 'ext' && c.smsCO[t.key] === false && !c.smsPP[t.key])
 
 // Audience Coverage by Channel: everyone a channel doesn't cover, expanded from orgs and groups and de-duplicated.
-// Type is how they were added (Person, Org, Group; Phone or Email for external contacts); with SMS fallback on,
-// Device Notifications counts the people the SMS reaches as covered.
-export type NotCovered = { id: string; p: Person | null; name: string; types: string[]; reason: string }
+// Source is where they came from: the org or group's name with an Org / Group tag, or just a Person / Phone / Email
+// tag when added on their own (2026-11-11); with SMS fallback on, Device Notifications counts the people the SMS
+// reaches as covered.
+export type CoverSrc = { name?: string; tag: string }
+export type NotCovered = { id: string; p: Person | null; name: string; srcs: CoverSrc[]; reason: string }
 export type CoverCh = 'push' | 'desktop' | 'email'
 export function notCovered(c: Compose, groups: Group[], k: CoverCh): NotCovered[] {
-  const src: Record<string, string[]> = {}, co: Record<string, boolean> = {}, pp: Record<string, boolean> = {}
-  const add = (id: string, s: string) => { const l = src[id] || (src[id] = []); if (l.indexOf(s) < 0) l.push(s) }
+  const src: Record<string, CoverSrc[]> = {}, co: Record<string, boolean> = {}, pp: Record<string, boolean> = {}
+  const add = (id: string, s: CoverSrc) => { const l = src[id] || (src[id] = []); if (!l.some(x => x.name === s.name && x.tag === s.tag)) l.push(s) }
   const extType = (v: string) => v.indexOf('@') < 0 ? L('Phone', '電話') : L('Email', 'Email')
   c.receivers.forEach(t => {
-    if (t.type === 'ext') { add('x:' + t.email, extType(t.email!)); return }
-    const type = t.type === 'person' ? L('Person', '人員') : t.type === 'org' ? L('Org', '組織') : L('Group', '群組')
+    if (t.type === 'ext') { add('x:' + t.email, { tag: extType(t.email!) }); return }
+    const from: CoverSrc = t.type === 'person' ? { tag: L('Person', '人員') } : t.type === 'org' ? { name: t.id!, tag: L('Org', '組織') } : { name: (groups.find(g => g.id === t.id) || { name: t.id! }).name, tag: L('Group', '群組') }
     flatten([t], groups).forEach(({ pid }) => {
       const p = PMAP[pid]; if (!p) return
-      if (p.extKind) { add('x:' + p.value, extType(p.value!)); return }
-      add(pid, type)
+      if (p.extKind) { add('x:' + p.value, from); return }
+      add(pid, from)
       if (c.smsCO[t.key] !== false) co[pid] = true
       if (c.smsPP[t.key]) pp[pid] = true
     })
   })
   const sms = smsOn(c), out: NotCovered[] = []
   Object.keys(src).forEach(id => {
-    const types = src[id]
+    const srcs = src[id]
     if (id.indexOf('x:') === 0) {
       const v = id.slice(2), ph = v.indexOf('@') < 0
       const ok = k === 'email' ? !ph : k === 'push' ? sms && ph : false
-      if (!ok) out.push({ id, p: null, name: v, types, reason: ph ? L('Phone only', '只有電話') : L('Email only', '只有 Email') })
+      if (!ok) out.push({ id, p: null, name: v, srcs, reason: ph ? L('Phone only', '只有電話') : L('Email only', '只有 Email') })
       return
     }
     const p = PMAP[id]
-    if (k === 'push' && !p.dev && !(sms && ((co[id] && (p.co || p.pp)) || (pp[id] && p.pp)))) out.push({ id, p, name: p.en + ' ' + p.zh, types, reason: L('App unregistered', 'App 未註冊') })
-    if (k === 'desktop' && !p.desk) out.push({ id, p, name: p.en + ' ' + p.zh, types, reason: L('No desktop agent', '沒有桌面程式') })
+    if (k === 'push' && !p.dev && !(sms && ((co[id] && (p.co || p.pp)) || (pp[id] && p.pp)))) out.push({ id, p, name: p.en + ' ' + p.zh, srcs, reason: L('App unregistered', 'App 未註冊') })
+    if (k === 'desktop' && !p.desk) out.push({ id, p, name: p.en + ' ' + p.zh, srcs, reason: L('No desktop agent', '沒有桌面程式') })
   })
   return out
 }
