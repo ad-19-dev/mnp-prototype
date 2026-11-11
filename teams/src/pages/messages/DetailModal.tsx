@@ -3,7 +3,7 @@
 // row shows, and more (message ID, channel, status, approval record, sender, audience count, template, created,
 // send time, created by), so nothing on the list is missing here (user test, 2026-11-10).
 // There is no separate edit mode: the fields are always there, editable or disabled by the record's status (the
-// same rules as the row menu):
+// same rules as the row menu); fields that can't be changed are readonly:
 //   content and audience: Scheduled, Scheduled expired (what Edit content allowed, plus the audience)
 //   send time: Scheduled, Scheduled expired, Error (what Reschedule allowed)
 // Once anything is changed the footer swaps its actions for Discard changes / Save changes; closing with unsaved
@@ -13,7 +13,7 @@ import {
   Button, DatePicker, DescriptionItem, DescriptionList, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader,
   DialogTitle, Input, PersonDisplay, Tag, Textarea,
 } from '@qijenchen/design-system'
-import { Ban, Copy, ExternalLink, Send, Trash2 } from 'lucide-react'
+import { Ban, Copy, ExternalLink, Send, Trash2, Upload } from 'lucide-react'
 import {
   ICSD, LIM, PEOPLE, PMAP, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
   type Channel, type Row, type Status, type Tag as RTag,
@@ -142,16 +142,29 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
     } else setTags(l => l.concat([{ key, type: it.kind, id: it.id }]))
   }
 
+  // Batch import: the send flow's dialog, working on this list (handed over before, read back as it adds)
+  const importing = React.useRef(false)
+  const fits = (x: RTag) => x.type !== 'ext' || (isExtPhone(x) ? k === 'sms' : k === 'email')
+  const openImport = () => { importing.current = true; m.setC({ receivers: tags }, true); m.openImport() }
+  React.useEffect(() => {
+    if (!importing.current) return
+    const got = m.s.c.receivers, keep = got.filter(fits)
+    if (keep.length !== got.length) flash(L('External contacts left out: they don’t get ' + chName(k) + '.', '已略過外部聯絡人：他們收不到 ' + chName(k) + '。'), 'err')
+    if (tagKeys(keep) !== tagKeys(tags)) setTags(keep)
+  }, [m.s.c.receivers])
+  React.useEffect(() => { if (!m.s.imp) importing.current = false }, [m.s.imp])
+
   const fails = failsOf(x)
-  const mode = edit ? 'edit' as const : 'disabled' as const
+  // not editable: readonly (the field's frame stays, the text keeps its normal colour, it just can't be changed)
+  const mode = edit ? 'edit' as const : 'readonly' as const
   const cnt = (n: number, lim: number) => (edit ? n + ' / ' + lim : undefined)
   return (
     <DialogContent maxWidth={1120} height="fill">
       <DialogHeader>
         <div className="flex min-w-0 items-center gap-2">
           <Tag size="sm" color="neutral" className="shrink-0 tabular-nums">{msgId(r)}</Tag>
-          <DialogTitle className="truncate">{t.title || chName(k)}</DialogTitle>
-          <DialogDescription className="sr-only">{chName(k)}</DialogDescription>
+          <DialogTitle>{L('Message details', '訊息詳情')}</DialogTitle>
+          <DialogDescription className="sr-only">{(t.title || '') + ' · ' + chName(k)}</DialogDescription>
         </div>
       </DialogHeader>
 
@@ -202,7 +215,8 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
               {fails ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text" onClick={() => m.set({ ns: r.id + '|' + k })}>{L(fails + ' not sent', fails + ' 人未送出')}</Button> : null}
             </div>
             {/* editable: the send flow's search above the list, and a remove button on every row */}
-            {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag} /> : null}
+            {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag}
+              extra={<Button variant="tertiary" startIcon={Upload} onClick={openImport}>{L('Batch import', '批次匯入')}</Button>} /> : null}
             {tags.length ? <AudienceList tags={tags} groups={app.groups} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined} /> : <span className="text-body text-fg-secondary">—</span>}
             {show('aud') ? <ErrText>{show('aud')}</ErrText> : null}
           </section>
@@ -219,7 +233,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
 
       <DialogFooter className="border-t border-divider">
         <div className="flex w-full flex-wrap items-center gap-2">
-          {canCancel(st) ? <Button variant="tertiary" startIcon={Ban} className="!text-error-text" disabled={dirty} onClick={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</Button> : null}
+          {canCancel(st) ? <Button variant="secondary" danger startIcon={Ban} disabled={dirty} onClick={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</Button> : null}
           <span className="flex-1" />
           {dirty ? <>
             <Button variant="tertiary" onClick={discard}>{L('Discard changes', '捨棄變更')}</Button>
