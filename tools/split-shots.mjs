@@ -62,6 +62,8 @@ await wait(1500);
 
 // ---- list
 await step('list', async () => {
+  // the prototype starts at All time for usability tests; the spec shows the specified default, Last 2 weeks
+  await main.getByRole('combobox', { name: 'Created date' }).click(); await wait(300); await p.getByRole('option', { name: 'Last 2 weeks' }).click(); await wait(500);
   await shot('list', null, [
     [1, main.locator('[role="columnheader"]').filter({ hasText: 'Channel' }), 'tl'],
     [2, main.locator('[role="columnheader"]').filter({ hasText: 'Title' }), 'tl'],
@@ -321,7 +323,7 @@ await step('dlg-reschedule-error', async () => {
 // ---- first use: a space with nothing in it (last, it adds a team)
 await step('empty-first', async () => {
   await p.getByRole('button', { name: /add|new|create/i }).first().click(); await wait(600);
-  await p.getByPlaceholder(/Fab 18/).fill('Brand New Team'); await p.getByRole('button', { name: 'Create team' }).click(); await wait(1500);
+  await p.getByPlaceholder(/Fab 18/).fill('Brand New Team'); await p.getByRole('button', { name: 'Create space' }).click(); await wait(1500);
   await shot('empty-first', null);
 });
 

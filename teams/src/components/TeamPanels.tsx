@@ -65,16 +65,16 @@ export function leaveCf(team: Team, done: () => void): Confirm {
     const what = L(P(n.msg, 'message', '') + ', ' + P(n.grp, 'audience group', '') + ' and ' + P(n.tpl, 'template', ''), n.msg + ' 則訊息、' + n.grp + ' 個收件群組和 ' + n.tpl + ' 個模板')
     return {
       title: L('Leave ' + team.name + '?', '要離開「' + team.name + '」嗎？'),
-      text: last ? L('You’re the last member. Leaving deletes the team and its shared space.', '你是最後一位成員，離開後團隊和它的共享發送空間會一起刪除。') : L('You’ll lose access to this team’s shared space, including what you made there. Anyone in the team can add you back.', '離開後你就看不到這個團隊的共享發送空間，包括你在裡面建立的內容。團隊裡的任何人都能再把你加回來。'),
+      text: last ? L('You’re the last member. Leaving deletes this shared space.', '你是最後一位成員，離開後這個共享發送空間會被刪除。') : L('You’ll lose access to this shared space, including what you made there. Anyone in the space can add you back.', '離開後你就看不到這個共享發送空間，包括你在裡面建立的內容。空間裡的任何人都能再把你加回來。'),
       rows: [{ k: L('In this space', '空間裡有'), v: what },
-             { k: last ? L('After you leave', '離開後') : L('The team keeps', '團隊保留'), v: last ? L('All of it is deleted', '全部刪除') : L('All of it, including what you made', '全部，包括你建立的內容') }],
-      icon: LogOut, tone: 'warn', cancel: L('Cancel', '取消'), ok: last ? L('Leave and delete team', '離開並刪除團隊') : L('Leave team', '離開團隊'), danger: true,
+             { k: last ? L('After you leave', '離開後') : L('The space keeps', '空間保留'), v: last ? L('All of it is deleted', '全部刪除') : L('All of it, including what you made', '全部，包括你建立的內容') }],
+      icon: LogOut, tone: 'warn', cancel: L('Cancel', '取消'), ok: last ? L('Leave and delete space', '離開並刪除空間') : L('Leave space', '離開空間'), danger: true,
       run: () => {
         setApp(s => last
           ? { teams: s.teams.filter(t => t.id !== team.id), rows: s.rows.filter(r => r.team !== team.id), groups: s.groups.filter(g => g.team !== team.id), templates: s.templates.filter(t => t.team !== team.id), space: 'me' }
           : { teams: s.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t), space: 'me' })
         done()
-        flash(last ? L('Team deleted', '已刪除團隊') : L('You left ' + team.name, '已離開「' + team.name + '」'), 'ok')
+        flash(last ? L('Space deleted', '已刪除空間') : L('You left ' + team.name, '已離開「' + team.name + '」'), 'ok')
       },
     }
 }
@@ -88,19 +88,19 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
     setName(team ? team.name : ''); setDesc(team ? team.desc : ''); setPids(team ? team.members.map(x => x.pid) : [ME]); setTried(false)
   }, [open, team])
   const nm = name.trim(), dup = getApp().teams.some(t => t.id !== team?.id && t.name.toLowerCase() === nm.toLowerCase())
-  const err = tried && !nm ? L('Enter a name.', '請輸入名稱。') : name.length > 50 ? L('Use 50 characters or fewer.', '最多 50 個字。') : tried && dup ? L('Another team already uses this name.', '已有團隊使用這個名稱。') : ''
+  const err = tried && !nm ? L('Enter a name.', '請輸入名稱。') : name.length > 50 ? L('Use 50 characters or fewer.', '最多 50 個字。') : tried && dup ? L('Another space already uses this name.', '已有空間使用這個名稱。') : ''
   const save = () => {
     if (!nm || name.length > 50 || desc.length > 200 || dup) { setTried(true); return }
     if (team) {
       setApp(a => ({ teams: a.teams.map(t => t.id === team.id ? { ...t, name: nm, desc: desc.trim(), members: pids.map(pid => ({ pid })) } : t) }))
-      onClose(); flash(L('Team updated', '已更新團隊'), 'ok')
+      onClose(); flash(L('Space updated', '已更新空間'), 'ok')
       return
     }
     const id = 'tn' + Date.now().toString(36)
     const t: Team = { id, name: nm, desc: desc.trim(), created: new Date().toISOString().slice(0, 10).replace(/-/g, '/'), members: pids.map(pid => ({ pid })) }
     setApp(a => ({ teams: a.teams.concat([t]), space: id }))
     go('send'); onClose()
-    flash(L('Team created', '已建立團隊'), 'ok')
+    flash(L('Space created', '已建立空間'), 'ok')
   }
   const askLeave = () => { if (team) setCf(leaveCf(team, () => { setCf(null); onClose() })) }
   return (
@@ -108,14 +108,14 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
       <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
         {open ? (
           <DialogContent maxWidth={560} height="hug">
-            <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{team ? L('Team settings', '團隊設定') : L('New team', '建立團隊')}</DialogTitle><DialogDescription className="sr-only">{team ? L('Team settings', '團隊設定') : L('New team', '建立團隊')}</DialogDescription></div></DialogHeader>
+            <DialogHeader><div className="flex flex-col gap-0.5"><DialogTitle>{team ? L('Space settings', '空間設定') : L('New space', '建立空間')}</DialogTitle><DialogDescription className="sr-only">{team ? L('Space settings', '空間設定') : L('New space', '建立空間')}</DialogDescription></div></DialogHeader>
             <DialogBody>
               <div className="flex flex-col gap-[var(--layout-space-loose)]">
                 <FormField id="nt-name" label={L('Name', '名稱')} required count={name.length + ' / 50'} over={name.length > 50} error={err}>
                   <Input id="nt-name" autoFocus={!team} value={name} error={!!err} onChange={e => setName(e.target.value)} placeholder={L('e.g. Fab 18 Communications', '例如：Fab 18 Communications')} />
                 </FormField>
-                <FormField id="nt-desc" label={L('Description', '說明')} count={desc.length + ' / 200'} over={desc.length > 200} hint={L('Shown at the top of the team’s space.', '顯示在團隊空間的上方。')}>
-                  <Textarea id="nt-desc" rows={2} value={desc} onChange={e => setDesc(e.target.value)} placeholder={L('What this team sends', '這個團隊負責發送什麼')} />
+                <FormField id="nt-desc" label={L('Description', '說明')} count={desc.length + ' / 200'} over={desc.length > 200} hint={L('Shown at the top of the space.', '顯示在空間的上方。')}>
+                  <Textarea id="nt-desc" rows={2} value={desc} onChange={e => setDesc(e.target.value)} placeholder={L('What this space sends', '這個空間負責發送什麼')} />
                 </FormField>
                 <div className="flex flex-col gap-2">
                   <span className="text-body font-medium">{L('Members', '成員')} <span className="font-normal text-fg-secondary">· {fmtN(pids.length)}</span></span>
@@ -125,9 +125,9 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
               </div>
             </DialogBody>
             <DialogFooter>
-              {team ? <Button variant="text" danger className="mr-auto" onClick={askLeave}>{L('Leave team', '離開團隊')}</Button> : null}
+              {team ? <Button variant="text" danger className="mr-auto" onClick={askLeave}>{L('Leave space', '離開空間')}</Button> : null}
               <Button variant="tertiary" onClick={onClose}>{L('Cancel', '取消')}</Button>
-              <Button variant="primary" onClick={save}>{team ? L('Save', '儲存') : L('Create team', '建立團隊')}</Button>
+              <Button variant="primary" onClick={save}>{team ? L('Save', '儲存') : L('Create space', '建立空間')}</Button>
             </DialogFooter>
           </DialogContent>
         ) : null}

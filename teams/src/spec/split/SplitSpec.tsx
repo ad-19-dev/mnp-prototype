@@ -128,7 +128,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="dialog" title="Reschedule" when="選單 Reschedule（詳情裡直接改 Send time）" shots={['dlg-reschedule']} then="這個通道改到新的傳送時間，不需要重新核准。" />
           <Card kind="dialog" title="Cancel sending?" when="選單或詳情底部的 Cancel sending" shots={['dlg-cancel']} then="這個通道不再送出，狀態變成 Canceled；紀錄留在列表。" />
           <Card kind="action" title="Duplicate to new message" when="選單或詳情底部的 Duplicate to new message" then="進入發送流程，只帶入這個通道（通道、內容與它的收件人）。" />
-          <Card kind="menu" title="共享空間的 ⋯ 選單" when="側邊欄滑過共享空間" shots={['space-menu']} then="Team settings（開團隊設定）、Leave team（確認後離開）。" />
+          <Card kind="menu" title="共享空間的 ⋯ 選單" when="側邊欄滑過共享空間" shots={['space-menu']} then="Space settings（開空間設定）、Leave space（確認後離開）。" />
         </div>
       </Section>
     </>

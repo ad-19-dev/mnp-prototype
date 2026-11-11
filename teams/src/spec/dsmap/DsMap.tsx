@@ -42,7 +42,7 @@ export default function DsMap() {
         <Section eyebrow="List" title="訊息列表">
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['整頁外殼', comps('AppShell', 'Sidebar'), '左側 Sidebar（發送空間）、頁首、主區。訊息詳情是 Dialog，不再用右側 AppShellAside。', <Own>—</Own>],
-            ['共享空間的 ⋯', comps('Sidebar', 'DropdownMenu'), 'SidebarMenuAction（MoreHorizontal，showOnHover）當 DropdownMenu 的觸發：Team settings、分隔線、Leave team（紅字）。', <Own>Leave team 的確認對話框內容</Own>],
+            ['共享空間的 ⋯', comps('Sidebar', 'DropdownMenu'), 'SidebarMenuAction（MoreHorizontal，showOnHover）當 DropdownMenu 的觸發：Space settings、分隔線、Leave space（紅字）。', <Own>Leave space 的確認對話框內容</Own>],
             ['空間頁籤', comps('Tabs'), 'Send messages / Audience groups / Templates，放在頁首第二列。', <Own>—</Own>],
             ['搜尋框', comps('Input'), 'type=search，開頭圖示 Search；寬 480。', <Own>寬度 480 是我們定的</Own>],
             ['建立日期篩選', comps('Select'), 'Select 單選，外層寬 160：Last 7 days、Last 2 weeks（預設）、Last 30 days、Last 3 months、All time。', <Own>依 Created 日期篩選</Own>],

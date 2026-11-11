@@ -107,7 +107,7 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>{L('Shared spaces', '共享發送空間')}</SidebarGroupLabel>
-          <SidebarGroupAction icon={Plus} aria-label={L('New team', '建立團隊')} onClick={() => setCreating(true)} />
+          <SidebarGroupAction icon={Plus} aria-label={L('New space', '建立空間')} onClick={() => setCreating(true)} />
           <SidebarGroupContent>
             <SidebarMenu>
               {teams.map(t => (
@@ -116,9 +116,9 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild><SidebarMenuAction icon={MoreHorizontal} showOnHover aria-label={L('More for ', '更多：') + t.name} /></DropdownMenuTrigger>
                     <DropdownMenuContent align="start" side="right">
-                      <DropdownMenuItem startIcon={Settings} onSelect={() => setEditing(t)}>{L('Team settings', '團隊設定')}</DropdownMenuItem>
+                      <DropdownMenuItem startIcon={Settings} onSelect={() => setEditing(t)}>{L('Space settings', '空間設定')}</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem startIcon={LogOut} className="text-error-text" onSelect={() => setCf(leaveCf(t, () => setCf(null)))}>{L('Leave team', '離開團隊')}</DropdownMenuItem>
+                      <DropdownMenuItem startIcon={LogOut} className="text-error-text" onSelect={() => setCf(leaveCf(t, () => setCf(null)))}>{L('Leave space', '離開空間')}</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </SidebarMenuItem>
@@ -171,7 +171,7 @@ export function SpaceSettings() {
   if (!team) return null
   return (
     <>
-      <Button variant="tertiary" iconOnly startIcon={Settings} aria-label={L('Team settings', '團隊設定')} onClick={() => setOpen(true)} />
+      <Button variant="tertiary" iconOnly startIcon={Settings} aria-label={L('Space settings', '空間設定')} onClick={() => setOpen(true)} />
       <TeamDialog team={team} open={open} onClose={() => setOpen(false)} />
     </>
   )

@@ -39,7 +39,8 @@ export interface SendState {
   gp: { q: string; tab: 'all' | 'mine' | 'shared'; sel: Record<string, boolean> } | null
 }
 export const initSend = (): SendState => ({
-  view: 'list', q: '', fs: [], fch: [], fd: 14, page: 1, det: null, ns: null, cf: null, rs: null,
+  // fd: All time for now, for this week's usability tests (the spec stays at the last 2 weeks)
+  view: 'list', q: '', fs: [], fch: [], fd: 0, page: 1, det: null, ns: null, cf: null, rs: null,
   c: blankCompose(), ri: { type: 'person', q: '', open: false, exp: null }, rf: '',
   imp: null, num: null, sg: null, stpl: null, tp: null, unr: false, gp: null,
 })
