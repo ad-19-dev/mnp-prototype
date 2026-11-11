@@ -61,7 +61,8 @@ function DeliveryTable({ height = '360px', showVia = true }: { height?: string; 
           opts={(['sent', 'failed', 'queued'] as St[]).map(k => ({ k, view: <Tag size="sm" color={ST[k].color}>{ST[k].label}</Tag>, n: n(k) }))} />
         <span className="ml-auto text-caption tabular-nums text-fg-secondary">{rows.length} of {LINES.length} messages</span>
       </div>
-      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={height} getRowId={x => x.sn} />
+      {/* render every row (a sample of a few dozen): with the DS default overscan of 5, a fast scroll showed blank rows until they were drawn */}
+      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={height} overscan={LINES.length} getRowId={x => x.sn} />
     </div>
   )
 }
