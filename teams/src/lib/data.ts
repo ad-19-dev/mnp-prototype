@@ -62,6 +62,8 @@ export interface Row {
   chSched?: Partial<Record<Channel, string>> | null
   // a channel whose audience was edited on its own (Detail modal study); the other channels keep aud
   chAud?: Partial<Record<Channel, [string, string][]>> | null
+  // Device Notifications (SMS): which phones get the SMS, per audience row (company ticked unless false; personal when true)
+  chPhones?: { co: Record<string, boolean>; pp: Record<string, boolean> } | null
   team?: string | null
   // ICSD approval skipped because the message was urgent: who, when and why (kept for the record)
   bypass?: { by: string; at: string; reason: string } | null

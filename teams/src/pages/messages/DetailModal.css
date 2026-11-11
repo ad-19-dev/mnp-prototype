@@ -1,0 +1,8 @@
+/* Detail modal study: a readonly field gets no blue frame on focus, so it doesn't read as editable
+   (it can still be focused, read and copied). Agreed with the designers on 2026-11-11, pending the DS owner.
+   In the first cascade layer: an !important there outranks the DS utilities' own !important. */
+@layer theme {
+  .mnp-dm [data-field-mode="readonly"],
+  .mnp-dm [data-field-mode="readonly"]:focus-within,
+  .mnp-dm [data-field-mode="readonly"]:focus-visible { border-color: transparent !important; }
+}

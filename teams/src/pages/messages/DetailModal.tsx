@@ -11,10 +11,11 @@
 import * as React from 'react'
 import {
   Button, DatePicker, DescriptionItem, DescriptionList, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle, DataTable, Empty, Input, PersonDisplay, Tag, Textarea,
+  DialogTitle, Checkbox, DataTable, Empty, Input, PersonDisplay, Tag, Textarea,
 } from '@qijenchen/design-system'
 import { createColumnHelper } from '@tanstack/react-table'
 import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
+import './DetailModal.css'
 import { Ban, Building2, Copy, ExternalLink, Mail, Phone, Send, Trash2, Upload, Users, X } from 'lucide-react'
 import {
   ICSD, LIM, ORGS, PEOPLE, PMAP, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
@@ -78,6 +79,10 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   const [v, setV] = React.useState<Vals>(init.v), [tags, setTags] = React.useState<RTag[]>(init.tags)
   const [tried, setTried] = React.useState(false), [seed, setSeed] = React.useState(0)
   const [ri, setRi] = React.useState<RiState>({ type: 'person', q: '', open: false, exp: null })
+  // Device Notifications (SMS): which phones get the SMS, per audience row (the send flow's two columns)
+  const initPh = React.useMemo(() => r.chPhones || { co: {}, pp: {} }, [r.id, r.fresh])
+  const [ph, setPh] = React.useState(initPh)
+  const phOf = (o: typeof ph, l: RTag[]) => JSON.stringify(l.filter(x => x.type !== 'ext').map(x => [o.co[x.key] !== false, !!o.pp[x.key]]))
   const set = (p: Partial<Vals>) => setV(o => ({ ...o, ...p }))
   const tagKeys = (l: RTag[]) => l.map(x => x.key).join('|')
   // compared as times: the date field may add seconds
@@ -85,7 +90,8 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   const timeChanged = tOf(v.at) !== tOf(init.v.at)
   // only this channel's own fields count as changes
   const own = (o: Vals) => k === 'email' ? [o.subject, o.html] : k === 'desktop' ? [o.sender, o.dTitle, o.content] : k === 'sms' ? [o.sender, o.content, o.sms] : [o.sender, o.content]
-  const dirty = JSON.stringify(own(v)) !== JSON.stringify(own(init.v)) || tagKeys(tags) !== tagKeys(init.tags) || timeChanged
+  const phChanged = k === 'sms' && phOf(ph, tags) !== phOf(initPh, tags)
+  const dirty = JSON.stringify(own(v)) !== JSON.stringify(own(init.v)) || tagKeys(tags) !== tagKeys(init.tags) || timeChanged || phChanged
   React.useEffect(() => { onDirty(dirty) }, [dirty])
 
   // the same checks as the send flow
@@ -107,12 +113,13 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
       if (!v.bodyText.trim()) e.body = req
     }
     if (!tags.length) e.aud = L('Add at least one audience.', '請加入至少一位收件人。')
+    else if (k === 'sms' && tags.some(x => x.type !== 'ext' && ph.co[x.key] === false && !ph.pp[x.key])) e.aud = L('Choose at least one phone for each audience.', '每一列收件人至少要選一支手機。')
   }
   const atD = fromIso(v.at), now = new Date(), max = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate(), now.getHours(), now.getMinutes())
   if (timeChanged) { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now || atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
   const show = (key: string) => (tried ? e[key] || '' : '')
 
-  const discard = () => { setV(init.v); setTags(init.tags); setTried(false); setSeed(n => n + 1) }
+  const discard = () => { setV(init.v); setTags(init.tags); setPh(initPh); setTried(false); setSeed(n => n + 1) }
   const save = () => {
     if (Object.keys(e).length) { setTried(true); return }
     if (edit) {
@@ -126,6 +133,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
         p.chAud = { ...(r.chAud || {}), [k]: aud }
         p.byCh = { ...(r.byCh || {}), [k === 'sms' ? 'push' : k]: [0, countOf(tags, app.groups)] }
       }
+      if (phChanged) p.chPhones = ph
       patchRow(r.id, p)
     }
     if (timeChanged && atD) m.setCh(r.id, k, 'scheduled', fmtDT(atD))
@@ -161,7 +169,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   const mode = edit ? 'edit' as const : 'readonly' as const
   const cnt = (n: number, lim: number) => (edit ? n + ' / ' + lim : undefined)
   return (
-    <DialogContent maxWidth={1120} height="fill">
+    <DialogContent maxWidth={1120} height="fill" className="mnp-dm">
       <DialogHeader>
         <div className="flex min-w-0 items-center gap-2">
           <Tag size="sm" color="neutral" className="shrink-0 tabular-nums">{msgId(r)}</Tag>
@@ -174,7 +182,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
       <div className="flex min-h-0 flex-1 border-t border-divider">
         <div className="flex min-w-0 flex-1 flex-col gap-[calc(var(--layout-space-loose)*1.5)] overflow-y-auto p-[var(--layout-space-loose)]">
           <section className="flex flex-col gap-[var(--layout-space-tight)]">
-            <H3>{L('Content', '內容')}</H3>
+            <span className="flex items-center gap-2"><H3>{L('Content', '內容')}</H3>{edit ? null : <ReadOnlyTag />}</span>
             {k === 'push' || k === 'sms' ? <>
               {x.fb ? <PartHead title={CHN.push.name} part={{ ok: x.ok, of: x.of, unk: x.unk, st: x.pst }} /> : null}
               <FormField id="dm-sender" label={L('Sender', '寄件人')} required={edit} count={cnt(v.sender.length, LIM.sender)} over={v.sender.length > LIM.sender} error={show('sender')}>
@@ -215,13 +223,14 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
 
           <section className="flex flex-col gap-[var(--layout-space-tight)]">
             <div className="flex items-center justify-between gap-2">
-              <H3>{L('Audience', '收件人')}</H3>
+              <span className="flex items-center gap-2"><H3>{L('Audience', '收件人')}</H3>{edit ? null : <ReadOnlyTag />}</span>
               {fails ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text" onClick={() => m.set({ ns: r.id + '|' + k })}>{L(fails + ' not sent', fails + ' 人未送出')}</Button> : null}
             </div>
             {/* editable: the send flow's search above the list, and a remove button on every row */}
             {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag}
               extra={<Button variant="tertiary" startIcon={Upload} onClick={openImport}>{L('Batch import', '批次匯入')}</Button>} /> : null}
-            <AudTable tags={tags} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined} />
+            <AudTable tags={tags} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined}
+              phones={k === 'sms' ? { co: ph.co, pp: ph.pp, set: edit ? (which, keys, val) => setPh(o => ({ ...o, [which]: { ...o[which], ...Object.fromEntries(keys.map(kk => [kk, val])) } })) : undefined } : undefined} />
             {show('aud') ? <ErrText>{show('aud')}</ErrText> : null}
           </section>
         </div>
@@ -298,7 +307,10 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
 // an external contact with its icon and a Phone / Email tag. Editable: a remove button ends every row.
 type ARow = { t: RTag; label: string; kind: string; ppl: ReturnType<typeof flatten> }
 const acol = createColumnHelper<ARow>()
-function AudTable({ tags, onRemove }: { tags: RTag[]; onRemove?: (key: string) => void }) {
+// phones (Device Notifications (SMS)): Company phone / Personal phone columns, a select-all in each header;
+// set is missing when the list can't be edited (the boxes are then disabled)
+type Phones = { co: Record<string, boolean>; pp: Record<string, boolean>; set?: (which: 'co' | 'pp', keys: string[], val: boolean) => void }
+function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: (key: string) => void; phones?: Phones }) {
   const app = useApp()
   const [mem, setMem] = React.useState<MemberSet | null>(null)
   const rows: ARow[] = tags.map(t => {
@@ -308,7 +320,7 @@ function AudTable({ tags, onRemove }: { tags: RTag[]; onRemove?: (key: string) =
     return { t, label: t.id!, kind: L('Person', '人員'), ppl: [] }
   })
   const cols = React.useMemo(() => [
-    acol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 480 }, cell: i => {
+    acol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: phones ? 320 : 480 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
       const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
       const many = t.type === 'group' || t.type === 'org'
@@ -323,7 +335,16 @@ function AudTable({ tags, onRemove }: { tags: RTag[]; onRemove?: (key: string) =
         </span>
       )
     } }),
-  ], [app.lang, app.groups])
+    ...(phones ? (['co', 'pp'] as const).map(w => {
+      const label = w === 'co' ? L('Company phone', '公務手機') : L('Personal phone', '私人手機')
+      const on = (key: string) => (w === 'co' ? phones.co[key] !== false : !!phones.pp[key])
+      const keys = tags.filter(t => t.type !== 'ext').map(t => t.key), n = keys.filter(on).length, all = !!keys.length && n === keys.length
+      return acol.display({ id: w, meta: { width: 160, maxWidth: 160 },
+        header: () => <span className="inline-flex items-center gap-2"><Checkbox checked={all ? true : n ? 'indeterminate' : false} disabled={!phones.set || !keys.length} onCheckedChange={() => phones.set && phones.set(w, keys, !all)} aria-label={L('All: ', '全部：') + label} />{label}</span>,
+        cell: i => i.row.original.t.type === 'ext' ? <span className="text-fg-muted">—</span>
+          : <Checkbox checked={on(i.row.original.t.key)} disabled={!phones.set} onCheckedChange={val => phones.set && phones.set(w, [i.row.original.t.key], !!val)} aria-label={label} /> })
+    }) : []),
+  ], [app.lang, app.groups, phones, tags])
   if (!tags.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
     <>
@@ -333,3 +354,6 @@ function AudTable({ tags, onRemove }: { tags: RTag[]; onRemove?: (key: string) =
     </>
   )
 }
+
+// next to a section title when nothing in it can be changed
+function ReadOnlyTag() { return <Tag size="sm" color="neutral">{L('Read only', '唯讀')}</Tag> }

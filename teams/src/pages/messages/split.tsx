@@ -13,7 +13,7 @@ import {
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Ban } from 'lucide-react'
 import {
-  CH_ORDER, ICSD, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
+  CH_ORDER, ICSD, MODAL, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
@@ -330,7 +330,8 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             height="100%"
             autoRowHeight
             getRowId={x => x.id}
-            rowActions={(x: GRow) => <><Mk g={x} />{/* View details as a toggle (DS Button pressed, emphasis): pressed while this record's panel is open */}<Button variant="text" size="xs" iconOnly startIcon={Info} pressed={s.det === x.id} aria-label={L('View details', '查看詳情')} onClick={() => m.set({ det: s.det === x.id ? null : x.id })} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
+            // Detail modal study: the title opens the details, so the row has no ⓘ or ⋮
+            rowActions={MODAL ? undefined : (x: GRow) => <><Mk g={x} />{/* View details as a toggle (DS Button pressed, emphasis): pressed while this record's panel is open */}<Button variant="text" size="xs" iconOnly startIcon={Info} pressed={s.det === x.id} aria-label={L('View details', '查看詳情')} onClick={() => m.set({ det: s.det === x.id ? null : x.id })} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
             emptyState={<Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />}
           />
         </div>
