@@ -75,7 +75,7 @@ function DetailModalBody({ m, x, close }: { m: SendCtl; x: Rec; close: () => voi
           </section>
         </div>
 
-        <aside className="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l border-divider bg-muted p-[var(--layout-space-loose)]" aria-label={L('Details', '詳細資料')}>
+        <aside className="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l border-divider bg-[var(--color-neutral-1)] p-[var(--layout-space-loose)]" aria-label={L('Details', '詳細資料')}>
           <Facts m={m} x={x} />
         </aside>
       </div>
