@@ -7,11 +7,11 @@
 // which records went out together.
 import * as React from 'react'
 import {
-  Button, DataTable, Select, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
+  Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
   DescriptionList, DescriptionItem, PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Ban } from 'lucide-react'
+import { CalendarClock, ChevronDown, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Ban } from 'lucide-react'
 import {
   CH_ORDER, ICSD, MODAL, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
@@ -314,9 +314,19 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             <Input startIcon={Search} type="search" placeholder={L('Search message ID, title, content, sender, template or creator', '搜尋訊息 ID、標題、內容、寄件人、模板或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            {/* Created date: a few fixed ranges, the last two weeks by default */}
-            <div className="w-40 shrink-0"><Select aria-label={L('Created date', '建立日期')} value={String(s.fd)} onChange={v => m.set({ fd: Number(v), page: 1 })}
-              options={DATE_OPTS.map(o => ({ value: String(o.d), label: o.label() }))} /></div>
+            {/* Created date: a few fixed ranges. A button and menu like Status and Channel (same hover), labelled with
+                the column it filters; it always has a value, so it isn't shown as pressed */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="tertiary" endIcon={ChevronDown}>{L('Created: ', '建立時間：') + (DATE_OPTS.find(o => o.d === s.fd) || DATE_OPTS[0]).label()}</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" minWidth={200}>
+                <DropdownMenuLabel>{L('Created', '建立時間')}</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={String(s.fd)} onValueChange={v => m.set({ fd: Number(v), page: 1 })}>
+                  {DATE_OPTS.map(o => <DropdownMenuRadioItem key={o.d} value={String(o.d)}>{o.label()}</DropdownMenuRadioItem>)}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <FilterMenu<Status> label={L('Status', '狀態')} opts={stOpts} sel={s.fs} toggle={k => m.set({ fs: flip(s.fs, k), page: 1 })} clear={() => m.set({ fs: [], page: 1 })} />
             <FilterMenu<Channel> label={L('Channel', '通道')} opts={chOpts} sel={s.fch} toggle={k => m.set({ fch: flip(s.fch, k), page: 1 })} clear={() => m.set({ fch: [], page: 1 })} />
           </div>

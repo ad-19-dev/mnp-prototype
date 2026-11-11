@@ -55,6 +55,15 @@ const closeAside = async () => { await p.keyboard.press('Escape'); await wait(40
 async function panel(name, list = []) {
   await shot(name, aside(), list, 12);
 }
+// the Created date menu: open it (again if the last one was still closing) and pick a range
+const pickDate = async name => {
+  for (let i = 0; i < 3; i++) {
+    await main.getByRole('button', { name: /^Created:/ }).click(); await wait(500);
+    const it = p.getByRole('menuitemradio', { name });
+    if (await it.count()) { await it.click(); await wait(500); return }
+  }
+  throw new Error('date menu did not open');
+};
 const openRecord = async (text, nth = 0) => { await row(text, nth).getByRole('link').first().click().catch(async () => { await row(text, nth).getByText(text).first().click() }); await wait(700) };
 
 await p.goto('http://localhost:4190/index.html'); await wait(300);
@@ -63,7 +72,7 @@ await wait(1500);
 // ---- list
 await step('list', async () => {
   // the prototype starts at All time for usability tests; the spec shows the specified default, Last 2 weeks
-  await main.getByRole('combobox', { name: 'Created date' }).click(); await wait(300); await p.getByRole('option', { name: 'Last 2 weeks' }).click(); await wait(500);
+  await pickDate('Last 2 weeks');
   await shot('list', null, [
     [1, main.locator('[role="columnheader"]').filter({ hasText: 'Channel' }), 'tl'],
     [2, main.locator('[role="columnheader"]').filter({ hasText: 'Title' }), 'tl'],
@@ -73,10 +82,10 @@ await step('list', async () => {
     [6, main.getByRole('button', { name: /^Actions for/ }).first(), 'c'],
     [7, main.getByRole('button', { name: /^Status/ }), 'tl'],
     [8, main.getByRole('button', { name: /^Channel/ }), 'tl'],
-    [9, main.getByRole('combobox', { name: 'Created date' }), 'tl'],
+    [9, main.getByRole('button', { name: /^Created:/ }), 'tl'],
   ]);
   // the rest of the shots use sample messages of any date: clear the default last-two-weeks range
-  await main.getByRole('combobox', { name: 'Created date' }).click(); await wait(300); await p.getByRole('option', { name: 'All time' }).click(); await wait(400);
+  await pickDate('All time');
 });
 await step('group', async () => {
   await find('Design review');
