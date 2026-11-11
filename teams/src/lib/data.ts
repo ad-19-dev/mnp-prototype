@@ -75,7 +75,7 @@ export interface Tag { key: string; type: 'person' | 'group' | 'org' | 'ext'; id
 export interface Fail { p?: Person; ext?: string; reason: string; fallback: string; via?: Channel | null }
 
 const SUR = [['陳','Chen'],['林','Lin'],['黃','Huang'],['張','Chang'],['李','Lee'],['王','Wang'],['吳','Wu'],['劉','Liu'],['蔡','Tsai'],['楊','Yang'],['許','Hsu'],['鄭','Cheng'],['謝','Hsieh'],['郭','Kuo'],['洪','Hung'],['曾','Tseng'],['邱','Chiu'],['廖','Liao'],['賴','Lai'],['周','Chou']]
-const GIV = [['志豪','Jason'],['雅雯','Vivian'],['冠廷','Ethan'],['怡安','Annie'],['柏宇','Brian'],['家瑜','Joyce'],['宗佑','Leo'],['佩芸','Cindy'],['承翰','Ryan'],['思穎','Iris'],['俊傑','Allen'],['欣妤','Tina'],['彥均','Ivan'],['詩婷','Sandy'],['建志','Eric'],['郁芳','Wendy'],['品豪','Sean'],['宜庭','Peggy'],['書瑋','Kevin'],['芷萱','Yvonne'],['育誠','Owen'],['筱涵','Hannah'],['哲維','Victor'],['婉婷','Fiona']]
+const GIV = [['志豪','Jason'],['雅雯','Vivian'],['冠廷','Marcus'],['怡安','Annie'],['柏宇','Brian'],['家瑜','Joyce'],['宗佑','Leo'],['佩芸','Cindy'],['承翰','Ryan'],['思穎','Iris'],['俊傑','Allen'],['欣妤','Tina'],['彥均','Ivan'],['詩婷','Sandy'],['建志','Eric'],['郁芳','Wendy'],['品豪','Sean'],['宜庭','Peggy'],['書瑋','Kevin'],['芷萱','Yvonne'],['育誠','Owen'],['筱涵','Hannah'],['哲維','Victor'],['婉婷','Fiona']]
 const TITLES = ['Engineer', 'Senior Engineer', 'Technician', 'Specialist', 'Analyst', 'Shift Lead']
 
 export const ORGS: Org[] = [
@@ -103,7 +103,7 @@ export const PEOPLE: Person[] = ([
   ['p07','陳怡君','Erin Chen','ycchenm','124118','FESH','ESH Engineer','','','0910884261',0,1],
   ['p08','黃柏翰','Brian Huang','bhhuang','112306','PDEV','Senior Engineer','62306','0918112306','0988130557',1,1],
   ['p09','張雅婷','Tina Chang','ytchang','119774','PUX','Senior UX Designer','69774','0918119774','',1,1],
-  ['p10','李承恩','Ethan Lee','celee','126031','PENG','Engineer','','','0937402118',1,1],
+  ['p10','李承恩','Adrian Lee','celee','126031','PENG','Engineer','','','0937402118',1,1],
   ['p11','王思妤','Iris Wang','sywangd','122487','ITIS','IT Specialist','62487','0918122487','',1,1],
   ['p12','蔡宗翰','Leo Tsai','thtsai','110958','FMFG','Manufacturing Manager','60958','0918110958','0920775641',1,1],
   ['p13','楊佩珊','Peggy Yang','psyang','117263','FESH','Safety Officer','67263','0918117263','',1,0],
@@ -466,7 +466,7 @@ const OPS: [string, string, string, string, Channel[], Status, string, number, n
   ['m137', 'p08', 'Weekly release digest: W41', 'This week in tWorkspace: faster people search, room equipment in Calendar, MNP approval status.', ['email'], 'sent', '2026/10/10 09:00', 560, 560, 't9'],
   ['m136', 'p22', 'Database failover test tonight 23:00', 'We test database failover tonight at 23:00. tWorkspace may pause for up to 2 minutes.', ['desktop'], 'sent', '2026/10/09 15:40', 560, 548, 't4'],
   ['m135', 'p17', 'Pilot: new search beta opens Monday', 'Pilot users: the new search beta opens Monday. Turn it on in Settings › Labs and tell us what breaks.', ['push', 'email'], 'sent', '2026/10/08 10:30', 312, 309, null],
-  ['m134', 'p02', 'On-call handover: week 42', 'Week 42 on-call: primary Ethan Huang, secondary Vivian Lin.', ['push'], 'sent', '2026/10/10 09:00', 24, 24, null],
+  ['m134', 'p02', 'On-call handover: week 42', 'Week 42 on-call: primary Marcus Huang, secondary Vivian Lin.', ['push'], 'sent', '2026/10/10 09:00', 24, 24, null],
   ['m133', 'p10', 'Resolved: login loop on Safari', 'The login loop on Safari is fixed. If you still see it, clear cookies for tworkspace and sign in again.', ['push', 'desktop'], 'sent', '2026/10/06 11:15', 560, 557, 't8'],
   ['m132', 'p08', 'Weekly release digest: W40', 'This week in tWorkspace: profile working hours, MNP drafts, faster file preview.', ['email'], 'sent', '2026/10/03 09:00', 560, 560, 't9'],
   ['m131', 'p22', 'tWorkspace maintenance: Sat 10/4 01:00–02:00', 'tWorkspace will be unavailable on Sat, Oct 4 from 01:00 to 02:00 (GMT+8) for a network upgrade.', ['desktop', 'email'], 'sent', '2026/10/01 16:00', 560, 560, 't4'],
