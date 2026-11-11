@@ -129,7 +129,6 @@ export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={260}>
         <DropdownMenuGroup>
-          <DropdownMenuLabel>{label}</DropdownMenuLabel>
           {opts.map(o => (
             <DropdownMenuCheckboxItem key={o.k} checked={sel.indexOf(o.k) >= 0} onCheckedChange={() => toggle(o.k)} onSelect={e => e.preventDefault()}>
               <span className="flex w-full items-center justify-between gap-3">{o.view}<span className="text-caption text-fg-muted tabular-nums">{o.n}</span></span>

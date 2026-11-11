@@ -93,12 +93,12 @@
  },
  "status-menu": {
   "w": 670,
-  "h": 428,
+  "h": 396,
   "marks": []
  },
  "channel-menu": {
   "w": 689,
-  "h": 286,
+  "h": 254,
   "marks": []
  },
  "filtered": {

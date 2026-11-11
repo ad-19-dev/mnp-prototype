@@ -7,7 +7,7 @@
 // which records went out together.
 import * as React from 'react'
 import {
-  Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
+  Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty, Input,
   DescriptionList, DescriptionItem, PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
@@ -321,7 +321,6 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
                 <Button variant="tertiary" endIcon={ChevronDown}>{L('Created: ', '建立時間：') + (DATE_OPTS.find(o => o.d === s.fd) || DATE_OPTS[0]).label()}</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" minWidth={200}>
-                <DropdownMenuLabel>{L('Created', '建立時間')}</DropdownMenuLabel>
                 <DropdownMenuRadioGroup value={String(s.fd)} onValueChange={v => m.set({ fd: Number(v), page: 1 })}>
                   {DATE_OPTS.map(o => <DropdownMenuRadioItem key={o.d} value={String(o.d)}>{o.label()}</DropdownMenuRadioItem>)}
                 </DropdownMenuRadioGroup>
