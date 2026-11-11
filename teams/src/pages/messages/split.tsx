@@ -349,7 +349,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
 
 // ---------- details of one record ----------
 // the audiences that apply to this record: external phones only get SMS (so only on "Device Notifications (SMS)"), external emails only Email
-export const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
+export const tagsFor = (r: Row, k: Channel) => audToTags((r.chAud && r.chAud[k]) || r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
 
 // What the panel adds to the row it opens from: the channel's full content, whom it went to, and where the
 // approval stands (a link to the Approval Center). With SMS fallback the panel has two blocks, Device

@@ -7,7 +7,7 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CornerDownRight, CalendarClock, CircleAlert, Globe, Mail, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser } from 'lucide-react'
+import { Building2, CornerDownRight, CalendarClock, CircleAlert, Globe, Mail, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser, X } from 'lucide-react'
 import {
   ICSD, ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, membersFor, orgMembers, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Channel, type Fail, type Group, type Row, type Tag as RTag,
@@ -117,7 +117,8 @@ function ChannelRow({ m, r, k, ok, of, sms, last }: { m: SendCtl; r: Row; k: Cha
 // every audience is a row, in a fixed order: orgs, groups, people, then external contacts. Orgs and groups
 // show their size as a link that opens a searchable member list (as in step 1 of the send flow).
 const AUD_ORDER = { org: 0, group: 1, person: 2, ext: 3 } as Record<string, number>
-export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }) {
+// onRemove: an editable list (Detail modal study): each row ends with a remove button
+export function AudienceList({ tags, groups, onRemove }: { tags: RTag[]; groups: Group[]; onRemove?: (key: string) => void }) {
   const [mem, setMem] = React.useState<MemberSet | null>(null)
   const list = tags.slice().sort((a, b) => AUD_ORDER[a.type] - AUD_ORDER[b.type])
   // orgs and groups: the icon on a round bg-muted backing
@@ -149,6 +150,7 @@ export function AudienceList({ tags, groups }: { tags: RTag[]; groups: Group[] }
               {lead}
               <span className="flex min-w-0 flex-1 flex-col"><span className="truncate text-body font-medium">{name}</span><span className="truncate text-caption text-fg-secondary">{sub}</span></span>
               {end}
+              {onRemove ? <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + name} onClick={() => onRemove(t.key)} /> : null}
             </div>
           )
         })}

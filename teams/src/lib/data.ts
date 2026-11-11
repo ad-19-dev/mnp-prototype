@@ -60,6 +60,8 @@ export interface Row {
   chSt?: Partial<Record<Channel, Status>> | null
   // a channel rescheduled on its own (actions work on one channel at a time)
   chSched?: Partial<Record<Channel, string>> | null
+  // a channel whose audience was edited on its own (Detail modal study); the other channels keep aud
+  chAud?: Partial<Record<Channel, [string, string][]>> | null
   team?: string | null
   // ICSD approval skipped because the message was urgent: who, when and why (kept for the record)
   bypass?: { by: string; at: string; reason: string } | null
