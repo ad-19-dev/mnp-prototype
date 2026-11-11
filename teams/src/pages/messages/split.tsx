@@ -122,9 +122,10 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
         <Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + recText(r, x.k).title} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={232}>
-        <DropdownMenuItem startIcon={Info} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>
+        {/* Detail modal study: the title opens the details, and content is edited there, so the menu keeps only quick actions */}
+        {MODAL ? null : <DropdownMenuItem startIcon={Info} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>}
         {lite ? null : <>
-        {st === 'expired' || st === 'scheduled' ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startEditContent(r, x.k)}>{L('Edit content', '編輯內容')}</DropdownMenuItem> : null}
+        {!MODAL && (st === 'expired' || st === 'scheduled') ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startEditContent(r, x.k)}>{L('Edit content', '編輯內容')}</DropdownMenuItem> : null}
         {st === 'expired' || st === 'error' ? <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, x)}>{L('Send now', '立即傳送')}</DropdownMenuItem> : null}
         {st === 'expired' || st === 'error' || st === 'scheduled' ? <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r, x.k)}>{L('Reschedule', '重新排程')}</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
@@ -330,8 +331,8 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
             height="100%"
             autoRowHeight
             getRowId={x => x.id}
-            // Detail modal study: the title opens the details, so the row has no ⓘ or ⋮
-            rowActions={MODAL ? undefined : (x: GRow) => <><Mk g={x} />{/* View details as a toggle (DS Button pressed, emphasis): pressed while this record's panel is open */}<Button variant="text" size="xs" iconOnly startIcon={Info} pressed={s.det === x.id} aria-label={L('View details', '查看詳情')} onClick={() => m.set({ det: s.det === x.id ? null : x.id })} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
+            // Detail modal study: the title opens the details, so the row has no ⓘ, only ⋮ with the quick actions
+            rowActions={MODAL ? (x: GRow) => <><Mk g={x} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></> : (x: GRow) => <><Mk g={x} />{/* View details as a toggle (DS Button pressed, emphasis): pressed while this record's panel is open */}<Button variant="text" size="xs" iconOnly startIcon={Info} pressed={s.det === x.id} aria-label={L('View details', '查看詳情')} onClick={() => m.set({ det: s.det === x.id ? null : x.id })} /><RecMenu m={m} x={x} lite={hdrs && !x.hdr && x.n > 1} /></>}
             emptyState={<Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Try another search or clear filters.', '換個關鍵字，或清除篩選條件。')} action={<Button onClick={clearAll}>{L('Clear filters', '清除篩選')}</Button>} />}
           />
         </div>
