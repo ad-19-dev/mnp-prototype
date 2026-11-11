@@ -11,20 +11,22 @@
 import * as React from 'react'
 import {
   Button, DatePicker, DescriptionItem, DescriptionList, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle, Input, PersonDisplay, Tag, Textarea,
+  DialogTitle, DataTable, Empty, Input, PersonDisplay, Tag, Textarea,
 } from '@qijenchen/design-system'
-import { Ban, Copy, ExternalLink, Send, Trash2, Upload } from 'lucide-react'
+import { createColumnHelper } from '@tanstack/react-table'
+import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
+import { Ban, Building2, Copy, ExternalLink, Mail, Phone, Send, Trash2, Upload, Users, X } from 'lucide-react'
 import {
-  ICSD, LIM, PEOPLE, PMAP, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
+  ICSD, LIM, ORGS, PEOPLE, PMAP, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { SENDER_ERR, SENDER_RE, pushTitle } from '../../lib/compose'
 import { flash, patchRow, useApp } from '../../lib/store'
 import { L, niceDT } from '../../lib/i18n'
-import { CHN, ErrText, FormField, StatusTag, personVal } from '../../components/ui'
-import { RichText } from '../../components/RichText'
+import { CHN, ErrText, FormField, NO_HIDE, StatusTag, personVal } from '../../components/ui'
+import { MailHtml, RichText } from '../../components/RichText'
 import { RecvInput, riKey, type RiState } from '../../components/RecvInput'
-import { AudienceList, H3 } from './Detail'
+import { H3 } from './Detail'
 import {
   AudienceN, askCancel, askSendNow, chName, duplicateCh, failsOf, msgId, recSender, recText, recordById, tagsFor,
   type Part, type Rec,
@@ -204,7 +206,9 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
                 <Input id="dm-subject" mode={mode} value={v.subject} error={!!show('subject')} onChange={ev => set({ subject: ev.target.value })} />
               </FormField>
               <FormField id="dm-body" label={L('Content', '內容')} required={edit} error={show('body')}>
-                <RichText id="dm-body" seedKey={'dm-' + r.id + '-' + seed} readOnly={!edit} html={v.html} label={L('Content', '內容')} error={!!show('body')} onInput={(h, tx) => set({ html: h, bodyText: tx })} />
+                {/* not editable: the body as a readonly field (readonly background, full width), like the subject above */}
+                {edit ? <RichText id="dm-body" seedKey={'dm-' + r.id + '-' + seed} html={v.html} label={L('Content', '內容')} error={!!show('body')} onInput={(h, tx) => set({ html: h, bodyText: tx })} />
+                  : <MailHtml html={v.html} className="w-full border-transparent bg-readonly px-[var(--field-px)] py-[var(--field-control-py-md)]" />}
               </FormField>
             </> : null}
           </section>
@@ -217,7 +221,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
             {/* editable: the send flow's search above the list, and a remove button on every row */}
             {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag}
               extra={<Button variant="tertiary" startIcon={Upload} onClick={openImport}>{L('Batch import', '批次匯入')}</Button>} /> : null}
-            {tags.length ? <AudienceList tags={tags} groups={app.groups} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined} /> : <span className="text-body text-fg-secondary">—</span>}
+            <AudTable tags={tags} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined} />
             {show('aud') ? <ErrText>{show('aud')}</ErrText> : null}
           </section>
         </div>
@@ -286,5 +290,46 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
       <DescriptionItem label={L('Send time', '傳送時間')}>{time || <span className="tabular-nums">{curTime(r, k)}</span>}</DescriptionItem>
       <DescriptionItem label={L('Created by', '建立者')}><PersonDisplay value={personVal(creator)} /></DescriptionItem>
     </DescriptionList>
+  )
+}
+
+// ---------- the audience as a table, like the send flow's ----------
+// One column: a person in the DS person display; an org or group with its type tag and a link to its members;
+// an external contact with its icon and a Phone / Email tag. Editable: a remove button ends every row.
+type ARow = { t: RTag; label: string; kind: string; ppl: ReturnType<typeof flatten> }
+const acol = createColumnHelper<ARow>()
+function AudTable({ tags, onRemove }: { tags: RTag[]; onRemove?: (key: string) => void }) {
+  const app = useApp()
+  const [mem, setMem] = React.useState<MemberSet | null>(null)
+  const rows: ARow[] = tags.map(t => {
+    if (t.type === 'group') { const g = app.groups.find(x => x.id === t.id); return { t, label: g ? g.name : t.id!, kind: L('Group', '群組'), ppl: flatten([t], app.groups) } }
+    if (t.type === 'org') { const o = ORGS.find(x => x.code === t.id); return { t, label: o ? o.code : t.id!, kind: L('Org', '組織'), ppl: flatten([t], app.groups) } }
+    if (t.type === 'ext') return { t, label: t.email!, kind: isExtPhone(t) ? L('Phone', '電話') : 'Email', ppl: [] }
+    return { t, label: t.id!, kind: L('Person', '人員'), ppl: [] }
+  })
+  const cols = React.useMemo(() => [
+    acol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 480 }, cell: i => {
+      const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
+      const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
+      const many = t.type === 'group' || t.type === 'org'
+      return (
+        <span className="flex min-w-0 items-center gap-2">
+          {p ? <PersonDisplay value={personVal(p)} /> : <>
+            <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted"><Icon className="size-3.5 text-fg-secondary" aria-hidden /></span>
+            <span className="truncate text-body">{x.label}</span>
+            <Tag size="sm" color="neutral">{x.kind}</Tag>
+          </>}
+          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl.map(y => PMAP[y.pid]).filter(Boolean), group: t.type === 'group' ? t.id : undefined })}>{L(fmtN(x.ppl.length) + (x.ppl.length === 1 ? ' person' : ' people'), x.ppl.length + ' 人')}</Button> : null}
+        </span>
+      )
+    } }),
+  ], [app.lang, app.groups])
+  if (!tags.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
+  return (
+    <>
+      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} getRowId={x => x.t.key}
+        rowActions={onRemove ? (x: ARow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => onRemove(x.t.key)} /> : undefined} />
+      <MembersDialog set={mem} onClose={() => setMem(null)} />
+    </>
   )
 }
