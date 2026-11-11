@@ -13,7 +13,8 @@ import { L } from '../../lib/i18n'
 import { SendList } from './List'
 import { DetailSheet, NotSentDialog, RescheduleDialog } from './Detail'
 import { SplitDetailSheet, SplitFailDialog, SplitList } from './split'
-import { SPLIT } from '../../lib/data'
+import { MODAL, SPLIT } from '../../lib/data'
+import { DetailModal } from './DetailModal'
 import { ComposeView } from './Compose'
 import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog } from './Modals'
 
@@ -46,7 +47,7 @@ export function MessagesPage() {
           {SPLIT ? <SplitList m={m} intro={<SpaceIntro />} /> : <SendList m={m} intro={<SpaceIntro />} />}
         </>
       )}
-      {SPLIT ? <SplitDetailSheet m={m} /> : <DetailSheet m={m} />}
+      {MODAL ? <DetailModal m={m} /> : SPLIT ? <SplitDetailSheet m={m} /> : <DetailSheet m={m} />}
       {SPLIT ? <SplitFailDialog m={m} /> : <NotSentDialog m={m} />}
       <RescheduleDialog m={m} />
       <ImportDialog m={m} />

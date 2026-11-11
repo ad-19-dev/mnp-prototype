@@ -72,7 +72,7 @@ export function recordById(m: SendCtl, rows: Row[], id: string | null): Rec | nu
 }
 // People it failed for: with SMS fallback, only those SMS didn't reach either (it goes to everyone Device Notifications missed)
 const done = (st: Status) => st === 'sent' || st === 'error'
-const failsOf = (x: Rec) => (x.fb ? (!x.fb.unk && done(x.st) ? Math.max(0, x.fb.of - x.fb.ok) : 0) : !x.unk && done(x.st) ? Math.max(0, x.of - x.ok) : 0)
+export const failsOf = (x: Rec) => (x.fb ? (!x.fb.unk && done(x.st) ? Math.max(0, x.fb.of - x.fb.ok) : 0) : !x.unk && done(x.st) ? Math.max(0, x.of - x.ok) : 0)
 export const chName = (k: Channel) => CHN[k].name
 
 // the channel's own words: Desktop OS has its own text; Email its subject and body; SMS has no title
@@ -83,7 +83,7 @@ export function recText(r: Row, k: Channel) {
   return dedupe(r.title, r.content)
 }
 // only Device Notifications and Desktop OS carry a sender name
-const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
+export const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
 
 // the channel as an icon only; its name is in the tooltip and the accessible label. Device Notifications (SMS) has
 // a phone with a small envelope, apart from Device Notifications' plain phone.
@@ -101,14 +101,14 @@ function ChCell({ k }: { k: Channel }) {
 // ---------- the message ID, and the actions on one channel ----------
 // the message ID: the same on every channel of one send, so records can be told apart and searched by it
 export const msgId = (r: Row) => 'MSG-' + String((r.id.startsWith('n') ? 90000 : 10000) + (parseInt(r.id.replace(/\D/g, ''), 10) || 0))
-function askSendNow(m: SendCtl, x: Rec) {
+export function askSendNow(m: SendCtl, x: Rec) {
   m.set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It will be sent right away on ' + chName(x.k) + '.', '會立刻用 ' + chName(x.k) + ' 送出。'), icon: Send, tone: 'info', cancel: L('Cancel', '取消'), ok: L('Send now', '立即傳送'), run: () => m.sendNowCh(x.r.id, x.k) } })
 }
-function askCancel(m: SendCtl, x: Rec) {
+export function askCancel(m: SendCtl, x: Rec) {
   m.set({ cf: { title: L('Cancel sending?', '要取消傳送嗎？'), text: L('It won’t be sent on ' + chName(x.k) + '. The record stays in the list.', '不會用 ' + chName(x.k) + ' 送出，紀錄仍會留在列表。'), icon: Ban, tone: 'err', cancel: L('Keep', '保留'), ok: L('Cancel sending', '取消傳送'), danger: true, run: () => m.cancelCh(x.r.id, x.k) } })
 }
 // a new message from this channel only: its channel, its text and the audiences it reached
-function duplicateCh(m: SendCtl, x: Rec) {
+export function duplicateCh(m: SendCtl, x: Rec) {
   const k = x.k
   m.startCompose('duplicate', x.r, tagsFor(x.r, k), k)
 }
@@ -141,7 +141,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
 // the record's count: delivered / audience on this channel only
 // Audience: how many people this channel goes to, nothing more (decided with PM 2026-11-05). SMS fallback's
 // number is known only once Device Notifications has gone out.
-function AudienceN({ x }: { x: Rec }) {
+export function AudienceN({ x }: { x: Rec }) {
   if (x.unk) return (
     <span className="flex min-w-0 flex-col items-end text-right">
       <span className="text-body tabular-nums">–</span>
@@ -349,7 +349,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
 
 // ---------- details of one record ----------
 // the audiences that apply to this record: external phones only get SMS (so only on "Device Notifications (SMS)"), external emails only Email
-const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
+export const tagsFor = (r: Row, k: Channel) => audToTags(r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
 
 // What the panel adds to the row it opens from: the channel's full content, whom it went to, and where the
 // approval stands (a link to the Approval Center). With SMS fallback the panel has two blocks, Device
