@@ -35,7 +35,7 @@ const SmartphoneMail = React.forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElem
 const CH_ICON: Record<Channel, LucideIcon> = { push: Smartphone, desktop: Monitor, email: Mail, sms: SmartphoneMail }
 export function chn(k: Channel) {
   const names: Record<Channel, [string, string, string, string, string, string]> = {
-    push: ['Device Notifications', 'Device Notifications', 'Device', 'Device', 'Push to the app on company phones.', '推播到公司手機的 App。'],
+    push: ['Device Notifications', 'Device Notifications', 'Device', 'Device', 'Push to the app on company phones, with optional SMS fallback.', '推播到公務手機的 App，可加 SMS 備援。'],
     desktop: ['Desktop OS', '桌面通知', 'Desktop', '桌面', 'Pop-up on company Windows PCs.', '在公司 Windows 電腦跳出通知。'],
     email: ['Email', 'Email', 'Email', 'Email', 'Company mailbox, with formatting and files.', '寄到公司信箱，可加格式和附件。'],
     sms: ['Device Notifications (SMS)', 'Device Notifications（SMS）', 'SMS', 'SMS', '', ''],

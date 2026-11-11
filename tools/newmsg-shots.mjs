@@ -80,7 +80,7 @@ await step('s1-filled', async () => {
   await big(1500); await page('s1-filled');
 });
 await step('s1-sms', async () => {
-  await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
+  await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(400);
   await page('s1-sms');
 });
 await step('s1-urgent', async () => {
@@ -160,12 +160,12 @@ await step('s1-types', async () => {
   const sec = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-types', (await sec.count()) ? sec : null, [], 12);
   // SMS fallback on: the audience list gets the phone columns
-  await p.getByRole('checkbox', { name: /Device Notifications \(SMS\)/ }).click(); await wait(400);
+  await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(400);
   await p.getByRole('checkbox', { name: 'Personal phone' }).nth(1).click(); await wait(300);
   await big(2200);
   const aud = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-phones', (await aud.count()) ? aud : null, [], 12);
-  const reachSec = p.getByRole('heading', { name: 'Audience Reach by Channel' }).locator('xpath=ancestor::section[1]');
+  const reachSec = p.getByRole('heading', { name: 'Audience Coverage by Channel' }).locator('xpath=ancestor::section[1]');
   await shot('s1-ext', (await reachSec.count()) ? reachSec : null, [], 12);
 });
 

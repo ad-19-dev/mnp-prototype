@@ -121,11 +121,11 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         <div className="sf-list">
           <Sub id="1-1" title="選通道（步驟 1 最上方）" start="通道卡片" items={[
             N('勾通道卡片', 's1-sms', '通道在收件人之前選'),
-            F(['勾 Device Notifications (SMS)', N('收件人表格多出 Company phone、Personal phone 兩欄', 's1-phones', '預設每列勾公務機；表頭可全選'), E('需要時勾私人手機'), R('下方摘要的 SMS 人數跟著變')],
+            F(['Delivery method 選 PNS + SMS fallback', N('收件人表格多出 Company phone、Personal phone 兩欄', 's1-phones', '預設每列勾公務機；表頭可全選'), E('需要時勾私人手機'), R('下方摘要的 SMS 人數跟著變')],
               ['只勾其他通道', R('收件人表格只有 Audience 一欄')]),
           ]} />
-          <Sub id="1-2" title="緊急送出" start="勾了 SMS 備援" items={[
-            N('SMS 備援下方出現緊急送出勾選框', 's1-sms'), E('勾 It’s urgent'), R('完成，不用填原因'),
+          <Sub id="1-2" title="緊急送出" start="選了 PNS + SMS fallback" items={[
+            N('第二個選項下方出現緊急送出勾選框', 's1-sms'), E('勾 It’s urgent'), R('完成，不用填原因'),
           ]} />
           <Sub id="1-3" title="搜尋並加入收件人" start="步驟 1 空白" items={[
             N('空白', 's1-empty'), E('選類型、輸入'), N('下拉選單', 's1-search'),
@@ -251,7 +251,7 @@ function Frame() {
           ['新訊息', '列表右上角 New message', 'New message', '全部空白，從步驟 1 開始。'],
           ['複製', '列表選單 Duplicate to new message（單一通道的紀錄）', 'Duplicate message', '只有那一個通道（SMS 的紀錄會勾 Device Notifications 加 SMS 備援）、它的內容與模板；收件人是這個通道收得到的人（外部電話只跟 SMS 的紀錄，外部 Email 只跟 Email 的紀錄）。傳送時間不帶入，預設立即傳送。三個步驟都已解鎖，可以直接點步驟列。'],
           ['重寄', 'Not sent to 對話框的 Resend to n', 'Resend to missed audiences', '同一個通道與內容；收件人只有沒收到的人（含外部）。三個步驟都已解鎖。'],
-          ['編輯內容', '列表選單 Edit content（Scheduled 與 Scheduled expired）', 'Edit content', '只有那一個通道的內容欄位，沒有步驟列與模板選項，頁尾只有 Cancel、Save。細節見「Send messages 設計規格」。'],
+          ['編輯內容', '不經過發送流程：在訊息詳情（modal）裡直接改（Scheduled 與 Scheduled expired）', '—', '內容、收件人與傳送時間都在訊息詳情裡改，細節見「Send messages 設計規格」。'],
         ]} />
       </Section>
       <Section eyebrow="Rules" title="移動與離開的規則">
@@ -260,7 +260,7 @@ function Frame() {
           ['Back', '回上一步，不檢查；已填的內容都保留。'],
           ['點步驟列', '點前面的步驟：直接回去，不檢查。點後面的步驟：從目前這步依序檢查到目標的前一步，停在第一個有錯的步驟。下一步永遠可以點；再後面的步驟要先到過才能點。'],
           ['Create message', '步驟 1 到 3 依序檢查，停在第一個有錯的步驟並顯示錯誤；全部通過才送出。'],
-          ['Cancel、點頁首的空間名稱', '還沒改過任何內容就直接回列表（複製與重寄預填的內容不算改過）；改過就先問 Leave without sending?。Edit content 的標題是 Leave without saving?。'],
+          ['Cancel、點頁首的空間名稱', '還沒改過任何內容就直接回列表（複製與重寄預填的內容不算改過）；改過就先問 Leave without sending?。'],
           ['改通道、改收件人', '已填的文字都保留。取消勾選的通道，內容留著但不會送出，再勾回來還在。'],
           ['錯誤的顯示', '錯誤顯示在欄位或區塊下方（紅字加警示三角形）；有輸入框的欄位同時變紅框。按 Next 或 Create message 時一併檢查，之後邊改邊更新；各步驟的錯誤文字與出現時機，見各步驟頁籤。'],
           ['送出後', '回到列表第 1 頁，並清掉搜尋與篩選；新紀錄排在最上方。'],
@@ -311,7 +311,7 @@ function Step1() {
 
       <Section eyebrow="Step 1" title="通道" lead="區塊標題 Channels。三張卡片可以複選。">
         <SpecTable head={['卡片', '說明文字']} nowrap={[0]} rows={[
-          [<Copy en="Device Notifications" zh="Device Notifications" />, <Copy en="Push to the app on company phones." zh="推播到公務手機的 App。" />],
+          [<Copy en="Device Notifications" zh="Device Notifications" />, <>{<Copy en="Push to the app on company phones, with optional SMS fallback." zh="推播到公務手機的 App，可加 SMS 備援。" />}（optional SMS fallback 用 500 字重）</>],
           [<Copy en="Desktop OS" zh="Desktop OS" />, <Copy en="Pop-up on company Windows PCs." zh="公司 Windows 電腦的彈出通知。" />],
           [<Copy en="Email" zh="Email" />, <Copy en="Company mailbox, with formatting and files." zh="公司信箱，可加格式與附件。" />],
         ]} />
@@ -320,22 +320,24 @@ function Step1() {
           { title: '順序', body: '步驟 1 由上而下：Channels → Audience。先選通道，收件人表格才知道要不要顯示 SMS 的手機欄位；加了收件人之後，上方通道卡片的人數會跟著更新。' },
           { title: '收不到的人', body: <>某個通道的 n（分子）小於 total（分母）時，那一列最右側顯示藍色連結 <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />（1 時用單數 message），N = total − n；n = total 時不顯示。Device Notifications (SMS) 合併列也一樣顯示。點了開這個通道的名單。框下方沒有統一的警告列。</> },
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點各通道下方的連結看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道、開 SMS 時有一列公務手機和私人手機都沒勾。' },
-          { title: '通道的連動', body: 'SMS 備援只能跟 Device Notifications 一起：勾 SMS 備援會自動勾上 Device Notifications；取消 Device Notifications 會連 SMS 備援一起取消。至少要勾一個通道（只勾 SMS 備援不算）。' },
+          { title: '通道的連動', body: 'SMS 備援是 Device Notifications 的傳送方式之一：勾了 Device Notifications 才出現 Delivery method；取消 Device Notifications 會回到 PNS only。至少要勾一個通道。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
           { title: 'Audience Coverage by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Audience Coverage by Channel" zh="各通道涵蓋人數" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的 n / total（像收件人表格裡組織名稱後面接人數）（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
         ]} />
         <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
 
-      <Section eyebrow="Step 1" title="SMS 備援與緊急送出" lead="勾了 Device Notifications 才出現。">
+      <Section eyebrow="Step 1" title="Delivery method 與緊急送出" lead="勾了 Device Notifications 才出現，在通道卡片下方。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['SMS 備援', <>勾選框 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />，旁邊標籤 Need ICSD Approval；說明兩行：第一行粗體 <Copy en="Push notifications are prioritized, with SMS as a backup if the device is unreachable via PNS." zh="優先傳送推播通知；裝置無法透過 PNS 收到時，改以 SMS 備援。" />，第二行一般字重 <Copy en="(Note: Requires ICSD approval upon submission, which takes 3 working days.)" zh="（注意：送出後需經 ICSD 核准，約需 3 個工作天。）" /></>],
-          ['緊急送出的位置', '勾了 SMS 備援後，緊急送出勾選框縮排在 SMS 備援下方，沒有外框、沒有標題，也不用填原因。'],
+          ['Delivery method', <>標題 <Copy en="Delivery method" zh="傳送方式" />（中等粗細），下方二選一（設計系統 RadioGroup，直向）。預設 PNS only。</>],
+          ['選項一', <><Copy en="PNS only" zh="只用 PNS" />；說明 <Copy en="Send a push notification via PNS only. No SMS if the device is unreachable." zh="只透過 PNS 傳送推播通知；裝置收不到時不改發 SMS。" /></>],
+          ['選項二', <><Copy en="PNS + SMS fallback" zh="PNS + SMS 備援" />，旁邊 amber 標籤 <Copy en="Need ICSD approval" zh="需 ICSD 核准" />；說明 <Copy en="PNS is prioritized, with SMS as a backup if the device is unreachable via PNS. (Requires ICSD approval upon submission — takes 3 working days.)" zh="優先使用 PNS；裝置無法透過 PNS 收到時，改以 SMS 備援。（送出後需經 ICSD 核准，約 3 個工作天。）" /></>],
+          ['緊急送出的位置', '選了 PNS + SMS fallback 後，緊急送出勾選框縮排在第二個選項下方，沒有外框、沒有標題，也不用填原因。'],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />，下方沒有說明文字（「僅限緊急、會留存紀錄」的說明放在送出前的確認對話框）。</>],
           ['有外部收件人', '緊急送出只略過 ICSD，仍要主管核准；步驟 1 不另外提示。'],
-          ['SMS 寄到哪支手機', <>和 GMC 一樣，在收件人表格裡逐列選：勾了 SMS 備援後，表格多出 <Copy en="Company phone" zh="公務手機" />、<Copy en="Personal phone" zh="私人手機" /> 兩欄（各 176 寬，固定）。每列預設勾公務手機、不勾私人手機；表頭的勾選框可全選、全不選，部分勾選時是半選。組織與群組是整列一起勾。外部電話與外部 Email 這兩欄顯示「—」。勾公務手機但這個人沒有公務手機時，改寄私人手機；兩支都不勾的列收不到 SMS（不另外提示）。。</>],
+          ['SMS 寄到哪支手機', <>和 GMC 一樣，在收件人表格裡逐列選：選了 PNS + SMS fallback 後，表格多出 <Copy en="Company phone" zh="公務手機" />、<Copy en="Personal phone" zh="私人手機" /> 兩欄（各 176 寬，固定）。每列預設勾公務手機、不勾私人手機；表頭的勾選框可全選、全不選，部分勾選時是半選。組織與群組是整列一起勾。外部電話與外部 Email 這兩欄顯示「—」。勾公務手機但這個人沒有公務手機時，改寄私人手機；兩支都不勾的列收不到 SMS（不另外提示）。。</>],
         ]} />
-        <Gallery items={[['s1-sms', '勾了 SMS 備援'], ['s1-urgent', '勾了緊急送出']]} />
+        <Gallery items={[['s1-sms', '選了 PNS + SMS fallback'], ['s1-urgent', '勾了緊急送出']]} />
       </Section>
 
       <Section eyebrow="Step 1" title="驗證、紅字與提醒" lead="按 Next 時檢查這一步，列在「擋 Next」的才會停在這一步；其他只是即時提醒。紅字是警示三角形加紅色文字；步驟 1 不放黃字與灰色提示框。">
@@ -347,7 +349,7 @@ function Step1() {
           ['開 SMS 時有一列沒勾任何手機', <Copy en="Choose at least one phone for each audience." zh="每一列收件人至少要選一支手機。" />, '紅字', '收件人表格下方', '按過 Next 之後', '擋'],
         ]} />
         <Big name="s1-error" title="沒有收件人與通道（按 Next 之後）" />
-        <Big name="s1-phones" title="勾了 SMS 備援時的收件人表格" sub="Company phone、Personal phone 兩欄" />
+        <Big name="s1-phones" title="選了 PNS + SMS fallback 時的收件人表格" sub="Company phone、Personal phone 兩欄" />
         <Big name="s1-ext" title="Audience Coverage by Channel" sub="收件人下方；外部 Email 與外部電話，通道都有勾" />
       </Section>
     </>
@@ -496,7 +498,7 @@ function After() {
         ['需要核准（SMS 備援或外部收件人）', <Copy en="Sent for approval" zh="已送出審核" />, <StatusTag s="pending" />],
       ]} />
       <SpecTable head={['核准規則', '誰核准', '可以略過嗎']} nowrap={[0]} rows={[
-        ['勾了 SMS 備援', 'SMS 審核人員', '可以：勾 It’s urgent（不用填原因），送出前要通過 Send without SMS approval? 確認'],
+        ['選了 PNS + SMS fallback', 'SMS 審核人員', '可以：勾 It’s urgent（不用填原因），送出前要通過 Send without SMS approval? 確認'],
         ['有外部收件人（對應通道有勾）', '你的主管', '不行；緊急送出也一樣'],
         ['兩者都有', '兩邊都需要', '緊急送出只略過 SMS 審核人員，主管仍要核准'],
       ]} />
@@ -510,7 +512,7 @@ function After() {
           ['Send me a test 成功', <Copy en="Test sent via n channels" zh="已透過 n 個通道寄出測試" />],
           ['Send me a test、Save as template 時內容有錯（紅色）', <Copy en="Finish the message first" zh="請先完成訊息內容" />],
           ['Batch import 上傳的檔案讀不到（紅色）', <Copy en="Can’t read that file. Use .csv or .txt." zh="無法讀取檔案，請用 .csv 或 .txt。" />],
-          ['Edit content 儲存', <Copy en="Content saved" zh="已儲存內容" />],
+          ['訊息詳情儲存變更', <Copy en="Changes saved" zh="已儲存變更" />],
         ]} />
       </Section>
       <Notes items={[{ title: 'Toast', body: '顯示在畫面下方置中（設計系統 Toaster，position 設為 bottom-center，離底部 48px）；一行文字，前面不放圖示；右側有關閉鈕。' }]} />

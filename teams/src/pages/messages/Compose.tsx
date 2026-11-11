@@ -174,7 +174,7 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
       <span className="flex items-start gap-3">
         <IconBox icon={meta.icon} tone={on ? 'info' : 'neutral'} />
-        <Two a={meta.name} b={meta.desc} strong className="flex-1 [&>span:first-child]:font-semibold [&>span:last-child]:whitespace-normal" />
+        <Two a={meta.name} b={k === 'push' ? <>{L('Push to the app on company phones, with ', '推播到公務手機的 App，可加 ')}<span className="font-medium">{L('optional SMS fallback', 'SMS 備援')}</span>{L('.', '。')}</> : meta.desc} strong className="flex-1 [&>span:first-child]:font-semibold [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
     </label>
@@ -192,13 +192,17 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} />)}</div>
           {c.ch.push ? (
-            <div className="flex flex-col gap-[var(--layout-space-tight)]">
-              <Checkbox
-                checked={c.ch.sms} onCheckedChange={() => m.pickChannel('sms')}
-                label={<span className="inline-flex items-center gap-2">{L('Device Notifications (SMS)', 'Device Notifications（SMS）')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD Approval', '需 ICSD 核准')}</Tag> : null}</span>}
-                description={<><strong className="font-semibold text-fg">{L('Push notifications are prioritized, with SMS as a backup if the device is unreachable via PNS.', '優先傳送推播通知；裝置無法透過 PNS 收到時，改以 SMS 備援。')}</strong><br />{L('(Note: Requires ICSD approval upon submission, which takes 3 working days.)', '（注意：送出後需經 ICSD 核准，約需 3 個工作天。）')}</>}
-              />
-              {/* urgent send belongs to SMS fallback: one indented checkbox, no reason to fill in */}
+            // Device Notifications' delivery method: one of two, SMS fallback being the second (2026-11-11)
+            <div className="flex flex-col gap-2">
+              <span className="text-body font-medium">{L('Delivery method', '傳送方式')}</span>
+              <RadioGroup value={c.ch.sms ? 'sms' : 'pns'} onValueChange={v => { if ((v === 'sms') !== !!c.ch.sms) m.pickChannel('sms') }} aria-label={L('Delivery method', '傳送方式')} className="flex flex-col gap-3">
+                <RadioGroupItem value="pns" label={L('PNS only', '只用 PNS')}
+                  description={L('Send a push notification via PNS only. No SMS if the device is unreachable.', '只透過 PNS 傳送推播通知；裝置收不到時不改發 SMS。')} />
+                <RadioGroupItem value="sms"
+                  label={<span className="inline-flex items-center gap-2">{L('PNS + SMS fallback', 'PNS + SMS 備援')}{ICSD ? <Tag size="sm" color="amber">{L('Need ICSD approval', '需 ICSD 核准')}</Tag> : null}</span>}
+                  description={L('PNS is prioritized, with SMS as a backup if the device is unreachable via PNS. (Requires ICSD approval upon submission — takes 3 working days.)', '優先使用 PNS；裝置無法透過 PNS 收到時，改以 SMS 備援。（送出後需經 ICSD 核准，約 3 個工作天。）')} />
+              </RadioGroup>
+              {/* urgent send belongs to SMS fallback: one indented checkbox under the second option, no reason to fill in */}
               {ICSD && c.ch.sms ? (
                 <div className="ml-7">
                   <Checkbox checked={c.urgent} onCheckedChange={() => m.setC({ urgent: !c.urgent })}

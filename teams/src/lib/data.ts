@@ -11,8 +11,8 @@ export const ICSD = true
 // "one record per channel" version: the list shows a row per channel of a message. It is the version being developed
 // and the default build; the earlier one-row-per-message list is frozen (build it with `--mode legacy`).
 export const SPLIT = import.meta.env.MODE !== 'legacy'
-// a study (build mode `modal`): a record's details open in a large dialog instead of the side panel
-export const MODAL = import.meta.env.MODE === 'modal'
+// a record's details open in a large dialog (the Detail modal, default since 2026-11-11) instead of the side panel
+export const MODAL = import.meta.env.MODE !== 'legacy'
 export const ME = 'p01'
 export const SUPERVISOR = 'Jimmy Chen 陳志明'
 

@@ -5,13 +5,15 @@ import { createPortal } from 'react-dom'
 import {
   AccountMenu, AppShell, AppShellAside, Avatar, Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage,
   Button, ChromeHeader, Input, Sidebar, SidebarContent, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel,
-  SidebarFooter, SidebarHeader, SidebarMenu,
+  SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuAction, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
   SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SegmentedControl, SegmentedControlItem, Tabs, TabsList, TabsTrigger,
 } from '@qijenchen/design-system'
-import { House, Megaphone, Plus, Settings, UsersRound } from 'lucide-react'
+import { House, LogOut, Megaphone, MoreHorizontal, Plus, Settings, UsersRound } from 'lucide-react'
 import { go, setApp, setLang, useApp, type Page } from '../lib/store'
 import { ME_SPACE, myTeams, spaceName, teamById } from '../lib/teams'
-import { TeamDialog } from './TeamPanels'
+import { TeamDialog, leaveCf } from './TeamPanels'
+import { ConfirmDialog, type Confirm } from './ui'
+import type { Team } from '../lib/data'
 import { L } from '../lib/i18n'
 
 // The sidebar lists sending spaces: your personal space, then a Shared spaces group with one space per team.
@@ -80,6 +82,8 @@ function LangSwitch() {
 
 function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
   const [creating, setCreating] = React.useState(false)
+  // a shared space's ⋯ menu (on hover): its settings, or leaving it
+  const [editing, setEditing] = React.useState<Team | null>(null), [cf, setCf] = React.useState<Confirm | null>(null)
   useApp()
   const teams = myTeams()
   return (
@@ -109,6 +113,14 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
               {teams.map(t => (
                 <SidebarMenuItem key={t.id}>
                   <SidebarMenuButton id={'sp:' + t.id} startIcon={UsersRound} tooltip={t.name} onClick={() => onSpace(t.id)}>{t.name}</SidebarMenuButton>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild><SidebarMenuAction icon={MoreHorizontal} showOnHover aria-label={L('More for ', '更多：') + t.name} /></DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" side="right">
+                      <DropdownMenuItem startIcon={Settings} onSelect={() => setEditing(t)}>{L('Team settings', '團隊設定')}</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem startIcon={LogOut} className="text-error-text" onSelect={() => setCf(leaveCf(t, () => setCf(null)))}>{L('Leave team', '離開團隊')}</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -127,6 +139,8 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
         </SidebarFooter>
       ) : null}
       <TeamDialog open={creating} onClose={() => setCreating(false)} />
+      <TeamDialog team={editing || undefined} open={!!editing} onClose={() => setEditing(null)} />
+      <ConfirmDialog cf={cf} onClose={() => setCf(null)} />
     </Sidebar>
   )
 }

@@ -331,7 +331,7 @@ function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: (key: s
             <span className="truncate text-body">{x.label}</span>
             <Tag size="sm" color="neutral">{x.kind}</Tag>
           </>}
-          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl.map(y => PMAP[y.pid]).filter(Boolean), group: t.type === 'group' ? t.id : undefined })}>{L(fmtN(x.ppl.length) + (x.ppl.length === 1 ? ' person' : ' people'), x.ppl.length + ' 人')}</Button> : null}
+          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + x.ppl.length + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl.map(y => PMAP[y.pid]).filter(Boolean), group: t.type === 'group' ? t.id : undefined })}>{L(fmtN(x.ppl.length) + (x.ppl.length === 1 ? ' person' : ' people'), x.ppl.length + ' 人')}</Button> : null}
         </span>
       )
     } }),

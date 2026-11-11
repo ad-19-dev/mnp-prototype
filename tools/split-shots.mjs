@@ -40,7 +40,8 @@ async function shot(name, target, list = [], pad = 0) {
   marks[name] = { w: Math.round(box.width), h: Math.round(box.height), marks: out };
 }
 const main = p.locator('#app-shell-main');
-const aside = () => p.locator('aside').last();
+// the record's details: the Detail modal (default since 2026-11-11)
+const aside = () => p.getByRole('dialog').first();
 const space = async n => { await p.getByRole('button', { name: n, exact: true }).first().click(); await wait(1300) };
 const row = (text, nth = 0) => main.locator('[role="row"]').filter({ hasText: text }).nth(nth);
 // the row actions sit in their own column outside the row, so find them by their label
@@ -48,15 +49,11 @@ const openRowMenu = async text => { await main.getByRole('button', { name: new R
 // bring a message to the top of the list (the list is longer than the window)
 const find = async text => { await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500) };
 const unfind = async () => { await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400) };
-const closeAside = async () => { await aside().getByRole('button', { name: 'Close' }).first().click().catch(() => {}); await wait(300) };
+const closeAside = async () => { await p.keyboard.press('Escape'); await wait(400) };
 // a detail panel, cut just below its last section
 // open: unfold the content accordion first (it is folded by default)
-async function panel(name, list = [], open = false) {
-  const a = aside();
-  if (open) { const t = a.locator('button[aria-expanded="false"]'); for (let i = await t.count(); i > 0; i--) { await t.first().click(); await wait(250) } }
-  const bb = await a.boundingBox();
-  const bottom = await a.evaluate(n => Math.max(...Array.from(n.querySelectorAll('section')).map(x => x.getBoundingClientRect().bottom)));
-  await shot(name, { x: bb.x, y: bb.y, width: bb.width, height: Math.min(bb.height, bottom - bb.y + 28) }, list);
+async function panel(name, list = []) {
+  await shot(name, aside(), list, 12);
 }
 const openRecord = async (text, nth = 0) => { await row(text, nth).getByRole('link').first().click().catch(async () => { await row(text, nth).getByText(text).first().click() }); await wait(700) };
 
@@ -153,13 +150,13 @@ await step('detail-fb', async () => {
   await row('Chemical delivery at Dock 2').getByText('Chemical delivery at Dock 2').first().click(); await wait(800);
   const a = aside();
   await panel('detail-fb', [
-    [1, a.getByText('Message detail').first(), 'tl'],
-    [2, a.getByText('Channel', { exact: true }).first(), 'tl'],
-    [3, a.getByText('Device Notifications', { exact: true }).first(), 'tl'],
-    [4, a.getByText('SMS fallback', { exact: true }).first(), 'tl'],
-    [5, a.getByText('Audience', { exact: true }), 'tl'],
+    [1, a.getByText('Message details').first(), 'tl'],
+    [2, a.getByText('Content', { exact: true }).first(), 'tl'],
+    [3, a.getByText('SMS fallback', { exact: true }).first(), 'tl'],
+    [4, a.getByText('Audience', { exact: true }).first(), 'tl'],
+    [5, a.getByText('Message ID', { exact: true }).first(), 'tl'],
+    [6, a.getByRole('button', { name: 'Duplicate to new message' }), 'tl'],
   ]);
-  await panel('detail-fb-open', [], true);
   await closeAside();
 });
 await step('detail-single', async () => {
@@ -246,12 +243,27 @@ await step('detail-canceled', async () => {
   await panel('detail-canceled', []); await closeAside(); await unfind();
 });
 // Edit content: one channel's text on its own screen
+// editing in the Detail modal: change a field, the footer turns into Discard changes / Save changes
 await step('edit-content', async () => {
-  await find('UX sync moves'); await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: 'Edit content' }).click(); await wait(900);
-  await shot('edit-content', null);
-  await p.locator('[data-compose]').getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(600);
-  if (await p.getByRole('dialog').count()) { await p.getByRole('dialog').getByRole('button').last().click(); await wait(500) }
-  await unfind();
+  await find('UX sync moves'); await openRecord('UX sync moves');
+  await aside().locator('#dm-sms').fill('UX sync moved: Tue 11/4 10:00, 5F-Ocean.'); await wait(300);
+  await panel('edit-content', [
+    [1, aside().locator('#dm-sms'), 'tl'],
+    [2, aside().getByRole('button', { name: 'Batch import' }), 'tl'],
+    [3, aside().locator('[role="columnheader"]').filter({ hasText: 'Company phone' }), 'tl'],
+    [4, aside().locator('#dm-at'), 'tl'],
+    [5, aside().getByRole('button', { name: 'Save changes' }), 'tl'],
+  ]);
+  await aside().getByRole('button', { name: 'Discard changes' }).click(); await wait(300);
+  await closeAside(); await unfind();
+});
+// a shared space's ⋯ menu in the sidebar
+await step('space-menu', async () => {
+  await p.getByRole('button', { name: 'Platform Ops', exact: true }).hover(); await wait(300);
+  await p.getByRole('button', { name: 'More for Platform Ops' }).click(); await wait(400);
+  const mb = await p.getByRole('menu').boundingBox();
+  await shot('space-menu', { x: 0, y: 40, width: mb.x + mb.width + 24, height: mb.y + mb.height - 40 + 24 });
+  await p.keyboard.press('Escape'); await wait(300);
 });
 // the urgent samples (personal space), one per status: the panel shows the reason the sender gave
 for (const [n, t] of [['urg-pending', 'Parking lot A closed'], ['urg-scheduled', 'Network maintenance tonight'], ['urg-progress', 'Water leak on 5F'], ['urg-sent', 'Elevator 3 out of service'], ['urg-error', 'Power dip in Building C'], ['urg-rejected', 'Fire drill moved'], ['urg-expired', 'Badge reader outage']]) await detail(n, t, t);
@@ -270,14 +282,15 @@ await step('detail-urgent', async () => {
 await step('dlg-members', async () => {
   await row('Design review', 0).getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
   await aside().getByRole('button', { name: /members of PUX/ }).click(); await wait(700);
-  await shot('dlg-members', p.getByRole('dialog'), [
-    [1, p.getByRole('dialog').getByRole('heading').first(), 'tl'],
-    [2, p.getByRole('dialog').getByPlaceholder(/Search/), 'tl'],
-    [3, p.getByRole('dialog').locator('[role="columnheader"]').first(), 'tl'],
+  const md = p.getByRole('dialog').last();
+  await shot('dlg-members', md, [
+    [1, md.getByRole('heading').first(), 'tl'],
+    [2, md.getByPlaceholder(/Search/), 'tl'],
+    [3, md.locator('[role="columnheader"]').first(), 'tl'],
   ], 12);
   await p.keyboard.press('Escape'); await wait(300);
   await aside().getByRole('button', { name: /members of Design System Guild/ }).click(); await wait(700);
-  await shot('dlg-members-group', p.getByRole('dialog'), [], 12);
+  await shot('dlg-members-group', p.getByRole('dialog').last(), [], 12);
   await p.keyboard.press('Escape'); await wait(300);
   await closeAside();
 });
