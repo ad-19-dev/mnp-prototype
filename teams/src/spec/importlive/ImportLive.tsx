@@ -102,6 +102,9 @@ function OptB() {
   const [kind, setKind] = React.useState<Kind>('nt'), [vals, setVals] = React.useState<string[]>(split(KINDS[0].sample).concat(['']))
   const hits = matchAll(kind, vals.filter(Boolean))
   let hi = 0
+  // a paste is read straight from the clipboard (a one-line field would drop its line breaks): a list of many entries,
+  // from Excel, a text file or an email, fills as many rows from this cell down
+  const pasteAt = (i: number, text: string) => setVals(l => { const many = split(text); const n = l.slice(); n.splice(i, n[i] ? 0 : 1, ...many); if (n[n.length - 1] !== '') n.push(''); return n })
   const setAt = (i: number, v: string) => setVals(l => { const n = l.slice(); const many = split(v); if (many.length > 1) n.splice(i, 1, ...many); else n[i] = v; if (n[n.length - 1] !== '') n.push(''); return n })
   return (
     <Frame kind={kind} setKind={k => { setKind(k); setVals(split(KINDS.find(x => x.k === k)!.sample).concat([''])) }}
@@ -115,7 +118,7 @@ function OptB() {
               return (
                 <tr key={i} className="border-t border-divider">
                   <td className="px-2 text-caption tabular-nums text-fg-muted">{i + 1}</td>
-                  <td className="px-1 py-1"><Input size="sm" aria-label={'Entry ' + (i + 1)} value={v} error={!!(h && h.err)} placeholder={v ? '' : 'Paste or type'} onChange={e => setAt(i, e.target.value)} /></td>
+                  <td className="px-1 py-1"><Input size="sm" aria-label={'Entry ' + (i + 1)} onPaste={e => { const t = e.clipboardData.getData('text'); if (split(t).length > 1) { e.preventDefault(); pasteAt(i, t) } }} value={v} error={!!(h && h.err)} placeholder={v ? '' : 'Paste or type'} onChange={e => setAt(i, e.target.value)} /></td>
                   <td className="px-2 py-1">{!h ? null : h.err ? <span className="text-error-text">{h.err}</span> : h.dup ? <span className="text-fg-muted">Duplicate · not added again</span>
                     : <span className="flex min-w-0 items-center gap-2">{h.p ? <PAvatar p={h.p} /> : null}<span className="truncate">{okLabel(h)}</span>{h.p ? <span className="text-caption text-fg-secondary">{h.p.org} · {h.p.emp}</span> : null}</span>}</td>
                   <td className="px-1">{v ? <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={'Remove row ' + (i + 1)} onClick={() => setVals(l => l.filter((_, j) => j !== i))} /> : null}</td>
@@ -125,7 +128,7 @@ function OptB() {
           </tbody>
         </table>
       </div>
-      <span className="text-caption text-fg-secondary">Paste a whole list into any cell to fill several rows; the last row is always empty for the next one.</span>
+      <span className="text-caption text-fg-secondary">Paste a whole list (one per line, or separated by commas, from Excel or anywhere) into any cell: it fills as many rows as it has. The last row is always empty for the next one.</span>
     </Frame>
   )
 }
@@ -181,9 +184,9 @@ export default function ImportLive() {
           <OptA />
           <Notes items={[{ title: '優點', body: '最精簡、大家熟悉（Outlook、Gmail）。一眼看出有幾個紅的。' }, { title: '缺點', body: '原因要滑過才看得到；一次幾百筆時標籤擠成一大片，不好找特定一筆；標籤上看不到原本輸入的值。' }]} cols />
         </Section>
-        <Section eyebrow="Option B" title="B：一列一筆（像試算表）" lead="左欄是輸入的值（可以直接改），右欄即時顯示比對結果：姓名與組織、工號，或紅字原因。整份名單可以貼進任何一格，會自動展開成多列。">
+        <Section eyebrow="Option B" title="B：一列一筆（像試算表）" lead="左欄是輸入的值（可以直接改），右欄即時顯示比對結果：姓名與組織、工號，或紅字原因。整份名單（從 Excel 一欄、文字檔或信件複製，換行、逗號或 Tab 分隔都可以）一次貼進任何一格，就會從那一格往下展開成多列。">
           <OptB />
-          <Notes items={[{ title: '優點', body: '輸入的值和結果並排，原因直接看得到；筆數多時可以捲動、逐列檢查；修正就是改那一格。' }, { title: '缺點', body: '比 A 佔空間；只想貼兩三個人時顯得有點重。' }]} cols />
+          <Notes items={[{ title: '優點', body: '輸入的值和結果並排，原因直接看得到；筆數多時可以捲動、逐列檢查；修正就是改那一格。' }, { title: '缺點', body: '比 A 佔空間；只想貼兩三個人時顯得有點重。（一次貼整份名單沒問題：貼進任一格就會展開成多列。）' }]} cols />
         </Section>
         <Section eyebrow="Option C" title="C：先把找到的加進去，只留下找不到的" lead="貼上後按 Add：找到的直接加入收件人，對話框只剩找不到的那幾筆，每筆可以改，再按 Try again。">
           <OptC />
