@@ -33,6 +33,7 @@ import {
   type Part, type Rec,
 } from './split'
 import type { SendCtl } from './ctl'
+import { DeliveryLogDialog } from './DeliveryLog'
 
 const canEditContent = (st: Status) => st === 'scheduled' || st === 'expired'
 const canReschedule = (st: Status) => st === 'scheduled' || st === 'expired' || st === 'error'
@@ -165,6 +166,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   React.useEffect(() => { if (!m.s.imp) importing.current = false }, [m.s.imp])
 
   const fails = failsOf(x)
+  const hasLog = st === 'sent' || st === 'error' || st === 'progress', [logOpen, setLogOpen] = React.useState(false)
   // not editable: readonly (the field's frame stays, the text keeps its normal colour, it just can't be changed)
   const mode = edit ? 'edit' as const : 'readonly' as const
   const cnt = (n: number, lim: number) => (edit ? n + ' / ' + lim : undefined)
@@ -224,7 +226,11 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
           <section className="flex flex-col gap-[var(--layout-space-tight)]">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-2"><H3>{L('Audience', '收件人')}</H3>{edit ? null : <ReadOnlyTag />}</span>
-              {fails ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text" onClick={() => m.set({ ns: r.id + '|' + k })}>{L(fails + ' not sent', fails + ' 人未送出')}</Button> : null}
+              <span className="flex items-center gap-3">
+                {fails ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text" onClick={() => m.set({ ns: r.id + '|' + k })}>{L(fails + ' not sent', fails + ' 人未送出')}</Button> : null}
+                {/* once anything has gone out: every message sent, by person, in a dialog of its own */}
+                {hasLog ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setLogOpen(true)}>{L('View delivery details', '查看發送明細')}</Button> : null}
+              </span>
             </div>
             {/* editable: the send flow's search above the list, and a remove button on every row */}
             {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag}
@@ -244,6 +250,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
         </aside>
       </div>
 
+      <DeliveryLogDialog x={x} open={logOpen} onClose={() => setLogOpen(false)} />
       <DialogFooter className="border-t border-divider">
         <div className="flex w-full flex-wrap items-center gap-2">
           {canCancel(st) ? <Button variant="secondary" danger startIcon={Ban} disabled={dirty} onClick={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</Button> : null}

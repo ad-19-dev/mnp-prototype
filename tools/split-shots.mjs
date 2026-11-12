@@ -192,6 +192,26 @@ await step('detail-mixed', async () => {
   await closeAside();
 });
 
+// ---- delivery details (from the Detail modal), then filtered to failures
+await step('dlg-delivery', async () => {
+  await space('ESH Emergency');
+  await row('Chemical delivery at Dock 2').getByText('Chemical delivery at Dock 2').first().click(); await wait(800);
+  await aside().getByRole('button', { name: 'View delivery details' }).click(); await wait(900);
+  const d = p.getByRole('dialog').last();
+  await shot('dlg-delivery', d, [
+    [1, d.getByRole('combobox', { name: 'Search by' }), 'tl'],
+    [2, d.getByRole('button', { name: /^Status/ }), 'tl'],
+    [3, d.locator('[role="columnheader"]').filter({ hasText: 'Status' }), 'tl'],
+    [4, d.locator('[role="columnheader"]').filter({ hasText: 'Sent at' }), 'tl'],
+    [5, d.getByText(/ of \d/).first(), 'tl'],
+    [6, d.getByRole('button', { name: 'Export CSV' }), 'tl'],
+  ], 12);
+  await d.getByRole('button', { name: /^Status/ }).click(); await wait(300);
+  await p.getByRole('menuitemcheckbox').filter({ hasText: 'Failed' }).click(); await p.keyboard.press('Escape'); await wait(400);
+  await shot('dlg-delivery-failed', d, [], 12);
+  await d.getByRole('button', { name: 'Close' }).last().click(); await wait(400);
+  await closeAside(); await space('My sending space');
+});
 // ---- dialogs
 await step('dlg-fail', async () => {
   await row('Design review', 0).getByRole('button', { name: /not sent/ }).click(); await wait(800);

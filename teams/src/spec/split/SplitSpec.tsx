@@ -116,6 +116,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="不能編輯的紀錄" when="Pending approval、In progress、Sent、Rejected、Canceled" shots={['detail-fb']} then={'內容與收件人是 Read only（標題旁有 Read only 標籤）。右側：' + FIELDS + '。'} />
           <Card kind="page" title="可以編輯的紀錄" when="Scheduled、Scheduled expired（Error 只能改傳送時間）" shots={['edit-content']} then="內容、收件人（搜尋、Batch import、移除；SMS 有兩欄手機）、傳送時間直接改；一改動，底部換成 Discard changes / Save changes。" />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、Device Notifications" shots={['detail-email', 'detail-push']} then="內容只有這個通道的欄位；收件人只列這個通道寄得到的人。" />
+          <Card kind="dialog" title="Delivery details" when="訊息詳情的 View delivery details（已開始送出）" shots={['dlg-delivery']} then="每一則實際送出的訊息一列：可依欄位搜尋、篩選、分頁、匯出 CSV。" />
           <Card kind="action" title="Approval Center" when="點 View in Approval Center" then="開啟內部的 Approval Center（prototype 只顯示提示）。" />
         </div>
       </Section>
@@ -303,6 +304,32 @@ function Detail() {
           { title: '沒儲存就關閉', body: <>先問 <Copy en="Discard changes?" zh="要捨棄變更嗎？" />：Keep editing / Discard。</> },
           { title: '儲存後', body: <>toast <Copy en="Changes saved" zh="已儲存變更" />；有改傳送時間時是 <Copy en="Saved. Sends <時間>" zh="已儲存，將於 <時間> 傳送" />。</> },
         ]} />
+      </Section>
+      <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 View delivery details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
+        <Figure label="Delivery details" sub="Device Notifications (SMS)，Error" shot="dlg-delivery" max={980} notes={[
+          { n: 1, title: '搜尋欄位', body: <>先選要搜尋的欄位：Recipient（姓名、電話或 Email，部分比對）、Employee ID、NT account、Serial no.（完全比對）。工號與 NT 帳號可一次貼多個，用逗號或空格分隔。名單可能有數萬人，限定欄位與完全比對，伺服器才查得快。</> },
+          { n: 2, title: '篩選', body: 'Status（附數量）、Reason、Org，Device Notifications (SMS) 多一個 Via（PNS / SMS）。都是多選，沿用列表的 FilterMenu。' },
+          { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Failed／Queued 標籤，失敗時下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。' },
+          { n: 4, title: 'Sent at', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
+          { n: 5, title: '分頁', body: '「第一筆–最後一筆 of 總數」、頁碼、每頁 50 / 100 / 200 筆。搜尋或篩選後回到第 1 頁。' },
+          { n: 6, title: 'Export CSV', body: '匯出符合目前搜尋與篩選的所有列（不只這一頁）。' },
+        ]} />
+        <SpecTable head={['欄位', '內容']} nowrap={[0]} rows={[
+          ['Serial no.', '每一則送出的訊息的流水號（訊息 ID 加序號），依送出順序'],
+          ['Recipient', '人員顯示；外部聯絡人顯示電話或 Email'],
+          ['Employee ID', '工號，查案最常用；外部聯絡人 —'],
+          ['Org', '組織代號；外部聯絡人 External'],
+          ['Via', '只在 Device Notifications (SMS)：PNS 或 SMS。推播失敗後改寄的 SMS 是同一人的另一列'],
+          ['Sent to', 'App、Windows PC、遮罩後的手機號碼（標明公務或私人）或 Email 地址'],
+          ['Status', '標籤加原因（見上）'],
+          ['Sent at', '實際送出時間'],
+        ]} />
+        <Notes items={[
+          { title: '標題列', body: <>標題 <Copy en="Delivery details" zh="發送明細" />，下方一行：訊息 ID · 通道 · n messages · n sent · n failed · n queued。</> },
+          { title: '大小', body: '設計系統 Dialog，最大寬 1280、填滿可用高度；表格固定高度、內部捲動，分頁列在表格下方。疊在訊息詳情之上，關閉後回到訊息詳情。' },
+          { title: '大量資料', body: '搜尋、篩選、分頁、篩選選單上的數量都由伺服器計算；prototype 用收件人展開後的範例資料示意。' },
+        ]} />
+        <div className="spec-gallery"><figure><figcaption><b>只看失敗</b><span>Status 篩選 Failed。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delivery-failed" alt="只看失敗" max={980} /></div></figure></div>
       </Section>
       <Section eyebrow="Variants" title="各種紀錄的訊息詳情">
         <div className="spec-gallery">
