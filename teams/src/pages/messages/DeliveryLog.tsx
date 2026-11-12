@@ -5,19 +5,19 @@
 //   Search: one box, no field to pick first (2026-11-12). Each term is matched against the name, phone or email
 //           (part of it), and the employee ID, NT account and serial no. (whole); several can be pasted at once,
 //           separated by commas or spaces. The server tells the kinds apart (digits: employee ID, MSG-like: serial...).
-//   Filters: Status (with counts), Org, and Via (Device Notifications (SMS) only). No Reason filter: a reason only
+//   Filters: Status (with counts) and Via (Device Notifications (SMS) only). No Reason filter: a reason only
 //           exists on failures and already shows under the Failed tag.
 //   Paging: 50 / 100 / 200 per page, with "first–last of total". The list is worked out on the server; the prototype
 //           builds it from the record's audience.
 //   Status and reason are one column: the status tag, and the reason under it when it failed.
-// Export CSV takes the rows that match the current search and filters.
+// No Org column or filter, no export (2026-11-12).
 import * as React from 'react'
 import {
   Button, DataTable, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
   Empty, Input, Pagination, PersonDisplay, Select, Tag,
 } from '@qijenchen/design-system'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Download, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { DOMAIN, fmtN, maskPhone, PMAP, flatten, isExtPhone, type Channel, type Person } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
 import { L } from '../../lib/i18n'
@@ -87,22 +87,21 @@ export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean;
   const app = useApp(), k: Channel = x.k
   const all = React.useMemo(() => (open ? logLines(x, app.groups) : []), [open, x.r.id, x.k, x.r.fresh, app.groups])
   const [q, setQ] = React.useState('')
-  const [fs, setFs] = React.useState<St[]>([]), [fo, setFo] = React.useState<string[]>([]), [fv, setFv] = React.useState<string[]>([])
+  const [fs, setFs] = React.useState<St[]>([]), [fv, setFv] = React.useState<string[]>([])
   const [page, setPage] = React.useState(1), [per, setPer] = React.useState(50)
-  React.useEffect(() => { if (open) { setQ(''); setFs([]); setFo([]); setFv([]); setPage(1) } }, [open, x.id])
+  React.useEffect(() => { if (open) { setQ(''); setFs([]); setFv([]); setPage(1) } }, [open, x.id])
   const terms = q.split(/[\s,，;]+/).map(t => t.trim().toLowerCase()).filter(Boolean)
   // any term matches part of the name, phone or email, or the whole employee ID, NT account or serial no.
   const match = (l: LogLine) => !terms.length || terms.some(t => (l.who + ' ' + l.to).toLowerCase().indexOf(t) >= 0 || t === l.emp.toLowerCase() || t === l.nt.toLowerCase() || t === l.sn.toLowerCase())
-  const rows = all.filter(l => match(l) && (!fs.length || fs.indexOf(l.st) >= 0) && (!fo.length || fo.indexOf(l.org) >= 0) && (!fv.length || fv.indexOf(l.via) >= 0))
+  const rows = all.filter(l => match(l) && (!fs.length || fs.indexOf(l.st) >= 0) && (!fv.length || fv.indexOf(l.via) >= 0))
   const pages = Math.max(1, Math.ceil(rows.length / per)), pg = Math.min(page, pages), shown = rows.slice((pg - 1) * per, pg * per)
   const flip = <T,>(set: React.Dispatch<React.SetStateAction<T[]>>) => (v: T) => { set(l => (l.indexOf(v) >= 0 ? l.filter(y => y !== v) : l.concat([v]))); setPage(1) }
   const count = (f: (l: LogLine) => string) => { const m: Record<string, number> = {}; all.forEach(l => { const v = f(l); if (v) m[v] = (m[v] || 0) + 1 }); return m }
-  const byOrg = count(l => l.org), byVia = count(l => l.via), bySt = count(l => l.st)
+  const byVia = count(l => l.via), bySt = count(l => l.st)
   const cols = React.useMemo(() => [
     col.accessor('sn', { header: L('Serial no.', '流水號'), meta: { width: 140, maxWidth: 140 }, cell: i => <span className="tabular-nums">{i.getValue()}</span> }),
     col.display({ id: 'who', header: L('Recipient', '收件人'), meta: { width: 220 }, cell: i => { const l = i.row.original; return l.p ? <PersonDisplay value={personVal(l.p)} /> : <span className="truncate">{l.who}</span> } }),
     col.accessor('emp', { header: L('Employee ID', '工號'), meta: { width: 124, maxWidth: 124 }, cell: i => i.getValue() ? <span className="tabular-nums">{i.getValue()}</span> : <span className="text-fg-muted">—</span> }),
-    col.accessor('org', { header: L('Org', '組織'), meta: { width: 96, maxWidth: 96 } }),
     ...(k === 'sms' ? [col.accessor('via', { header: L('Via', '管道'), meta: { width: 72, maxWidth: 72 } })] : []),
     col.accessor('to', { header: L('Sent to', '寄送到'), meta: { width: 200, maxWidth: 220 }, cell: i => <span className="truncate tabular-nums">{i.getValue()}</span> }),
     // status and reason in one column: the tag, and why under it when it failed
@@ -110,7 +109,6 @@ export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean;
     col.accessor('at', { header: L('Sent at', '送出時間'), meta: { width: 168, maxWidth: 168 }, cell: i => <span className="whitespace-nowrap tabular-nums">{i.getValue()}</span> }),
   ], [k, app.lang])
   const opts = (m: Record<string, number>) => Object.keys(m).sort().map(v => ({ k: v, view: <span>{v}</span>, n: m[v] }))
-  const exportCsv = () => flash(L('Exporting ' + fmtN(rows.length) + ' rows as CSV', '匯出 ' + fmtN(rows.length) + ' 筆 CSV'), 'ok')
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
       {open ? (
@@ -131,7 +129,6 @@ export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean;
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                   <FilterMenu<string> label={L('Status', '狀態')} sel={fs} toggle={flip(setFs) as any} clear={() => { setFs([]); setPage(1) }}
                     opts={(['sent', 'failed', 'queued'] as St[]).filter(s => bySt[s]).map(s => ({ k: s, view: <Tag size="sm" color={ST[s].color}>{ST[s].label()}</Tag>, n: bySt[s] }))} />
-                  <FilterMenu<string> label={L('Org', '組織')} sel={fo} toggle={flip(setFo)} clear={() => { setFo([]); setPage(1) }} opts={opts(byOrg)} />
                   {k === 'sms' ? <FilterMenu<string> label={L('Via', '管道')} sel={fv} toggle={flip(setFv)} clear={() => { setFv([]); setPage(1) }} opts={opts(byVia)} /> : null}
                 </div>
               </div>
@@ -149,7 +146,6 @@ export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean;
             </div>
           </DialogBody>
           <DialogFooter>
-            <Button variant="tertiary" startIcon={Download} className="mr-auto" onClick={exportCsv}>{L('Export CSV', '匯出 CSV')}</Button>
             <Button variant="primary" onClick={onClose}>{L('Close', '關閉')}</Button>
           </DialogFooter>
         </DialogContent>

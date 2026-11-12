@@ -28,12 +28,13 @@ function initialLang(): Lang {
 let state: AppState = {
   page: (['send', 'groups', 'templates'].indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : 'send') as Page,
   lang: initialLang(),
-  rows: ROWS0,
-  groups: GROUPS.map(g => ({ ...g })),
-  templates: TEMPLATES.map(t => ({ ...t })),
+  // no personal space (2026-11-12): what was in it now belongs to UX Team, the space that opens first
+  rows: ROWS0.map(r => (r.team ? r : { ...r, team: 'tm4' })),
+  groups: GROUPS.map(g => ({ ...g, team: g.team || 'tm4' })),
+  templates: TEMPLATES.map(t => ({ ...t, team: t.team || 'tm4' })),
   teams: TEAMS.map(t => ({ ...t, members: t.members.map(x => ({ ...x })) })),
   useTemplateId: null,
-  space: 'me',
+  space: 'tm4',
 }
 document.documentElement.lang = state.lang === 'zh' ? 'zh-Hant' : 'en'
 const subs = new Set<() => void>()

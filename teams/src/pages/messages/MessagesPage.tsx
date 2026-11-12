@@ -3,7 +3,7 @@ import * as React from 'react'
 import { Button } from '@qijenchen/design-system'
 import { Plus } from 'lucide-react'
 import { useLogic } from '../../lib/logic'
-import { ME_SPACE, inTeam } from '../../lib/teams'
+import { inTeam, myTeams } from '../../lib/teams'
 import { scopeLabel } from './ctl'
 import { getApp, setApp, useApp } from '../../lib/store'
 import { ConfirmDialog } from '../../components/ui'
@@ -22,7 +22,7 @@ export function MessagesPage() {
   const app = useApp()
   const [s, m] = useLogic(initSend, makeSendCtl)
   // the open space may vanish (you left the team): fall back to your personal space
-  React.useEffect(() => { if (app.space !== ME_SPACE && !inTeam(app.space)) setApp({ space: ME_SPACE }) }, [app.space, app.teams])
+  React.useEffect(() => { if (!inTeam(app.space)) { const t = myTeams()[0]; if (t) setApp({ space: t.id }) } }, [app.space, app.teams])
   // another space starts from its first page, unfiltered
   React.useEffect(() => { m.set({ page: 1, q: '', fs: [], fch: [], det: null }) }, [app.space, m])
   useNavHome(() => m.goList())

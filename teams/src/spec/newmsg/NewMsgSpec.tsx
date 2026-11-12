@@ -459,7 +459,7 @@ function Dialogs() {
         <Gallery items={[['dlg-import', '輸入名單', '先選資料類型'], ['dlg-import-list', '貼上名單'], ['dlg-import-result', '比對結果']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
-          ['List', <>多行輸入，提示 <Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />右上角顯示筆數。下方 Upload .csv or .txt 與 Try a sample。</>],
+          ['List', <>多行輸入，提示 <Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />右上角顯示筆數。（沒有上傳檔案與範例名單）</>],
           ['比對結果', '數量標籤：n ready（綠）、n to choose（黃）、n not found（紅）、n already added（灰）。下方分組：Who do you mean?（同名，勾選）、Ready to add、Not found。'],
           ['按鈕', '輸入階段：Cancel、Find matches；結果階段：Edit list（回到輸入）、Add n audiences（沒有可加入的時是 Nothing to add；只剩找不到的時是 Fix entries not found）。'],
         ]} />
@@ -481,7 +481,6 @@ function Dialogs() {
           ['Save as group、Save as template', '名稱沒填', <Copy en="Enter a name." zh="請輸入名稱。" />, '按 Save 後', '擋 Save'],
           ['Save as group、Save as template', '名稱超過 50 字、與這個空間已有的重名', <><Copy en="Up to 50 characters." zh="最多 50 字。" />　<Copy en="This name is taken." zh="這個名稱已經有人用了。" /></>, '即時', '擋 Save'],
           ['Batch import', '有找不到的項目', '紅色標籤 n not found，下方列出每筆的原因', '按 Find matches 後', '不擋；找得到的照樣可以加入'],
-          ['Batch import', '上傳的檔案讀不到', <Copy en="Can’t read that file. Use .csv or .txt." zh="無法讀取檔案，請用 .csv 或 .txt。" />, '上傳當下（紅色 toast）', '—'],
         ]} />
       </Section>
     </>
@@ -511,7 +510,6 @@ function After() {
           ['存成群組', <Copy en="Group saved" zh="已存成群組" />],
           ['Send me a test 成功', <Copy en="Test sent via n channels" zh="已透過 n 個通道寄出測試" />],
           ['Send me a test、Save as template 時內容有錯（紅色）', <Copy en="Finish the message first" zh="請先完成訊息內容" />],
-          ['Batch import 上傳的檔案讀不到（紅色）', <Copy en="Can’t read that file. Use .csv or .txt." zh="無法讀取檔案，請用 .csv 或 .txt。" />],
           ['訊息詳情儲存變更', <Copy en="Changes saved" zh="已儲存變更" />],
         ]} />
       </Section>

@@ -72,7 +72,7 @@ export function leaveCf(team: Team, done: () => void): Confirm {
       run: () => {
         setApp(s => last
           ? { teams: s.teams.filter(t => t.id !== team.id), rows: s.rows.filter(r => r.team !== team.id), groups: s.groups.filter(g => g.team !== team.id), templates: s.templates.filter(t => t.team !== team.id), space: 'me' }
-          : { teams: s.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t), space: 'me' })
+          : { teams: s.teams.map(t => t.id === team.id ? { ...t, members: t.members.filter(x => x.pid !== ME) } : t) })
         done()
         flash(last ? L('Space deleted', '已刪除空間') : L('You left ' + team.name, '已離開「' + team.name + '」'), 'ok')
       },

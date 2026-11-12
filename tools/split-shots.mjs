@@ -171,8 +171,8 @@ await step('detail-fb', async () => {
   await closeAside();
 });
 await step('detail-single', async () => {
-  await space('My sending space');
-  await find('Design review'); await row('Design review', 1).getByText('Design review with Northwind Studio: Thu, Nov 6').first().click(); await wait(800);
+  await space('UX Team');
+  await find('Design review'); await main.getByText('Design review with Northwind Studio: Thu, Nov 6').first().click(); await wait(800);
   await panel('detail-email', [], true);
   await closeAside();
   await find('Team lunch moves'); await row('Team lunch moves to 12:30').getByText('Team lunch moves to 12:30 today').first().click(); await wait(800);
@@ -180,12 +180,14 @@ await step('detail-single', async () => {
   await closeAside(); await unfind();
 });
 await step('detail-pending', async () => {
+  await find('Atlas demo moves');
   await row('Atlas demo moves').getByText('Atlas demo moves to Mon').first().click(); await wait(800);
   await panel('detail-pending', []);
   await closeAside();
 });
 await step('detail-mixed', async () => {
-  await row('Design review', 0).getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
+  await find('Design review');
+  await main.getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
   await panel('detail-mixed', [
     [1, aside().getByRole('button', { name: /Approval Center/ }), 'tl'],
   ]);
@@ -204,17 +206,17 @@ await step('dlg-delivery', async () => {
     [3, d.locator('[role="columnheader"]').filter({ hasText: 'Status' }), 'tl'],
     [4, d.locator('[role="columnheader"]').filter({ hasText: 'Sent at' }), 'tl'],
     [5, d.getByText(/ of \d/).first(), 'tl'],
-    [6, d.getByRole('button', { name: 'Export CSV' }), 'tl'],
   ], 12);
   await d.getByRole('button', { name: /^Status/ }).click(); await wait(300);
   await p.getByRole('menuitemcheckbox').filter({ hasText: 'Failed' }).click(); await p.keyboard.press('Escape'); await wait(400);
   await shot('dlg-delivery-failed', d, [], 12);
   await d.getByRole('button', { name: 'Close' }).last().click(); await wait(400);
-  await closeAside(); await space('My sending space');
+  await closeAside(); await space('UX Team');
 });
 // ---- dialogs
 await step('dlg-fail', async () => {
-  await row('Design review', 0).getByRole('button', { name: /not sent/ }).click(); await wait(800);
+  await find('Design review');
+  await main.locator('[role="row"]').filter({ hasText: 'Thu 11/6' }).first().getByRole('button', { name: /not sent/ }).click(); await wait(800);
   const d = p.getByRole('dialog'); await shot('dlg-fail', d, [
     [1, d.getByText('Not sent to', { exact: true }), 'tl'],
     [2, d.locator('[role="columnheader"]').filter({ hasText: 'Reason' }), 'tl'],
@@ -227,9 +229,9 @@ await step('dlg-fail', async () => {
 });
 const dlgShot = async (name, text, item, btn) => {
   await step(name, async () => {
-    await openRowMenu(text); await p.getByRole('menuitem', { name: item }).click(); await wait(600);
+    await find(text); await openRowMenu(text); await p.getByRole('menuitem', { name: item }).click(); await wait(600);
     await shot(name, p.getByRole('dialog'), [], 12);
-    await p.keyboard.press('Escape'); await wait(300);
+    await p.keyboard.press('Escape'); await wait(300); await unfind();
   });
 };
 await dlgShot('dlg-cancel', 'UX sync moves', /^Cancel sending$/);
@@ -239,7 +241,7 @@ await dlgShot('dlg-reschedule', 'UX sync moves', /^Reschedule/);
 
 // ---- one list row (or the message's rows) per status
 await step('status-rows', async () => {
-  await space('My sending sp').catch(() => {});
+  await space('UX Team').catch(() => {});
 });
 await step('rows', async () => {
   const pairs = [['st-pending', 'Atlas demo moves'], ['st-expired', 'UX sync moves'], ['st-rejected', 'Reminder: badge photo'], ['st-scheduled', 'out of office'], ['st-progress', 'Fire alarm'], ['st-sent', 'Design review'], ['st-error', 'On-call swap'], ['st-mixed', 'Team lunch on Fri'], ['st-canceled', 'Badge reader']];
@@ -257,7 +259,7 @@ const detail = async (name, text, title, list = []) => {
   await step(name, async () => {
     // search first so the message is at the top of the list, in view
     await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500);
-    await row(text, 0).getByText(title).first().click(); await wait(800);
+    await main.getByText(title).first().click(); await wait(800);
     await panel(name, list); await closeAside();
     await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
   });
@@ -306,12 +308,13 @@ await step('detail-sms-notneeded', async () => {
 await step('detail-urgent', async () => {
   await space('ESH Emergency');
   await row('Typhoon update: offices reopen').getByText('Typhoon update: offices reopen').first().click(); await wait(800);
-  await panel('detail-urgent', []); await closeAside(); await space('My sending sp').catch(() => {});
-  await p.getByRole('button', { name: 'My sending space', exact: true }).first().click().catch(() => {}); await wait(1200);
+  await panel('detail-urgent', []); await closeAside(); await space('UX Team').catch(() => {});
+  await p.getByRole('button', { name: 'UX Team', exact: true }).first().click().catch(() => {}); await wait(1200);
 });
 // ---- members dialog (from a group or org in the audiences)
 await step('dlg-members', async () => {
-  await row('Design review', 0).getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
+  await find('Design review');
+  await main.getByText('Design review with Northwind Studio: Thu 11/6').first().click(); await wait(800);
   await aside().getByRole('button', { name: /members of PUX/ }).click(); await wait(700);
   const md = p.getByRole('dialog').last();
   await shot('dlg-members', md, [
@@ -327,6 +330,7 @@ await step('dlg-members', async () => {
 });
 // ---- failed-members dialog: without SMS fallback, and a message that failed as a whole
 await step('dlg-fail-email', async () => {
+  await find('Design review');
   const rs = main.locator('[role="row"]').filter({ hasText: 'Design review' });
   await rs.nth(1).getByRole('button', { name: /not sent/ }).click().catch(async () => { await main.getByRole('button', { name: /^1 not sent$/ }).nth(1).click() }); await wait(800);
   await shot('dlg-fail-email', p.getByRole('dialog'), [], 12);

@@ -50,11 +50,6 @@ export function ImportDialog({ m }: { m: SendCtl }) {
         <FormField id="imp-text" label={L('List', '名單')} count={n ? P(n, 'entry', '筆', 'entries') : ''} hint={L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
           <Textarea id="imp-text" rows={8} className="font-mono" value={imp.text} onChange={ev => m.setImp({ text: ev.target.value, file: '' })} placeholder={k ? L('e.g. ', '例如：') + listKindExample(k) : L('Choose a data type first', '請先選擇資料類型')} />
         </FormField>
-        <div className="flex flex-wrap items-center gap-3">
-          <FileUpload variant="button" accept=".csv,.txt,text/csv,text/plain" buttonLabel={L('Upload .csv or .txt', '上傳 .csv 或 .txt')} onUpload={files => m.onImpFile(files[0])} />
-          <Button variant="link" size="sm" disabled={!k} onClick={() => k && m.setImp({ text: LIST_SAMPLES[k], file: '' })}>{L('Try a sample', '使用範例名單')}</Button>
-          {imp.file ? <span className="text-caption text-fg-secondary">{L('Loaded ', '已載入 ') + imp.file}</span> : null}
-        </div>
       </Shell>
     )
   }

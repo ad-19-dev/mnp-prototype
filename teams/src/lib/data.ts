@@ -406,10 +406,10 @@ export const ROWS0 = buildRows()
 export interface Team { id: string; name: string; desc: string; created: string; members: { pid: string }[] }
 const TM = (pids: string): Team['members'] => pids.split(' ').map(pid => ({ pid }))
 export const TEAMS: Team[] = [
+  { id: 'tm4', name: 'UX Team', desc: 'Research recruiting and design system updates.', created: '2026/06/30', members: TM('p09 p01 p05 p18') },
   { id: 'tm1', name: 'Platform Ops', desc: 'tWorkspace operations: maintenance windows, incidents and release notes.', created: '2026/03/02', members: TM('p01 p22 p02 p10 p08 p17') },
   { id: 'tm2', name: 'Fab 18 Communications', desc: 'Facility and shift notices for Fab 18.', created: '2026/05/18', members: TM('p12 p20 p24 p04 p16 p01') },
   { id: 'tm3', name: 'ESH Emergency', desc: 'Emergency alerts and drills.', created: '2026/04/09', members: TM('p19 p13 p07 p01') },
-  { id: 'tm4', name: 'UX Team', desc: 'Research recruiting and design system updates.', created: '2026/06/30', members: TM('p09 p01 p05 p18') },
   { id: 'tm5', name: 'IT Service Desk', desc: 'IT notices for employees.', created: '2026/02/11', members: TM('p14 p11 p21') },
 ]
 // which space owns what in the sample data; anything not listed is in its creator's personal space

@@ -298,7 +298,6 @@ function GroupEditor({ m }: { m: GCtl }) {
                 </FormField>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-caption text-fg-secondary">{L('Separate with commas or new lines.', '用逗號或換行分隔。')}</span>
-                  <Button variant="link" size="sm" disabled={!ed.listKind} onClick={() => ed.listKind && m.setEd({ input: LIST_SAMPLES[ed.listKind] }, true)}>{L('Try a sample', '使用範例')}</Button>
                   <Button variant="primary" startIcon={Wand2} className="ml-auto" disabled={!inputN || !ed.listKind} onClick={() => m.parseMembers()}>{L('Add', '加入')}</Button>
                 </div>
               </div>

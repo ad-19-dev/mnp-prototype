@@ -87,7 +87,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
       </Section>
 
       <Section eyebrow="1" title="訊息列表" lead={<>每一列是一個通道的紀錄，每一列都顯示自己的完整資料；同一次發送的紀錄有相同的訊息 ID（例：MSG-10154），排在一起。欄位見「<button type="button" className="flow-spec-link" onClick={() => go('list')}>列表</button>」。</>}>
-        <Figure label="訊息列表（個人發送空間）" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
+        <Figure label="訊息列表（UX Team）" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
           { n: 1, title: '通道', body: 'Device Notifications、Device Notifications (SMS)、Desktop OS、Email。' },
           { n: 2, title: '訊息 ID、標題 / 內容', body: '訊息 ID 標籤，後面是這個通道的標題與內文；點標題開訊息詳情。' },
           { n: 3, title: '狀態', body: '這一筆的狀態。' },
@@ -116,7 +116,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="不能編輯的紀錄" when="Pending approval、In progress、Sent、Rejected、Canceled" shots={['detail-fb']} then={'內容與收件人是 Read only（標題旁有 Read only 標籤）。右側：' + FIELDS + '。'} />
           <Card kind="page" title="可以編輯的紀錄" when="Scheduled、Scheduled expired（Error 只能改傳送時間）" shots={['edit-content']} then="內容、收件人（搜尋、Batch import、移除；SMS 有兩欄手機）、傳送時間直接改；一改動，底部換成 Discard changes / Save changes。" />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、Device Notifications" shots={['detail-email', 'detail-push']} then="內容只有這個通道的欄位；收件人只列這個通道寄得到的人。" />
-          <Card kind="dialog" title="Delivery details" when="訊息詳情的 View delivery details（已開始送出）" shots={['dlg-delivery']} then="每一則實際送出的訊息一列：可依欄位搜尋、篩選、分頁、匯出 CSV。" />
+          <Card kind="dialog" title="Delivery details" when="訊息詳情的 View delivery details（已開始送出）" shots={['dlg-delivery']} then="每一則實際送出的訊息一列：可以搜尋、篩選、分頁。" />
           <Card kind="action" title="Approval Center" when="點 View in Approval Center" then="開啟內部的 Approval Center（prototype 只顯示提示）。" />
         </div>
       </Section>
@@ -180,7 +180,7 @@ function ListTab() {
   return (
     <>
       <Section eyebrow="Page" title="列表" lead="一列一個通道的紀錄。頁首、搜尋與篩選、表格、分頁。">
-        <Figure label="個人發送空間" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
+        <Figure label="UX Team" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
           { n: 1, title: '通道', body: <>只顯示圖示，滑過顯示通道名稱。Device Notifications (SMS) 用「手機加小信封」的圖示，和 Device Notifications 的手機圖示區分。設計系統與 lucide 都沒有這個圖示，是自己畫的（lucide 24px 格線、2px 線寬）。</> },
           { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開訊息詳情）加一行內文，過長截斷，不顯示滑過提示。Email 顯示主旨與內文；Device Notifications (SMS) 顯示 Device Notifications 的文字。</> },
           { n: 3, title: '狀態', body: '這一筆的狀態，見「狀態與合併規則」。' },
@@ -308,17 +308,15 @@ function Detail() {
       <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 View delivery details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
         <Figure label="Delivery details" sub="Device Notifications (SMS)，Error" shot="dlg-delivery" max={980} notes={[
           { n: 1, title: '搜尋', body: <>一個搜尋框，不用先選欄位，提示 <Copy en="Search name, employee ID, NT account, phone or serial no." zh="搜尋姓名、工號、NT 帳號、電話或流水號" />。姓名、電話、Email 部分比對；工號、NT 帳號、流水號完全比對（由伺服器依格式判斷，名單有數萬人時才查得快）。可以一次貼多個，用逗號或空格分隔。</> },
-          { n: 2, title: '篩選', body: 'Status（附數量）、Org，Device Notifications (SMS) 多一個 Via（PNS / SMS）。都是多選，沿用列表的 FilterMenu。沒有 Reason 篩選：原因只在失敗時才有，已經寫在 Failed 標籤下方。' },
+          { n: 2, title: '篩選', body: 'Status（附數量），Device Notifications (SMS) 多一個 Via（PNS / SMS）。都是多選，沿用列表的 FilterMenu。沒有 Reason 篩選：原因只在失敗時才有，已經寫在 Failed 標籤下方。' },
           { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Failed／Queued 標籤，失敗時下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。' },
           { n: 4, title: 'Sent at', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
           { n: 5, title: '分頁', body: '「第一筆–最後一筆 of 總數」、頁碼、每頁 50 / 100 / 200 筆。搜尋或篩選後回到第 1 頁。' },
-          { n: 6, title: 'Export CSV', body: '匯出符合目前搜尋與篩選的所有列（不只這一頁）。' },
         ]} />
         <SpecTable head={['欄位', '內容']} nowrap={[0]} rows={[
           ['Serial no.', '每一則送出的訊息的流水號（訊息 ID 加序號），依送出順序'],
           ['Recipient', '人員顯示；外部聯絡人顯示電話或 Email'],
           ['Employee ID', '工號，查案最常用；外部聯絡人 —'],
-          ['Org', '組織代號；外部聯絡人 External'],
           ['Via', '只在 Device Notifications (SMS)：PNS 或 SMS。推播失敗後改寄的 SMS 是同一人的另一列'],
           ['Sent to', 'App、Windows PC、遮罩後的手機號碼（標明公務或私人）或 Email 地址'],
           ['Status', '標籤加原因（見上）'],
@@ -497,7 +495,7 @@ function Blocks() {
           ['Template', '模板名稱，沒有時 —', '每一筆'],
           ['Created', '建立時間', '每一筆'],
           ['Send time', '傳送時間；可以改時是日期時間欄位', '每一筆'],
-          ['Created by', '設計系統 PersonDisplay', '每一筆（個人空間的列表上沒有這一欄，這裡也顯示）'],
+          ['Created by', '設計系統 PersonDisplay', '每一筆'],
         ]} />
       </Section>
       <Section eyebrow="Left" title="Content 與 Audience">
@@ -578,15 +576,15 @@ function Modals() {
 // ---------- sample data ----------
 function Data() {
   return (
-    <Section eyebrow="Data" title="prototype 的範例資料" lead="個人空間與四個團隊空間（Platform Ops、Fab 18 Communications、ESH Emergency、UX Team）都有七種狀態的訊息。">
+    <Section eyebrow="Data" title="prototype 的範例資料" lead="四個發送空間（UX Team、Platform Ops、Fab 18 Communications、ESH Emergency），沒有個人空間；打開時是 UX Team。每個空間都有各種狀態的訊息。">
       <SpecTable head={['要看什麼', '去哪裡']} nowrap={[0]} rows={[
-        ['各通道狀態不同', '個人「Fire alarm test…」（Device Notifications 已送出，SMS 與 Email 傳送中）；ESH「Chemical delivery at Dock 2」（推播送出、SMS 傳送錯誤）；個人「Team lunch on Fri 11/7」（Device Notifications 已送出、Email 傳送錯誤）'],
-        ['多種收件人', '個人「Design review with Northwind Studio」；Platform Ops「tWorkspace 5.2 is live」；Fab 18「Water shutdown」；ESH「Chemical delivery」；UX Team「Usability study invitation」'],
-        ['SMS 備援與未送出人數', '個人「Design review…」：Device Notifications 4 人未送達，SMS 補寄後仍有 1 人未送出'],
-        ['待核准、已駁回、排程已過期', '個人「Project Atlas demo」、「Reminder: badge photo update」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
-        ['已取消的通道', '個人「Badge reader outage at the B lobby until 12:00」：Email 已取消，Device Notifications (SMS) 排程已過期'],
-        ['緊急送出（七種狀態）', '個人空間「Parking lot A closed…」（待核准）、「Network maintenance tonight…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out of service…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
-        ['傳送錯誤', '個人「On-call swap」；Fab 18「Shift handover…」；UX Team「Reminder: send design review topics」'],
+        ['各通道狀態不同', 'UX Team「Fire alarm test…」（Device Notifications 已送出，SMS 與 Email 傳送中）；ESH「Chemical delivery at Dock 2」（推播送出、SMS 傳送錯誤）；UX Team「Team lunch on Fri 11/7」（Device Notifications 已送出、Email 傳送錯誤）'],
+        ['多種收件人', 'UX Team「Design review with Northwind Studio」；Platform Ops「tWorkspace 5.2 is live」；Fab 18「Water shutdown」；ESH「Chemical delivery」；UX Team「Usability study invitation」'],
+        ['SMS 備援與未送出人數', 'UX Team「Design review…」：Device Notifications 4 人未送達，SMS 補寄後仍有 1 人未送出'],
+        ['待核准、已駁回、排程已過期', 'UX Team「Project Atlas demo」、「Reminder: badge photo update」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
+        ['已取消的通道', 'UX Team「Badge reader outage at the B lobby until 12:00」：Email 已取消，Device Notifications (SMS) 排程已過期'],
+        ['緊急送出（七種狀態）', 'UX Team「Parking lot A closed…」（待核准）、「Network maintenance tonight…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out of service…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
+        ['傳送錯誤', 'UX Team「On-call swap」；Fab 18「Shift handover…」；UX Team「Reminder: send design review topics」'],
       ]} />
     </Section>
   )

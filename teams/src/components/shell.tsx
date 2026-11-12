@@ -96,15 +96,7 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton id={'sp:' + ME_SPACE} startIcon={House} tooltip={spaceName(ME_SPACE)} onClick={() => onSpace(ME_SPACE)}>{spaceName(ME_SPACE)}</SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* no personal space (2026-11-12): messages are sent from a shared space */}
         <SidebarGroup>
           <SidebarGroupLabel>{L('Shared spaces', '共享發送空間')}</SidebarGroupLabel>
           <SidebarGroupAction icon={Plus} aria-label={L('New space', '建立空間')} onClick={() => setCreating(true)} />

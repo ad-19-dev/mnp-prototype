@@ -59,7 +59,7 @@ await step('dlg-import', async () => {
   await shot('dlg-import', dlg(), [], 12);
   await dlg().getByRole('combobox').first().click(); await wait(300);
   await p.getByRole('option').first().click(); await wait(300);
-  await dlg().getByRole('button', { name: 'Try a sample' }).click(); await wait(300);
+  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, celee\nsywangd, psyang, a19999'); await wait(300);
   await shot('dlg-import-list', dlg(), [], 12);
   await dlg().getByRole('button', { name: 'Find matches' }).click(); await wait(700);
   await shot('dlg-import-result', dlg(), [], 12);
