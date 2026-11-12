@@ -199,7 +199,7 @@ await step('dlg-delivery', async () => {
   await aside().getByRole('button', { name: 'View delivery details' }).click(); await wait(900);
   const d = p.getByRole('dialog').last();
   await shot('dlg-delivery', d, [
-    [1, d.getByRole('combobox', { name: 'Search by' }), 'tl'],
+    [1, d.getByRole('searchbox').first(), 'tl'],
     [2, d.getByRole('button', { name: /^Status/ }), 'tl'],
     [3, d.locator('[role="columnheader"]').filter({ hasText: 'Status' }), 'tl'],
     [4, d.locator('[role="columnheader"]').filter({ hasText: 'Sent at' }), 'tl'],

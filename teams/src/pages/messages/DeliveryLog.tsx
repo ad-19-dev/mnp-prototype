@@ -2,9 +2,11 @@
 // (orgs and groups expanded). Opened from the Detail modal's "View delivery details", in a dialog of its own with the
 // full width and height, because one send can reach tens of thousands of people and this is where a sender digs into a
 // problem ("did Jason get it?", "why did PENG's SMS fail?").
-//   Search: pick what to search by (Recipient, Employee ID, NT account, Serial no.); exact match on IDs, so it stays
-//           fast on a big send. Several employee IDs can be pasted at once, separated by commas or spaces.
-//   Filters: Status (with counts), Reason, Org, and Via (Device Notifications (SMS) only).
+//   Search: one box, no field to pick first (2026-11-12). Each term is matched against the name, phone or email
+//           (part of it), and the employee ID, NT account and serial no. (whole); several can be pasted at once,
+//           separated by commas or spaces. The server tells the kinds apart (digits: employee ID, MSG-like: serial...).
+//   Filters: Status (with counts), Org, and Via (Device Notifications (SMS) only). No Reason filter: a reason only
+//           exists on failures and already shows under the Failed tag.
 //   Paging: 50 / 100 / 200 per page, with "first–last of total". The list is worked out on the server; the prototype
 //           builds it from the record's audience.
 //   Status and reason are one column: the status tag, and the reason under it when it failed.
@@ -78,36 +80,24 @@ export function logLines(x: Rec, groups: Parameters<typeof flatten>[1]): LogLine
   return out
 }
 
-type By = 'who' | 'emp' | 'nt' | 'sn'
-const BY: { k: By; label: () => string; ph: () => string }[] = [
-  { k: 'who', label: () => L('Recipient', '收件人'), ph: () => L('Name, phone or email', '姓名、電話或 Email') },
-  { k: 'emp', label: () => L('Employee ID', '工號'), ph: () => L('One or more, e.g. 120588, 103217', '可輸入多個，例如 120588, 103217') },
-  { k: 'nt', label: () => L('NT account', 'NT 帳號'), ph: () => L('One or more, e.g. gywu, cmchen', '可輸入多個，例如 gywu, cmchen') },
-  { k: 'sn', label: () => L('Serial no.', '流水號'), ph: () => L('Full serial number', '完整的流水號') },
-]
 const PER = [50, 100, 200]
 const col = createColumnHelper<LogLine>()
 
 export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean; onClose: () => void }) {
   const app = useApp(), k: Channel = x.k
   const all = React.useMemo(() => (open ? logLines(x, app.groups) : []), [open, x.r.id, x.k, x.r.fresh, app.groups])
-  const [by, setBy] = React.useState<By>('who'), [q, setQ] = React.useState('')
-  const [fs, setFs] = React.useState<St[]>([]), [fr, setFr] = React.useState<string[]>([]), [fo, setFo] = React.useState<string[]>([]), [fv, setFv] = React.useState<string[]>([])
+  const [q, setQ] = React.useState('')
+  const [fs, setFs] = React.useState<St[]>([]), [fo, setFo] = React.useState<string[]>([]), [fv, setFv] = React.useState<string[]>([])
   const [page, setPage] = React.useState(1), [per, setPer] = React.useState(50)
-  React.useEffect(() => { if (open) { setQ(''); setFs([]); setFr([]); setFo([]); setFv([]); setPage(1) } }, [open, x.id])
+  React.useEffect(() => { if (open) { setQ(''); setFs([]); setFo([]); setFv([]); setPage(1) } }, [open, x.id])
   const terms = q.split(/[\s,，;]+/).map(t => t.trim().toLowerCase()).filter(Boolean)
-  const match = (l: LogLine) => {
-    if (!terms.length) return true
-    if (by === 'who') return terms.some(t => (l.who + ' ' + l.to).toLowerCase().indexOf(t) >= 0)
-    if (by === 'emp') return terms.indexOf(l.emp.toLowerCase()) >= 0
-    if (by === 'nt') return terms.indexOf(l.nt.toLowerCase()) >= 0
-    return terms.indexOf(l.sn.toLowerCase()) >= 0
-  }
-  const rows = all.filter(l => match(l) && (!fs.length || fs.indexOf(l.st) >= 0) && (!fr.length || fr.indexOf(l.reason) >= 0) && (!fo.length || fo.indexOf(l.org) >= 0) && (!fv.length || fv.indexOf(l.via) >= 0))
+  // any term matches part of the name, phone or email, or the whole employee ID, NT account or serial no.
+  const match = (l: LogLine) => !terms.length || terms.some(t => (l.who + ' ' + l.to).toLowerCase().indexOf(t) >= 0 || t === l.emp.toLowerCase() || t === l.nt.toLowerCase() || t === l.sn.toLowerCase())
+  const rows = all.filter(l => match(l) && (!fs.length || fs.indexOf(l.st) >= 0) && (!fo.length || fo.indexOf(l.org) >= 0) && (!fv.length || fv.indexOf(l.via) >= 0))
   const pages = Math.max(1, Math.ceil(rows.length / per)), pg = Math.min(page, pages), shown = rows.slice((pg - 1) * per, pg * per)
   const flip = <T,>(set: React.Dispatch<React.SetStateAction<T[]>>) => (v: T) => { set(l => (l.indexOf(v) >= 0 ? l.filter(y => y !== v) : l.concat([v]))); setPage(1) }
   const count = (f: (l: LogLine) => string) => { const m: Record<string, number> = {}; all.forEach(l => { const v = f(l); if (v) m[v] = (m[v] || 0) + 1 }); return m }
-  const byOrg = count(l => l.org), byReason = count(l => l.reason), byVia = count(l => l.via), bySt = count(l => l.st)
+  const byOrg = count(l => l.org), byVia = count(l => l.via), bySt = count(l => l.st)
   const cols = React.useMemo(() => [
     col.accessor('sn', { header: L('Serial no.', '流水號'), meta: { width: 140, maxWidth: 140 }, cell: i => <span className="tabular-nums">{i.getValue()}</span> }),
     col.display({ id: 'who', header: L('Recipient', '收件人'), meta: { width: 220 }, cell: i => { const l = i.row.original; return l.p ? <PersonDisplay value={personVal(l.p)} /> : <span className="truncate">{l.who}</span> } }),
@@ -119,7 +109,6 @@ export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean;
     col.display({ id: 'st', header: L('Status', '狀態'), meta: { width: 200, maxWidth: 220 }, cell: i => { const l = i.row.original; return <span className="flex min-w-0 flex-col items-start gap-0.5"><Tag size="sm" color={ST[l.st].color}>{ST[l.st].label()}</Tag>{l.reason ? <span className="truncate text-caption text-fg-secondary">{l.reason}</span> : null}</span> } }),
     col.accessor('at', { header: L('Sent at', '送出時間'), meta: { width: 168, maxWidth: 168 }, cell: i => <span className="whitespace-nowrap tabular-nums">{i.getValue()}</span> }),
   ], [k, app.lang])
-  const B = BY.find(b => b.k === by)!
   const opts = (m: Record<string, number>) => Object.keys(m).sort().map(v => ({ k: v, view: <span>{v}</span>, n: m[v] }))
   const exportCsv = () => flash(L('Exporting ' + fmtN(rows.length) + ' rows as CSV', '匯出 ' + fmtN(rows.length) + ' 筆 CSV'), 'ok')
   return (
@@ -137,13 +126,11 @@ export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean;
           <DialogBody>
             <div className="flex h-full min-h-0 flex-col gap-[var(--layout-space-tight)]">
               <div className="flex flex-wrap items-center gap-2">
-                {/* search: pick the field first, so a big send can be searched by exact IDs */}
-                <div className="w-40 shrink-0"><Select aria-label={L('Search by', '搜尋欄位')} value={by} onChange={v => { setBy(v as By); setPage(1) }} options={BY.map(b => ({ value: b.k, label: b.label() }))} /></div>
-                <div className="w-80 max-w-full"><Input type="search" startIcon={Search} value={q} onChange={e => { setQ(e.target.value); setPage(1) }} placeholder={B.ph()} aria-label={L('Search by ', '搜尋：') + B.label()} /></div>
+                {/* one search box: names, phones and emails by part; employee IDs, NT accounts and serial numbers whole */}
+                <div className="w-[480px] max-w-full"><Input type="search" startIcon={Search} value={q} onChange={e => { setQ(e.target.value); setPage(1) }} placeholder={L('Search name, employee ID, NT account, phone or serial no.', '搜尋姓名、工號、NT 帳號、電話或流水號')} aria-label={L('Search delivery details', '搜尋發送明細')} /></div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                   <FilterMenu<string> label={L('Status', '狀態')} sel={fs} toggle={flip(setFs) as any} clear={() => { setFs([]); setPage(1) }}
                     opts={(['sent', 'failed', 'queued'] as St[]).filter(s => bySt[s]).map(s => ({ k: s, view: <Tag size="sm" color={ST[s].color}>{ST[s].label()}</Tag>, n: bySt[s] }))} />
-                  <FilterMenu<string> label={L('Reason', '原因')} sel={fr} toggle={flip(setFr)} clear={() => { setFr([]); setPage(1) }} opts={opts(byReason)} />
                   <FilterMenu<string> label={L('Org', '組織')} sel={fo} toggle={flip(setFo)} clear={() => { setFo([]); setPage(1) }} opts={opts(byOrg)} />
                   {k === 'sms' ? <FilterMenu<string> label={L('Via', '管道')} sel={fv} toggle={flip(setFv)} clear={() => { setFv([]); setPage(1) }} opts={opts(byVia)} /> : null}
                 </div>

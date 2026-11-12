@@ -307,8 +307,8 @@ function Detail() {
       </Section>
       <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 View delivery details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
         <Figure label="Delivery details" sub="Device Notifications (SMS)，Error" shot="dlg-delivery" max={980} notes={[
-          { n: 1, title: '搜尋欄位', body: <>先選要搜尋的欄位：Recipient（姓名、電話或 Email，部分比對）、Employee ID、NT account、Serial no.（完全比對）。工號與 NT 帳號可一次貼多個，用逗號或空格分隔。名單可能有數萬人，限定欄位與完全比對，伺服器才查得快。</> },
-          { n: 2, title: '篩選', body: 'Status（附數量）、Reason、Org，Device Notifications (SMS) 多一個 Via（PNS / SMS）。都是多選，沿用列表的 FilterMenu。' },
+          { n: 1, title: '搜尋', body: <>一個搜尋框，不用先選欄位，提示 <Copy en="Search name, employee ID, NT account, phone or serial no." zh="搜尋姓名、工號、NT 帳號、電話或流水號" />。姓名、電話、Email 部分比對；工號、NT 帳號、流水號完全比對（由伺服器依格式判斷，名單有數萬人時才查得快）。可以一次貼多個，用逗號或空格分隔。</> },
+          { n: 2, title: '篩選', body: 'Status（附數量）、Org，Device Notifications (SMS) 多一個 Via（PNS / SMS）。都是多選，沿用列表的 FilterMenu。沒有 Reason 篩選：原因只在失敗時才有，已經寫在 Failed 標籤下方。' },
           { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Failed／Queued 標籤，失敗時下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。' },
           { n: 4, title: 'Sent at', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
           { n: 5, title: '分頁', body: '「第一筆–最後一筆 of 總數」、頁碼、每頁 50 / 100 / 200 筆。搜尋或篩選後回到第 1 頁。' },
