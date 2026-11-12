@@ -251,16 +251,20 @@ const fcol = createColumnHelper<Fail>()
 // and name, NT and ID in its hover card), external contacts their icon and address; Org says External for them.
 // With SMS fallback, the SMS reason gets its own column instead of a second line.
 const smsWhy = (t: string) => t.replace(/^SMS fallback: /, '').replace(/^./, x => x.toUpperCase())
-export const notSentCols = (fb: boolean) => [
-  fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: fb ? 232 : 280 }, cell: i => {
+// srcOf: where each one came from (org or group name with its type tag; a Person / Phone / Email tag when added on
+// their own), shown in a Source column like New message's "n messages can't be sent" list; without it, the Org column
+export const notSentCols = (fb: boolean, srcOf?: (f: Fail) => { name?: string; tag: string }[]) => [
+  fcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: fb ? 200 : 280 }, cell: i => {
     const f = i.row.original
     if (!f.ext) return <PersonDisplay value={personVal(f.p!)} />
     const I = f.ext.indexOf('@') < 0 ? Phone : Mail
     return <span className="flex min-w-0 items-center gap-2"><I className="size-4 shrink-0 text-fg-secondary" aria-hidden /><span className="truncate">{f.ext}</span></span>
   } }),
-  fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: fb ? 96 : 120 }, cell: i => <span className="truncate">{i.row.original.ext ? L('External', '外部') : i.row.original.p!.org}</span> }),
-  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: fb ? 200 : 320 }, cell: i => <span className="truncate">{tx(i.row.original.reason)}</span> }),
-  ...(fb ? [fcol.display({ id: 'sms', header: L('SMS fallback', 'SMS 備援'), meta: { width: 200 }, cell: i => <span className="truncate">{i.row.original.fallback ? smsWhy(tx(i.row.original.fallback)) : '—'}</span> })] : []),
+  srcOf
+    ? fcol.display({ id: 'src', header: L('Source', '來源'), meta: { width: fb ? 150 : 220 }, cell: i => <span className="flex flex-col gap-1">{srcOf(i.row.original).map(x => <span key={(x.name || '') + x.tag} className="flex min-w-0 items-center gap-1.5">{x.name ? <span className="truncate text-body">{x.name}</span> : null}<Tag size="sm" color="neutral">{x.tag}</Tag></span>)}</span> })
+    : fcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: fb ? 96 : 120 }, cell: i => <span className="truncate">{i.row.original.ext ? L('External', '外部') : i.row.original.p!.org}</span> }),
+  fcol.display({ id: 'why', header: L('Reason', '原因'), meta: { width: fb ? 170 : 320 }, cell: i => <span className="truncate">{tx(i.row.original.reason)}</span> }),
+  ...(fb ? [fcol.display({ id: 'sms', header: L('SMS fallback', 'SMS 備援'), meta: { width: 170 }, cell: i => <span className="truncate">{i.row.original.fallback ? smsWhy(tx(i.row.original.fallback)) : '—'}</span> })] : []),
 ]
 
 export const failCols = (byCh?: boolean) => [

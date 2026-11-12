@@ -13,7 +13,7 @@ import {
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { CalendarClock, ChevronDown, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Ban } from 'lucide-react'
 import {
-  CH_ORDER, ICSD, MODAL, PEOPLE, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
+  CH_ORDER, ICSD, MODAL, PEOPLE, flatten, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
@@ -437,6 +437,18 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
   const k: Channel = rec ? rec.k : 'push', n = rec ? failsOf(rec) : 0
   // people first, then external contacts (the panel's audience order)
   const list = r ? chFailList(r, k === 'sms' ? 'push' : k, n).map(f => ({ ...f, via: null })).sort((a, b) => (a.ext ? 1 : 0) - (b.ext ? 1 : 0)) : []
+  // Source: the org or group each person came from (name + type tag), or a Person / Phone / Email tag when added directly
+  const srcMap = React.useMemo(() => {
+    const out: Record<string, { name?: string; tag: string }[]> = {}
+    const add = (id: string, x: { name?: string; tag: string }) => { const l = out[id] || (out[id] = []); if (!l.some(y => y.name === x.name && y.tag === x.tag)) l.push(x) }
+    if (r) tagsFor(r, k).forEach(t => {
+      if (t.type === 'ext') { add('x:' + t.email, { tag: isExtPhone(t) ? L('Phone', '電話') : 'Email' }); return }
+      const from = t.type === 'person' ? { tag: L('Person', '人員') } : t.type === 'org' ? { name: t.id!, tag: L('Org', '組織') } : { name: (app.groups.find(g => g.id === t.id) || { name: t.id! }).name, tag: L('Group', '群組') }
+      flatten([t], app.groups).forEach(({ pid }) => { const p = PMAP[pid]; if (p) add(p.extKind ? 'x:' + p.value : pid, from) })
+    })
+    return out
+  }, [r, k, app.groups])
+  const srcOf = (f: { p?: { id: string }; ext?: string }) => srcMap[f.ext ? 'x:' + f.ext : f.p!.id] || [f.ext ? { tag: f.ext.indexOf('@') < 0 ? L('Phone', '電話') : 'Email' } : { tag: L('Person', '人員') }]
   const close = () => m.set({ ns: null })
   const resend = () => {
     if (!r) return
@@ -456,7 +468,7 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
           </DialogHeader>
           <DialogBody>
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
-              <DataTable tableOptions={NO_HIDE} columns={notSentCols(list.some(f => !!f.fallback)) as any} data={list} bordered height="380px" getRowId={(_, i) => String(i)} />
+              <DataTable tableOptions={NO_HIDE} columns={notSentCols(list.some(f => !!f.fallback), srcOf) as any} data={list} bordered height="380px" getRowId={(_, i) => String(i)} />
             </div>
           </DialogBody>
           <DialogFooter>

@@ -325,7 +325,7 @@ function Detail() {
           ['Sent at', '實際送出時間'],
         ]} />
         <Notes items={[
-          { title: '標題列', body: <>標題 <Copy en="Delivery details" zh="發送明細" />，下方一行：訊息 ID · 通道 · n messages · n sent · n failed · n queued。</> },
+          { title: '標題列', body: <>訊息 ID 標籤加 <Copy en="Delivery details · <通道>" zh="發送明細・<通道>" />（和訊息詳情一樣把訊息 ID 放在標題前）；沒有副標或統計行，數量看 Status 篩選上的數字。</> },
           { title: '大小', body: '設計系統 Dialog，最大寬 1280、填滿可用高度；表格固定高度、內部捲動，分頁列在表格下方。疊在訊息詳情之上，關閉後回到訊息詳情。' },
           { title: '大量資料', body: '搜尋、篩選、分頁、篩選選單上的數量都由伺服器計算；prototype 用收件人展開後的範例資料示意。' },
         ]} />
@@ -534,11 +534,11 @@ function Modals() {
       <Section eyebrow="Not sent" title="未送出名單">
         <Figure label="有 SMS 備援" sub="Device Notifications (SMS)" shot="dlg-fail" max={760} notes={[
           { n: 1, title: '標題', body: <><Copy en="Not sent to" zh="未送達的收件人" />，沒有副標。</> },
-          { n: 2, title: '表格', body: '高 380，固定行高、每格一行（設計系統表格規則）。欄：Audience、Org、Reason；有 SMS 備援時多一欄 SMS fallback（SMS 的原因）。內部人員用設計系統的人員顯示（頭像、姓名；NT 與工號在滑過的人員卡片），Org 是組織代號。外部聯絡人是信封（Email）或電話圖示加地址或號碼，Org 寫 External。先列內部人員，再列外部聯絡人。' },
+          { n: 2, title: '表格', body: '高 380，固定行高、每格一行（設計系統表格規則）。欄：Audience、Source（組織或群組名稱加 Org / Group 標籤；直接加入的只有 Person、Phone 或 Email 標籤，比照 New message 的 n messages can’t be sent 名單）、Reason；有 SMS 備援時多一欄 SMS fallback（SMS 的原因）。內部人員用設計系統的人員顯示（頭像、姓名；NT 與工號在滑過的人員卡片），Org 是組織代號。外部聯絡人是信封（Email）或電話圖示加地址或號碼，Org 寫 External。先列內部人員，再列外部聯絡人。' },
           { n: 3, title: '重寄', body: <><C>Resend</C>：進入發送流程，收件人是這些人，通道是這一筆的通道。</> },
         ]} />
         <div className="spec-gallery">
-          <figure><figcaption><b>Email（內部人員與外部聯絡人）</b><span>沒有 SMS 備援，三欄；外部 Email 排在最後，Org 是 External。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 未送出名單" /></div></figure>
+          <figure><figcaption><b>Email（內部人員與外部聯絡人）</b><span>沒有 SMS 備援，三欄；外部 Email 排在最後，Source 是 Email 標籤。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-email" alt="Email 未送出名單" /></div></figure>
           <figure><figcaption><b>傳送錯誤</b><span>表格上方不放錯誤提示，只有名單與原因；按鈕同樣是 Resend。</span></figcaption><div className="spec-canvas"><Shot name="dlg-fail-error" alt="傳送錯誤" /></div></figure>
         </div>
       </Section>

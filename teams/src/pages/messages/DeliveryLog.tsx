@@ -127,9 +127,11 @@ export function DeliveryLogDialog({ x, open, onClose }: { x: Rec; open: boolean;
       {open ? (
         <DialogContent maxWidth={1280} height="fill">
           <DialogHeader>
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <DialogTitle>{L('Delivery details', '發送明細')}</DialogTitle>
-              <DialogDescription>{msgId(x.r) + ' · ' + chName(k) + ' · ' + L(fmtN(all.length) + ' messages', fmtN(all.length) + ' 則') + (bySt.sent ? L(' · ' + fmtN(bySt.sent) + ' sent', '・已送出 ' + fmtN(bySt.sent)) : '') + (bySt.failed ? L(' · ' + fmtN(bySt.failed) + ' failed', '・失敗 ' + fmtN(bySt.failed)) : '') + (bySt.queued ? L(' · ' + fmtN(bySt.queued) + ' queued', '・排隊中 ' + fmtN(bySt.queued)) : '')}</DialogDescription>
+            {/* the message ID tag and the channel sit in the title, like the Detail modal's; no summary line */}
+            <div className="flex min-w-0 items-center gap-2">
+              <Tag size="sm" color="neutral" className="shrink-0 tabular-nums">{msgId(x.r)}</Tag>
+              <DialogTitle className="truncate">{L('Delivery details · ', '發送明細・') + chName(k)}</DialogTitle>
+              <DialogDescription className="sr-only">{L(fmtN(all.length) + ' messages', fmtN(all.length) + ' 則')}</DialogDescription>
             </div>
           </DialogHeader>
           <DialogBody>
