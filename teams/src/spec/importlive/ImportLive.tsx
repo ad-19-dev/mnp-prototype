@@ -133,6 +133,65 @@ function OptB() {
   )
 }
 
+// ---------- B+: B made lighter. A paste area first; then the list splits into "Need fixing" (editable, with the
+// reason) and "Found" (names only, no fields). More can be pasted into the same box at any time. ----------
+function OptBPlus() {
+  const done = useAdded()
+  const [kind, setKind] = React.useState<Kind>('nt'), [vals, setVals] = React.useState<string[]>([]), [box, setBox] = React.useState('')
+  const [all, setAll] = React.useState(false)
+  const hits = matchAll(kind, vals)
+  const take = (t: string) => { const l = split(t); if (l.length) setVals(v => v.concat(l)); setBox('') }
+  const bad = hits.map((h, i) => ({ h, i })).filter(x => !!x.h.err), dups = hits.filter(h => h.dup).length
+  const good = hits.map((h, i) => ({ h, i })).filter(x => ok(x.h))
+  const shownGood = all ? good : good.slice(0, 8)
+  const n = good.length
+  return (
+    <Frame kind={kind} setKind={k => { setKind(k); setVals([]) }}
+      foot={<>{done.note}<Button variant="tertiary">Cancel</Button><Button variant="primary" disabled={!n} onClick={() => done.add(n)}>{n ? 'Add ' + n + ' audiences' : 'Add audiences'}</Button></>}>
+      {/* the paste area: big and labelled before anything is in; a slim "add more" box after */}
+      <Textarea rows={vals.length ? 2 : 6} className="font-mono" value={box} aria-label="Paste a list"
+        placeholder={vals.length ? 'Paste or type more, then Enter' : 'Paste a list here, one per line\nA column copied from Excel works too\n\ne.g. ' + split(KINDS.find(k => k.k === kind)!.sample).slice(0, 3).join('\n')}
+        onChange={e => setBox(e.target.value)} onPaste={e => { e.preventDefault(); take(e.clipboardData.getData('text')) }}
+        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); take(box) } }} />
+      {vals.length ? <>
+        <div className="flex flex-wrap items-center gap-2 text-body">
+          <span className="text-fg-secondary">{hits.length} entries</span>
+          {n ? <Tag size="sm" color="green">{n} found</Tag> : null}
+          {bad.length ? <Tag size="sm" color="red">{bad.length} to fix</Tag> : null}
+          {dups ? <span className="text-caption text-fg-secondary">{dups === 1 ? '1 duplicate left out' : dups + ' duplicates left out'}</span> : null}
+          <Button variant="link" size="sm" className="ml-auto !h-auto !p-0" onClick={() => setVals([])}>Clear all</Button>
+        </div>
+        {bad.length ? (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-body font-medium">To fix</span>
+            {bad.map(({ h, i }) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="w-52 shrink-0"><Input size="sm" error={!!h.err} aria-label={'Fix ' + h.v} value={h.v} onChange={e => setVals(l => l.map((x, j) => (j === i ? e.target.value : x)))} /></div>
+                <span className="min-w-0 flex-1 truncate text-caption text-error-text">{h.err}</span>
+                <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={'Leave out ' + h.v} onClick={() => setVals(l => l.filter((_, j) => j !== i))} />
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {n ? (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-body font-medium">Found</span>
+            <div className="flex flex-wrap gap-1.5">
+              {shownGood.map(({ h, i }) => (
+                <span key={i} className="group inline-flex items-center gap-1.5 rounded-md border border-divider bg-[var(--color-neutral-1)] py-0.5 pr-1 pl-1.5 text-body">
+                  {h.p ? <PAvatar p={h.p} /> : null}{h.ext ? h.v : okLabel(h)}
+                  <button type="button" aria-label={'Remove ' + h.v} className="text-fg-muted opacity-0 group-hover:opacity-100 hover:text-foreground focus-visible:opacity-100" onClick={() => setVals(l => l.filter((_, j) => j !== i))}><X className="size-3.5" /></button>
+                </span>
+              ))}
+              {good.length > 8 && !all ? <Button variant="link" size="sm" className="!h-auto !p-0" onClick={() => setAll(true)}>+{good.length - 8} more</Button> : null}
+            </div>
+          </div>
+        ) : null}
+      </> : null}
+    </Frame>
+  )
+}
+
 // ---------- C: add what's found right away; only the ones not found stay ----------
 function OptC() {
   const [kind, setKind] = React.useState<Kind>('nt'), [text, setText] = React.useState(KINDS[0].sample), [left, setLeft] = React.useState<Hit[] | null>(null), [got, setGot] = React.useState(0)
@@ -188,6 +247,15 @@ export default function ImportLive() {
           <OptB />
           <Notes items={[{ title: '優點', body: '輸入的值和結果並排，原因直接看得到；筆數多時可以捲動、逐列檢查；修正就是改那一格。' }, { title: '缺點', body: '比 A 佔空間；只想貼兩三個人時顯得有點重。（一次貼整份名單沒問題：貼進任一格就會展開成多列。）' }]} cols />
         </Section>
+        <Section eyebrow="Option B+" title="B+：以 B 為基礎精簡" lead="先給一個明顯的貼上區（空的時候就寫著「Paste a list here, one per line」），貼上後名單分成兩組：To fix（只有這些是輸入框，旁邊寫原因）與 Found（只顯示姓名，不是輸入框）。之後還要加，就繼續貼進同一個框。">
+          <OptBPlus />
+          <Notes items={[
+            { title: '比 B 精簡在哪', body: '沒有 # 欄、沒有一整排輸入框；找到的人只是一排姓名標籤，滑過才出現 ✕。視線只需要停在 To fix。' },
+            { title: '提示更清楚', body: '還沒貼東西時，貼上區很大，裡面直接寫怎麼貼與範例；貼過之後縮成一行「Paste or type more」，位置不變。' },
+            { title: '修正', body: '在 To fix 改那一格，比對成功就自動移到 Found；也可以按 ✕ 不要這筆。重複的不用處理：自動略過，摘要列寫 1 duplicate left out。' },
+            { title: '名單很長時', body: 'Found 超過 8 人時收起，顯示 +n more；要檢查的通常只有 To fix。' },
+          ]} cols />
+        </Section>
         <Section eyebrow="Option C" title="C：先把找到的加進去，只留下找不到的" lead="貼上後按 Add：找到的直接加入收件人，對話框只剩找不到的那幾筆，每筆可以改，再按 Try again。">
           <OptC />
           <Notes items={[{ title: '優點', body: '步驟最少；大部分都找得到時，一次就完成。' }, { title: '缺點', body: '加入前看不到「會加入哪些人」；如果貼錯資料類型，會一次加進一堆不對的人，要回到收件人表格逐一刪。' }]} cols />
@@ -196,11 +264,12 @@ export default function ImportLive() {
           <SpecTable head={['', '看得到原因', '加入前確認', '大量名單', '修正方式', '空間']} nowrap={[0]} rows={[
             ['A 標籤', '滑過才看到', '可以', '擠', '點標籤改', '小'],
             ['B 一列一筆', '直接看到', '可以', '好（可捲動）', '改那一格', '中'],
+            ['B+ 精簡版', '直接看到（只列要修正的）', '可以', '好（找到的收起）', '改那一格', '小到中'],
             ['C 先加入', '直接看到（只列失敗的）', '不行', '好', '改輸入框再試', '小'],
           ]} />
           <Notes items={[
-            { title: '建議：B', body: '批次匯入通常是幾十到幾百筆，而且使用者最在意「哪幾筆有問題、為什麼」。B 讓輸入值、結果與原因並排，修正就是改那一格，不需要第二層頁面。' },
-            { title: '名單很短時', body: '收件人搜尋列本身已經能一筆一筆加入；批次匯入是給「手上有一份名單」的情況，所以以 B 的清楚度為優先。' },
+            { title: '建議：B+', body: '保留 B 的優點（原因直接看得到、就地修正、加入前可以確認），但只把注意力放在要修正的那幾筆；找到的人收成一排姓名。貼上區一開始就很明顯，不用讀說明也知道可以整份貼。' },
+            { title: '名單很短時', body: '收件人搜尋列本身已經能一筆一筆加入；批次匯入是給「手上有一份名單」的情況，所以以清楚度為優先。' },
           ]} />
         </Section>
       </main>
