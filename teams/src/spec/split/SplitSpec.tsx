@@ -74,7 +74,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
     <>
       <Section eyebrow="Flow" title="從列表出發的操作流程" lead="一則訊息選了幾個通道，列表就有幾筆紀錄（Device Notifications 加 SMS 備援算一筆）。所有操作都從列表開始：點標題開這一筆的訊息詳情（大 modal），能改的欄位直接在裡面改；快速動作也在每一筆的 ⋮ 選單裡。都只作用在這一個通道。">
         <div className="flow-map" role="list">
-          <Stop sub="發送空間的 Send messages">訊息列表</Stop><span className="flow-arrow" aria-hidden>→</span>
+          <Stop sub="專案的 Send messages">訊息列表</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="搜尋、狀態、通道">找到那一筆</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="點標題">訊息詳情（modal）</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="依狀態編輯，或 Send now、Cancel sending">編輯或操作</Stop>
@@ -129,7 +129,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="dialog" title="Reschedule" when="選單 Reschedule（詳情裡直接改 Send time）" shots={['dlg-reschedule']} then="這個通道改到新的傳送時間，不需要重新核准。" />
           <Card kind="dialog" title="Cancel sending?" when="選單或詳情底部的 Cancel sending" shots={['dlg-cancel']} then="這個通道不再送出，狀態變成 Canceled；紀錄留在列表。" />
           <Card kind="action" title="Duplicate to new message" when="選單或詳情底部的 Duplicate to new message" then="進入發送流程，只帶入這個通道（通道、內容與它的收件人）。" />
-          <Card kind="menu" title="共享空間的 ⋯ 選單" when="側邊欄滑過共享空間" shots={['space-menu']} then="Space settings（開空間設定）、Leave space（確認後離開）。" />
+          <Card kind="menu" title="專案的 ⋯ 選單" when="側邊欄滑過一個專案" shots={['space-menu']} then="Project settings（開專案設定）、Leave project（確認後離開）。" />
         </div>
       </Section>
     </>
@@ -576,7 +576,7 @@ function Modals() {
 // ---------- sample data ----------
 function Data() {
   return (
-    <Section eyebrow="Data" title="prototype 的範例資料" lead="四個發送空間（UX Team、Platform Ops、Fab 18 Communications、ESH Emergency），沒有個人空間；打開時是 UX Team。每個空間都有各種狀態的訊息。">
+    <Section eyebrow="Data" title="prototype 的範例資料" lead="側邊欄群組標題 Projects，四個專案（UX Team、Platform Ops、Fab 18 Communications、ESH Emergency），沒有個人空間；打開時是 UX Team。每個空間都有各種狀態的訊息。">
       <SpecTable head={['要看什麼', '去哪裡']} nowrap={[0]} rows={[
         ['各通道狀態不同', 'UX Team「Fire alarm test…」（Device Notifications 已送出，SMS 與 Email 傳送中）；ESH「Chemical delivery at Dock 2」（推播送出、SMS 傳送錯誤）；UX Team「Team lunch on Fri 11/7」（Device Notifications 已送出、Email 傳送錯誤）'],
         ['多種收件人', 'UX Team「Design review with Northwind Studio」；Platform Ops「tWorkspace 5.2 is live」；Fab 18「Water shutdown」；ESH「Chemical delivery」；UX Team「Usability study invitation」'],

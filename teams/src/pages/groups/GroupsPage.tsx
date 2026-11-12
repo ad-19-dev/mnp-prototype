@@ -270,7 +270,7 @@ function GroupEditor({ m }: { m: GCtl }) {
             <FormField id="g-name" label={L('Name', '名稱')} required count={ed.name.length + ' / 50'} over={ed.name.length > 50} error={nameErr}>
               <Input id="g-name" disabled={isViewer} value={ed.name} error={!!nameErr} onChange={e => m.setEd({ name: e.target.value })} placeholder={L('e.g. Fab 18 drill wardens', '例如：F18 演習引導員')} />
             </FormField>
-            <FormField id="g-desc" label={L('Description', '說明')} count={ed.desc.length + ' / 200'} over={ed.desc.length > 200} hint={L('Helps others in this space pick the right group.', '幫助空間裡的其他人選對群組。')}>
+            <FormField id="g-desc" label={L('Description', '說明')} count={ed.desc.length + ' / 200'} over={ed.desc.length > 200} hint={L('Helps others in this project pick the right group.', '幫助專案裡的其他人選對群組。')}>
               <Textarea id="g-desc" rows={2} disabled={isViewer} value={ed.desc} onChange={e => m.setEd({ desc: e.target.value })} placeholder={L('What this group is for', '這個群組的用途')} />
             </FormField>
           </div>

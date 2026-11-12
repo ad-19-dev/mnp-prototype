@@ -356,7 +356,7 @@ await step('dlg-reschedule-error', async () => {
 // ---- first use: a space with nothing in it (last, it adds a team)
 await step('empty-first', async () => {
   await p.getByRole('button', { name: /add|new|create/i }).first().click(); await wait(600);
-  await p.getByPlaceholder(/Fab 18/).fill('Brand New Team'); await p.getByRole('button', { name: 'Create space' }).click(); await wait(1500);
+  await p.getByPlaceholder(/Tool alarm/).fill('Tool alarm alerts'); await p.getByRole('button', { name: 'Create project' }).click(); await wait(1500);
   await shot('empty-first', null);
 });
 

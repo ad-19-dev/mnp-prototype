@@ -98,8 +98,8 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
       <SidebarContent>
         {/* no personal space (2026-11-12): messages are sent from a shared space */}
         <SidebarGroup>
-          <SidebarGroupLabel>{L('Shared spaces', '共享發送空間')}</SidebarGroupLabel>
-          <SidebarGroupAction icon={Plus} aria-label={L('New space', '建立空間')} onClick={() => setCreating(true)} />
+          <SidebarGroupLabel>{L('Projects', '專案')}</SidebarGroupLabel>
+          <SidebarGroupAction icon={Plus} aria-label={L('New project', '建立專案')} onClick={() => setCreating(true)} />
           <SidebarGroupContent>
             <SidebarMenu>
               {teams.map(t => (
@@ -108,9 +108,9 @@ function MnpSidebar({ onSpace }: { onSpace: (sp: string) => void }) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild><SidebarMenuAction icon={MoreHorizontal} showOnHover aria-label={L('More for ', '更多：') + t.name} /></DropdownMenuTrigger>
                     <DropdownMenuContent align="start" side="right">
-                      <DropdownMenuItem startIcon={Settings} onSelect={() => setEditing(t)}>{L('Space settings', '空間設定')}</DropdownMenuItem>
+                      <DropdownMenuItem startIcon={Settings} onSelect={() => setEditing(t)}>{L('Project settings', '專案設定')}</DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem startIcon={LogOut} className="text-error-text" onSelect={() => setCf(leaveCf(t, () => setCf(null)))}>{L('Leave space', '離開空間')}</DropdownMenuItem>
+                      <DropdownMenuItem startIcon={LogOut} className="text-error-text" onSelect={() => setCf(leaveCf(t, () => setCf(null)))}>{L('Leave project', '離開專案')}</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </SidebarMenuItem>
@@ -163,7 +163,7 @@ export function SpaceSettings() {
   if (!team) return null
   return (
     <>
-      <Button variant="tertiary" iconOnly startIcon={Settings} aria-label={L('Space settings', '空間設定')} onClick={() => setOpen(true)} />
+      <Button variant="tertiary" iconOnly startIcon={Settings} aria-label={L('Project settings', '專案設定')} onClick={() => setOpen(true)} />
       <TeamDialog team={team} open={open} onClose={() => setOpen(false)} />
     </>
   )
