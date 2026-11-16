@@ -116,16 +116,23 @@ export function IconBox({ icon: I, tone }: { icon: LucideIcon; tone?: 'warn' | '
 // DataTable: columns can't be hidden in this product (see globals.css for the header menu)
 export const NO_HIDE = { enableHiding: false }
 
-// A filter button that opens a checklist; used for status and channel filters
+// A filter button that opens a checklist; used for status and channel filters.
+// Its name says what it filters on (2026-11-16): nothing picked, the filter's name ("Status"); one value picked,
+// that value's name ("Not sent"); two or more, the filter's name with a badge counting them ("Status 2").
+// text: an option's name for the button (its view may be a tag or an icon and name)
 export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }: {
   label: string; sel: K[]; toggle: (k: K) => void; clear: () => void
-  opts: { k: K; view: React.ReactNode; n: number }[]
+  opts: { k: K; view: React.ReactNode; n: number; text?: string }[]
 }) {
+  const one = sel.length === 1 ? opts.find(o => o.k === sel[0]) : undefined
+  const name = one && one.text ? one.text : label
+  const badge = sel.length > 1 || (sel.length === 1 && name === label)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {/* outlined (tertiary) filter buttons, pressed while they filter; the badge counts the values picked */}
-        <Button variant="tertiary" endIcon={ChevronDown} pressed={sel.length > 0} badge={sel.length ? <Badge count={sel.length} variant="low" /> : undefined}>{label}</Button>
+        {/* outlined (tertiary) filter buttons, pressed while they filter */}
+        <Button variant="tertiary" endIcon={ChevronDown} pressed={sel.length > 0} aria-label={sel.length ? label + ': ' + (name === label ? sel.length : name) : undefined}
+          badge={badge ? <Badge count={sel.length} variant="low" /> : undefined}>{name}</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={260}>
         <DropdownMenuGroup>

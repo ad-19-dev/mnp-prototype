@@ -250,7 +250,7 @@ function Frame() {
         <SpecTable head={['進入方式', '入口', '頁首標題', '預填內容']} nowrap={[0, 2]} rows={[
           ['新訊息', '列表右上角 New message', 'New message', '全部空白，從步驟 1 開始。'],
           ['複製', '列表選單 Duplicate to new message（單一通道的紀錄）', 'Duplicate message', '只有那一個通道（SMS 的紀錄會勾 Device Notifications 加 SMS 備援）、它的內容與模板；收件人是這個通道收得到的人（外部電話只跟 SMS 的紀錄，外部 Email 只跟 Email 的紀錄）。傳送時間不帶入，預設立即傳送。三個步驟都已解鎖，可以直接點步驟列。'],
-          ['重寄', 'Not sent to 對話框的 Resend to n', 'Resend to missed audiences', '同一個通道與內容；收件人只有沒收到的人（含外部）。三個步驟都已解鎖。'],
+          ['重寄', 'Delivery details 對話框的 Resend to n（從 {n} not sent 或訊息詳情開啟）', 'Resend to missed audiences', '同一個通道與內容；收件人只有沒收到的人（含外部）。三個步驟都已解鎖。'],
           ['編輯內容', '不經過發送流程：在訊息詳情（modal）裡直接改（Scheduled 與 Scheduled expired）', '—', '內容、收件人與傳送時間都在訊息詳情裡改，細節見「Send messages 設計規格」。'],
         ]} />
       </Section>
@@ -287,7 +287,7 @@ function Step1() {
           ['Person', '姓名、NT 帳號或工號', '輸入後列出符合的人（最多 8 筆）：大頭照、英文名 中文名、組織代號 · NT · 工號。點選，或按 Enter 加入第一筆。', <><Copy en="No one named “<輸入>” found." zh="找不到叫「<輸入>」的人。" />（不提示切換到 Phone、Email 或 Group）</>],
           ['Org', '組織代碼、編號或名稱', '沒輸入也列出全部組織：代碼、編號、人數。加入後下拉選單不關，可以連續加入。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
           ['Group', '群組名稱', '沒輸入時，標題 Your groups 下列出這個空間的群組：名稱、說明、人數。加入後下拉選單不關。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
-          ['Phone', '手機號碼，例如 0912-345-678', '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。', <Copy en="Enter 8–15 digits." zh="請輸入 8–15 碼數字。" />],
+          ['Phone', '手機號碼，例如 0912-345-678', '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。沒選 PNS + SMS fallback 時，外部號碼不能加入（收不到任何通道），員工的號碼照常加入員工。', <><Copy en="Enter 8–15 digits." zh="請輸入 8–15 碼數字。" />　<Copy en="SMS fallback isn’t selected in Channels, so outside numbers can’t be added. Employee numbers add the employee." zh="Channels 沒有選 SMS 備援，無法加入外部號碼。員工的號碼會加入該員工。" /></>],
           ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。Channels 沒勾 Email 時，外部 Email 不能加入（收不到任何通道），公司信箱照常加入員工。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" />　<Copy en="Email isn’t selected in Channels, so outside addresses can’t be added. Company addresses add the employee." zh="Channels 沒有選 Email，無法加入外部信箱。公司信箱會加入該員工。" /></>],
           ['MVPN', '7 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。', <><Copy en="MVPN is up to 7 digits." zh="MVPN 最多 7 碼。" />　<Copy en="No one has this MVPN." zh="沒有人用這個 MVPN。" /></>],
         ]} />
@@ -458,7 +458,7 @@ function Dialogs() {
       <Section eyebrow="Import" title="Batch import" lead="兩個階段：輸入名單 → 比對結果。">
         <Gallery items={[['dlg-import', '輸入名單', '先選資料類型'], ['dlg-import-list', '貼上名單'], ['dlg-import-result', '比對結果']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。不提供 Names：公司超過 10 萬名員工，同名同姓很多。Emails：沒勾 Email 通道時，外部地址列在 Not found，原因 Email isn’t a selected channel。'],
+          ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。不提供 Names：公司超過 10 萬名員工，同名同姓很多。Emails：沒勾 Email 通道時，外部地址列在 Not found，原因 Email isn’t a selected channel。Phone numbers：沒選 SMS 備援時，外部號碼列在 Not found，原因 SMS fallback isn’t a selected channel。'],
           ['List', <>多行輸入，提示 <Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />右上角顯示筆數。（沒有上傳檔案與範例名單）</>],
           ['比對結果', '數量標籤：n ready（綠）、n to choose（黃）、n not found（紅）、n already added（灰）。下方分組：Who do you mean?（同名，勾選）、Ready to add、Not found。'],
           ['按鈕', '輸入階段：Cancel、Find matches；結果階段：Edit list（回到輸入）、Add n audiences（沒有可加入的時是 Nothing to add；只剩找不到的時是 Fix entries not found）。'],

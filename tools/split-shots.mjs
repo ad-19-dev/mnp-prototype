@@ -167,7 +167,7 @@ await step('detail-fb', async () => {
     [4, a.getByText('Audience', { exact: true }).first(), 'tl'],
     [5, a.getByText('Message ID', { exact: true }).first(), 'tl'],
     [6, a.getByRole('button', { name: 'Duplicate to new message' }), 'tl'],
-    [7, a.getByRole('button', { name: 'Sent details' }), 'tl'],
+    [7, a.getByRole('button', { name: 'Delivery details' }), 'tl'],
   ]);
   await closeAside();
 });
@@ -199,7 +199,7 @@ await step('detail-mixed', async () => {
 await step('dlg-delivery', async () => {
   await space('ESH Emergency');
   await row('Chemical delivery at Dock 2').getByText('Chemical delivery at Dock 2').first().click(); await wait(800);
-  await aside().getByRole('button', { name: 'Sent details' }).click(); await wait(900);
+  await aside().getByRole('button', { name: 'Delivery details' }).click(); await wait(900);
   const d = p.getByRole('dialog').last();
   await shot('dlg-delivery', d, [
     [1, d.getByRole('searchbox').first(), 'tl'],
@@ -209,10 +209,13 @@ await step('dlg-delivery', async () => {
     [5, d.getByText(/ of \d/).first(), 'tl'],
     [6, d.locator('[role="columnheader"]').filter({ hasText: 'Channel' }), 'tl'],
     [7, d.getByRole('button', { name: /^Resend to/ }), 'tl'],
+    [8, d.getByRole('button', { name: 'Show them' }), 'tl'],
   ], 12);
-  await d.getByRole('button', { name: /^Status/ }).click(); await wait(300);
-  await p.getByRole('menuitemcheckbox').filter({ hasText: 'Not sent' }).click(); await p.keyboard.press('Escape'); await wait(400);
-  await shot('dlg-delivery-failed', d, [], 12);
+  // Show them: Status set to Not sent only, and the filter button then reads "Not sent"
+  await d.getByRole('button', { name: 'Show them' }).click(); await wait(400);
+  await shot('dlg-delivery-failed', d, [
+    [1, d.getByRole('button', { name: /^Status/ }), 'tl'],
+  ], 12);
   await d.getByRole('button', { name: 'Close' }).last().click(); await wait(400);
   await closeAside(); await space('UX Team');
 });
@@ -221,8 +224,8 @@ await step('dlg-fail', async () => {
   await find('Design review');
   await main.locator('[role="row"]').filter({ hasText: 'Thu 11/6' }).first().getByRole('button', { name: /not sent/ }).click(); await wait(800);
   const d = p.getByRole('dialog'); await shot('dlg-fail', d, [
-    [1, d.getByText('Not sent to', { exact: true }), 'tl'],
-    [2, d.locator('[role="columnheader"]').filter({ hasText: 'Reason' }), 'tl'],
+    [1, d.getByText(/^Delivery details/).first(), 'tl'],
+    [2, d.getByRole('button', { name: /^Status/ }), 'tl'],
     [3, d.getByRole('button', { name: /^Resend/ }), 'tl'],
   ], 12);
   await d.getByRole('button', { name: /^Resend/ }).click(); await wait(1200);
@@ -331,24 +334,9 @@ await step('dlg-members', async () => {
   await p.keyboard.press('Escape'); await wait(300);
   await closeAside();
 });
-// ---- failed-members dialog: without SMS fallback, and a message that failed as a whole
-await step('dlg-fail-email', async () => {
-  await find('Design review');
-  const rs = main.locator('[role="row"]').filter({ hasText: 'Design review' });
-  await rs.nth(1).getByRole('button', { name: /not sent/ }).click().catch(async () => { await main.getByRole('button', { name: /^1 not sent$/ }).nth(1).click() }); await wait(800);
-  await shot('dlg-fail-email', p.getByRole('dialog'), [], 12);
-  await p.keyboard.press('Escape'); await wait(300);
-});
-await step('dlg-fail-error', async () => {
-  await main.getByPlaceholder(/Search message ID/).fill('On-call swap'); await wait(500);
-  await main.getByRole('button', { name: /^4 not sent$/ }).first().click(); await wait(800);
-  await shot('dlg-fail-error', p.getByRole('dialog'), [], 12);
-  await p.keyboard.press('Escape'); await wait(300);
-  await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
-});
 // ---- reschedule with a time in the past
 await step('dlg-reschedule-error', async () => {
-  await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: /^Reschedule/ }).click(); await wait(600);
+  await find('UX sync moves'); await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: /^Reschedule/ }).click(); await wait(600);
   const d = p.getByRole('dialog');
   await d.getByPlaceholder('YYYY/MM/DD HH:MM').fill('2026/11/01 09:00'); await wait(200);
   await d.getByRole('button', { name: 'Reschedule' }).click(); await wait(500);

@@ -228,10 +228,10 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
               <span className="flex items-center gap-2"><H3>{L('Audience', '收件人')}</H3>{edit ? null : <ReadOnlyTag />}</span>
               {/* once anything has gone out: one link to every message sent, by person, in a dialog of its own (who
                   wasn't reached is there too, with Resend; 2026-11-16: "n not sent" and "View delivery details" merged) */}
-              {hasLog ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setLogOpen(true)}>{L('Sent details', '發送明細')}</Button> : null}
+              {hasLog ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setLogOpen(true)}>{L('Delivery details', '發送明細')}</Button> : null}
             </div>
             {/* editable: the send flow's search above the list, and a remove button on every row */}
-            {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag} noExtEmail={k !== 'email'}
+            {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag} noExtEmail={k !== 'email'} noExtPhone={k !== 'sms'}
               extra={<Button variant="tertiary" startIcon={Upload} onClick={openImport}>{L('Batch import', '批次匯入')}</Button>} /> : null}
             <AudTable tags={tags} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined}
               phones={k === 'sms' ? { co: ph.co, pp: ph.pp, set: edit ? (which, keys, val) => setPh(o => ({ ...o, [which]: { ...o[which], ...Object.fromEntries(keys.map(kk => [kk, val])) } })) : undefined } : undefined} />
@@ -266,7 +266,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   )
 }
 
-// a part's name above its fields (no "n / m sent" count, 2026-11-16: how it went is in Sent details)
+// a part's name above its fields (no "n / m sent" count, 2026-11-16: how it went is in Delivery details)
 function PartHead({ title }: { title: string }) {
   return <span className="pt-1 text-body font-medium">{title}</span>
 }

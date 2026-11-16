@@ -17,13 +17,14 @@ import {
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
-import { Banner, CHN, ChIcons, FilterMenu, personVal, NO_HIDE, PAvatar, PageSize, StatusTag, Tip, Trunc, Two } from '../../components/ui'
+import { Banner, CHN, ChIcons, FilterMenu, personVal, NO_HIDE, PAvatar, PageSize, StatusTag, statusLabel, Tip, Trunc, Two } from '../../components/ui'
 import { ShellAside } from '../../components/shell'
 import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
 import { ListLoading, dedupe } from './List'
 import './split.css'
-import { AudienceList, ChannelText, Part, notSentCols, reviewer } from './Detail'
+import { AudienceList, ChannelText, Part, reviewer } from './Detail'
+import { DeliveryLogDialog } from './DeliveryLog'
 
 // ---------- records ----------
 // One record per channel of a message. SMS fallback isn't a record of its own: a message sent with it is one
@@ -243,8 +244,8 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   React.useEffect(() => { setLoading(true); const t = setTimeout(() => setLoading(false), 700); return () => clearTimeout(t) }, [app.space])
   const clearAll = () => m.set({ fs: [], fch: [], fd: 0, q: '', page: 1 })
   const flip = <K,>(list: K[], k: K) => (list.indexOf(k) >= 0 ? list.filter(x => x !== k) : list.concat([k]))
-  const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.st === k)).map(k => ({ k, view: <StatusTag s={k} />, n: vis.filter(x => x.st === k).length }))
-  const chOpts = REC_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, n: vis.filter(x => x.k === k).length })).filter(o => o.n)
+  const stOpts = STATUS_ORDER.filter(k => vis.some(x => x.st === k)).map(k => ({ k, view: <StatusTag s={k} />, text: statusLabel(k), n: vis.filter(x => x.st === k).length }))
+  const chOpts = REC_ORDER.map(k => ({ k, view: <span className="flex items-center gap-2">{React.createElement(CHN[k].icon, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}{chName(k)}</span>, text: chName(k), n: vis.filter(x => x.k === k).length })).filter(o => o.n)
 
   // the cells every record of a message shares: once per message when merged, on the message row with a header
   const shared = (g: GRow) => (hdrs ? !!g.hdr || g.n === 1 : group === 'merge' ? g.pos === 'solo' || g.pos === 'first' : true)
@@ -428,54 +429,13 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
 }
 
 // ---------- who one record missed ----------
-// One record's list: the people it didn't reach. With SMS fallback that's the people neither Device Notifications nor SMS
-// reached, each with both reasons. Resend goes out on this record's channels again.
+// "{n} not sent" (list row, Detail modal) opens the record's Delivery details already filtered to Not sent
+// (2026-11-16: replaces the separate "Not sent to" dialog, so looking up who wasn't reached and Resend live in one
+// place). Clearing the filter shows everything sent; Resend to {n} goes out on this record's channel again.
 export function SplitFailDialog({ m }: { m: SendCtl }) {
   const app = useApp(), [nid, nch] = (m.s.ns || '').split('|') as [string, Channel | undefined]
   const r = nid ? app.rows.find(x => x.id === nid) : null
   const rec = r ? recordsOf(m, [r]).find(x => x.k === nch) || recordsOf(m, [r])[0] : null
-  const k: Channel = rec ? rec.k : 'push', n = rec ? failsOf(rec) : 0
-  // people first, then external contacts (the panel's audience order)
-  const list = r ? chFailList(r, k === 'sms' ? 'push' : k, n).map(f => ({ ...f, via: null })).sort((a, b) => (a.ext ? 1 : 0) - (b.ext ? 1 : 0)) : []
-  // Source: the org or group each person came from (name + type tag), or a Person / Phone / Email tag when added directly
-  const srcMap = React.useMemo(() => {
-    const out: Record<string, { name?: string; tag: string }[]> = {}
-    const add = (id: string, x: { name?: string; tag: string }) => { const l = out[id] || (out[id] = []); if (!l.some(y => y.name === x.name && y.tag === x.tag)) l.push(x) }
-    if (r) tagsFor(r, k).forEach(t => {
-      if (t.type === 'ext') { add('x:' + t.email, { tag: isExtPhone(t) ? L('Phone', '電話') : 'Email' }); return }
-      const from = t.type === 'person' ? { tag: L('Person', '人員') } : t.type === 'org' ? { name: t.id!, tag: L('Org', '組織') } : { name: (app.groups.find(g => g.id === t.id) || { name: t.id! }).name, tag: L('Group', '群組') }
-      flatten([t], app.groups).forEach(({ pid }) => { const p = PMAP[pid]; if (p) add(p.extKind ? 'x:' + p.value : pid, from) })
-    })
-    return out
-  }, [r, k, app.groups])
-  const srcOf = (f: { p?: { id: string }; ext?: string }) => srcMap[f.ext ? 'x:' + f.ext : f.p!.id] || [f.ext ? { tag: f.ext.indexOf('@') < 0 ? L('Phone', '電話') : 'Email' } : { tag: L('Person', '人員') }]
-  const close = () => m.set({ ns: null })
-  const resend = () => {
-    if (!r) return
-    const tags: RTag[] = list.map(f => f.ext ? { key: 'e:' + f.ext, type: 'ext' as const, email: f.ext } : { key: 'p:' + f.p!.id, type: 'person' as const, id: f.p!.id })
-    close()
-    m.startCompose('resend', r, tags, k)
-  }
-  return (
-    <Dialog open={!!r} onOpenChange={o => { if (!o) close() }}>
-      {r ? (
-        <DialogContent maxWidth={760} height="hug">
-          <DialogHeader>
-            <div className="flex flex-col gap-0.5">
-              <DialogTitle>{L('Not sent to', '未送達的收件人')}</DialogTitle>
-              <DialogDescription className="sr-only">{chName(k)}</DialogDescription>
-            </div>
-          </DialogHeader>
-          <DialogBody>
-            <div className="flex flex-col gap-[var(--layout-space-tight)]">
-              <DataTable tableOptions={NO_HIDE} columns={notSentCols(list.some(f => !!f.fallback), srcOf) as any} data={list} bordered height="380px" getRowId={(_, i) => String(i)} />
-            </div>
-          </DialogBody>
-          <DialogFooter>
-            <Button variant="primary" onClick={resend}>{L('Resend to ' + fmtN(list.length), '重新寄送給 ' + fmtN(list.length) + ' 人')}</Button>
-          </DialogFooter>
-        </DialogContent>
-      ) : null}
-    </Dialog>
-  )
+  if (!rec) return null
+  return <DeliveryLogDialog x={rec} open initial={['failed']} onClose={() => m.set({ ns: null })} onResend={tags => m.startCompose('resend', rec.r, tags, rec.k)} />
 }

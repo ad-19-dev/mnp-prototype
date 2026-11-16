@@ -46,7 +46,7 @@ export default function DsMap() {
             ['空間頁籤', comps('Tabs'), 'Send messages / Audience groups / Templates，放在頁首第二列。', <Own>—</Own>],
             ['搜尋框', comps('Input'), 'type=search，開頭圖示 Search；寬 480。', <Own>寬度 480 是我們定的</Own>],
             ['建立日期篩選', comps('Button', 'DropdownMenu'), 'Button tertiary（endIcon ChevronDown）開 DropdownMenu（沒有標題）：DropdownMenuRadioGroup 單選 Last 7 days、Last 2 weeks（預設）、Last 30 days、Last 3 months、All time。不設 pressed。', <Own>按鈕文字 Created: 範圍；依 Created 日期篩選</Own>],
-            ['Status / Channel 篩選', comps('Button', 'DropdownMenu'), 'Button 開 DropdownMenu（沒有標題），選項是 checkbox item；選了之後按鈕變藍並顯示數量；底部 Clear 有選項時為藍色。', <Own>FilterMenu：把按鈕、角標、選項、Clear 組成一個元件</Own>],
+            ['Status / Channel 篩選', comps('Button', 'DropdownMenu'), 'Button 開 DropdownMenu（沒有標題），選項是 checkbox item；選了之後按鈕變藍；底部 Clear 有選項時為藍色。按鈕文字：沒選時是篩選名稱；只選一項時是那一項的名稱（不顯示數量）；選兩項以上時是篩選名稱加 Badge 數量。', <Own>FilterMenu：把按鈕、角標、選項、Clear 組成一個元件；每個選項帶一個給按鈕用的純文字名稱</Own>],
             ['表格', comps('DataTable'), 'bordered、固定高度；欄位用 meta.width，Title / Content 以外的欄再設 meta.maxWidth，多出的寬度才會全給 Title / Content；列尾 rowActions；排序用 manualSorting。', <Own>各欄的 cell 內容（見下）；欄寬</Own>],
             ['訊息 ID', comps('Tag'), 'size sm、neutral。', <Own>放在標題前、tabular 數字</Own>],
             ['通道', comps('Tag', 'Tooltip'), '只有圖示的 Tag（文字隱藏），Tooltip 顯示通道名稱。', <Own>隱藏 Tag 文字的樣式；Device Notifications (SMS) 的「手機加小信封」圖示（DS 與 lucide 都沒有，自己畫）</Own>],
@@ -67,7 +67,7 @@ export default function DsMap() {
             ['Audience', comps('DataTable', 'Checkbox', 'Button'), '和發送流程同樣的表格；SMS 兩欄手機用 Checkbox；可編輯時 rowActions 放移除鈕。', <Own>搜尋列（RecvInput）、Batch import 寫回這個表格</Own>],
             ['底部操作', comps('Button'), 'Cancel sending：secondary danger；Duplicate：secondary；Send now / Save changes：primary；Discard changes：tertiary。', <Own>有改動時換成 Discard / Save</Own>],
             ['成員對話框', comps('Dialog', 'DataTable'), '寬 640，表格列出成員，有搜尋。', <Own>—</Own>],
-            ['發送明細', comps('Dialog', 'Input', 'DropdownMenu', 'DataTable', 'Tag', 'Pagination'), 'Dialog 最大寬 1280、height fill；一個搜尋 Input（不用先選欄位）；沒有匯出；篩選沿用 FilterMenu；DataTable 固定高度；Status 欄 Tag（Sent／Not sent／Queued）下方小字原因；Channel 欄純文字（不顯示號碼）；Pagination 加每頁筆數 Select（50 / 100 / 200）；有人未送出時 DialogFooter 加 Resend to {n}（primary）。', <Own>伺服器端搜尋（依格式判斷姓名、工號、NT、Job ID）、篩選與分頁；多筆貼上比對；誰算沒收到（同一人有一列送出就算收到）</Own>],
+            ['發送明細', comps('Dialog', 'Input', 'DropdownMenu', 'DataTable', 'Tag', 'Pagination'), 'Dialog 最大寬 1280、height fill；一個搜尋 Input（不用先選欄位）；沒有匯出；篩選沿用 FilterMenu；DataTable 固定高度；Status 欄 Tag（Sent／Not sent／Queued）下方小字原因；Channel 欄純文字（不顯示號碼）；Pagination 加每頁筆數 Select（50 / 100 / 200）；有人未送出時 DialogFooter 左側一句說明加 Show them（Button link），右側 Close 與 Resend to {n}（primary）；從 {n} not sent 開啟時 Status 預設只選 Not sent（取代原本的 Not sent to 對話框）。', <Own>伺服器端搜尋（依格式判斷姓名、工號、NT、Job ID）、篩選與分頁；多筆貼上比對；誰算沒收到（同一人有一列送出就算收到）</Own>],
           ]} />
         </Section>
 
@@ -105,7 +105,6 @@ export default function DsMap() {
             ['所有對話框', comps('Dialog'), 'DialogHeader / Body / Footer；Cancel 在左、主要動作在右；按鈕沒有圖示；沒有副標。', <Own>—</Own>],
             ['確認對話框', comps('Dialog', 'Button'), '寬 480；標題、一句說明、兩個按鈕；危險動作用 danger。', <Own>Confirm：把標題、說明、按鈕組成共用的確認元件</Own>],
             ['Batch import', comps('Dialog', 'Select', 'Textarea', 'FileUpload'), '先選 Data type，再貼上或上傳；比對結果分組顯示。', <Own>比對結果的分組列表</Own>],
-            ['Not sent to', comps('Dialog', 'DataTable', 'Avatar'), '單行儲存格；內部人員用 DS 人員顯示，外部用圖示加地址。', <Own>—</Own>],
             ['Toast', comps('Toast'), 'Toaster position=bottom-center、offset=48（比預設 24px 高一點）；一則一行。', <Own>隱藏 Toast 前面的圖示（CSS）</Own>],
           ]} />
           <Notes items={[{ title: '載入中', body: <>列表載入用 {link('CircularProgress')} 加 Empty；規格見 Storybook。</> }]} />

@@ -1,5 +1,5 @@
-// Sent details (proposal C, 2026-11-12; named Delivery details until 2026-11-16): every message actually sent for one record, one row each, by person
-// (orgs and groups expanded). Opened from the Detail modal's "Sent details", in a dialog of its own with the
+// Delivery details (proposal C, 2026-11-12): every message actually sent for one record, one row each, by person
+// (orgs and groups expanded). Opened from the Detail modal's "Delivery details" link, and, filtered to Not sent, from every "{n} not sent", in a dialog of its own with the
 // full width and height, because one send can reach tens of thousands of people and this is where a sender digs into a
 // problem ("did Jason get it?", "why did PENG's SMS fail?").
 //   Search: one box, no field to pick first (2026-11-12). Each term is matched against the name, phone or email
@@ -7,12 +7,13 @@
 //           separated by commas or spaces. The server tells the kinds apart (digits: employee ID, MSG-like: job ID...).
 //   Filters: Status (with counts) and Channel (Device Notifications (SMS) only). No Reason filter: a reason only
 //           exists on what wasn't sent and already shows under the Not sent tag.
-//   Channel: how and where it went, in one column (2026-11-16: Via and Sent to merged): "PNS · App",
-//           "SMS · Company phone", "SMS · Personal phone", "Desktop · Windows PC", "Email". No phone number or address
+//   Channel: how and where it went, in one column (2026-11-16: Via and Sent to merged): "PNS",
+//           "SMS · Company phone", "SMS · Personal phone", "Desktop OS", "Email". No phone number or address
 //           is shown (privacy), only which phone; a number can still be searched for.
 //   Not sent: one word everywhere for what didn't go out (no "Failed"). When anyone wasn't reached, the footer has
-//           Resend to {n}: everyone with nothing sent (a person whose app push failed but whose SMS went out was
-//           reached), into a new message on this channel, like the "Not sent to" dialog's.
+//           "{n} people didn't receive this message." with Show them (sets Status to Not sent only) on the left, and
+//           Resend to {n} on the right: everyone with nothing sent (a person whose app push failed but whose SMS went
+//           out was reached), into a new message on this channel. n counts people, not rows.
 //   Paging: 50 / 100 / 200 per page, with "first–last of total". The list is worked out on the server; the prototype
 //           builds it from the record's audience.
 //   Status and reason are one column: the status tag, and the reason under it when it failed.
@@ -67,7 +68,7 @@ export function logLines(x: Rec, groups: Parameters<typeof flatten>[1]): LogLine
     const base = { p, who: p.en + ' ' + p.zh, emp: p.emp, nt: p.nt, org: p.org }
     if (k === 'push' || k === 'sms') {
       const ok = p.dev && !down[p.id]
-      push({ ...base, via: 'PNS', to: '', st: ok ? 'sent' : 'failed', reason: ok ? '' : down[p.id] ? svc : L('App unregistered', 'App 未註冊') }, 'PNS · App')
+      push({ ...base, via: 'PNS', to: '', st: ok ? 'sent' : 'failed', reason: ok ? '' : down[p.id] ? svc : L('App unregistered', 'App 未註冊') }, 'PNS')
       if (k === 'sms' && !ok && !(x.fb && x.fb.unk)) {
         const num = p.co || p.pp, bad = !num || h01(p.id + 'sms') < 0.15
         push({ ...base, via: 'SMS', to: num || '', st: bad ? 'failed' : 'sent', reason: bad ? (num ? L('Number not in service', '號碼停用') : L('No phone number', '沒有電話號碼')) : '' },
@@ -75,7 +76,7 @@ export function logLines(x: Rec, groups: Parameters<typeof flatten>[1]): LogLine
       }
     } else if (k === 'desktop') {
       const ok = p.desk && !down[p.id]
-      push({ ...base, via: 'Desktop', to: '', st: ok ? 'sent' : 'failed', reason: ok ? '' : down[p.id] ? svc : L('No desktop agent', '沒有桌面程式') }, 'Desktop · ' + L('Windows PC', 'Windows 電腦'))
+      push({ ...base, via: 'Desktop', to: '', st: ok ? 'sent' : 'failed', reason: ok ? '' : down[p.id] ? svc : L('No desktop agent', '沒有桌面程式') }, 'Desktop OS')
     } else {
       const bad = !!down[p.id]
       push({ ...base, via: 'Email', to: p.nt + '@' + DOMAIN, st: bad ? 'failed' : 'sent', reason: bad ? L('Mailbox full (552)', '信箱已滿（552）') : '' }, 'Email')
@@ -102,13 +103,14 @@ export function notReached(lines: LogLine[]): Tag[] {
   return Object.keys(st).filter(key => !st[key].ok).map(key => st[key].tag)
 }
 
-export function DeliveryLogDialog({ x, open, onClose, onResend }: { x: Rec; open: boolean; onClose: () => void; onResend?: (tags: Tag[]) => void }) {
+// initial: the Status filter it opens with (['failed'] from "{n} not sent")
+export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: Rec; open: boolean; onClose: () => void; onResend?: (tags: Tag[]) => void; initial?: St[] }) {
   const app = useApp(), k: Channel = x.k
   const all = React.useMemo(() => (open ? logLines(x, app.groups) : []), [open, x.r.id, x.k, x.r.fresh, app.groups])
   const [q, setQ] = React.useState('')
   const [fs, setFs] = React.useState<St[]>([]), [fv, setFv] = React.useState<string[]>([])
   const [page, setPage] = React.useState(1), [per, setPer] = React.useState(50)
-  React.useEffect(() => { if (open) { setQ(''); setFs([]); setFv([]); setPage(1) } }, [open, x.id])
+  React.useEffect(() => { if (open) { setQ(''); setFs(initial || []); setFv([]); setPage(1) } }, [open, x.id])
   const terms = q.split(/[\s,，;]+/).map(t => t.trim().toLowerCase()).filter(Boolean)
   // any term matches part of the name, phone or email, or the whole employee ID, NT account or serial no.
   const match = (l: LogLine) => !terms.length || terms.some(t => (l.who + ' ' + l.to).toLowerCase().indexOf(t) >= 0 || t === l.emp.toLowerCase() || t === l.nt.toLowerCase() || t === l.sn.toLowerCase())
@@ -127,7 +129,7 @@ export function DeliveryLogDialog({ x, open, onClose, onResend }: { x: Rec; open
     col.display({ id: 'st', header: L('Status', '狀態'), meta: { width: 200, maxWidth: 220 }, cell: i => { const l = i.row.original; return <span className="flex min-w-0 flex-col items-start gap-0.5"><DsTag size="sm" color={ST[l.st].color}>{ST[l.st].label()}</DsTag>{l.reason ? <span className="truncate text-caption text-fg-secondary">{l.reason}</span> : null}</span> } }),
     col.accessor('at', { header: L('Send time', '傳送時間'), meta: { width: 168, maxWidth: 168 }, cell: i => <span className="whitespace-nowrap tabular-nums">{i.getValue()}</span> }),
   ], [k, app.lang])
-  const opts = (m: Record<string, number>) => Object.keys(m).sort().map(v => ({ k: v, view: <span>{v}</span>, n: m[v] }))
+  const opts = (m: Record<string, number>) => Object.keys(m).sort().map(v => ({ k: v, view: <span>{v}</span>, text: v, n: m[v] }))
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
       {open ? (
@@ -136,7 +138,7 @@ export function DeliveryLogDialog({ x, open, onClose, onResend }: { x: Rec; open
             {/* the message ID tag and the channel sit in the title, like the Detail modal's; no summary line */}
             <div className="flex min-w-0 items-center gap-2">
               <DsTag size="sm" color="neutral" className="shrink-0 tabular-nums">{msgId(x.r)}</DsTag>
-              <DialogTitle className="truncate">{L('Sent details · ', '發送明細・') + chName(k)}</DialogTitle>
+              <DialogTitle className="truncate">{L('Delivery details · ', '發送明細・') + chName(k)}</DialogTitle>
               <DialogDescription className="sr-only">{L(fmtN(all.length) + ' messages', fmtN(all.length) + ' 則')}</DialogDescription>
             </div>
           </DialogHeader>
@@ -147,7 +149,7 @@ export function DeliveryLogDialog({ x, open, onClose, onResend }: { x: Rec; open
                 <div className="w-[480px] max-w-full"><Input type="search" startIcon={Search} value={q} onChange={e => { setQ(e.target.value); setPage(1) }} placeholder={L('Search name, employee ID, NT account, phone or job ID', '搜尋姓名、工號、NT 帳號、電話或 Job ID')} aria-label={L('Search delivery details', '搜尋發送明細')} /></div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                   <FilterMenu<string> label={L('Status', '狀態')} sel={fs} toggle={flip(setFs) as any} clear={() => { setFs([]); setPage(1) }}
-                    opts={(['sent', 'failed', 'queued'] as St[]).filter(s => bySt[s]).map(s => ({ k: s, view: <DsTag size="sm" color={ST[s].color}>{ST[s].label()}</DsTag>, n: bySt[s] }))} />
+                    opts={(['sent', 'failed', 'queued'] as St[]).filter(s => bySt[s]).map(s => ({ k: s, view: <DsTag size="sm" color={ST[s].color}>{ST[s].label()}</DsTag>, text: ST[s].label(), n: bySt[s] }))} />
                   {k === 'sms' ? <FilterMenu<string> label={L('Channel', '通道')} sel={fv} toggle={flip(setFv)} clear={() => { setFv([]); setPage(1) }} opts={opts(byVia)} /> : null}
                 </div>
               </div>
@@ -165,11 +167,19 @@ export function DeliveryLogDialog({ x, open, onClose, onResend }: { x: Rec; open
             </div>
           </DialogBody>
           <DialogFooter>
-            {/* anyone not reached: resend to them, in a new message on this channel */}
-            {missed.length && onResend ? <>
-              <Button variant="secondary" onClick={onClose}>{L('Close', '關閉')}</Button>
-              <Button variant="primary" onClick={() => onResend(missed)}>{L('Resend to ' + fmtN(missed.length), '重新寄送給 ' + fmtN(missed.length) + ' 人')}</Button>
-            </> : <Button variant="primary" onClick={onClose}>{L('Close', '關閉')}</Button>}
+            {/* anyone not reached: how many people (not rows), Show them (Status: Not sent only), and resend to them in
+                a new message on this channel */}
+            {missed.length && onResend ? (
+              <div className="flex w-full flex-wrap items-center gap-2">
+                <span className="flex flex-wrap items-center gap-x-2 text-body text-fg-secondary">
+                  <span className="tabular-nums">{L(fmtN(missed.length) + (missed.length === 1 ? ' person didn’t' : ' people didn’t') + ' receive this message.', fmtN(missed.length) + ' 人沒有收到這則訊息。')}</span>
+                  {fs.length === 1 && fs[0] === 'failed' ? null : <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => { setFs(['failed']); setPage(1) }}>{L('Show them', '只看他們')}</Button>}
+                </span>
+                <span className="flex-1" />
+                <Button variant="secondary" onClick={onClose}>{L('Close', '關閉')}</Button>
+                <Button variant="primary" onClick={() => onResend(missed)}>{L('Resend to ' + fmtN(missed.length), '重新寄送給 ' + fmtN(missed.length) + ' 人')}</Button>
+              </div>
+            ) : <Button variant="primary" onClick={onClose}>{L('Close', '關閉')}</Button>}
           </DialogFooter>
         </DialogContent>
       ) : null}

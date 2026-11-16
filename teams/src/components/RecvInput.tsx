@@ -30,8 +30,8 @@ interface Opt { item: RiItem; av?: Person; icon?: typeof Users; name: string; su
 
 // options for the dropdown, plus a format error when the typed value isn't valid
 // noExtEmail: Email isn't a chosen channel, so an outside address would get nothing; a company address still adds
-// the employee (they get the other channels)
-function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefined, isAdded: (it: RiItem) => boolean, noExtEmail?: boolean) {
+// the employee (they get the other channels). noExtPhone: the same for outside phone numbers without SMS fallback.
+function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefined, isAdded: (it: RiItem) => boolean, noExtEmail?: boolean, noExtPhone?: boolean) {
   const q = ri.q.trim(), low = q.toLowerCase(), out = { opts: [] as Opt[], err: '', tip: '' }
   const person = (p: Person, meta?: string): Opt => ({ item: { kind: 'person', id: p.id }, av: p, name: p.en + ' ' + p.zh, sub: [p.org, p.nt, p.emp].filter(Boolean).join(' · '), meta: meta || '' })
   const ext = (v: string): Opt => ({ item: { kind: 'ext', value: v }, icon: v.indexOf('@') < 0 ? Phone : Mail, name: v, sub: v.indexOf('@') < 0 ? L('External · SMS only', '外部 · 只收 SMS') : L('External · Email only', '外部 · 只收 Email'), meta: L('External', '外部') })
@@ -54,7 +54,9 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
     else if (!d) out.err = L('Enter 8–15 digits.', '請輸入 8–15 碼數字。')
     else {
       const p = PEOPLE.find(x => x.co === d || x.pp === d)
-      out.opts.push(p ? person(p, p.co === d ? L('Company mobile', '公務手機') : L('Personal phone', '私人手機')) : ext(fmtExtPhone(d)))
+      if (p) out.opts.push(person(p, p.co === d ? L('Company mobile', '公務手機') : L('Personal phone', '私人手機')))
+      else if (noExtPhone) out.err = L('SMS fallback isn’t selected in Channels, so outside numbers can’t be added. Employee numbers add the employee.', 'Channels 沒有選 SMS 備援，無法加入外部號碼。員工的號碼會加入該員工。')
+      else out.opts.push(ext(fmtExtPhone(d)))
     }
   } else if (ri.type === 'email') {
     if (!q) out.tip = L('For contractors. Company addresses add the employee.', '給外包人員用。輸入公司信箱會加入該員工。')
@@ -79,11 +81,11 @@ function GroupPeek({ g }: { g: Group }) {
   )
 }
 
-export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, onAdd, extra, noExtEmail }: {
+export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, onAdd, extra, noExtEmail, noExtPhone }: {
   id: string; ri: RiState; setRi: (r: RiState) => void; groups: Group[]; excludeGroup?: string; bad?: boolean
-  isAdded: (it: RiItem) => boolean; onAdd: (it: RiItem) => void; extra?: React.ReactNode; noExtEmail?: boolean
+  isAdded: (it: RiItem) => boolean; onAdd: (it: RiItem) => void; extra?: React.ReactNode; noExtEmail?: boolean; noExtPhone?: boolean
 }) {
-  const T = riType(ri.type), r = riOptions(ri, groups, excludeGroup, isAdded, noExtEmail)
+  const T = riType(ri.type), r = riOptions(ri, groups, excludeGroup, isAdded, noExtEmail, noExtPhone)
   const set = (p: Partial<RiState>) => setRi({ ...ri, ...p })
   const add = (it: RiItem) => { onAdd(it); set({ q: '', open: ri.type === 'group' || ri.type === 'org', exp: null }) }
   const first = r.opts.find(x => !x.added)
