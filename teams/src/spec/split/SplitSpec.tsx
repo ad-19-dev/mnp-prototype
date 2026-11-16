@@ -547,7 +547,7 @@ function Modals() {
       </Section>
       <Section eyebrow="Resend" title="重新傳送" lead="取代原本的 Send now 與 Reschedule（2026-11-16）：在訊息詳情裡完成，不另開對話框，也不進入發送流程。核准仍然有效；只作用在這個通道。">
         <Figure label="從選單 Resend（全部收件人）" sub="Scheduled expired" shot="resend-full" max={760} notes={[
-          { n: 1, title: 'Send time', body: <>兩個選項：<C>Now</C>（預設）、<C>Schedule</C>（出現日期時間欄位，必填，現在到 3 個月內）。</> },
+          { n: 1, title: 'Send time', body: <>兩個選項：<C>Now</C>（預設）、<C>Schedule</C>（出現日期時間欄位，必填，現在到 3 個月內；日曆上今天以前的日期是灰色、不能點）。</> },
           { n: 2, title: '底部', body: <>Cancel（回到一般的訊息詳情，不送出）；主要按鈕 <C>Resend</C>，選 Schedule 時是 <C>Schedule resend</C>。送出後 toast：Sending on &lt;通道&gt; 或 Resend scheduled for &lt;時間&gt;。</> },
         ]} />
         <Figure label="從 Sent details 的 Resend to not sent (n)" sub="只寄沒收到的人" shot="resend" max={760} notes={[

@@ -424,7 +424,7 @@ function Step3() {
         <Notes items={[
           { title: '排程錯誤', body: <>選到過去或超過 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" /></> },
           { title: '預覽', body: 'Device Notifications 的預覽只有寄件人與內容（沒有標題欄位）；Email 預覽主旨與內文。只有一個通道時不顯示切換，只顯示通道名稱。' },
-          { title: '排程時間', body: '選 Scheduled send 時預設明天 09:00；改回 Send now 欄位隱藏，再選回來保留上次選的時間。時間填錯的錯誤，填了值就顯示，不用等按 Create message。' },
+          { title: '排程時間', body: '日曆上今天以前的日期是灰色、不能點（DS DatePicker 之後會提供這個設定，目前原型先自行處理）。選 Scheduled send 時預設明天 09:00；改回 Send now 欄位隱藏，再選回來保留上次選的時間。時間填錯的錯誤，填了值就顯示，不用等按 Create message。' },
           { title: 'Send me a test', body: '只檢查步驟 2 的內容。有錯時不寄，標記步驟 2 的錯誤並出現紅色 toast；沒錯就寄給自己。' },
         ]} />
       </Section>
