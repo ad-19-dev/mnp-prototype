@@ -8,6 +8,7 @@
 - The Delivery method proposals (how to tie it to Device Notifications) are `teams/delivery.html` (`teams/src/spec/delivery/`); they do not change the prototype.
 - The per-recipient delivery details proposals (Detail modal) are `teams/sendlog.html` (`teams/src/spec/sendlog/`); they do not change the prototype.
 - The batch import proposals (match inline, no second match page) are `teams/importlive.html` (`teams/src/spec/importlive/`); they do not change the prototype.
+- The Not sent / Resend demo (answers to two prototype questions, 2026-11-16) is `teams/notsent.html` (`teams/src/spec/notsent/`); it does not change the prototype.
 - The phone-number de-duplication study is `teams/phone-dedupe.html` (`teams/src/spec/phone/`).
 - The DS component map for developers is `teams/dsmap.html` (`teams/src/spec/dsmap/`).
 - The "which phone gets the SMS" comparison for PM is `teams/smsphone.html` (`teams/src/spec/smsphone/`); it does not change the prototype.
