@@ -232,10 +232,18 @@ await step('dlg-fail', async () => {
     [2, d.getByRole('button', { name: /^Status/ }), 'tl'],
     [3, d.getByRole('button', { name: /^Resend/ }), 'tl'],
   ], 12);
-  await d.getByRole('button', { name: /^Resend/ }).click(); await wait(1200);
-  await shot('resend', null);
-  await p.getByRole('button', { name: 'Cancel' }).click(); await wait(500);
+  // Resend to not sent: the Detail modal in its resend mode, with only those people (no new page)
+  await d.getByRole('button', { name: /^Resend/ }).click(); await wait(1000);
+  const r = p.getByRole('dialog').last();
+  await shot('resend', r, [
+    [1, r.getByText('Resend', { exact: true }).first(), 'tl'],
+    [2, r.getByText(/Only the people who didn’t receive it/).first(), 'tl'],
+    [3, r.getByRole('radio', { name: 'Now' }), 'tl'],
+    [4, r.getByRole('button', { name: 'Resend', exact: true }), 'tl'],
+  ], 12);
+  await p.keyboard.press('Escape'); await wait(400);
   const leave = p.getByRole('button', { name: 'Discard' }); if (await leave.count()) await leave.click(); await wait(500);
+  await unfind();
 });
 const dlgShot = async (name, text, item, btn) => {
   await step(name, async () => {
@@ -245,8 +253,22 @@ const dlgShot = async (name, text, item, btn) => {
   });
 };
 await dlgShot('dlg-cancel', 'UX sync moves', /^Cancel sending$/);
-await dlgShot('dlg-sendnow', 'UX sync moves', /^Send now/);
-await dlgShot('dlg-reschedule', 'UX sync moves', /^Reschedule/);
+// Resend from the row menu (Scheduled expired): the whole audience, in the Detail modal; then Schedule with a past time
+await step('resend-full', async () => {
+  await find('UX sync moves'); await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: /^Resend/ }).click(); await wait(800);
+  const d = p.getByRole('dialog').last();
+  await shot('resend-full', d, [
+    [1, d.getByRole('radio', { name: 'Now' }), 'tl'],
+    [2, d.getByRole('button', { name: 'Cancel', exact: true }), 'tl'],
+  ], 12);
+  await d.getByRole('radio', { name: 'Schedule' }).click(); await wait(300);
+  await d.getByPlaceholder('YYYY/MM/DD HH:MM').fill('2026/11/01 09:00'); await wait(200);
+  await d.getByRole('button', { name: 'Schedule resend' }).click(); await wait(500);
+  await shot('resend-later', d.locator('aside').first(), [], 12);
+  await p.keyboard.press('Escape'); await wait(400);
+  const leave = p.getByRole('button', { name: 'Discard' }); if (await leave.count()) await leave.click(); await wait(500);
+  await unfind();
+});
 
 
 // ---- one list row (or the message's rows) per status
@@ -338,16 +360,6 @@ await step('dlg-members', async () => {
   await p.keyboard.press('Escape'); await wait(300);
   await closeAside();
 });
-// ---- reschedule with a time in the past
-await step('dlg-reschedule-error', async () => {
-  await find('UX sync moves'); await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: /^Reschedule/ }).click(); await wait(600);
-  const d = p.getByRole('dialog');
-  await d.getByPlaceholder('YYYY/MM/DD HH:MM').fill('2026/11/01 09:00'); await wait(200);
-  await d.getByRole('button', { name: 'Reschedule' }).click(); await wait(500);
-  await shot('dlg-reschedule-error', d, [], 12);
-  await p.keyboard.press('Escape'); await wait(300);
-});
-
 // ---- first use: a space with nothing in it (last, it adds a team)
 await step('empty-first', async () => {
   await p.getByRole('button', { name: /add|new|create/i }).first().click(); await wait(600);

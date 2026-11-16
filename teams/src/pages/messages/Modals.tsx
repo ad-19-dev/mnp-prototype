@@ -8,6 +8,7 @@ import { ArrowRight, Building2, ChevronLeft, Copy, Globe, Lock, Mail, Phone, Plu
 import { LIM, ME, PEOPLE, PMAP, fmtPhone, maskPhone, plural, splitTokens, tplFormats, LIST_SAMPLES } from '../../lib/data'
 import { effEmailMode, hasNotif, multiPeople, recvFlat, smsOn, tplFit } from '../../lib/compose'
 import { flash, useApp } from '../../lib/store'
+import { BatchImportDialog } from '../../components/BatchImport'
 import { Banner, FmtChips, FormField, IconBox, KV, ListBox, ListKindField, ListRow, PAvatar, Two, listKindExample } from '../../components/ui'
 import { groupInSpace, tplInSpace } from '../../lib/teams'
 import type { SendCtl } from './ctl'
@@ -37,69 +38,17 @@ const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-
 const Group = ({ children }: { children: React.ReactNode }) => <section className="flex flex-col gap-2 pt-[var(--layout-space-tight)]">{children}</section>
 
 // ---------- batch import ----------
-// B+ (2026-11-16): one step, no second "match" page. Choose the data type, paste a list (a column from Excel works);
-// every entry is matched as it comes in. Below the paste box: "{n} to fix" (each entry as an editable field, with
-// why it wasn't found, and ✕ to leave it out) and "{m} valid audiences" (names only; ✕ on hover). Entries already in
-// the audience, or twice in the list, are left out quietly ("n duplicates left out"). More can be pasted any time.
-// Each name's ✕ is always shown (not only on hover); Clear all (footer, left) empties the list.
-// Add {m} audiences adds what's valid and closes; whatever is still to fix isn't added.
+// the shared B+ dialog (components/BatchImport), adding to the send flow's audience; outside contacts only with
+// their channel (Email; SMS fallback)
 export function ImportDialog({ m }: { m: SendCtl }) {
-  const imp = m.s.imp, close = () => m.set({ imp: null })
-  const [all, setAll] = React.useState(false)
-  React.useEffect(() => { if (!imp) setAll(false) }, [!imp])
-  if (!imp) return <Shell open={false} onClose={close} title="" foot={null}>{null}</Shell>
-  const k = imp.kind, h = m.impHits(), n = h.ok.length, some = imp.vals.length > 0
-  const shown = all ? h.ok : h.ok.slice(0, 12)
-  const take = (t: string) => { if (k) m.impTake(t) }
-  return (
-    <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
-      foot={<>{/* left: Clear all empties the list (and the paste box) to start over */}
-        <Button variant="tertiary" className="mr-auto" disabled={!some && !imp.text} onClick={() => m.setImp({ vals: [], text: '' })}>{L('Clear all', '全部清除')}</Button>
-        <Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" disabled={!n} onClick={() => m.impAddValid()}>{n ? L('Add ', '加入 ') + P(n, 'audience', '位收件人') : L('Add audiences', '加入收件人')}</Button></>}>
-      {/* changing the type matches what's already in again */}
-      <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />
-      {/* the paste area: big before anything is in, a slim "add more" box after; a paste is taken in at once
-          (line breaks kept), typing is taken in on Enter */}
-      <FormField id="imp-text" label={L('List', '名單')} hint={some ? undefined : L('Separate with commas or new lines. A column copied from Excel works too.', '用逗號或換行分隔；也可以直接貼上從 Excel 複製的一欄。')}>
-        <Textarea id="imp-text" rows={some ? 2 : 6} className="font-mono" value={imp.text} disabled={!k}
-          placeholder={!k ? L('Choose a data type first', '請先選擇資料類型') : some ? L('Paste or type more, then press Enter', '貼上或輸入更多，按 Enter 加入') : L('e.g. ', '例如：') + listKindExample(k)}
-          onChange={ev => m.setImp({ text: ev.target.value })}
-          onPaste={ev => { ev.preventDefault(); take(imp.text + ev.clipboardData.getData('text')) }}
-          onKeyDown={ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); take(imp.text) } }} />
-      </FormField>
-      {h.fix.length ? <Group>
-        <H3>{L(h.fix.length + ' to fix', h.fix.length + ' 筆要修正')}</H3>
-        <div className="flex flex-col gap-1.5">
-          {h.fix.map(x => (
-            <div key={x.i} className="flex items-center gap-2">
-              <div className="w-60 shrink-0"><Input size="sm" className="font-mono" error aria-label={L('Fix ', '修正 ') + x.v} value={x.v} onChange={ev => m.impSetVal(x.i, ev.target.value)} /></div>
-              <span className="min-w-0 flex-1 truncate text-caption text-error-text">{tx(x.why)}</span>
-              <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Leave out ', '不加入 ') + x.v} onClick={() => m.impDrop(x.i)} />
-            </div>
-          ))}
-        </div>
-      </Group> : null}
-      {n || h.dup ? <Group>
-        <span className="flex flex-wrap items-baseline gap-x-2">
-          <H3>{L(P(n, 'valid audience', '', 'valid audiences'), n + ' 位有效收件人')}</H3>
-          {h.dup ? <span className="text-caption text-fg-secondary">{L(h.dup === 1 ? '1 duplicate left out' : h.dup + ' duplicates left out', '已略過 ' + h.dup + ' 筆重複')}</span> : null}
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          {shown.map(x => {
-            const mm = x.mm
-            return (
-              <span key={x.i} className="group inline-flex items-center gap-1.5 rounded-md border border-divider bg-[var(--color-neutral-1)] py-0.5 pr-1 pl-1.5 text-body">
-                {mm.kind === 'one' ? <PAvatar p={mm.p} size={20} /> : React.createElement(mm.kind === 'org' ? Building2 : x.tag.email && x.tag.email.indexOf('@') < 0 ? Phone : Mail, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}
-                {mm.kind === 'one' ? mm.p.en + ' ' + mm.p.zh : mm.kind === 'org' ? mm.org.code : x.tag.email}
-                <button type="button" aria-label={L('Remove ', '移除 ') + x.v} className="rounded-sm text-fg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.impDrop(x.i)}><X className="size-3.5" /></button>
-              </span>
-            )
-          })}
-          {h.ok.length > shown.length ? <Button variant="link" size="sm" className="!h-auto !p-0" onClick={() => setAll(true)}>{L('+' + (h.ok.length - shown.length) + ' more', '還有 ' + (h.ok.length - shown.length) + ' 位')}</Button> : null}
-        </div>
-      </Group> : null}
-    </Shell>
-  )
+  const c = m.s.c, close = () => m.set({ imp: null })
+  return <BatchImportDialog open={!!m.s.imp} onClose={close} has={key => c.receivers.some(t => t.key === key)}
+    opts={{ allowExt: true, noExtEmail: !c.ch.email, noExtPhone: !(c.ch.push && c.ch.sms) }}
+    onAdd={(ok, left) => {
+      m.setC({ receivers: m.s.c.receivers.concat(ok.map(x => x.tag)) })
+      close()
+      flash(L('Added ', '已加入 ') + P(ok.length, 'audience', '位收件人') + (left ? L(' · ' + left + ' not added', '・' + left + ' 筆未加入') : ''))
+    }} />
 }
 
 // ---------- SMS numbers ----------

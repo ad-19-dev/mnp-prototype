@@ -65,7 +65,7 @@ export default function DsMap() {
             ['內容欄位', comps('Input', 'Textarea'), '可編輯時 mode edit（有計數）；不能編輯時 mode readonly。', <Own>readonly 欄位 focus 時不顯示藍框（覆寫 DS，待 DS 負責人確認）；Read only 標籤（Tag）</Own>],
             ['Email 內文', comps('FileItem'), '附件用 FileItem。', <Own>可編輯時是格式編輯器；readonly 時是 bg-readonly 的 HTML 框</Own>],
             ['Audience', comps('DataTable', 'Checkbox', 'Button'), '和發送流程同樣的表格；SMS 兩欄手機用 Checkbox；可編輯時 rowActions 放移除鈕。', <Own>搜尋列（RecvInput）、Batch import 寫回這個表格</Own>],
-            ['底部操作', comps('Button'), 'Cancel sending：secondary danger；Duplicate：secondary；Send now / Save changes：primary；Discard changes：tertiary。', <Own>有改動時換成 Discard / Save</Own>],
+            ['底部操作', comps('Button'), 'Cancel sending：secondary danger；Duplicate：secondary；Resend / Save changes：primary；Resend 模式的 Send time 用 RadioGroup（Now / Schedule）加 DatePicker；Discard changes：tertiary。', <Own>有改動時換成 Discard / Save</Own>],
             ['成員對話框', comps('Dialog', 'DataTable'), '寬 640，表格列出成員，有搜尋。', <Own>—</Own>],
             ['發送明細', comps('Dialog', 'Input', 'DropdownMenu', 'DataTable', 'Tag', 'Pagination'), 'Dialog 最大寬 1280、height fill；一個搜尋 Input（不用先選欄位）；沒有匯出；篩選沿用 FilterMenu；DataTable 固定高度；Status 欄 Tag（Sent／Not sent／Queued）下方小字原因；Channel 欄純文字（不顯示號碼）；Pagination 加每頁筆數 Select（50 / 100 / 200）；有人未送出時 DialogFooter 是 Close（secondary）與 Resend to not sent (n)（primary）；收件人旁的手機標籤用 Tag（Company phone blue、Personal phone purple）；從 {n} not sent 開啟時 Status 預設只選 Not sent（取代原本的 Not sent to 對話框）。', <Own>伺服器端搜尋（依格式判斷姓名、工號、NT、Job ID）、篩選與分頁；多筆貼上比對；誰算沒收到（同一人有一列送出就算收到）</Own>],
           ]} />

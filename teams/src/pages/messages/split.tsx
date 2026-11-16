@@ -128,8 +128,10 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
         {MODAL ? null : <DropdownMenuItem startIcon={Info} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>}
         {lite ? null : <>
         {!MODAL && (st === 'expired' || st === 'scheduled') ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startEditContent(r, x.k)}>{L('Edit content', '編輯內容')}</DropdownMenuItem> : null}
-        {st === 'expired' || st === 'error' ? <DropdownMenuItem startIcon={Send} onSelect={() => askSendNow(m, x)}>{L('Send now', '立即傳送')}</DropdownMenuItem> : null}
-        {st === 'expired' || st === 'error' || st === 'scheduled' ? <DropdownMenuItem startIcon={CalendarClock} onSelect={() => m.openReschedule(r, x.k)}>{L('Reschedule', '重新排程')}</DropdownMenuItem> : null}
+        {/* Resend (2026-11-16): replaces Send now and Reschedule. Opens the Detail modal in its resend mode (content
+            and audience editable, Now or Schedule), to the whole audience. A Scheduled record has no menu item for its
+            time: it's changed in the Detail modal (open the title). */}
+        {st === 'expired' || st === 'error' ? <DropdownMenuItem startIcon={Send} onSelect={() => m.set({ det: x.id, resend: {} })}>{L('Resend', '重新傳送')}</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
         {st === 'expired' || st === 'error' || st === 'scheduled' || st === 'pending' ? <>
           <DropdownMenuSeparator />
@@ -439,5 +441,5 @@ export function SplitFailDialog({ m }: { m: SendCtl }) {
   const r = nid ? app.rows.find(x => x.id === nid) : null
   const rec = r ? recordsOf(m, [r]).find(x => x.k === nch) || recordsOf(m, [r])[0] : null
   if (!rec) return null
-  return <DeliveryLogDialog x={rec} open initial={['failed']} onClose={() => m.set({ ns: null })} onResend={tags => m.startCompose('resend', rec.r, tags, rec.k)} />
+  return <DeliveryLogDialog x={rec} open initial={['failed']} onClose={() => m.set({ ns: null })} onResend={tags => m.set({ ns: null, det: rec.id, resend: { tags } })} />
 }

@@ -250,7 +250,7 @@ function Frame() {
         <SpecTable head={['進入方式', '入口', '頁首標題', '預填內容']} nowrap={[0, 2]} rows={[
           ['新訊息', '列表右上角 New message', 'New message', '全部空白，從步驟 1 開始。'],
           ['複製', '列表選單 Duplicate to new message（單一通道的紀錄）', 'Duplicate message', '只有那一個通道（SMS 的紀錄會勾 Device Notifications 加 SMS 備援）、它的內容與模板；收件人是這個通道收得到的人（外部電話只跟 SMS 的紀錄，外部 Email 只跟 Email 的紀錄）。傳送時間不帶入，預設立即傳送。三個步驟都已解鎖，可以直接點步驟列。'],
-          ['重寄', 'Delivery details 對話框的 Resend to n（從 {n} not sent 或訊息詳情開啟）', 'Resend to missed audiences', '同一個通道與內容；收件人只有沒收到的人（含外部）。三個步驟都已解鎖。'],
+          ['重寄', '（2026-11-16 起不再進入發送流程）', '—', 'Sent details 的 Resend to not sent (n) 與列表選單的 Resend，都在訊息詳情的 Resend 模式裡完成，見 Send messages 設計規格。'],
           ['編輯內容', '不經過發送流程：在訊息詳情（modal）裡直接改（Scheduled 與 Scheduled expired）', '—', '內容、收件人與傳送時間都在訊息詳情裡改，細節見「Send messages 設計規格」。'],
         ]} />
       </Section>
@@ -459,6 +459,7 @@ function Dialogs() {
       <Section eyebrow="Import" title="Batch import" lead="兩個階段：輸入名單 → 比對結果。">
         <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-result', '貼上之後', '同一個畫面：要修正的與有效的分開列出']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
+          ['共用', 'Audience group 的成員也用同一個 Batch import 對話框（按鈕在搜尋列右邊，和這裡一樣），文案把 audiences 換成 members（2026-11-16）。'],
           ['流程', 'B+（2026-11-16）：只有一個畫面，沒有第二層比對頁。貼上（或輸入後按 Enter）就立刻比對，結果直接列在輸入框下方。'],
           ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前輸入框停用。改類型時已輸入的項目會重新比對。不提供 Names：公司超過 10 萬名員工，同名同姓很多。Emails：沒勾 Email 通道時，外部地址列為要修正，原因 Email isn’t a selected channel。Phone numbers：沒選 SMS 備援時，外部號碼列為要修正，原因 SMS fallback isn’t a selected channel。'],
           ['List', <>貼上時直接收進來（保留換行，可以貼 Excel 的一欄）；用打的時按 Enter 收進來。還沒有項目時輸入框 6 行高，提示 <Copy en="Separate with commas or new lines. A column copied from Excel works too." zh="用逗號或換行分隔；也可以直接貼上從 Excel 複製的一欄。" />；有項目後縮成 2 行，提示 <Copy en="Paste or type more, then press Enter" zh="貼上或輸入更多，按 Enter 加入" />。沒有筆數、Clear all 那一行（2026-11-16 拿掉）。</>],

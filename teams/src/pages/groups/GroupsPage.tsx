@@ -10,7 +10,7 @@ import { ME_SPACE, groupInSpace, spaceName, spaceTeam } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   Check, Copy, FileText, Lock, Mail, MessageSquareText, Monitor, MoreVertical, Pencil, Plus,
-  Search, Smartphone, Trash2, Undo2, Users, Wand2, X, CircleAlert, BookUser } from 'lucide-react'
+  Search, Smartphone, Trash2, Undo2, Upload, Users, Wand2, X, CircleAlert, BookUser } from 'lucide-react'
 import {
   GSEED, ME, PEOPLE, PMAP, LIST_SAMPLES, extPerson, fmtDT, fmtN, maskPhone, membersFor, orgMembers, parseListAs, plural,
   splitTokens, type Group, type ListKind, type Person,
@@ -20,6 +20,7 @@ import { useLogic, scrollTop } from '../../lib/logic'
 import { Banner, CHN, ConfirmDialog, FormField, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RecvInput, type RiItem, type RiState } from '../../components/RecvInput'
+import { BatchImportDialog } from '../../components/BatchImport'
 import { L, P, tx } from '../../lib/i18n'
 
 type Role = 'Owner' | 'Editor' | 'Viewer'
@@ -125,6 +126,16 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
       if (it.kind === 'org') return orgMembers(it.id).map(p => p.id)
       return membersFor(getApp().groups.find(x => x.id === it.id) || ({ id: it.id, count: 0 } as Group)).map(x => x.pid)
     },
+    // from Batch import: several at once; left: entries still to fix, not added
+    addItems(items: RiItem[], left: number) {
+      const ed = get().ed!, has: Record<string, boolean> = {}, add: string[] = []
+      ed.members.forEach(x => { has[x.pid] = true })
+      items.forEach(it => m.pidsOf(it).forEach(id => { if (!has[id]) { has[id] = true; add.push(id) } }))
+      const fresh: Record<string, boolean> = {}
+      add.forEach(id => { fresh[id] = true })
+      m.setEd({ members: add.map(id => ({ pid: id })).concat(ed.members), fresh, mpage: 1, mf: 'all', mq: '' })
+      flash(L('Added ', '已加入 ') + P(add.length, 'member', '人') + (left ? L(' · ' + left + ' not added', '・' + left + ' 筆未加入') : ''))
+    },
     addItem(it: RiItem) {
       const ed = get().ed!, has: Record<string, boolean> = {}
       ed.members.forEach(x => { has[x.pid] = true })
@@ -209,7 +220,7 @@ const Cv = ({ ok, plain, children }: { ok: boolean; plain?: boolean; children: R
 }
 
 function GroupEditor({ m }: { m: GCtl }) {
-  const [per, setPer] = React.useState(20)
+  const [per, setPer] = React.useState(20), [imp, setImp] = React.useState(false)
   const app = useApp(), s = m.s, ed = s.ed!
   const isViewer = false, canEdit = true
   const cr = PMAP[ed.creator] || PEOPLE[0]
@@ -284,24 +295,14 @@ function GroupEditor({ m }: { m: GCtl }) {
                 <RecvInput id="ri-group" ri={ed.ri} setRi={ri => m.setEd({ ri }, true)} groups={app.groups.filter(g => groupInSpace(g))} excludeGroup={ed.id || undefined}
                   isAdded={it => { const p = m.pidsOf(it); return p.length > 0 && p.every(id => has[id]) }}
                   onAdd={it => m.addItem(it)}
-                  extra={<Button variant="tertiary" startIcon={FileText} aria-expanded={ed.showPaste} onClick={() => m.setEd({ showPaste: !ed.showPaste }, true)}>{ed.showPaste ? L('Hide list', '收起名單') : L('Paste a list', '貼上名單')}</Button>} />
+                  extra={<Button variant="tertiary" startIcon={Upload} onClick={() => setImp(true)}>{L('Batch import', '批次匯入')}</Button>} />
                 <span className="text-caption text-fg-secondary">{L('Orgs and groups add their current members.', '加入組織或群組時，會加入目前的所有成員。')}</span>
               </div>
             ) : null}
-            {canEdit && ed.showPaste ? (
-              <div className="flex flex-col gap-2">
-                <ListKindField id="g-kind" value={ed.listKind} onChange={listKind => m.setEd({ listKind }, true)} />
-                <FormField id="g-input" label={L('List', '名單')} count={inputN ? P(inputN, 'entry', '筆', 'entries') : ''}>
-                  <Textarea id="g-input" rows={3} className="font-mono" value={ed.input} onChange={e => m.setEd({ input: e.target.value }, true)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (splitTokens(m.s.ed!.input).length && m.s.ed!.listKind) m.parseMembers() } }}
-                    placeholder={ed.listKind ? L('e.g. ', '例如：') + listKindExample(ed.listKind) : L('Choose a data type first', '請先選擇資料類型')} />
-                </FormField>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-caption text-fg-secondary">{L('Separate with commas or new lines.', '用逗號或換行分隔。')}</span>
-                  <Button variant="primary" startIcon={Wand2} className="ml-auto" disabled={!inputN || !ed.listKind} onClick={() => m.parseMembers()}>{L('Add', '加入')}</Button>
-                </div>
-              </div>
-            ) : null}
+            {/* Batch import (2026-11-16): the send flow's dialog, so members are added the same way as audiences */}
+            <BatchImportDialog open={imp} onClose={() => setImp(false)} noun="member" opts={{ allowExt: true }}
+              has={key => { const it: RiItem = key[0] === 'e' ? { kind: 'ext', value: key.slice(2) } : { kind: key[0] === 'o' ? 'org' : 'person', id: key.slice(2) }; const p = m.pidsOf(it); return p.length > 0 && p.every(id => has[id]) }}
+              onAdd={(ok, left) => { setImp(false); m.addItems(ok.map(x => (x.tag.type === 'ext' ? { kind: 'ext', value: x.tag.email! } : { kind: x.tag.type as 'person' | 'org', id: x.tag.id! })), left) }} />
             {canEdit && fb ? <Feedback m={m} ed={ed} fb={fb} /> : null}
 
             {/* one compact row: search, then how many members each channel reaches (click a short one to list who's missing) */}
