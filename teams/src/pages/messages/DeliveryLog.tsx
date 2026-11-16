@@ -154,7 +154,7 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
     // how it went: PNS, SMS (fallback: after the push didn't arrive), SMS (an outside number), Desktop OS, Email
     col.accessor('ch', { header: L('Channel', '通道'), meta: { width: 150, maxWidth: 170 }, cell: i => <span className="truncate">{i.getValue()}</span> }),
     // status and reason in one column: the tag, and why under it when it failed
-    col.display({ id: 'st', header: L('Status', '狀態'), meta: { width: 250, maxWidth: 260 }, cell: i => { const l = i.row.original; return <span className="flex min-w-0 flex-col items-start gap-0.5"><DsTag size="sm" color={ST[l.st].color}>{ST[l.st].label()}</DsTag>{l.reason || l.note ? <span className="truncate text-caption text-fg-secondary">{l.reason || l.note}</span> : null}</span> } }),
+    col.display({ id: 'st', header: L('Status', '狀態'), meta: { width: 250, maxWidth: 260 }, cell: i => { const l = i.row.original; return <span className="flex min-w-0 flex-col items-start gap-0.5"><DsTag size="sm" color={ST[l.st].color}>{ST[l.st].label()}</DsTag>{/* the reason (Not sent) and the carrier's note (Sent) are both something gone wrong: red (2026-11-16) */}{l.reason || l.note ? <span className="truncate text-caption text-error-text">{l.reason || l.note}</span> : null}</span> } }),
     col.accessor('at', { header: L('Send time', '傳送時間'), meta: { width: 168, maxWidth: 168 }, cell: i => <span className="whitespace-nowrap tabular-nums">{i.getValue()}</span> }),
   ], [k, app.lang])
   const opts = (m: Record<string, number>) => Object.keys(m).sort().map(v => ({ k: v, view: <span>{v}</span>, text: v, n: m[v] }))

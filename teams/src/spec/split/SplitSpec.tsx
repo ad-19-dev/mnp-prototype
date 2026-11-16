@@ -309,7 +309,7 @@ function Detail() {
         <Figure label="Sent details" sub="Device Notifications (SMS)，UX Team「Fire evacuation drill」" shot="dlg-delivery" max={980} notes={[
           { n: 1, title: '搜尋', body: <>一個搜尋框，不用先選欄位，提示 <Copy en="Search name, employee ID, NT account, phone or job ID" zh="搜尋姓名、工號、NT 帳號、電話或 Job ID" />。姓名、電話、Email 部分比對（電話不顯示但可以搜）；工號、NT 帳號、Job ID 完全比對（由伺服器依格式判斷，名單有數萬人時才查得快）。可以一次貼多個，用逗號或空格分隔。</> },
           { n: 2, title: '篩選', body: 'Status（附數量），Device Notifications (SMS) 多一個 Channel（PNS / SMS）。都是多選，沿用列表的 FilterMenu：沒選時按鈕寫篩選名稱（Status）；只選一項時按鈕直接寫那一項（例：Not sent）；選兩項以上時是篩選名稱加數量（Status 2）。沒有 Reason 篩選：原因只在未送出時才有，已經寫在 Not sent 標籤下方。' },
-          { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Not sent 標籤。Not sent 下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。Sent 代表我們送出成功；如果接收端回報沒送達，Sent 下方也寫出原因（例：Recipient has blocked SMS messages、Message is barred by customer），這些仍算送出、不列入 Resend。還在傳送中的紀錄只列已經送出的，沒有 Queued（2026-11-16）。全站統一用 Not sent，不用 Failed。' },
+          { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Not sent 標籤。Not sent 下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。Sent 代表我們送出成功；如果接收端回報沒送達，Sent 下方也寫出原因（例：Recipient has blocked SMS messages、Message is barred by customer），這些仍算送出、不列入 Resend。兩種小字（Not sent 的原因、Sent 的接收端原因）都是紅字，因為都是異常狀況。還在傳送中的紀錄只列已經送出的，沒有 Queued（2026-11-16）。全站統一用 Not sent，不用 Failed。' },
           { n: 4, title: 'Send time', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
           { n: 5, title: '分頁', body: '「第一筆–最後一筆 of 總數」、頁碼、每頁 50 / 100 / 200 筆。搜尋或篩選後回到第 1 頁。' },
           { n: 6, title: 'Channel', body: <>怎麼送：<C>PNS</C>、<C>SMS (fallback)</C>（推播沒送到後改寄的 SMS）、<C>SMS</C>（外部號碼）、<C>Desktop OS</C>、<C>Email</C>。不寫是哪支手機，也不顯示號碼（隱私考量）。</> },
