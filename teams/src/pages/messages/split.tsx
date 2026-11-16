@@ -101,7 +101,8 @@ function ChCell({ k }: { k: Channel }) {
 
 // ---------- the message ID, and the actions on one channel ----------
 // the message ID: the same on every channel of one send, so records can be told apart and searched by it
-export const msgId = (r: Row) => 'MSG-' + String((r.id.startsWith('n') ? 90000 : 10000) + (parseInt(r.id.replace(/\D/g, ''), 10) || 0))
+// the message ID: a number only, no "MSG-" (2026-11-16)
+export const msgId = (r: Row) => String((r.id.startsWith('n') ? 90000 : 10000) + (parseInt(r.id.replace(/\D/g, ''), 10) || 0))
 export function askSendNow(m: SendCtl, x: Rec) {
   m.set({ cf: { title: L('Send it now?', '要立即傳送嗎？'), text: L('It will be sent right away on ' + chName(x.k) + '.', '會立刻用 ' + chName(x.k) + ' 送出。'), icon: Send, tone: 'info', cancel: L('Cancel', '取消'), ok: L('Send now', '立即傳送'), run: () => m.sendNowCh(x.r.id, x.k) } })
 }
@@ -202,7 +203,8 @@ const since = (n: number) => { const t = new Date(), d = new Date(t.getFullYear(
 export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: React.ReactNode; group?: GroupStyle }) {
   const [per, setPer] = React.useState(20)
   const s = m.s, app = useApp(), vis = React.useMemo(() => recordsOf(m, m.visible()), [m, app.rows, app.space])
-  const q = s.q.trim().toLowerCase()
+  // "MSG-10180" typed or pasted from elsewhere still finds 10180
+  const q = s.q.trim().toLowerCase().replace(/^msg-?/, '')
   const rows = vis.filter(x => {
     if (s.fs.length && s.fs.indexOf(x.st) < 0) return false
     if (s.fch.length && s.fch.indexOf(x.k) < 0) return false

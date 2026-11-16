@@ -95,7 +95,7 @@ await step('group', async () => {
     [2, a.locator('[role="cell"]').nth(1), 'tl'],
     [3, a.locator('[role="cell"]').nth(3), 'tl'],
     [4, a.locator('[role="cell"]').nth(4), 'tl'],
-    [5, c.getByText(/^MSG-/).first(), 'tl'],
+    [5, c.getByText(/^\d{5}$/).first(), 'tl'],
   ], 10);
   await unfind();
 });

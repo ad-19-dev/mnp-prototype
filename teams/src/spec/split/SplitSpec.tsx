@@ -86,7 +86,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         </div>
       </Section>
 
-      <Section eyebrow="1" title="訊息列表" lead={<>每一列是一個通道的紀錄，每一列都顯示自己的完整資料；同一次發送的紀錄有相同的訊息 ID（例：MSG-10154），排在一起。欄位見「<button type="button" className="flow-spec-link" onClick={() => go('list')}>列表</button>」。</>}>
+      <Section eyebrow="1" title="訊息列表" lead={<>每一列是一個通道的紀錄，每一列都顯示自己的完整資料；同一次發送的紀錄有相同的訊息 ID（例：10154），排在一起。欄位見「<button type="button" className="flow-spec-link" onClick={() => go('list')}>列表</button>」。</>}>
         <Figure label="訊息列表（UX Team）" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
           { n: 1, title: '通道', body: 'Device Notifications、Device Notifications (SMS)、Desktop OS、Email。' },
           { n: 2, title: '訊息 ID、標題 / 內容', body: '訊息 ID 標籤，後面是這個通道的標題與內文；點標題開訊息詳情。' },
@@ -196,7 +196,7 @@ function ListTab() {
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
           [<Copy en="Sender" zh="寄件人" />, '140（固定）', 'Device Notifications 與 Desktop OS 的寄件人；Email 沒有寄件人，顯示「—」。每一列都顯示。', '可'],
           [<Copy en="Channel" zh="通道" />, '96（固定；同一次發送有標題列時 128）', '通道圖示', '—'],
-          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320，其餘寬度都給它', '訊息 ID 標籤（Tag sm、neutral，例：MSG-10154），後面是標題；下一行是內文', '—'],
+          [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320，其餘寬度都給它', '訊息 ID 標籤（Tag sm、neutral，例：10154），後面是標題；下一行是內文', '—'],
           [<Copy en="Status" zh="狀態" />, '168（固定）', '狀態標籤；下方是 {n} not sent', '—'],
           [<Copy en="Audience" zh="收件人數" />, '88，最多 96', '人數，齊右', '可'],
           [<Copy en="Template" zh="模板" />, '176（固定）', '模板名稱；沒用模板顯示「—」。', '可'],
@@ -314,8 +314,8 @@ function Detail() {
           { n: 4, title: 'Send time', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
           { n: 5, title: '分頁', body: '「第一筆–最後一筆 of 總數」、頁碼、每頁 50 / 100 / 200 筆。搜尋或篩選後回到第 1 頁。' },
           { n: 6, title: 'Channel', body: <>原本的 Via 與 Sent to 合併成一欄：<C>PNS</C>、<C>SMS · Company phone</C>、<C>SMS · Personal phone</C>、<C>Desktop OS</C>、<C>Email</C>。不顯示電話號碼（連遮罩也不顯示，隱私考量），只寫是哪一支。</> },
-          { n: 7, title: 'Resend to {n}', body: '有人沒收到時，底部右側是 Close 加 Resend to {n}：n 是完全沒收到的人（推播沒送到但 SMS 送到的算收到），開一則新訊息，同一個通道與內容，收件人只有這些人。都收到了只有 Close。' },
-          { n: 8, title: '{n} people didn’t receive this message.', body: <>底部左側一句說明，寫清楚 n 是人數（Not sent 篩選的數字是訊息則數，一個人可能有推播與 SMS 兩列）。後面接 <C>Show them</C>：把 Status 設成只選 Not sent（按鈕顯示 Not sent），已經是這樣時不顯示。</> },
+          { n: 7, title: 'Resend to {n}', body: '有人沒收到時，標題下方出現設計系統 Alert（fixed 置頂：滿版寬度、無圓角，黃色 warning），裡面是 Resend to {n}（primary，sm）：n 是完全沒收到的人（推播沒送到但 SMS 送到的算收到），開一則新訊息，同一個通道與內容，收件人只有這些人。底部只有 Close（此時為 secondary）。都收到了不顯示 Alert，底部只有 Close（primary）。' },
+          { n: 8, title: '{n} people didn’t receive this message.', body: <>Alert 的文字，寫清楚 n 是人數（Not sent 篩選的數字是訊息則數，一個人可能有推播與 SMS 兩列）。右側是 <C>Show them</C>（連結）：把 Status 設成只選 Not sent（按鈕顯示 Not sent），已經是這樣時不顯示；再來是 Resend to {'{n}'}。用 warning 不用 error：多數人已經收到，這是部分沒送到的提醒。</> },
         ]} />
         <SpecTable head={['欄位', '內容']} nowrap={[0]} rows={[
           ['Job ID', '每一則送出的訊息的編號（訊息 ID 加序號），依送出順序'],
@@ -489,7 +489,7 @@ function Blocks() {
       </Section>
       <Section eyebrow="Right" title="基本資訊" lead="設計系統 DescriptionList（vertical）：名稱在上（次要文字色）、值在下。列表上有的資訊都在這裡。">
         <SpecTable head={['欄位', '值', '出現條件']} nowrap={[0]} rows={[
-          ['Message ID', '訊息 ID（例：MSG-10154），同一次發送的各通道相同', '每一筆'],
+          ['Message ID', '訊息 ID（例：10154），同一次發送的各通道相同', '每一筆'],
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤；下方紅字 n not sent 連結（有未送出時）', '每一筆'],
           ['Approval record', '連結按鈕 View in Approval Center（sm，外連圖示）', 'Device Notifications (SMS)，或需要核准的訊息'],

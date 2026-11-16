@@ -67,7 +67,7 @@ export default function DsMap() {
             ['Audience', comps('DataTable', 'Checkbox', 'Button'), '和發送流程同樣的表格；SMS 兩欄手機用 Checkbox；可編輯時 rowActions 放移除鈕。', <Own>搜尋列（RecvInput）、Batch import 寫回這個表格</Own>],
             ['底部操作', comps('Button'), 'Cancel sending：secondary danger；Duplicate：secondary；Send now / Save changes：primary；Discard changes：tertiary。', <Own>有改動時換成 Discard / Save</Own>],
             ['成員對話框', comps('Dialog', 'DataTable'), '寬 640，表格列出成員，有搜尋。', <Own>—</Own>],
-            ['發送明細', comps('Dialog', 'Input', 'DropdownMenu', 'DataTable', 'Tag', 'Pagination'), 'Dialog 最大寬 1280、height fill；一個搜尋 Input（不用先選欄位）；沒有匯出；篩選沿用 FilterMenu；DataTable 固定高度；Status 欄 Tag（Sent／Not sent／Queued）下方小字原因；Channel 欄純文字（不顯示號碼）；Pagination 加每頁筆數 Select（50 / 100 / 200）；有人未送出時 DialogFooter 左側一句說明加 Show them（Button link），右側 Close 與 Resend to {n}（primary）；從 {n} not sent 開啟時 Status 預設只選 Not sent（取代原本的 Not sent to 對話框）。', <Own>伺服器端搜尋（依格式判斷姓名、工號、NT、Job ID）、篩選與分頁；多筆貼上比對；誰算沒收到（同一人有一列送出就算收到）</Own>],
+            ['發送明細', comps('Dialog', 'Alert', 'Input', 'DropdownMenu', 'DataTable', 'Tag', 'Pagination'), 'Dialog 最大寬 1280、height fill；一個搜尋 Input（不用先選欄位）；沒有匯出；篩選沿用 FilterMenu；DataTable 固定高度；Status 欄 Tag（Sent／Not sent／Queued）下方小字原因；Channel 欄純文字（不顯示號碼）；Pagination 加每頁筆數 Select（50 / 100 / 200）；有人未送出時標題下方放 Alert（placement fixed、variant warning），endContent 是 Show them（Button link）與 Resend to {n}（Button primary sm），DialogFooter 只剩 Close；從 {n} not sent 開啟時 Status 預設只選 Not sent（取代原本的 Not sent to 對話框）。', <Own>伺服器端搜尋（依格式判斷姓名、工號、NT、Job ID）、篩選與分頁；多筆貼上比對；誰算沒收到（同一人有一列送出就算收到）</Own>],
           ]} />
         </Section>
 

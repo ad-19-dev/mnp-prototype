@@ -4,23 +4,24 @@
 // problem ("did Jason get it?", "why did PENG's SMS fail?").
 //   Search: one box, no field to pick first (2026-11-12). Each term is matched against the name, phone or email
 //           (part of it), and the employee ID, NT account and job ID (whole); several can be pasted at once,
-//           separated by commas or spaces. The server tells the kinds apart (digits: employee ID, MSG-like: job ID...).
+//           separated by commas or spaces. The server tells the kinds apart (6 digits: employee ID, 12345-000001: job ID...).
 //   Filters: Status (with counts) and Channel (Device Notifications (SMS) only). No Reason filter: a reason only
 //           exists on what wasn't sent and already shows under the Not sent tag.
 //   Channel: how and where it went, in one column (2026-11-16: Via and Sent to merged): "PNS",
 //           "SMS · Company phone", "SMS · Personal phone", "Desktop OS", "Email". No phone number or address
 //           is shown (privacy), only which phone; a number can still be searched for.
-//   Not sent: one word everywhere for what didn't go out (no "Failed"). When anyone wasn't reached, the footer has
-//           "{n} people didn't receive this message." with Show them (sets Status to Not sent only) on the left, and
-//           Resend to {n} on the right: everyone with nothing sent (a person whose app push failed but whose SMS went
-//           out was reached), into a new message on this channel. n counts people, not rows.
+//   Not sent: one word everywhere for what didn't go out (no "Failed"). When anyone wasn't reached, a warning Alert
+//           (DS fixed placement: full width under the title) says "{n} people didn't receive this message." with
+//           Show them (sets Status to Not sent only) and Resend to {n}: everyone with nothing sent (a person whose app
+//           push failed but whose SMS went out was reached), into a new message on this channel. n counts people, not
+//           rows. The footer has Close only (2026-11-16).
 //   Paging: 50 / 100 / 200 per page, with "first–last of total". The list is worked out on the server; the prototype
 //           builds it from the record's audience.
 //   Status and reason are one column: the status tag, and the reason under it when it failed.
 // No Org column or filter, no export (2026-11-12).
 import * as React from 'react'
 import {
-  Button, DataTable, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Alert, Button, DataTable, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
   Empty, Input, Pagination, PersonDisplay, Select, Tag as DsTag,
 } from '@qijenchen/design-system'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -47,7 +48,7 @@ export function logLines(x: Rec, groups: Parameters<typeof flatten>[1]): LogLine
   const ext = tags.filter(t => t.type === 'ext').map(t => t.email!)
   const base = new Date((((r.chSched && r.chSched[k === 'sms' ? 'push' : k]) || r.sched || r.created).replace(/\//g, '-').replace(' ', 'T')) + ':00')
   const at = (i: number) => { const d = new Date(base.getTime() + Math.floor(i / 200) * 60000 + (i % 200) * 250); return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + ' ' + [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':') }
-  const out: LogLine[] = [], prefix = msgId(r).replace('MSG-', '') + '-'
+  const out: LogLine[] = [], prefix = msgId(r) + '-'
   let n = 0
   const push = (l: Omit<LogLine, 'sn' | 'at' | 'ch'>, ch: string) => {
     const i = n++
@@ -144,6 +145,16 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
               <DialogDescription className="sr-only">{L(fmtN(all.length) + ' messages', fmtN(all.length) + ' 則')}</DialogDescription>
             </div>
           </DialogHeader>
+          {/* anyone not reached: the DS Alert in its fixed placement (full width, right under the title), warning tone
+              (most people got it; this is a partial miss, not a failed send). It says how many people (not rows), with
+              Show them (Status: Not sent only) and Resend to {n} (a new message on this channel, to them only). */}
+          {missed.length && onResend ? (
+            <Alert placement="fixed" variant="warning" title={L(fmtN(missed.length) + (missed.length === 1 ? ' person didn’t' : ' people didn’t') + ' receive this message.', fmtN(missed.length) + ' 人沒有收到這則訊息。')}
+              endContent={<span className="flex shrink-0 items-center gap-3">
+                {fs.length === 1 && fs[0] === 'failed' ? null : <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => { setFs(['failed']); setPage(1) }}>{L('Show them', '只看他們')}</Button>}
+                <Button variant="primary" size="sm" onClick={() => onResend(missed)}>{L('Resend to ' + fmtN(missed.length), '重新寄送給 ' + fmtN(missed.length) + ' 人')}</Button>
+              </span>} />
+          ) : null}
           <DialogBody>
             <div className="flex h-full min-h-0 flex-col gap-[var(--layout-space-tight)]">
               <div className="flex flex-wrap items-center gap-2">
@@ -156,7 +167,7 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
                 </div>
               </div>
               <div className="flex min-h-0 flex-col">
-                <DataTable tableOptions={NO_HIDE} columns={cols as any} data={shown} bordered height="calc(100svh - 380px)" autoRowHeight getRowId={l => l.sn}
+                <DataTable tableOptions={NO_HIDE} columns={cols as any} data={shown} bordered height={missed.length && onResend ? 'calc(100svh - 440px)' : 'calc(100svh - 380px)'} autoRowHeight getRowId={l => l.sn}
                   emptyState={<Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Check the search field and the filters.', '確認搜尋欄位與篩選條件。')} />} />
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -169,19 +180,8 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
             </div>
           </DialogBody>
           <DialogFooter>
-            {/* anyone not reached: how many people (not rows), Show them (Status: Not sent only), and resend to them in
-                a new message on this channel */}
-            {missed.length && onResend ? (
-              <div className="flex w-full flex-wrap items-center gap-2">
-                <span className="flex flex-wrap items-center gap-x-2 text-body text-fg-secondary">
-                  <span className="tabular-nums">{L(fmtN(missed.length) + (missed.length === 1 ? ' person didn’t' : ' people didn’t') + ' receive this message.', fmtN(missed.length) + ' 人沒有收到這則訊息。')}</span>
-                  {fs.length === 1 && fs[0] === 'failed' ? null : <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => { setFs(['failed']); setPage(1) }}>{L('Show them', '只看他們')}</Button>}
-                </span>
-                <span className="flex-1" />
-                <Button variant="secondary" onClick={onClose}>{L('Close', '關閉')}</Button>
-                <Button variant="primary" onClick={() => onResend(missed)}>{L('Resend to ' + fmtN(missed.length), '重新寄送給 ' + fmtN(missed.length) + ' 人')}</Button>
-              </div>
-            ) : <Button variant="primary" onClick={onClose}>{L('Close', '關閉')}</Button>}
+            {/* Resend (primary) is in the Alert when anyone wasn't reached; Close is then secondary */}
+            <Button variant={missed.length && onResend ? 'secondary' : 'primary'} onClick={onClose}>{L('Close', '關閉')}</Button>
           </DialogFooter>
         </DialogContent>
       ) : null}
