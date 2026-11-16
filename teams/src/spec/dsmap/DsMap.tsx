@@ -67,7 +67,7 @@ export default function DsMap() {
             ['Audience', comps('DataTable', 'Checkbox', 'Button'), '和發送流程同樣的表格；SMS 兩欄手機用 Checkbox；可編輯時 rowActions 放移除鈕。', <Own>搜尋列（RecvInput）、Batch import 寫回這個表格</Own>],
             ['底部操作', comps('Button'), 'Cancel sending：secondary danger；Duplicate：secondary；Send now / Save changes：primary；Discard changes：tertiary。', <Own>有改動時換成 Discard / Save</Own>],
             ['成員對話框', comps('Dialog', 'DataTable'), '寬 640，表格列出成員，有搜尋。', <Own>—</Own>],
-            ['發送明細', comps('Dialog', 'Alert', 'Input', 'DropdownMenu', 'DataTable', 'Tag', 'Pagination'), 'Dialog 最大寬 1280、height fill；一個搜尋 Input（不用先選欄位）；沒有匯出；篩選沿用 FilterMenu；DataTable 固定高度；Status 欄 Tag（Sent／Not sent／Queued）下方小字原因；Channel 欄純文字（不顯示號碼）；Pagination 加每頁筆數 Select（50 / 100 / 200）；有人未送出時標題下方放 Alert（placement fixed、variant warning），endContent 是 Show them（Button link）與 Resend to {n}（Button primary sm），DialogFooter 只剩 Close；從 {n} not sent 開啟時 Status 預設只選 Not sent（取代原本的 Not sent to 對話框）。', <Own>伺服器端搜尋（依格式判斷姓名、工號、NT、Job ID）、篩選與分頁；多筆貼上比對；誰算沒收到（同一人有一列送出就算收到）</Own>],
+            ['發送明細', comps('Dialog', 'Input', 'DropdownMenu', 'DataTable', 'Tag', 'Pagination'), 'Dialog 最大寬 1280、height fill；一個搜尋 Input（不用先選欄位）；沒有匯出；篩選沿用 FilterMenu；DataTable 固定高度；Status 欄 Tag（Sent／Not sent／Queued）下方小字原因；Channel 欄純文字（不顯示號碼）；Pagination 加每頁筆數 Select（50 / 100 / 200）；有人未送出時 DialogFooter 是 Close（secondary）與 Resend to not sent (n)（primary）；收件人旁的手機標籤用 Tag（Company phone blue、Personal phone purple）；從 {n} not sent 開啟時 Status 預設只選 Not sent（取代原本的 Not sent to 對話框）。', <Own>伺服器端搜尋（依格式判斷姓名、工號、NT、Job ID）、篩選與分頁；多筆貼上比對；誰算沒收到（同一人有一列送出就算收到）</Own>],
           ]} />
         </Section>
 
@@ -104,7 +104,7 @@ export default function DsMap() {
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['所有對話框', comps('Dialog'), 'DialogHeader / Body / Footer；Cancel 在左、主要動作在右；按鈕沒有圖示；沒有副標。', <Own>—</Own>],
             ['確認對話框', comps('Dialog', 'Button'), '寬 480；標題、一句說明、兩個按鈕；危險動作用 danger。', <Own>Confirm：把標題、說明、按鈕組成共用的確認元件</Own>],
-            ['Batch import', comps('Dialog', 'Select', 'Textarea', 'Input', 'Button'), 'B+：一個畫面。先選 Data type（Select），在 Textarea 貼上；要修正的每筆一個 Input（error 狀態）加原因與移除鈕（Button text iconOnly）；標題字級沿用 DialogTitle（16px）。', <Own>貼上即比對、重複自動略過；有效收件人的名稱小方塊（大頭照或圖示加名稱，右邊一直有 ✕）；Footer 左側 Clear all（Button text）</Own>],
+            ['Batch import', comps('Dialog', 'Select', 'Textarea', 'Input', 'Button'), 'B+：一個畫面。先選 Data type（Select），在 Textarea 貼上；要修正的每筆一個 Input（error 狀態）加原因與移除鈕（Button text iconOnly）；標題字級沿用 DialogTitle（16px）。', <Own>貼上即比對、重複自動略過；有效收件人的名稱小方塊（大頭照或圖示加名稱，右邊一直有 ✕）；Footer 左側 Clear all（Button tertiary）</Own>],
             ['Toast', comps('Toast'), 'Toaster position=bottom-center、offset=48（比預設 24px 高一點）；一則一行。', <Own>隱藏 Toast 前面的圖示（CSS）</Own>],
           ]} />
           <Notes items={[{ title: '載入中', body: <>列表載入用 {link('CircularProgress')} 加 Empty；規格見 Storybook。</> }]} />

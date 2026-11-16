@@ -287,8 +287,8 @@ function Step1() {
           ['Person', '姓名、NT 帳號或工號', '輸入後列出符合的人（最多 8 筆）：大頭照、英文名 中文名、組織代號 · NT · 工號。點選，或按 Enter 加入第一筆。', <><Copy en="No one named “<輸入>” found." zh="找不到叫「<輸入>」的人。" />（不提示切換到 Phone、Email 或 Group）</>],
           ['Org', '組織代碼、編號或名稱', '沒輸入也列出全部組織：代碼、編號、人數。加入後下拉選單不關，可以連續加入。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
           ['Group', '群組名稱', '沒輸入時，標題 Your groups 下列出這個空間的群組：名稱、說明、人數。加入後下拉選單不關。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
-          ['Phone', '手機號碼，例如 0912-345-678', '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。沒選 PNS + SMS fallback 時，外部號碼不能加入（收不到任何通道），員工的號碼照常加入員工。', <><Copy en="Enter 8–15 digits." zh="請輸入 8–15 碼數字。" />　<Copy en="SMS fallback isn’t selected in Channels, so outside numbers can’t be added. Employee numbers add the employee." zh="Channels 沒有選 SMS 備援，無法加入外部號碼。員工的號碼會加入該員工。" /></>],
-          ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。Channels 沒勾 Email 時，外部 Email 不能加入（收不到任何通道），公司信箱照常加入員工。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" />　<Copy en="Email isn’t selected in Channels, so outside addresses can’t be added. Company addresses add the employee." zh="Channels 沒有選 Email，無法加入外部信箱。公司信箱會加入該員工。" /></>],
+          ['Phone', '手機號碼，例如 0912-345-678', '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。沒選 PNS + SMS fallback 時，外部號碼不能加入（收不到任何通道），員工的號碼照常加入員工。', <><Copy en="Enter 8–15 digits." zh="請輸入 8–15 碼數字。" />　<Copy en="Select SMS fallback in Channels to add outside numbers." zh="在 Channels 選擇 SMS 備援才能加入外部號碼。" /></>],
+          ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。Channels 沒勾 Email 時，外部 Email 不能加入（收不到任何通道），公司信箱照常加入員工。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" />　<Copy en="Select Email in Channels to add outside addresses." zh="在 Channels 勾選 Email 才能加入外部信箱。" /></>],
           ['MVPN', '7 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。', <><Copy en="MVPN is up to 7 digits." zh="MVPN 最多 7 碼。" />　<Copy en="No one has this MVPN." zh="沒有人用這個 MVPN。" /></>],
         ]} />
         <Notes items={[
@@ -335,6 +335,7 @@ function Step1() {
           ['緊急送出的位置', '選了 PNS + SMS fallback 後，緊急送出勾選框縮排在第二個選項下方，沒有外框、沒有標題，也不用填原因。'],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />，下方沒有說明文字（「僅限緊急、會留存紀錄」的說明放在送出前的確認對話框）。</>],
           ['有外部收件人', '緊急送出只略過 ICSD，仍要主管核准；步驟 1 不另外提示。'],
+          ['外部聯絡人與通道不符', <>加入後又取消對應的通道（例：先勾 Email、加了外部 Email，再取消 Email），按 Next 會擋下，收件人區塊下方紅字：<Copy en="Outside email addresses need the Email channel. Select Email or remove them." zh="外部 Email 需要 Email 通道。請勾選 Email，或移除這些收件人。" />；外部電話沒有 SMS 備援時：<Copy en="Outside phone numbers need SMS fallback. Select it or remove them." zh="外部電話需要 SMS 備援。請選擇 SMS 備援，或移除這些收件人。" /></>],
           ['SMS 寄到哪支手機', <>和 GMC 一樣，在收件人表格裡逐列選：選了 PNS + SMS fallback 後，表格多出 <Copy en="Company phone" zh="公務手機" />、<Copy en="Personal phone" zh="私人手機" /> 兩欄（各 176 寬，固定）。每列預設勾公務手機、不勾私人手機；表頭的勾選框可全選、全不選，部分勾選時是半選。組織與群組是整列一起勾。外部電話與外部 Email 這兩欄顯示「—」。每位員工都有公務手機；沒有登記私人手機的人，Personal phone 欄顯示「—」（不能勾，表頭全選也不算這些列）。不再有 No phone 標籤（2026-11-16）。組織與群組勾了私人手機時，只寄給有登記私人手機的成員。每列至少要勾一支，否則不能到下一步：<Copy en="Choose at least one phone for each audience." zh="每一列收件人至少要選一支手機。" /></>],
         ]} />
         <Gallery items={[['s1-sms', '選了 PNS + SMS fallback'], ['s1-urgent', '勾了緊急送出']]} />
@@ -463,7 +464,7 @@ function Dialogs() {
           ['List', <>貼上時直接收進來（保留換行，可以貼 Excel 的一欄）；用打的時按 Enter 收進來。還沒有項目時輸入框 6 行高，提示 <Copy en="Separate with commas or new lines. A column copied from Excel works too." zh="用逗號或換行分隔；也可以直接貼上從 Excel 複製的一欄。" />；有項目後縮成 2 行，提示 <Copy en="Paste or type more, then press Enter" zh="貼上或輸入更多，按 Enter 加入" />。沒有筆數、Clear all 那一行（2026-11-16 拿掉）。</>],
           [<Copy en="{n} to fix" zh="{n} 筆要修正" />, '找不到或格式不對的項目，每筆一個可編輯的欄位（紅框），右邊紅字寫原因，最右邊 ✕ 不加入。改了就立刻重新比對，找到了就移到下方。'],
           [<Copy en="{m} valid audiences" zh="{m} 位有效收件人" />, '找到的人（大頭照加姓名）、組織（代號）、外部聯絡人（號碼或地址），只顯示名稱、不是欄位；每個名稱右邊一直有 ✕ 可以移除（不是滑過才出現）。超過 12 個時其餘收成 +n more。標題旁小字 n duplicates left out：已在收件人表格裡、或在名單裡出現第二次的，自動略過，不另外列出。'],
-          ['按鈕', <>左側 <Copy en="Clear all" zh="全部清除" />（text 按鈕，清空名單與輸入框重新開始；沒有內容時停用）；右側 Cancel、<Copy en="Add {m} audiences" zh="加入 {m} 位收件人" />（沒有有效收件人時停用）。按下後只加入有效的，關閉對話框，toast 寫加入幾位；還有要修正的會加上「· n not added」。</>],
+          ['按鈕', <>左側 <Copy en="Clear all" zh="全部清除" />（tertiary 按鈕，清空名單與輸入框重新開始；沒有內容時停用）；右側 Cancel、<Copy en="Add {m} audiences" zh="加入 {m} 位收件人" />（沒有有效收件人時停用）。按下後只加入有效的，關閉對話框，toast 寫加入幾位；還有要修正的會加上「· n not added」。</>],
           ['標題', 'Batch import，設計系統 DialogTitle 的字級（text-body-lg 16px，medium），和其他對話框一致。對話框裡的小標題（n to fix、m valid audiences）是 14px medium，比標題輕一級。'],
         ]} />
       </Section>

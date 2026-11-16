@@ -54,7 +54,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
   return (
     <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
       foot={<>{/* left: Clear all empties the list (and the paste box) to start over */}
-        <Button variant="text" className="mr-auto" disabled={!some && !imp.text} onClick={() => m.setImp({ vals: [], text: '' })}>{L('Clear all', '全部清除')}</Button>
+        <Button variant="tertiary" className="mr-auto" disabled={!some && !imp.text} onClick={() => m.setImp({ vals: [], text: '' })}>{L('Clear all', '全部清除')}</Button>
         <Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" disabled={!n} onClick={() => m.impAddValid()}>{n ? L('Add ', '加入 ') + P(n, 'audience', '位收件人') : L('Add audiences', '加入收件人')}</Button></>}>
       {/* changing the type matches what's already in again */}
       <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />

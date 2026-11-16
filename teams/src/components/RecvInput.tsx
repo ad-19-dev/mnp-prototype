@@ -55,7 +55,7 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
     else {
       const p = PEOPLE.find(x => x.co === d || x.pp === d)
       if (p) out.opts.push(person(p, p.co === d ? L('Company mobile', '公務手機') : L('Personal phone', '私人手機')))
-      else if (noExtPhone) out.err = L('SMS fallback isn’t selected in Channels, so outside numbers can’t be added. Employee numbers add the employee.', 'Channels 沒有選 SMS 備援，無法加入外部號碼。員工的號碼會加入該員工。')
+      else if (noExtPhone) out.err = L('Select SMS fallback in Channels to add outside numbers.', '在 Channels 選擇 SMS 備援才能加入外部號碼。')
       else out.opts.push(ext(fmtExtPhone(d)))
     }
   } else if (ri.type === 'email') {
@@ -64,7 +64,7 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
     else if (low.split('@')[1] === DOMAIN) {
       const p = PEOPLE.find(x => x.nt === low.split('@')[0])
       if (p) out.opts.push(person(p, L('Company email', '公司信箱'))); else out.err = L('No employee has this address.', '沒有員工用這個信箱。')
-    } else if (noExtEmail) out.err = L('Email isn’t selected in Channels, so outside addresses can’t be added. Company addresses add the employee.', 'Channels 沒有選 Email，無法加入外部信箱。公司信箱會加入該員工。')
+    } else if (noExtEmail) out.err = L('Select Email in Channels to add outside addresses.', '在 Channels 勾選 Email 才能加入外部信箱。')
     else out.opts.push(ext(low))
   }
   out.opts.forEach(x => { x.added = isAdded(x.item) })

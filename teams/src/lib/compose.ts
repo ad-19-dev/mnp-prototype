@@ -127,6 +127,10 @@ export function errs(c: Compose, groups: Group[]): Errs {
   if (!c.ch.push && !c.ch.desktop && !c.ch.email) e.ch = L('Pick at least one channel.', '請選擇至少一個通道。')
   // SMS fallback on: every audience row needs at least one phone ticked
   if (smsOn(c) && noPhoneRows(c).length) e.phone = L('Choose at least one phone for each audience.', '每一列收件人至少要選一支手機。')
+  // an outside contact whose only channel isn't chosen any more (e.g. Email unticked after adding an outside
+  // address) gets nothing: Next stops until the channel is chosen again or the contact removed (2026-11-16)
+  if (extE && !c.ch.email) e.ext = L('Outside email addresses need the Email channel. Select Email or remove them.', '外部 Email 需要 Email 通道。請勾選 Email，或移除這些收件人。')
+  if (extP && !smsOn(c)) e.extp = L('Outside phone numbers need SMS fallback. Select it or remove them.', '外部電話需要 SMS 備援。請選擇 SMS 備援，或移除這些收件人。')
   // 2. Message
   // a sender name is required on Device Notifications, optional on Desktop OS, and Email has none
   if (c.ch.push) {
@@ -167,7 +171,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
 }
 export function stepOk(n: number, e: Errs) {
   // people a channel can't reach are only a notice (the red line under Channels), never a reason to stop on this step
-  if (n === 1) return !e.recv && !e.ch && !e.urgent && !e.phone
+  if (n === 1) return !e.recv && !e.ch && !e.urgent && !e.phone && !e.ext && !e.extp
   if (n === 2) return !e.sender && !e.title && !e.content && !e.dsender && !e.dtitle && !e.dcontent && !e.sms && !e.subject && !e.body
   return !e.sched
 }

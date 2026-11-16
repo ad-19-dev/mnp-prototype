@@ -228,7 +228,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
               <span className="flex items-center gap-2"><H3>{L('Audience', '收件人')}</H3>{edit ? null : <ReadOnlyTag />}</span>
               {/* once anything has gone out: one link to every message sent, by person, in a dialog of its own (who
                   wasn't reached is there too, with Resend; 2026-11-16: "n not sent" and "View delivery details" merged) */}
-              {hasLog ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setLogOpen(true)}>{L('Delivery details', '發送明細')}</Button> : null}
+              {hasLog ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setLogOpen(true)}>{L('Sent details', '發送明細')}</Button> : null}
             </div>
             {/* editable: the send flow's search above the list, and a remove button on every row */}
             {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag} noExtEmail={k !== 'email'} noExtPhone={k !== 'sms'}

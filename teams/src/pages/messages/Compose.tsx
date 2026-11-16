@@ -226,6 +226,8 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
           <RecvTable m={m} />
           {tried[1] && !hasR ? <ErrText>{L('Add at least one audience.', '請加入至少一位收件人。')}</ErrText> : null}
           {tried[1] && e.phone ? <ErrText>{e.phone}</ErrText> : null}
+          {tried[1] && e.ext ? <ErrText>{e.ext}</ErrText> : null}
+          {tried[1] && e.extp ? <ErrText>{e.extp}</ErrText> : null}
         </div>
       </Section>
 
