@@ -70,9 +70,11 @@ export function logLines(x: Rec, groups: Parameters<typeof flatten>[1]): LogLine
       const ok = p.dev && !down[p.id]
       push({ ...base, via: 'PNS', to: '', st: ok ? 'sent' : 'failed', reason: ok ? '' : down[p.id] ? svc : L('App unregistered', 'App 未註冊') }, 'PNS')
       if (k === 'sms' && !ok && !(x.fb && x.fb.unk)) {
-        const num = p.co || p.pp, bad = !num || h01(p.id + 'sms') < 0.15
+        // which phone: company, unless this person's row had only Personal phone ticked (and one is on file)
+        const ph = r.chPhones, key = 'p:' + p.id, usePP = !!(ph && ph.co[key] === false && ph.pp[key] && p.pp)
+        const num = usePP ? p.pp : p.co || p.pp, bad = !num || h01(p.id + 'sms') < 0.15
         push({ ...base, via: 'SMS', to: num || '', st: bad ? 'failed' : 'sent', reason: bad ? (num ? L('Number not in service', '號碼停用') : L('No phone number', '沒有電話號碼')) : '' },
-          'SMS' + (num ? ' · ' + (p.co ? L('Company phone', '公務手機') : L('Personal phone', '私人手機')) : ''))
+          'SMS' + (num ? ' · ' + (num === p.co ? L('Company phone', '公務手機') : L('Personal phone', '私人手機')) : ''))
       }
     } else if (k === 'desktop') {
       const ok = p.desk && !down[p.id]

@@ -18,7 +18,7 @@ import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
 import './DetailModal.css'
 import { Ban, Building2, Copy, ExternalLink, Mail, Phone, Send, Trash2, Upload, Users, X } from 'lucide-react'
 import {
-  ICSD, LIM, ORGS, PEOPLE, PMAP, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
+  ICSD, LIM, ORGS, PEOPLE, PMAP, noPhoneCell, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { SENDER_ERR, SENDER_RE, pushTitle } from '../../lib/compose'
@@ -335,10 +335,10 @@ function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: (key: s
     ...(phones ? (['co', 'pp'] as const).map(w => {
       const label = w === 'co' ? L('Company phone', '公務手機') : L('Personal phone', '私人手機')
       const on = (key: string) => (w === 'co' ? phones.co[key] !== false : !!phones.pp[key])
-      const keys = tags.filter(t => t.type !== 'ext').map(t => t.key), n = keys.filter(on).length, all = !!keys.length && n === keys.length
+      const keys = tags.filter(t => !noPhoneCell(t, w)).map(t => t.key), n = keys.filter(on).length, all = !!keys.length && n === keys.length
       return acol.display({ id: w, meta: { width: 160, maxWidth: 160 },
         header: () => <span className="inline-flex items-center gap-2"><Checkbox checked={all ? true : n ? 'indeterminate' : false} disabled={!phones.set || !keys.length} onCheckedChange={() => phones.set && phones.set(w, keys, !all)} aria-label={L('All: ', '全部：') + label} />{label}</span>,
-        cell: i => i.row.original.t.type === 'ext' ? <span className="text-fg-muted">—</span>
+        cell: i => noPhoneCell(i.row.original.t, w) ? <span className="text-fg-muted">—</span>
           : <Checkbox checked={on(i.row.original.t.key)} disabled={!phones.set} onCheckedChange={val => phones.set && phones.set(w, [i.row.original.t.key], !!val)} aria-label={label} /> })
     }) : []),
   ], [app.lang, app.groups, phones, tags])

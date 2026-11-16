@@ -509,7 +509,7 @@ function Blocks() {
           ['Email', 'Subject、內文（可以編輯時是格式編輯器；Read only 時是 readonly 底色的內文框，寬度撐滿）'],
         ]} />
         <SpecTable head={['Audience 表格', '規格']} nowrap={[0]} rows={[
-          ['欄位', 'Audience 一欄；Device Notifications (SMS) 多 Company phone、Personal phone 兩欄（表頭可全選，外部聯絡人顯示 —）'],
+          ['欄位', 'Audience 一欄；Device Notifications (SMS) 多 Company phone、Personal phone 兩欄（表頭可全選；外部聯絡人兩欄都是 —，沒有登記私人手機的人 Personal phone 是 —）'],
           ['列', '個人：PersonDisplay；組織、群組：圖示、名稱、類型標籤、藍色 n people（開成員）；外部：圖示、號碼或 Email、Phone / Email 標籤'],
           ['可以編輯時', '上方搜尋列與 Batch import；每列右側 ✕ 移除；表格超過 6 列時固定高 320、內部捲動'],
           ['Read only 時', '只有表格；手機欄的勾選框是 disabled'],

@@ -93,30 +93,31 @@ type PRow = [string, string, string, string, string, string, string, string, str
 function mkP(a: PRow, i: number): Person {
   return { id: a[0], zh: a[1], en: a[2], nt: a[3], emp: a[4], org: a[5], title: a[6], mvpn: a[7] ? '88' + a[7] : '', co: a[8], pp: a[9], dev: !!a[10], desk: !!a[11], c: i % 8, ini: initials(a[2]) }
 }
+// every employee has a company mobile (2026-11-16); only some have registered a personal phone
 export const PEOPLE: Person[] = ([
   ['p01','吳佳穎','Grace Wu','gywu','120588','PENG','Senior Engineer','61588','0918226588','0912337415',1,1],
   ['p02','陳志明','Jimmy Chen','cmchen','103217','PENG','Section Manager','60217','0918103217','',1,1],
   ['p03','林冠宇','Kevin Lin','kylin','118842','PDEV','Engineer','68842','0918118842','0933552019',1,1],
-  ['p04','林家豪','Kevin Lin','chlinb','121905','FMFG','Shift Lead','','','0921660734',1,0],
+  ['p04','林家豪','Kevin Lin','chlinb','121905','FMFG','Shift Lead','61905','0918121905','0921660734',1,0],
   ['p05','陳怡君','Yi-Chun Chen','ycchenz','115630','PUX','UX Designer','65630','0918115630','0975218306',1,1],
   ['p06','陳怡君','Joyce Chen','ycchenq','109472','HRCB','HR Specialist','69472','0918109472','',1,1],
-  ['p07','陳怡君','Erin Chen','ycchenm','124118','FESH','ESH Engineer','','','0910884261',0,1],
+  ['p07','陳怡君','Erin Chen','ycchenm','124118','FESH','ESH Engineer','64118','0918124118','0910884261',0,1],
   ['p08','黃柏翰','Brian Huang','bhhuang','112306','PDEV','Senior Engineer','62306','0918112306','0988130557',1,1],
   ['p09','張雅婷','Tina Chang','ytchang','119774','PUX','Senior UX Designer','69774','0918119774','',1,1],
-  ['p10','李承恩','Adrian Lee','celee','126031','PENG','Engineer','','','0937402118',1,1],
+  ['p10','李承恩','Adrian Lee','celee','126031','PENG','Engineer','66031','0918126031','0937402118',1,1],
   ['p11','王思妤','Iris Wang','sywangd','122487','ITIS','IT Specialist','62487','0918122487','',1,1],
   ['p12','蔡宗翰','Leo Tsai','thtsai','110958','FMFG','Manufacturing Manager','60958','0918110958','0920775641',1,1],
   ['p13','楊佩珊','Peggy Yang','psyang','117263','FESH','Safety Officer','67263','0918117263','',1,0],
   ['p14','許俊宏','Allen Hsu','chhsu','108145','ITIS','Infrastructure Manager','68145','0918108145','',1,1],
-  ['p15','鄭詩涵','Sandy Cheng','shcheng','125579','HRCB','HR Partner','','','0963219804',0,1],
-  ['p16','謝彥廷','Ryan Hsieh','ythsieh','120113','FMFG','Equipment Engineer','','','',1,0],
+  ['p15','鄭詩涵','Sandy Cheng','shcheng','125579','HRCB','HR Partner','65579','0918125579','0963219804',0,1],
+  ['p16','謝彥廷','Ryan Hsieh','ythsieh','120113','FMFG','Equipment Engineer','60113','0918120113','',1,0],
   ['p17','郭欣怡','Cindy Kuo','hykuo','123640','PDEV','Product Manager','63640','0918123640','0912708392',1,1],
-  ['p18','洪品睿','Sean Hung','prhung','127702','PUX','UX Designer','','','0958441276',1,1],
+  ['p18','洪品睿','Sean Hung','prhung','127702','PUX','UX Designer','67702','0918127702','0958441276',1,1],
   ['p19','曾郁婷','Wendy Tseng','yttseng','114389','FESH','ESH Section Manager','64389','0918114389','',1,1],
   ['p20','邱建宏','Eric Chiu','chchiu','106821','FMFG','Shift Lead','66821','0918106821','0935692147',1,0],
   ['p21','廖宜蓁','Vivian Liao','ycliao','128356','ITIS','Security Analyst','68356','0918128356','',0,1],
   ['p22','賴書豪','Ivan Lai','shlai','116904','PENG','Senior Engineer','66904','0918116904','0927583920',1,1],
-  ['p23','周芷寧','Yvonne Chou','cnchou','129017','HRCB','Recruiter','','','0971305468',1,1],
+  ['p23','周芷寧','Yvonne Chou','cnchou','129017','HRCB','Recruiter','69017','0918129017','0971305468',1,1],
   ['p24','劉宗翰','Jason Liu','thliu','111472','FMFG','Section Manager','61472','0918111472','',1,1],
 ] as PRow[]).map(mkP)
 export const PMAP: Record<string, Person> = {}
@@ -187,7 +188,7 @@ export function genPerson(key: string, org?: string | null): Person {
   const id = 'x' + key
   if (PMAP[id]) return PMAP[id]
   const h = hsh(key), su = SUR[h % SUR.length], gv = GIV[(h >>> 7) % GIV.length], hasCo = (h % 3) !== 0
-  const p: Person = { id, zh: su[0] + gv[0], en: gv[1] + ' ' + su[1], nt: (gv[1].charAt(0) + su[1]).toLowerCase() + ((h >>> 13) % 90 + 10), emp: String(100000 + (h % 30000)), org: org || ORGS[(h >>> 3) % ORGS.length].code, title: TITLES[(h >>> 17) % TITLES.length], mvpn: hasCo ? '88' + String(60000 + (h % 9999)) : '', co: hasCo ? '0918' + String(100000 + (h % 899999)) : '', pp: (h % 4) === 0 ? '09' + String(10000000 + (h % 89999999)) : '', dev: (h % 9) !== 0, desk: (h % 6) !== 0, c: h % 8, gen: true, ini: '' }
+  const p: Person = { id, zh: su[0] + gv[0], en: gv[1] + ' ' + su[1], nt: (gv[1].charAt(0) + su[1]).toLowerCase() + ((h >>> 13) % 90 + 10), emp: String(100000 + (h % 30000)), org: org || ORGS[(h >>> 3) % ORGS.length].code, title: TITLES[(h >>> 17) % TITLES.length], mvpn: hasCo ? '88' + String(60000 + (h % 9999)) : '', co: '0918' + String(100000 + (h % 899999)), pp: (h % 4) === 0 ? '09' + String(10000000 + (h % 89999999)) : '', dev: (h % 9) !== 0, desk: (h % 6) !== 0, c: h % 8, gen: true, ini: '' }
   p.ini = initials(p.en)
   PMAP[id] = p
   return p
@@ -235,6 +236,9 @@ export function tagsToAud(tags: Tag[]): [string, string][] { return tags.map(t =
 export function phoneDigits(s: string) { const t = String(s || '').trim(); if (!/^\+?[\d\s().-]{8,20}$/.test(t)) return ''; const d = t.replace(/[^\d+]/g, ''); return d.replace(/\+/g, '').length >= 8 ? d : '' }
 export function fmtExtPhone(d: string) { return /^09\d{8}$/.test(d) ? d.slice(0, 4) + '-' + d.slice(4, 7) + '-' + d.slice(7) : d }
 export function isExtPhone(t: Tag) { return t.type === 'ext' && (t.email || '').indexOf('@') < 0 }
+// SMS phone columns: a row that can't use this phone, shown as "—": an external contact, or a person with no
+// personal phone on file (every employee has a company mobile, 2026-11-16; replaces the "No phone" tag)
+export const noPhoneCell = (t: Tag, k: 'co' | 'pp') => t.type === 'ext' || (k === 'pp' && t.type === 'person' && !(PMAP[t.id!] && PMAP[t.id!].pp))
 
 // ---------- list matching (batch import, group member paste) ----------
 export type Match =

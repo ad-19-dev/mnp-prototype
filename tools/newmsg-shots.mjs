@@ -167,7 +167,12 @@ await step('s1-types', async () => {
   // channels come first, as a sender would do it
   await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
   await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
-  await add(null, 'Chen'); await add('Org', 'PENG'); await add('Group', ''); await add('Phone', '0987654321'); await add('Email', 'amy@vendor-example.com');
+  // an outside number can only be added with SMS fallback on (2026-11-16): turn it on for that one, then back off
+  await add(null, 'Chen'); await add('Org', 'PENG'); await add('Group', '');
+  await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(300);
+  await add('Phone', '0987654321');
+  await p.getByRole('radio', { name: /PNS only/ }).click(); await wait(300);
+  await add('Email', 'amy@vendor-example.com');
   await p.getByRole('heading', { name: 'Audience', exact: true }).scrollIntoViewIfNeeded();
   const sec = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-types', (await sec.count()) ? sec : null, [], 12);

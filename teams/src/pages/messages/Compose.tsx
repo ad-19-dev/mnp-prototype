@@ -13,7 +13,7 @@ import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
   CircleCheck, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
-  CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
+  CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, noPhoneCell, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Person, type Template, type Tag as RTag,
   ME,
 } from '../../lib/data'
@@ -92,12 +92,12 @@ function recvKind(t: RTag) {
 const phoneOn = (c: Compose, key: string, k: 'co' | 'pp') => k === 'co' ? c.smsCO[key] !== false : !!c.smsPP[key]
 function PhoneCell({ m, t, k }: { m: SendCtl; t: RTag; k: 'co' | 'pp' }) {
   const c = m.s.c
-  if (t.type === 'ext') return <span className="text-fg-muted">—</span>
+  if (noPhoneCell(t, k)) return <span className="text-fg-muted">—</span>
   const set = (v: boolean) => m.setC(k === 'co' ? { smsCO: { ...c.smsCO, [t.key]: v } } : { smsPP: { ...c.smsPP, [t.key]: v } })
   return <Checkbox checked={phoneOn(c, t.key, k)} onCheckedChange={v => set(!!v)} aria-label={(k === 'co' ? L('Company phone', '公務手機') : L('Personal phone', '私人手機'))} />
 }
 function PhoneHead({ m, k, label }: { m: SendCtl; k: 'co' | 'pp'; label: string }) {
-  const c = m.s.c, rows = c.receivers.filter(t => t.type !== 'ext'), on = rows.filter(t => phoneOn(c, t.key, k)).length
+  const c = m.s.c, rows = c.receivers.filter(t => !noPhoneCell(t, k)), on = rows.filter(t => phoneOn(c, t.key, k)).length
   const all = !!rows.length && on === rows.length
   const setAll = () => { const v = Object.fromEntries(rows.map(t => [t.key, !all])); m.setC(k === 'co' ? { smsCO: v } : { smsPP: v }) }
   return <span className="inline-flex items-center gap-2"><Checkbox checked={all ? true : on ? 'indeterminate' : false} disabled={!rows.length} onCheckedChange={setAll} aria-label={L('All: ', '全部：') + label} />{label}</span>
@@ -111,8 +111,7 @@ function RecvTable({ m }: { m: SendCtl }) {
     if (t.type === 'person') {
       const p = PMAP[t.id!]; ppl = [p].filter(Boolean)
       label = p ? p.en + ' ' + p.zh : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
-      const unres = false, noNum = sms && p && !p.co && !p.pp
-      badge = unres ? L('Choose number', '選擇號碼') : noNum ? L('No phone', '無電話') : ''; badgeBtn = !!unres; warn = !!unres
+      // no "No phone" tag (2026-11-16): a missing personal phone shows as "—" in the Personal phone column
     } else if (t.type === 'group' || t.type === 'org') {
       ppl = flatten([t], app.groups).map(x => PMAP[x.pid]).filter(Boolean); cnt = ppl.length
       if (t.type === 'group') { const g = app.groups.find(x => x.id === t.id); label = g ? g.name : t.id!; sub = g ? g.desc : '' }

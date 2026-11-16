@@ -335,7 +335,7 @@ function Step1() {
           ['緊急送出的位置', '選了 PNS + SMS fallback 後，緊急送出勾選框縮排在第二個選項下方，沒有外框、沒有標題，也不用填原因。'],
           ['緊急送出', <>勾選框 <Copy en="It’s urgent: send without waiting for SMS approval" zh="這是緊急訊息，不等 SMS 核准直接傳送" />，下方沒有說明文字（「僅限緊急、會留存紀錄」的說明放在送出前的確認對話框）。</>],
           ['有外部收件人', '緊急送出只略過 ICSD，仍要主管核准；步驟 1 不另外提示。'],
-          ['SMS 寄到哪支手機', <>和 GMC 一樣，在收件人表格裡逐列選：選了 PNS + SMS fallback 後，表格多出 <Copy en="Company phone" zh="公務手機" />、<Copy en="Personal phone" zh="私人手機" /> 兩欄（各 176 寬，固定）。每列預設勾公務手機、不勾私人手機；表頭的勾選框可全選、全不選，部分勾選時是半選。組織與群組是整列一起勾。外部電話與外部 Email 這兩欄顯示「—」。勾公務手機但這個人沒有公務手機時，改寄私人手機；兩支都不勾的列收不到 SMS（不另外提示）。。</>],
+          ['SMS 寄到哪支手機', <>和 GMC 一樣，在收件人表格裡逐列選：選了 PNS + SMS fallback 後，表格多出 <Copy en="Company phone" zh="公務手機" />、<Copy en="Personal phone" zh="私人手機" /> 兩欄（各 176 寬，固定）。每列預設勾公務手機、不勾私人手機；表頭的勾選框可全選、全不選，部分勾選時是半選。組織與群組是整列一起勾。外部電話與外部 Email 這兩欄顯示「—」。每位員工都有公務手機；沒有登記私人手機的人，Personal phone 欄顯示「—」（不能勾，表頭全選也不算這些列）。不再有 No phone 標籤（2026-11-16）。組織與群組勾了私人手機時，只寄給有登記私人手機的成員。每列至少要勾一支，否則不能到下一步：<Copy en="Choose at least one phone for each audience." zh="每一列收件人至少要選一支手機。" /></>],
         ]} />
         <Gallery items={[['s1-sms', '選了 PNS + SMS fallback'], ['s1-urgent', '勾了緊急送出']]} />
       </Section>
