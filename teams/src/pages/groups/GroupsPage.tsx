@@ -248,28 +248,15 @@ function GroupEditor({ m }: { m: GCtl }) {
   ed.members.forEach(x => { has[x.pid] = true })
 
   const mcols = React.useMemo(() => [
-    mcol.accessor(x => personVal(x.p), { id: 'who', header: L('Member', '成員'), meta: { type: 'person', width: 220 } }),
-    mcol.display({ id: 'emp', header: L('Employee ID', '工號'), meta: { width: 112 }, cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
-    mcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 112 }, cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
-    mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), meta: { width: 164 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
-    mcol.display({ id: 'desk', header: L('Desktop OS', '桌面通知'), meta: { width: 116 }, cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? L('Installed', '已安裝') : L('Not installed', '未安裝')}</Cv> }),
-    mcol.display({ id: 'email', header: 'Email', meta: { width: 100 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
-    mcol.display({ id: 'sms', header: L('Device Notifications (SMS)', 'Device Notifications（SMS）'), meta: { width: 200 }, cell: i => {
-      const p = i.row.original.p, co = p.extKind === 'phone' ? p.value : p.co ? 'MVPN ' + p.mvpn : '', pp = !p.extKind && p.pp ? maskPhone(p.pp) : ''
-      if (!co && !pp) return <Cv ok={false}>{L('No number', '沒有號碼')}</Cv>
-      // which number gets the SMS shows on hover
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild><span tabIndex={0} className="inline-flex rounded-sm focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"><Cv ok plain>{co || pp}</Cv></span></TooltipTrigger>
-          <TooltipContent>
-            <span className="flex flex-col gap-0.5 font-mono">
-              {co ? <span>{co}</span> : null}
-              {pp ? <span className="inline-flex items-center gap-1"><Lock className="size-3" aria-label={L('Personal phone (masked)', '私人手機（已遮蔽）')} />{pp}</span> : null}
-            </span>
-          </TooltipContent>
-        </Tooltip>
-      )
-    } }),
+    mcol.accessor(x => personVal(x.p), { id: 'who', header: L('Member', '成員'), meta: { type: 'person', width: 200 } }),
+    mcol.display({ id: 'emp', header: L('Employee ID', '工號'), meta: { width: 124 }, cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
+    mcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 80 }, cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
+    mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), meta: { width: 184 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
+    mcol.display({ id: 'desk', header: L('Desktop OS', '桌面通知'), meta: { width: 120 }, cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? L('Installed', '已安裝') : L('Not installed', '未安裝')}</Cv> }),
+    mcol.display({ id: 'email', header: 'Email', meta: { width: 88 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
+    // SMS in two columns, one per phone (2026-11-16); no numbers shown. Outside contacts: — (like the send flow's table)
+    mcol.display({ id: 'smsco', header: L('SMS (Company phone)', 'SMS（公務手機）'), meta: { width: 200 }, cell: i => { const p = i.row.original.p; return p.extKind ? <span className="text-fg-muted">—</span> : <Cv ok={!!p.co}>{p.co ? L('Available', '可收') : L('No number', '沒有號碼')}</Cv> } }),
+    mcol.display({ id: 'smspp', header: L('SMS (Personal phone)', 'SMS（私人手機）'), meta: { width: 200 }, cell: i => { const p = i.row.original.p; return p.extKind ? <span className="text-fg-muted">—</span> : <Cv ok={!!p.pp}>{p.pp ? L('Available', '可收') : L('Not registered', '未登記')}</Cv> } }),
   ], [app.lang])
 
   return (
@@ -291,12 +278,10 @@ function GroupEditor({ m }: { m: GCtl }) {
           <div className="flex flex-col gap-[var(--layout-space-tight)]">
             {canEdit ? (
               <div className="flex flex-col gap-1">
-                <span className="text-body font-medium">{L('Add members', '加入成員')}</span>
                 <RecvInput id="ri-group" ri={ed.ri} setRi={ri => m.setEd({ ri }, true)} groups={app.groups.filter(g => groupInSpace(g))} excludeGroup={ed.id || undefined}
                   isAdded={it => { const p = m.pidsOf(it); return p.length > 0 && p.every(id => has[id]) }}
                   onAdd={it => m.addItem(it)}
                   extra={<Button variant="tertiary" startIcon={Upload} onClick={() => setImp(true)}>{L('Batch import', '批次匯入')}</Button>} />
-                <span className="text-caption text-fg-secondary">{L('Orgs and groups add their current members.', '加入組織或群組時，會加入目前的所有成員。')}</span>
               </div>
             ) : null}
             {/* Batch import (2026-11-16): the send flow's dialog, so members are added the same way as audiences */}
@@ -305,31 +290,9 @@ function GroupEditor({ m }: { m: GCtl }) {
               onAdd={(ok, left) => { setImp(false); m.addItems(ok.map(x => (x.tag.type === 'ext' ? { kind: 'ext', value: x.tag.email! } : { kind: x.tag.type as 'person' | 'org', id: x.tag.id! })), left) }} />
             {canEdit && fb ? <Feedback m={m} ed={ed} fb={fb} /> : null}
 
-            {/* one compact row: search, then how many members each channel reaches (click a short one to list who's missing) */}
+            {/* search the members (2026-11-16: no per-channel counts row, no masked-number note) */}
             <div className="flex flex-wrap items-center gap-2">
               <div className="w-72"><Input size="sm" startIcon={Search} type="search" placeholder={L('Search members', '搜尋成員')} aria-label={L('Search members', '搜尋成員')} value={ed.mq} onChange={e => m.setEd({ mq: e.target.value, mpage: 1 }, true)} /></div>
-              <div role="group" aria-label={L('Who can receive each channel', '各通道可接收人數')} className="flex flex-wrap items-center gap-1.5">
-                {covDefs.map(t => {
-                  const miss = n - t.ok, on = ed.mf === t.key, I = t.icon
-                  const tip = !n ? L(t.label + ': add members to see who can get it', t.label + '：加入成員後顯示') : miss ? L(plural(miss, 'person', 'people') + ' with ' + t.word + (on ? ' · Click to show everyone' : ' · Click to show'), miss + ' 人' + t.word + (on ? '・再點一下顯示全部' : '・點一下查看')) : L('Everyone can get ' + t.label, '所有人都收得到' + t.label)
-                  return (
-                    <Tooltip key={t.key}>
-                      <TooltipTrigger asChild>
-                        <button type="button" aria-label={t.label + ': ' + fmtN(t.ok) + ' / ' + fmtN(n)} aria-pressed={miss ? on : undefined} aria-disabled={!miss || undefined}
-                          onClick={() => { if (miss) m.setEd({ mf: on ? 'all' : t.key, mpage: 1 }, true) }}
-                          className={cn('inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-body tabular-nums transition-colors',
-                            on ? 'border-primary bg-primary-subtle text-primary' : miss ? 'border-[var(--warning-text)] bg-warning-subtle text-warning-text hover:brightness-95' : 'cursor-default border-divider text-fg-secondary')}>
-                          <I className="size-3.5 shrink-0" aria-hidden />
-                          <span>{n ? fmtN(t.ok) + ' / ' + fmtN(n) : '—'}</span>
-                          {n ? (miss ? <CircleAlert className="size-3.5 shrink-0" aria-hidden /> : <Check className="size-3.5 shrink-0 text-success-text" aria-hidden />) : null}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>{tip}</TooltipContent>
-                    </Tooltip>
-                  )
-                })}
-              </div>
-              <span className="ml-auto inline-flex items-center gap-1 text-caption text-fg-secondary"><Lock className="size-3.5" aria-hidden />{L('Personal numbers are masked', '私人號碼已遮蔽')}</span>
             </div>
             <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['who']} columns={mcols as any} data={mrows} bordered height="auto" autoRowHeight getRowId={r => r.p.id}
               rowActions={canEdit ? ((r: MRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + r.p.en} onClick={() => m.removeMember(r.p.id)} />) : undefined}
