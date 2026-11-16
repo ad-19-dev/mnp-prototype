@@ -248,15 +248,15 @@ function GroupEditor({ m }: { m: GCtl }) {
   ed.members.forEach(x => { has[x.pid] = true })
 
   const mcols = React.useMemo(() => [
-    mcol.accessor(x => personVal(x.p), { id: 'who', header: L('Member', '成員'), meta: { type: 'person', width: 200 } }),
-    mcol.display({ id: 'emp', header: L('Employee ID', '工號'), meta: { width: 124 }, cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
+    mcol.accessor(x => personVal(x.p), { id: 'who', header: L('Member', '成員'), meta: { type: 'person', width: 190 } }),
+    mcol.display({ id: 'emp', header: L('Employee ID', '工號'), meta: { width: 120 }, cell: i => <Two a={<span className="font-mono">{i.row.original.p.emp || '—'}</span>} b={i.row.original.p.nt} /> }),
     mcol.display({ id: 'org', header: L('Org', '組織'), meta: { width: 80 }, cell: i => <span className="truncate">{i.row.original.p.org}</span> }),
-    mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), meta: { width: 184 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
+    mcol.display({ id: 'dev', header: L('Device Notifications', 'Device Notifications'), meta: { width: 170 }, cell: i => <Cv ok={i.row.original.p.dev}>{i.row.original.p.dev ? L('Registered', '已註冊') : L('No device', '沒有裝置')}</Cv> }),
     mcol.display({ id: 'desk', header: L('Desktop OS', '桌面通知'), meta: { width: 120 }, cell: i => <Cv ok={i.row.original.p.desk}>{i.row.original.p.desk ? L('Installed', '已安裝') : L('Not installed', '未安裝')}</Cv> }),
-    mcol.display({ id: 'email', header: 'Email', meta: { width: 88 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
-    // SMS in two columns, one per phone (2026-11-16); no numbers shown. Outside contacts: — (like the send flow's table)
-    mcol.display({ id: 'smsco', header: L('SMS (Company phone)', 'SMS（公務手機）'), meta: { width: 200 }, cell: i => { const p = i.row.original.p; return p.extKind ? <span className="text-fg-muted">—</span> : <Cv ok={!!p.co}>{p.co ? L('Available', '可收') : L('No number', '沒有號碼')}</Cv> } }),
-    mcol.display({ id: 'smspp', header: L('SMS (Personal phone)', 'SMS（私人手機）'), meta: { width: 200 }, cell: i => { const p = i.row.original.p; return p.extKind ? <span className="text-fg-muted">—</span> : <Cv ok={!!p.pp}>{p.pp ? L('Available', '可收') : L('Not registered', '未登記')}</Cv> } }),
+    mcol.display({ id: 'email', header: 'Email', meta: { width: 84 }, cell: i => <Cv ok={i.row.original.p.extKind !== 'phone'}>{i.row.original.p.extKind !== 'phone' ? L('Available', '可收') : L('No email', '沒有 Email')}</Cv> }),
+    // SMS in two columns, one per phone, the header on two lines (SMS / which phone) (2026-11-16); no numbers shown. Outside contacts: — (like the send flow's table)
+    mcol.display({ id: 'smsco', header: () => <span className="flex flex-col leading-tight"><span>SMS</span><span>{L('Company phone', '公務手機')}</span></span>, meta: { width: 140 }, cell: i => { const p = i.row.original.p; return p.extKind ? <span className="text-fg-muted">—</span> : <Cv ok={!!p.co}>{p.co ? L('Available', '可收') : L('No number', '沒有號碼')}</Cv> } }),
+    mcol.display({ id: 'smspp', header: () => <span className="flex flex-col leading-tight"><span>SMS</span><span>{L('Personal phone', '私人手機')}</span></span>, meta: { width: 152 }, cell: i => { const p = i.row.original.p; return p.extKind ? <span className="text-fg-muted">—</span> : <Cv ok={!!p.pp}>{p.pp ? L('Available', '可收') : L('Not registered', '未登記')}</Cv> } }),
   ], [app.lang])
 
   return (
@@ -274,7 +274,7 @@ function GroupEditor({ m }: { m: GCtl }) {
           </div>
         </Section>
 
-        <Section title={L('Members', '成員')} sub={n ? P(n, 'member', '人') : undefined}>
+        <Section title={L('Audience', '收件人')}>
           <div className="flex flex-col gap-[var(--layout-space-tight)]">
             {canEdit ? (
               <div className="flex flex-col gap-1">
