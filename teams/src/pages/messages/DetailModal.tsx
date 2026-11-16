@@ -156,7 +156,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   // Batch import: the send flow's dialog, working on this list (handed over before, read back as it adds)
   const importing = React.useRef(false)
   const fits = (x: RTag) => x.type !== 'ext' || (isExtPhone(x) ? k === 'sms' : k === 'email')
-  const openImport = () => { importing.current = true; m.setC({ receivers: tags }, true); m.openImport() }
+  const openImport = () => { importing.current = true; m.setC({ receivers: tags, ch: { push: k === 'push' || k === 'sms', desktop: k === 'desktop', email: k === 'email', sms: k === 'sms' } }, true); m.openImport() }
   React.useEffect(() => {
     if (!importing.current) return
     const got = m.s.c.receivers, keep = got.filter(fits)
@@ -165,7 +165,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   }, [m.s.c.receivers])
   React.useEffect(() => { if (!m.s.imp) importing.current = false }, [m.s.imp])
 
-  const fails = failsOf(x)
+  
   const hasLog = st === 'sent' || st === 'error' || st === 'progress', [logOpen, setLogOpen] = React.useState(false)
   // not editable: readonly (the field's frame stays, the text keeps its normal colour, it just can't be changed)
   const mode = edit ? 'edit' as const : 'readonly' as const
@@ -186,7 +186,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
           <section className="flex flex-col gap-[var(--layout-space-tight)]">
             <span className="flex items-center gap-2"><H3>{L('Content', '內容')}</H3>{edit ? null : <ReadOnlyTag />}</span>
             {k === 'push' || k === 'sms' ? <>
-              {x.fb ? <PartHead title={CHN.push.name} part={{ ok: x.ok, of: x.of, unk: x.unk, st: x.pst }} /> : null}
+              {x.fb ? <PartHead title={CHN.push.name} /> : null}
               <FormField id="dm-sender" label={L('Sender', '寄件人')} required={edit} count={cnt(v.sender.length, LIM.sender)} over={v.sender.length > LIM.sender} error={show('sender')}>
                 <Input id="dm-sender" mode={mode} value={v.sender} error={!!show('sender')} onChange={ev => set({ sender: ev.target.value })} />
               </FormField>
@@ -194,7 +194,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
                 <Textarea id="dm-content" mode={mode} rows={4} value={v.content} error={!!show('content')} onChange={ev => set({ content: ev.target.value })} />
               </FormField>
               {k === 'sms' ? <>
-                <PartHead title={L('SMS fallback', 'SMS 備援')} part={x.fb} />
+                <PartHead title={L('SMS fallback', 'SMS 備援')} />
                 <FormField id="dm-sms" label={L('SMS text', 'SMS 內容')} required={edit} count={cnt(v.sms.length, LIM.sms)} over={v.sms.length > LIM.sms} error={show('sms')}>
                   <Textarea id="dm-sms" mode={mode} rows={3} value={v.sms} error={!!show('sms')} onChange={ev => set({ sms: ev.target.value })} />
                 </FormField>
@@ -226,14 +226,12 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
           <section className="flex flex-col gap-[var(--layout-space-tight)]">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-2"><H3>{L('Audience', '收件人')}</H3>{edit ? null : <ReadOnlyTag />}</span>
-              <span className="flex items-center gap-3">
-                {fails ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text" onClick={() => m.set({ ns: r.id + '|' + k })}>{L(fails + ' not sent', fails + ' 人未送出')}</Button> : null}
-                {/* once anything has gone out: every message sent, by person, in a dialog of its own */}
-                {hasLog ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setLogOpen(true)}>{L('View delivery details', '查看發送明細')}</Button> : null}
-              </span>
+              {/* once anything has gone out: one link to every message sent, by person, in a dialog of its own (who
+                  wasn't reached is there too, with Resend; 2026-11-16: "n not sent" and "View delivery details" merged) */}
+              {hasLog ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setLogOpen(true)}>{L('Sent details', '發送明細')}</Button> : null}
             </div>
             {/* editable: the send flow's search above the list, and a remove button on every row */}
-            {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag}
+            {edit ? <RecvInput id="dm-ri" ri={ri} setRi={setRi} groups={app.groups} isAdded={it => tags.some(x => x.key === riKey(it))} onAdd={addTag} noExtEmail={k !== 'email'}
               extra={<Button variant="tertiary" startIcon={Upload} onClick={openImport}>{L('Batch import', '批次匯入')}</Button>} /> : null}
             <AudTable tags={tags} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined}
               phones={k === 'sms' ? { co: ph.co, pp: ph.pp, set: edit ? (which, keys, val) => setPh(o => ({ ...o, [which]: { ...o[which], ...Object.fromEntries(keys.map(kk => [kk, val])) } })) : undefined } : undefined} />
@@ -250,7 +248,7 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
         </aside>
       </div>
 
-      <DeliveryLogDialog x={x} open={logOpen} onClose={() => setLogOpen(false)} />
+      <DeliveryLogDialog x={x} open={logOpen} onClose={() => setLogOpen(false)} onResend={tags => { setLogOpen(false); m.startCompose('resend', r, tags, k) }} />
       <DialogFooter className="border-t border-divider">
         <div className="flex w-full flex-wrap items-center gap-2">
           {canCancel(st) ? <Button variant="secondary" danger startIcon={Ban} disabled={dirty} onClick={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</Button> : null}
@@ -268,17 +266,9 @@ function DetailModalBody({ m, x, close, onDirty }: { m: SendCtl; x: Rec; close: 
   )
 }
 
-// a part's name with how it went ("n / m sent"), above its fields; only once it has gone out
-function PartHead({ title, part }: { title: string; part?: Part }) {
-  const done = part && !part.unk && (part.st === 'sent' || part.st === 'error')
-  return (
-    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
-      <span className="text-body font-medium">{title}</span>
-      {done ? (part!.of === 0
-        ? <span className="text-caption text-fg-secondary">{L('Not needed', '不需要')}</span>
-        : <span className="text-caption tabular-nums text-fg-secondary">{L(fmtN(part!.ok) + ' / ' + fmtN(part!.of) + ' sent', fmtN(part!.ok) + ' / ' + fmtN(part!.of) + ' 已送出')}</span>) : null}
-    </span>
-  )
+// a part's name above its fields (no "n / m sent" count, 2026-11-16: how it went is in Sent details)
+function PartHead({ title }: { title: string }) {
+  return <span className="pt-1 text-body font-medium">{title}</span>
 }
 
 // ---------- right: the facts ----------
@@ -304,7 +294,7 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
       <DescriptionItem label={L('Template', '模板')}>{tpl || <span className="text-fg-muted">—</span>}</DescriptionItem>
       <DescriptionItem label={L('Created', '建立時間')}><span className="tabular-nums">{r.created}</span></DescriptionItem>
       <DescriptionItem label={L('Send time', '傳送時間')}>{time || <span className="tabular-nums">{curTime(r, k)}</span>}</DescriptionItem>
-      <DescriptionItem label={L('Created by', '建立者')}><PersonDisplay value={personVal(creator)} /></DescriptionItem>
+      <DescriptionItem label={L('Creator', '建立者')}><PersonDisplay value={personVal(creator)} /></DescriptionItem>
     </DescriptionList>
   )
 }

@@ -178,7 +178,7 @@ function GroupList({ m }: { m: GCtl }) {
     gcol.accessor('count', { header: L('Members', '人數'), meta: { width: 96 }, cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
     gcol.accessor('updated', { header: L('Updated', '更新時間'), meta: { width: 140 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // the personal space holds only your own groups, so Created by appears in team spaces only
-    ...(app.space === ME_SPACE ? [] : [gcol.accessor(g => personVal(PMAP[g.creator] || PEOPLE[0]), { id: 'creator', header: L('Created by', '建立者'), meta: { width: 200, type: 'person' } })]),
+    ...(app.space === ME_SPACE ? [] : [gcol.accessor(g => personVal(PMAP[g.creator] || PEOPLE[0]), { id: 'creator', header: L('Creator', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.space])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">

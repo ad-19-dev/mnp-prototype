@@ -67,7 +67,7 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Message ID、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Created by：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
+const FIELDS = 'Message ID、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Creator：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
@@ -116,7 +116,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="page" title="不能編輯的紀錄" when="Pending approval、In progress、Sent、Rejected、Canceled" shots={['detail-fb']} then={'內容與收件人是 Read only（標題旁有 Read only 標籤）。右側：' + FIELDS + '。'} />
           <Card kind="page" title="可以編輯的紀錄" when="Scheduled、Scheduled expired（Error 只能改傳送時間）" shots={['edit-content']} then="內容、收件人（搜尋、Batch import、移除；SMS 有兩欄手機）、傳送時間直接改；一改動，底部換成 Discard changes / Save changes。" />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、Device Notifications" shots={['detail-email', 'detail-push']} then="內容只有這個通道的欄位；收件人只列這個通道寄得到的人。" />
-          <Card kind="dialog" title="Delivery details" when="訊息詳情的 View delivery details（已開始送出）" shots={['dlg-delivery']} then="每一則實際送出的訊息一列：可以搜尋、篩選、分頁。" />
+          <Card kind="dialog" title="Sent details" when="訊息詳情 Audience 右上角的 Sent details（已開始送出）" shots={['dlg-delivery']} then="每一則實際送出的訊息一列：可以搜尋、篩選、分頁；有人未送出時可以 Resend。" />
           <Card kind="action" title="Approval Center" when="點 View in Approval Center" then="開啟內部的 Approval Center（prototype 只顯示提示）。" />
         </div>
       </Section>
@@ -202,7 +202,7 @@ function ListTab() {
           [<Copy en="Template" zh="模板" />, '176（固定）', '模板名稱；沒用模板顯示「—」。', '可'],
           [<Copy en="Created" zh="建立時間" />, '116，最多 124', '日期、時間兩行。', '可'],
           [<Copy en="Send time" zh="傳送時間" />, '116，最多 124', '這個通道的傳送時間：排程的是排程時間（單獨重新排程後是新的時間），立即傳送的是建立時間。', '可'],
-          [<Copy en="Created by" zh="建立者" />, '200，最多 220', '人員（大頭照與姓名；沒有照片時是姓名第一個字母）。只在團隊空間顯示。', '可'],
+          [<Copy en="Creator" zh="建立者" />, '200，最多 220', '人員（大頭照與姓名；沒有照片時是姓名第一個字母）。只在團隊空間顯示。', '可'],
           ['（列尾）', '依內容', '⋮ 一個圖示按鈕（xs）', '—'],
         ]} />
       </Section>
@@ -259,7 +259,7 @@ function Rules() {
           ['收件人數', '這個通道要寄給的人數。Device Notifications (SMS) 用 Device Notifications 的人數。'],
           ['未送出人數', '送完（已送出或傳送錯誤）才顯示，0 人不顯示。有 SMS 備援的，只算推播與 SMS 都沒送到的人。'],
           ['未送出名單', '點 {n} not sent 開對話框。'],
-          ['送達人數', '只在訊息詳情的 Device Notifications、SMS fallback 小標題旁顯示（n / m sent）。'],
+          ['送達明細', '訊息詳情不顯示送達人數（2026-11-16 拿掉 n / m sent）；每個人送到沒有，看 Sent details。'],
         ]} />
       </Section>
     </>
@@ -274,16 +274,17 @@ function Detail() {
         <Figure label="Device Notifications (SMS)" sub="Error：只能改傳送時間" shot="detail-fb" max={760} notes={[
           { n: 1, title: '標題', body: <>訊息 ID 標籤加 <C>Message details</C>（通用標題，不用訊息標題）；右上角關閉。</> },
           { n: 2, title: 'Content', body: '這個通道的欄位：Device Notifications 是 Sender、Content；Desktop OS 是 Sender、Title、Content；Email 是 Subject 與內文。不能編輯時標題旁有 Read only 標籤。' },
-          { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS text）；送完後小標題旁顯示 n / m sent，不需要時 Not needed。' },
-          { n: 4, title: 'Audience', body: '和發送流程相同的表格；SMS 多兩欄 Company phone、Personal phone。右上角是 n not sent 連結。' },
+          { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS text）。小標題旁不顯示送達人數。' },
+          { n: 4, title: 'Audience', body: '和發送流程相同的表格；SMS 多兩欄 Company phone、Personal phone。個人不加 Person 標籤（大頭照已經看得出是人；組織、群組、外部聯絡人是圖示，才需要標籤）。' },
           { n: 5, title: '基本資訊', body: FIELDS + '。' },
           { n: 6, title: '底部', body: '左：Cancel sending；右：Duplicate to new message、Send now（依狀態）。' },
+          { n: 7, title: 'Sent details', body: '已開始送出（In progress、Sent、Error）才有的藍字連結，開發送明細。原本的 n not sent 與 View delivery details 合併成這一個（2026-11-16）；未送出人數仍在右側 Status 下方。' },
         ]} />
       </Section>
       <Section eyebrow="Edit" title="編輯" lead="沒有另外的編輯模式：欄位一直都在，依狀態可編輯或 Read only。">
         <Figure label="可以編輯" sub="Scheduled expired，改了 SMS text" shot="edit-content" max={760} notes={[
           { n: 1, title: '可編輯的欄位', body: '必填星號、字數計數，限制和發送流程相同。' },
-          { n: 2, title: '加入收件人', body: '搜尋列（Person、Org、Group、Phone、Email）與 Batch import；每列右側 ✕ 移除。外部電話只能加在 Device Notifications (SMS)，外部 Email 只能加在 Email。' },
+          { n: 2, title: '加入收件人', body: '搜尋列（Person、Org、Group、Phone、Email）與 Batch import；每列右側 ✕ 移除。外部電話只能加在 Device Notifications (SMS)，外部 Email 只能加在 Email（其他通道輸入外部 Email 時搜尋框直接提示不能加入，公司信箱仍會加入員工）。' },
           { n: 3, title: '手機欄', body: '預設勾 Company phone；每列至少要勾一支，否則不能儲存。' },
           { n: 4, title: 'Send time', body: '日期時間欄位；改了之後狀態變成 Scheduled。' },
           { n: 5, title: 'Save changes', body: '有任何改動時，底部換成 Discard changes / Save changes，Cancel sending 停用；內容、收件人、傳送時間一起儲存。' },
@@ -305,29 +306,30 @@ function Detail() {
           { title: '儲存後', body: <>toast <Copy en="Changes saved" zh="已儲存變更" />；有改傳送時間時是 <Copy en="Saved. Sends <時間>" zh="已儲存，將於 <時間> 傳送" />。</> },
         ]} />
       </Section>
-      <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 View delivery details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
-        <Figure label="Delivery details" sub="Device Notifications (SMS)，Error" shot="dlg-delivery" max={980} notes={[
-          { n: 1, title: '搜尋', body: <>一個搜尋框，不用先選欄位，提示 <Copy en="Search name, employee ID, NT account, phone or serial no." zh="搜尋姓名、工號、NT 帳號、電話或流水號" />。姓名、電話、Email 部分比對；工號、NT 帳號、流水號完全比對（由伺服器依格式判斷，名單有數萬人時才查得快）。可以一次貼多個，用逗號或空格分隔。</> },
-          { n: 2, title: '篩選', body: 'Status（附數量），Device Notifications (SMS) 多一個 Via（PNS / SMS）。都是多選，沿用列表的 FilterMenu。沒有 Reason 篩選：原因只在失敗時才有，已經寫在 Failed 標籤下方。' },
-          { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Failed／Queued 標籤，失敗時下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。' },
-          { n: 4, title: 'Sent at', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
+      <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 Sent details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
+        <Figure label="Sent details" sub="Device Notifications (SMS)，Error" shot="dlg-delivery" max={980} notes={[
+          { n: 1, title: '搜尋', body: <>一個搜尋框，不用先選欄位，提示 <Copy en="Search name, employee ID, NT account, phone or job ID" zh="搜尋姓名、工號、NT 帳號、電話或 Job ID" />。姓名、電話、Email 部分比對（電話不顯示但可以搜）；工號、NT 帳號、Job ID 完全比對（由伺服器依格式判斷，名單有數萬人時才查得快）。可以一次貼多個，用逗號或空格分隔。</> },
+          { n: 2, title: '篩選', body: 'Status（附數量），Device Notifications (SMS) 多一個 Channel（PNS / SMS）。都是多選，沿用列表的 FilterMenu。沒有 Reason 篩選：原因只在未送出時才有，已經寫在 Not sent 標籤下方。' },
+          { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Not sent／Queued 標籤，未送出時下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。全站統一用 Not sent，不用 Failed。' },
+          { n: 4, title: 'Send time', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
           { n: 5, title: '分頁', body: '「第一筆–最後一筆 of 總數」、頁碼、每頁 50 / 100 / 200 筆。搜尋或篩選後回到第 1 頁。' },
+          { n: 6, title: 'Channel', body: <>原本的 Via 與 Sent to 合併成一欄：<C>PNS · App</C>、<C>SMS · Company phone</C>、<C>SMS · Personal phone</C>、<C>Desktop · Windows PC</C>、<C>Email</C>。不顯示電話號碼（連遮罩也不顯示，隱私考量），只寫是哪一支。</> },
+          { n: 7, title: 'Resend to {n}', body: '有人沒收到時，底部是 Close 加 Resend to {n}：n 是完全沒收到的人（推播沒送到但 SMS 送到的算收到），開一則新訊息，同一個通道與內容，收件人只有這些人（和 Not sent to 對話框的 Resend 相同）。都收到了只有 Close。' },
         ]} />
         <SpecTable head={['欄位', '內容']} nowrap={[0]} rows={[
-          ['Serial no.', '每一則送出的訊息的流水號（訊息 ID 加序號），依送出順序'],
+          ['Job ID', '每一則送出的訊息的編號（訊息 ID 加序號），依送出順序'],
           ['Recipient', '人員顯示；外部聯絡人顯示電話或 Email'],
           ['Employee ID', '工號，查案最常用；外部聯絡人 —'],
-          ['Via', '只在 Device Notifications (SMS)：PNS 或 SMS。推播失敗後改寄的 SMS 是同一人的另一列'],
-          ['Sent to', 'App、Windows PC、遮罩後的手機號碼（標明公務或私人）或 Email 地址'],
+          ['Channel', '怎麼送、送到哪：PNS · App、SMS · Company phone／Personal phone、Desktop · Windows PC、Email。推播沒送到後改寄的 SMS 是同一人的另一列'],
           ['Status', '標籤加原因（見上）'],
-          ['Sent at', '實際送出時間'],
+          ['Send time', '實際送出時間'],
         ]} />
         <Notes items={[
-          { title: '標題列', body: <>訊息 ID 標籤加 <Copy en="Delivery details · <通道>" zh="發送明細・<通道>" />（和訊息詳情一樣把訊息 ID 放在標題前）；沒有副標或統計行，數量看 Status 篩選上的數字。</> },
+          { title: '標題列', body: <>訊息 ID 標籤加 <Copy en="Sent details · <通道>" zh="發送明細・<通道>" />（和訊息詳情一樣把訊息 ID 放在標題前）；沒有副標或統計行，數量看 Status 篩選上的數字。</> },
           { title: '大小', body: '設計系統 Dialog，最大寬 1280、填滿可用高度；表格固定高度、內部捲動，分頁列在表格下方。疊在訊息詳情之上，關閉後回到訊息詳情。' },
           { title: '大量資料', body: '搜尋、篩選、分頁、篩選選單上的數量都由伺服器計算；prototype 用收件人展開後的範例資料示意。' },
         ]} />
-        <div className="spec-gallery"><figure><figcaption><b>只看失敗</b><span>Status 篩選 Failed。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delivery-failed" alt="只看失敗" max={980} /></div></figure></div>
+        <div className="spec-gallery"><figure><figcaption><b>只看未送出</b><span>Status 篩選 Not sent。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delivery-failed" alt="只看未送出" max={980} /></div></figure></div>
       </Section>
       <Section eyebrow="Variants" title="各種紀錄的訊息詳情">
         <div className="spec-gallery">
@@ -435,7 +437,7 @@ function StatusTab() {
         ['未送出人數', '有人未送出時，狀態下方顯示 {n} not sent'],
         ['傳送時間', '排程時間或建立時間'],
         ['列選單', 'View details、Duplicate to new message'],
-        ['訊息詳情', panel('有 SMS 備援時，Device Notifications、SMS fallback 小標題旁各顯示 n / m sent。')],
+        ['訊息詳情', panel('Audience 右上角有 Sent details，開發送明細。')],
       ]} />
       <StatusSpec id="傳送錯誤" s="error" tagDesc="這個通道沒有送出（例如平台中斷、郵件伺服器退件）。" shots={['st-error', 'st-mixed']} panel="detail-error" urg="urg-error" rows={[
         ['收件人數', '顯示'],

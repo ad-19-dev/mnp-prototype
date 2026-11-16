@@ -249,7 +249,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
   // the cells every record of a message shares: once per message when merged, on the message row with a header
   const shared = (g: GRow) => (hdrs ? !!g.hdr || g.n === 1 : group === 'merge' ? g.pos === 'solo' || g.pos === 'first' : true)
   const columns = React.useMemo(() => [
-    // order: Sender, Channel, Title / Content, Status, Reach / Audience, Template, Created, Scheduled, Created by
+    // order: Sender, Channel, Title / Content, Status, Reach / Audience, Template, Created, Scheduled, Creator
     col.accessor(x => recSender(x.r, x.k), { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 140, maxWidth: 140 }, cell: i => {
       const g = i.row.original
       return <><Mk g={g} />{group === 'bracket' && g.pos !== 'solo' ? <span className={'mnp-bracket is-' + g.pos} aria-hidden /> : null}
@@ -292,7 +292,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     // send now goes out at its created time, so it never shows a dash here
     col.accessor(x => (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116, maxWidth: 124 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     ...(app.space === 'me' ? [] : [// the DS person display, but blank (not the DS's own dash) on the message's other rows
-      col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Created by', '建立者'), meta: { width: 200, maxWidth: 220 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null })]),
+      col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Creator', '建立者'), meta: { width: 200, maxWidth: 220 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs, s.det])
 
   // first use (nothing in this space yet): a page-level empty state, no search, filters or table frame

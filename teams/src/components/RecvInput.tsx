@@ -29,7 +29,9 @@ function riType(k: RiType) {
 interface Opt { item: RiItem; av?: Person; icon?: typeof Users; name: string; sub: string; meta: string; group?: Group; added?: boolean }
 
 // options for the dropdown, plus a format error when the typed value isn't valid
-function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefined, isAdded: (it: RiItem) => boolean) {
+// noExtEmail: Email isn't a chosen channel, so an outside address would get nothing; a company address still adds
+// the employee (they get the other channels)
+function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefined, isAdded: (it: RiItem) => boolean, noExtEmail?: boolean) {
   const q = ri.q.trim(), low = q.toLowerCase(), out = { opts: [] as Opt[], err: '', tip: '' }
   const person = (p: Person, meta?: string): Opt => ({ item: { kind: 'person', id: p.id }, av: p, name: p.en + ' ' + p.zh, sub: [p.org, p.nt, p.emp].filter(Boolean).join(' · '), meta: meta || '' })
   const ext = (v: string): Opt => ({ item: { kind: 'ext', value: v }, icon: v.indexOf('@') < 0 ? Phone : Mail, name: v, sub: v.indexOf('@') < 0 ? L('External · SMS only', '外部 · 只收 SMS') : L('External · Email only', '外部 · 只收 Email'), meta: L('External', '外部') })
@@ -60,7 +62,8 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
     else if (low.split('@')[1] === DOMAIN) {
       const p = PEOPLE.find(x => x.nt === low.split('@')[0])
       if (p) out.opts.push(person(p, L('Company email', '公司信箱'))); else out.err = L('No employee has this address.', '沒有員工用這個信箱。')
-    } else out.opts.push(ext(low))
+    } else if (noExtEmail) out.err = L('Email isn’t selected in Channels, so outside addresses can’t be added. Company addresses add the employee.', 'Channels 沒有選 Email，無法加入外部信箱。公司信箱會加入該員工。')
+    else out.opts.push(ext(low))
   }
   out.opts.forEach(x => { x.added = isAdded(x.item) })
   return out
@@ -76,11 +79,11 @@ function GroupPeek({ g }: { g: Group }) {
   )
 }
 
-export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, onAdd, extra }: {
+export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, onAdd, extra, noExtEmail }: {
   id: string; ri: RiState; setRi: (r: RiState) => void; groups: Group[]; excludeGroup?: string; bad?: boolean
-  isAdded: (it: RiItem) => boolean; onAdd: (it: RiItem) => void; extra?: React.ReactNode
+  isAdded: (it: RiItem) => boolean; onAdd: (it: RiItem) => void; extra?: React.ReactNode; noExtEmail?: boolean
 }) {
-  const T = riType(ri.type), r = riOptions(ri, groups, excludeGroup, isAdded)
+  const T = riType(ri.type), r = riOptions(ri, groups, excludeGroup, isAdded, noExtEmail)
   const set = (p: Partial<RiState>) => setRi({ ...ri, ...p })
   const add = (it: RiItem) => { onAdd(it); set({ q: '', open: ri.type === 'group' || ri.type === 'org', exp: null }) }
   const first = r.opts.find(x => !x.added)

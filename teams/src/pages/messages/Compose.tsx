@@ -220,7 +220,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <RecvInput
             id="ri-send" ri={s.ri} setRi={ri => m.set({ ri })} groups={app.groups.filter(g => groupInSpace(g))}
-            isAdded={it => c.receivers.some(t => t.key === riKey(it))}
+            isAdded={it => c.receivers.some(t => t.key === riKey(it))} noExtEmail={!c.ch.email}
             onAdd={it => { const k = riKey(it); if (it.kind === 'ext') m.addRecv({ key: k, type: 'ext', email: it.value }); else m.addRecv({ key: k, type: it.kind, id: it.id }) }}
             extra={<Button variant="tertiary" startIcon={Upload} onClick={() => m.openImport()}>{L('Batch import', '批次匯入')}</Button>}
           />
@@ -370,7 +370,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
           </FormatBlock>
         ) : null}
         {smsOn(c) ? (
-          <FormatBlock title="SMS" icon={CHN.sms.icon} desc={L('Sent as a backup via SMS only if the push notification fails to send.', '只有推播傳送失敗時，才會用 SMS 補送。')}>
+          <FormatBlock title="SMS" icon={CHN.sms.icon} desc={L('Sent as a backup via SMS only if the push notification can’t be sent.', '只有推播未送出時，才會用 SMS 補送。')}>
             <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} error={eSms}>
               <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} />
             </FormField>

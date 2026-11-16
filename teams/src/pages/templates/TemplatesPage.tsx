@@ -142,7 +142,7 @@ function TplList({ m }: { m: TCtl }) {
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
     tcol.accessor('updated', { header: L('Updated', '更新日期'), meta: { width: 112 } }),
     // the personal space holds only your own templates, so Created by appears in team spaces only
-    ...(app.space === ME_SPACE ? [] : [tcol.accessor(t => personVal(PMAP[t.owner] || PEOPLE[0], t.owner === ME), { id: 'owner', header: L('Created by', '建立者'), meta: { width: 200, type: 'person' } })]),
+    ...(app.space === ME_SPACE ? [] : [tcol.accessor(t => personVal(PMAP[t.owner] || PEOPLE[0], t.owner === ME), { id: 'owner', header: L('Creator', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.space])
   return (
     <div className="flex h-full flex-col gap-[var(--layout-space-loose)] p-[var(--layout-space-loose)]">

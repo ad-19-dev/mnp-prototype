@@ -244,7 +244,7 @@ export type Match =
   | { kind: 'amb'; cands: Person[]; by: string; tok?: string }
   | { kind: 'miss'; why: string; tok?: string }
 export function splitTokens(text: string) { return String(text || '').split(/[\n,;，、；\t]+/).map(x => x.trim()).filter(Boolean) }
-export function matchOne(tok: string, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string }): Match {
+export function matchOne(tok: string, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string; noExtEmail?: boolean }): Match {
   const t = tok.trim(), low = t.toLowerCase(), digits = t.replace(/\D/g, '')
   const org = ORGS.find(o => o.code.toLowerCase() === low)
   if (org) return { kind: 'org', org, by: 'Org code' }
@@ -270,7 +270,7 @@ export function matchOne(tok: string, opts: { allowExt?: boolean; extWhy?: strin
   if (opts.allowExt) { const d = phoneDigits(tok); if (d) return { kind: 'ext', email: fmtExtPhone(d), by: 'External phone number' } }
   return { kind: 'miss', why: 'No match in the employee directory' }
 }
-export function parseList(text: string, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string }): Match[] {
+export function parseList(text: string, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string; noExtEmail?: boolean }): Match[] {
   const out: Match[] = []
   splitTokens(text).forEach(tok => {
     const m = matchOne(tok, opts)
@@ -297,7 +297,7 @@ export const LIST_SAMPLES: Record<ListKind, string> = {
   mvpn: '8861588, 8860217, 8868842\n8866904, 9999999',
   org: 'PUX\nFMFG\nXYZ/123',
 }
-export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string }): Match {
+export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string; noExtEmail?: boolean }): Match {
   const t = tok.trim(), low = t.toLowerCase(), digits = t.replace(/\D/g, '')
   if (kind === 'org') { const org = ORGS.find(o => o.code.toLowerCase() === low); return org ? { kind: 'org', org, by: 'Org code' } : { kind: 'miss', why: 'No org with this code' } }
   if (kind === 'nt') {
@@ -316,6 +316,7 @@ export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean;
     if (!EMAIL_RE.test(t)) return { kind: 'miss', why: 'Not a valid email address' }
     const parts = low.split('@')
     if (parts[1] === DOMAIN) { const p = PEOPLE.find(x => x.nt === parts[0]); return p ? { kind: 'one', p, by: 'Email' } : { kind: 'miss', why: 'No employee with this email' } }
+    if (opts.noExtEmail) return { kind: 'miss', why: 'Email isn’t a selected channel' }
     return opts.allowExt ? { kind: 'ext', email: low, by: 'External email' } : { kind: 'miss', why: opts.extWhy || 'External addresses can’t be group members' }
   }
   if (kind === 'phone') {
@@ -331,7 +332,7 @@ export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean;
   if (hits.length > 1) return { kind: 'amb', cands: hits, by: 'Name' }
   return { kind: 'miss', why: 'No employee with this name' }
 }
-export function parseListAs(text: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string }): Match[] {
+export function parseListAs(text: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string; noExtEmail?: boolean }): Match[] {
   return splitTokens(text).map(tok => Object.assign({ tok }, matchAs(tok, kind, opts)))
 }
 export const SAMPLE_SEND = 'gywu, cmchen, 112306, ytchang, celee, sywangd, 110958, psyang, chhsu, shcheng\nythsieh; hykuo; prhung; 114389; chchiu; ycliao; shlai; cnchou; thliu\n陳怡君\nKevin Lin\nPUX\n0921660734\na19999\n0988-000-111'

@@ -152,6 +152,18 @@ await step('s1-types', async () => {
     await box.fill(q); await wait(500); await box.press('Enter'); await wait(400);
     await p.keyboard.press('Escape'); await wait(200);
   };
+  // Email not ticked yet: an outside address can't be added (company addresses still add the employee)
+  await step('s1-email-off', async () => {
+    await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
+    await p.getByRole('option', { name: 'Email', exact: true }).click(); await wait(300);
+    const box = p.locator('[data-compose]').getByRole('textbox').first();
+    await box.fill('amy@vendor-example.com'); await wait(500);
+    const sec = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
+    await shot('s1-email-off', [p.getByRole('combobox', { name: 'Audience type' }), box, p.locator('[data-radix-popper-content-wrapper]').last()], [], 16);
+    await box.fill(''); await p.keyboard.press('Escape'); await wait(200);
+    await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
+    await p.getByRole('option', { name: 'Person', exact: true }).click(); await wait(300); await p.keyboard.press('Escape');
+  });
   // channels come first, as a sender would do it
   await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
   await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);

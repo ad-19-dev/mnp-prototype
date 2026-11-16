@@ -288,7 +288,7 @@ function Step1() {
           ['Org', '組織代碼、編號或名稱', '沒輸入也列出全部組織：代碼、編號、人數。加入後下拉選單不關，可以連續加入。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
           ['Group', '群組名稱', '沒輸入時，標題 Your groups 下列出這個空間的群組：名稱、說明、人數。加入後下拉選單不關。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
           ['Phone', '手機號碼，例如 0912-345-678', '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。', <Copy en="Enter 8–15 digits." zh="請輸入 8–15 碼數字。" />],
-          ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" /></>],
+          ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。Channels 沒勾 Email 時，外部 Email 不能加入（收不到任何通道），公司信箱照常加入員工。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" />　<Copy en="Email isn’t selected in Channels, so outside addresses can’t be added. Company addresses add the employee." zh="Channels 沒有選 Email，無法加入外部信箱。公司信箱會加入該員工。" /></>],
           ['MVPN', '7 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。', <><Copy en="MVPN is up to 7 digits." zh="MVPN 最多 7 碼。" />　<Copy en="No one has this MVPN." zh="沒有人用這個 MVPN。" /></>],
         ]} />
         <Notes items={[
@@ -306,7 +306,7 @@ function Step1() {
           ['外部電話', '電話圖示（灰色圓底）、號碼、Tag Phone', '電話圖示、號碼；下一行：External phone · SMS only'],
         ]} />
         <Big name="s1-types" title="各類型收件人在表格中的呈現" sub="個人、組織、群組、外部電話、外部 Email 各一筆" />
-        <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人']]} />
+        <Gallery items={[['s1-empty', '空白'], ['s1-search', '搜尋收件人'], ['s1-email-off', '沒勾 Email 時輸入外部 Email', '不能加入，搜尋框下拉直接提示']]} />
       </Section>
 
       <Section eyebrow="Step 1" title="通道" lead="區塊標題 Channels。三張卡片可以複選。">
@@ -458,7 +458,7 @@ function Dialogs() {
       <Section eyebrow="Import" title="Batch import" lead="兩個階段：輸入名單 → 比對結果。">
         <Gallery items={[['dlg-import', '輸入名單', '先選資料類型'], ['dlg-import-list', '貼上名單'], ['dlg-import-result', '比對結果']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
+          ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。不提供 Names：公司超過 10 萬名員工，同名同姓很多。Emails：沒勾 Email 通道時，外部地址列在 Not found，原因 Email isn’t a selected channel。'],
           ['List', <>多行輸入，提示 <Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />右上角顯示筆數。（沒有上傳檔案與範例名單）</>],
           ['比對結果', '數量標籤：n ready（綠）、n to choose（黃）、n not found（紅）、n already added（灰）。下方分組：Who do you mean?（同名，勾選）、Ready to add、Not found。'],
           ['按鈕', '輸入階段：Cancel、Find matches；結果階段：Edit list（回到輸入）、Add n audiences（沒有可加入的時是 Nothing to add；只剩找不到的時是 Fix entries not found）。'],

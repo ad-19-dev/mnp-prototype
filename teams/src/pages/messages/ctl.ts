@@ -439,7 +439,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     // ---------- batch import ----------
     openImport() { set({ imp: { text: '', file: '', res: null, picks: {}, kind: null, done: 0 } }) },
     setImp(p: Partial<ImpState>) { set({ imp: { ...get().imp!, ...p } }) },
-    identify() { const imp = get().imp!; if (!imp.kind) return; m.setImp({ res: parseListAs(imp.text, imp.kind, { allowExt: true }), picks: {} }) },
+    identify() { const imp = get().imp!; if (!imp.kind) return; m.setImp({ res: parseListAs(imp.text, imp.kind, { allowExt: true, noExtEmail: !get().c.ch.email }), picks: {} }) },
     // put the entries that weren't found back in the box, to fix and match again
     impFixMissing(done = 0) { const imp = get().imp!, miss = m.impSets().miss.map(x => x.tok!); m.setImp({ text: miss.join('\n'), file: '', res: null, picks: {}, done }) },
     impSets() {
