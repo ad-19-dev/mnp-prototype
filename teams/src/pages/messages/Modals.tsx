@@ -4,7 +4,7 @@ import {
   Button, Checkbox, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, FileUpload,
   Input, RadioGroup, RadioGroupItem, Tag, Textarea, cn,
 } from '@qijenchen/design-system'
-import { ArrowRight, Building2, ChevronLeft, Copy, Globe, Lock, Mail, Phone, Plus, Search, Wand2 } from 'lucide-react'
+import { ArrowRight, Building2, ChevronLeft, Copy, Globe, Lock, Mail, Phone, Plus, Search, Wand2, X } from 'lucide-react'
 import { LIM, ME, PEOPLE, PMAP, fmtPhone, maskPhone, plural, splitTokens, tplFormats, LIST_SAMPLES } from '../../lib/data'
 import { effEmailMode, hasNotif, multiPeople, recvFlat, smsOn, tplFit } from '../../lib/compose'
 import { flash, useApp } from '../../lib/store'
@@ -36,78 +36,63 @@ const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-
 const Group = ({ children }: { children: React.ReactNode }) => <section className="flex flex-col gap-2 pt-[var(--layout-space-tight)]">{children}</section>
 
 // ---------- batch import ----------
+// B+ (2026-11-16): one step, no second "match" page. Choose the data type, paste a list (a column from Excel works);
+// every entry is matched as it comes in. Below the paste box: "{n} to fix" (each entry as an editable field, with
+// why it wasn't found, and ✕ to leave it out) and "{m} valid audiences" (names only; ✕ on hover). Entries already in
+// the audience, or twice in the list, are left out quietly ("n duplicates left out"). More can be pasted any time.
+// Add {m} audiences adds what's valid and closes; whatever is still to fix isn't added.
 export function ImportDialog({ m }: { m: SendCtl }) {
   const imp = m.s.imp, close = () => m.set({ imp: null })
+  const [all, setAll] = React.useState(false)
+  React.useEffect(() => { if (!imp) setAll(false) }, [!imp])
   if (!imp) return <Shell open={false} onClose={close} title="" foot={null}>{null}</Shell>
-  // step 1: choose what the list holds, then paste or upload it
-  if (!imp.res) {
-    const n = splitTokens(imp.text).length, k = imp.kind
-    return (
-      <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
-        foot={<><Button variant="tertiary" onClick={close}>{imp.done ? L('Close', '關閉') : L('Cancel', '取消')}</Button><Button variant="primary" disabled={!n || !k} onClick={() => m.identify()}>{L('Find matches', '比對名單')}</Button></>}>
-        {imp.done ? <Banner tone="success" title={L('Added ' + P(imp.done, 'audience', ''), '已加入 ' + imp.done + ' 位收件人')}>{L('The entries below weren’t found. Fix them and match again, or close.', '下面是找不到的項目，修正後再比對一次，或直接關閉。')}</Banner> : null}
-        <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />
-        <FormField id="imp-text" label={L('List', '名單')} count={n ? P(n, 'entry', '筆', 'entries') : ''} hint={L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
-          <Textarea id="imp-text" rows={8} className="font-mono" value={imp.text} onChange={ev => m.setImp({ text: ev.target.value, file: '' })} placeholder={k ? L('e.g. ', '例如：') + listKindExample(k) : L('Choose a data type first', '請先選擇資料類型')} />
-        </FormField>
-      </Shell>
-    )
-  }
-  const sets = m.impSets(), picks = imp.picks
-  let pickedN = 0
-  const amb = sets.amb.map(a => {
-    const pk = picks[a.i] || {}
-    return { tok: a.m.tok!, i: a.i, cands: a.m.cands.map(p => { const key = 'p:' + p.id, added = !!(sets.have[key] || sets.seen[key]), on = !added && !!pk[p.id]; if (on) pickedN++; return { p, added, on } }) }
-  })
-  const addN = sets.ready.length + pickedN
+  const k = imp.kind, h = m.impHits(), n = h.ok.length, some = imp.vals.length > 0
+  const shown = all ? h.ok : h.ok.slice(0, 12)
+  const take = (t: string) => { if (k) m.impTake(t) }
   return (
     <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
-      foot={<><Button variant="tertiary" onClick={() => m.setImp({ res: null, picks: {} })}>{L('Edit list', '修改名單')}</Button>{!addN && sets.miss.length ? <Button variant="primary" onClick={() => m.impFixMissing()}>{L('Fix entries not found', '修正找不到的項目')}</Button> : <Button variant="primary" disabled={!addN} onClick={() => m.impAdd()}>{addN ? L('Add ', '加入 ') + P(addN, 'audience', '人') : L('Nothing to add', '沒有可加入的人')}</Button>}</>}>
-      <div className="flex flex-wrap gap-2">
-        <Tag size="md" color="green">{L(sets.ready.length + ' ready', sets.ready.length + ' 筆可加入')}</Tag>
-        {amb.length ? <Tag size="md" color="amber">{L(amb.length + ' to choose', amb.length + ' 筆待選擇')}</Tag> : null}
-        {sets.miss.length ? <Tag size="md" color="red">{L(sets.miss.length + ' not found', sets.miss.length + ' 筆找不到')}</Tag> : null}
-        {sets.dup ? <Tag size="md">{L(sets.dup + ' already added', sets.dup + ' 筆已在名單中')}</Tag> : null}
-      </div>
-      {amb.length ? <Group>
-        <H3>{L('Who do you mean?', '你指的是誰？')}</H3>
-        {amb.map(a => (
-          <div key={a.i} className="flex flex-col gap-1 rounded-md border border-divider p-2">
-            <div className="px-1 text-body text-fg-secondary">{L('“' + a.tok + '” matches ' + a.cands.length + ' people', '「' + a.tok + '」有 ' + a.cands.length + ' 人符合')}</div>
-            {a.cands.map(k => (
-              <div key={k.p.id} className={cn('flex items-center gap-3 rounded-md px-1 py-1', k.added && 'opacity-60')}>
-                <Checkbox checked={k.on || k.added} disabled={k.added} onCheckedChange={() => m.impPick(a.i, k.p.id)} aria-label={k.p.en + ' ' + k.p.zh} />
-                <PAvatar p={k.p} /><Two a={k.p.en + ' ' + k.p.zh} b={k.p.title + ' · ' + k.p.org + ' · ' + k.p.emp} strong className="flex-1" />
-                {k.added ? <Tag size="sm">{L('Already added', '已加入')}</Tag> : null}
-              </div>
-            ))}
-          </div>
-        ))}
+      foot={<><Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" disabled={!n} onClick={() => m.impAddValid()}>{n ? L('Add ', '加入 ') + P(n, 'audience', '位收件人') : L('Add audiences', '加入收件人')}</Button></>}>
+      {/* changing the type matches what's already in again */}
+      <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />
+      {/* the paste area: big before anything is in, a slim "add more" box after; a paste is taken in at once
+          (line breaks kept), typing is taken in on Enter */}
+      <FormField id="imp-text" label={L('List', '名單')} hint={some ? undefined : L('Separate with commas or new lines. A column copied from Excel works too.', '用逗號或換行分隔；也可以直接貼上從 Excel 複製的一欄。')}>
+        <Textarea id="imp-text" rows={some ? 2 : 6} className="font-mono" value={imp.text} disabled={!k}
+          placeholder={!k ? L('Choose a data type first', '請先選擇資料類型') : some ? L('Paste or type more, then press Enter', '貼上或輸入更多，按 Enter 加入') : L('e.g. ', '例如：') + listKindExample(k)}
+          onChange={ev => m.setImp({ text: ev.target.value })}
+          onPaste={ev => { ev.preventDefault(); take(imp.text + ev.clipboardData.getData('text')) }}
+          onKeyDown={ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); take(imp.text) } }} />
+      </FormField>
+      {h.fix.length ? <Group>
+        <H3>{L(h.fix.length + ' to fix', h.fix.length + ' 筆要修正')}</H3>
+        <div className="flex flex-col gap-1.5">
+          {h.fix.map(x => (
+            <div key={x.i} className="flex items-center gap-2">
+              <div className="w-60 shrink-0"><Input size="sm" className="font-mono" error aria-label={L('Fix ', '修正 ') + x.v} value={x.v} onChange={ev => m.impSetVal(x.i, ev.target.value)} /></div>
+              <span className="min-w-0 flex-1 truncate text-caption text-error-text">{tx(x.why)}</span>
+              <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Leave out ', '不加入 ') + x.v} onClick={() => m.impDrop(x.i)} />
+            </div>
+          ))}
+        </div>
       </Group> : null}
-      {sets.ready.length ? <Group>
-        <H3>{L('Ready to add', '可加入')}</H3>
-        <ListBox max={240}>
-          {sets.ready.map((x, i) => {
-            const mm = x.m
+      {n || h.dup ? <Group>
+        <span className="flex flex-wrap items-baseline gap-x-2">
+          <H3>{L(P(n, 'valid audience', '', 'valid audiences'), n + ' 位有效收件人')}</H3>
+          {h.dup ? <span className="text-caption text-fg-secondary">{L(h.dup === 1 ? '1 duplicate left out' : h.dup + ' duplicates left out', '已略過 ' + h.dup + ' 筆重複')}</span> : null}
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {shown.map(x => {
+            const mm = x.mm
             return (
-              <ListRow key={i}>
-                <code className="w-32 shrink-0 truncate font-mono text-caption text-fg-secondary">{mm.tok}</code>
-                <ArrowRight className="size-3.5 shrink-0 text-fg-muted" aria-hidden />
-                {mm.kind === 'one' ? <PAvatar p={mm.p} size={20} /> : <IconBox icon={mm.kind === 'org' ? Building2 : (mm as any).email && (mm as any).email.indexOf('@') < 0 ? Phone : Mail} />}
-                <span className="min-w-0 flex-1 truncate text-body font-medium">{mm.kind === 'one' ? mm.p.en + ' ' + mm.p.zh + ' · ' + mm.p.org : mm.kind === 'org' ? mm.org.code + ' · ' + P(mm.org.count, 'member', '人') : (mm as any).email + ' · ' + L('External', '外部')}</span>
-                <span className="text-caption text-fg-secondary">{tx((mm as any).by)}</span>
-              </ListRow>
+              <span key={x.i} className="group inline-flex items-center gap-1.5 rounded-md border border-divider bg-[var(--color-neutral-1)] py-0.5 pr-1 pl-1.5 text-body">
+                {mm.kind === 'one' ? <PAvatar p={mm.p} size={20} /> : React.createElement(mm.kind === 'org' ? Building2 : x.tag.email && x.tag.email.indexOf('@') < 0 ? Phone : Mail, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}
+                {mm.kind === 'one' ? mm.p.en + ' ' + mm.p.zh : mm.kind === 'org' ? mm.org.code : x.tag.email}
+                <button type="button" aria-label={L('Remove ', '移除 ') + x.v} className="text-fg-muted opacity-0 group-hover:opacity-100 hover:text-foreground focus-visible:opacity-100" onClick={() => m.impDrop(x.i)}><X className="size-3.5" /></button>
+              </span>
             )
           })}
-        </ListBox>
-      </Group> : null}
-      {sets.miss.length ? <Group>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <H3>{L('Not found', '找不到')}</H3>
-          <Button variant="link" size="sm" startIcon={Copy} onClick={() => { try { navigator.clipboard.writeText(sets.miss.map(x => x.tok).join('\n')) } catch { /* clipboard blocked */ } flash(L('Copied ', '已複製 ') + P(sets.miss.length, 'entry', '筆', 'entries')) }}>{L('Copy', '複製')}</Button>
+          {h.ok.length > shown.length ? <Button variant="link" size="sm" className="!h-auto !p-0" onClick={() => setAll(true)}>{L('+' + (h.ok.length - shown.length) + ' more', '還有 ' + (h.ok.length - shown.length) + ' 位')}</Button> : null}
         </div>
-        <p className="text-body text-fg-secondary">{addN ? L('After you add the others, these come back to the list box so you can fix them.', '加入其他人之後，這些項目會放回名單欄位，讓你修正後再比對。') : L('Fix them and match again.', '請修正後再比對一次。')}</p>
-        <ListBox>{sets.miss.map((x, i) => <ListRow key={i}><code className="w-32 shrink-0 truncate font-mono text-caption">{x.tok}</code><span className="text-body text-fg-secondary">{tx(x.why)}</span></ListRow>)}</ListBox>
       </Group> : null}
     </Shell>
   )

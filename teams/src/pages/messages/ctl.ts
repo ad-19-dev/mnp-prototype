@@ -1,7 +1,7 @@
 // Messages page controller: list, row actions, the 3-step send flow and its dialogs.
 import {
   BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, addMin, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
-  joinList, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
+  joinList, matchAs, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
   type Channel, type Group, type ListKind, type Match, type Row, type Status, type Tag, type Template,
 } from '../../lib/data'
 import {
@@ -18,7 +18,9 @@ import { CircleAlert, LayoutTemplate, Trash2, Ban, Send, ShieldAlert } from 'luc
 import type { RiState } from '../../components/RecvInput'
 
 // kind: what the pasted list holds; done: how many were added in the last round, when the not-found ones came back to fix
-export interface ImpState { text: string; file: string; res: Match[] | null; picks: Record<number, Record<string, boolean>>; kind: ListKind | null; done: number }
+// vals: the entries taken in so far (B+, 2026-11-16: matched as they come in, fixed in place, no second page);
+// text: what's in the paste box and not taken in yet
+export interface ImpState { text: string; file: string; res: Match[] | null; picks: Record<number, Record<string, boolean>>; kind: ListKind | null; done: number; vals: string[] }
 export interface SendState {
   view: 'list' | 'compose'
   // fs / fch: the Status and Channels filter buttons; sender, template and creator are found by search
@@ -437,7 +439,37 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     },
 
     // ---------- batch import ----------
-    openImport() { set({ imp: { text: '', file: '', res: null, picks: {}, kind: null, done: 0 } }) },
+    openImport() { set({ imp: { text: '', file: '', res: null, picks: {}, kind: null, done: 0, vals: [] } }) },
+    // ---- B+: take pasted or typed entries in, match each right away, fix or leave out in place, add what's valid
+    impTake(t: string) { const imp = get().imp!, l = splitTokens(t); m.setImp({ vals: l.length ? imp.vals.concat(l) : imp.vals, text: '' }) },
+    impSetVal(i: number, v: string) { const imp = get().imp!; m.setImp({ vals: imp.vals.map((x, j) => (j === i ? v : x)) }) },
+    impDrop(i: number) { const imp = get().imp!; m.setImp({ vals: imp.vals.filter((_, j) => j !== i) }) },
+    // each entry: to fix (not found, with why), valid (a tag to add), or a duplicate (already in the audience, or
+    // earlier in this list): left out without a row of its own
+    impHits() {
+      const s = get(), imp = s.imp!, c = s.c, have: Record<string, boolean> = {}, seen: Record<string, boolean> = {}
+      s.c.receivers.forEach(t => { have[t.key] = true })
+      const opts = { allowExt: true, noExtEmail: !c.ch.email, noExtPhone: !(c.ch.push && c.ch.sms) }
+      const fix: { i: number; v: string; why: string }[] = [], ok: { i: number; v: string; mm: Match; tag: Tag }[] = []
+      let dup = 0
+      if (!imp.kind) return { fix, ok, dup }
+      imp.vals.forEach((v, i) => {
+        const mm = matchAs(v, imp.kind!, opts)
+        if (mm.kind === 'one' || mm.kind === 'org' || mm.kind === 'ext') {
+          const tag: Tag = mm.kind === 'one' ? { key: 'p:' + mm.p.id, type: 'person', id: mm.p.id } : mm.kind === 'org' ? { key: 'o:' + mm.org.code, type: 'org', id: mm.org.code } : { key: 'e:' + mm.email, type: 'ext', email: mm.email }
+          if (have[tag.key] || seen[tag.key]) { dup++; return }
+          seen[tag.key] = true
+          ok.push({ i, v, mm, tag })
+        } else fix.push({ i, v, why: mm.kind === 'miss' ? mm.why : 'More than one match' })
+      })
+      return { fix, ok, dup }
+    },
+    impAddValid() {
+      const s = get(), h = m.impHits(), tags = h.ok.map(x => x.tag)
+      m.setC({ receivers: s.c.receivers.concat(tags) })
+      set({ imp: null })
+      flash(L('Added ', '已加入 ') + P(tags.length, 'audience', '位收件人') + (h.fix.length ? L(' · ' + h.fix.length + ' not added', '・' + h.fix.length + ' 筆未加入') : ''))
+    },
     setImp(p: Partial<ImpState>) { set({ imp: { ...get().imp!, ...p } }) },
     identify() { const imp = get().imp!; if (!imp.kind) return; m.setImp({ res: parseListAs(imp.text, imp.kind, { allowExt: true, noExtEmail: !get().c.ch.email, noExtPhone: !(get().c.ch.push && get().c.ch.sms) }), picks: {} }) },
     // put the entries that weren't found back in the box, to fix and match again

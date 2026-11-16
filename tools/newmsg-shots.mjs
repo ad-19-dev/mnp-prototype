@@ -59,11 +59,14 @@ await step('dlg-import', async () => {
   await shot('dlg-import', dlg(), [], 12);
   await dlg().getByRole('combobox').first().click(); await wait(300);
   await p.getByRole('option').first().click(); await wait(300);
-  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, celee\nsywangd, psyang, a19999'); await wait(300);
-  await shot('dlg-import-list', dlg(), [], 12);
-  await dlg().getByRole('button', { name: 'Find matches' }).click(); await wait(700);
-  await shot('dlg-import-result', dlg(), [], 12);
-  await dlg().locator('button').last().click(); await wait(700);
+  // B+: typed (or pasted) entries are taken in on Enter and matched right away
+  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, celee\nsywangd, psyang, a19999, gywuu, cmchen'); await dlg().locator('#imp-text').press('Enter'); await wait(500);
+  await shot('dlg-import-result', dlg(), [
+    [1, dlg().getByText(/ to fix$/).first(), 'tl'],
+    [2, dlg().getByText(/ valid audiences?$/).first(), 'tl'],
+    [3, dlg().getByText(/duplicates? left out/).first(), 'tl'],
+  ], 12);
+  await dlg().getByRole('button', { name: /^Add \d/ }).click(); await wait(700);
   await p.keyboard.press('Escape'); await wait(300);
 });
 // only Desktop OS: someone without the desktop agent can't get it

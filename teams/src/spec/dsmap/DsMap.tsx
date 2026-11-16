@@ -104,7 +104,7 @@ export default function DsMap() {
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['所有對話框', comps('Dialog'), 'DialogHeader / Body / Footer；Cancel 在左、主要動作在右；按鈕沒有圖示；沒有副標。', <Own>—</Own>],
             ['確認對話框', comps('Dialog', 'Button'), '寬 480；標題、一句說明、兩個按鈕；危險動作用 danger。', <Own>Confirm：把標題、說明、按鈕組成共用的確認元件</Own>],
-            ['Batch import', comps('Dialog', 'Select', 'Textarea', 'FileUpload'), '先選 Data type，再貼上或上傳；比對結果分組顯示。', <Own>比對結果的分組列表</Own>],
+            ['Batch import', comps('Dialog', 'Select', 'Textarea', 'Input', 'Button'), 'B+：一個畫面。先選 Data type（Select），在 Textarea 貼上；要修正的每筆一個 Input（error 狀態）加原因與移除鈕（Button text iconOnly）；標題字級沿用 DialogTitle（16px）。', <Own>貼上即比對、重複自動略過；有效收件人的名稱小方塊（大頭照或圖示加名稱，滑過出現 ✕）</Own>],
             ['Toast', comps('Toast'), 'Toaster position=bottom-center、offset=48（比預設 24px 高一點）；一則一行。', <Own>隱藏 Toast 前面的圖示（CSS）</Own>],
           ]} />
           <Notes items={[{ title: '載入中', body: <>列表載入用 {link('CircularProgress')} 加 Empty；規格見 Storybook。</> }]} />
