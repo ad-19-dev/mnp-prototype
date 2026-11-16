@@ -273,7 +273,7 @@ function Detail() {
       <Section eyebrow="Modal" title="訊息詳情" lead="設計系統 Dialog（寬 1120，填滿可用高度）。點列表上的標題開啟。標題 Message details，前面是訊息 ID 標籤；左邊是內容與收件人，右邊淺灰底是基本資訊；底部是操作。">
         <Figure label="Device Notifications (SMS)" sub="Error：只能改傳送時間" shot="detail-fb" max={760} notes={[
           { n: 1, title: '標題', body: <>訊息 ID 標籤加 <C>Message details</C>（通用標題，不用訊息標題）；右上角關閉。</> },
-          { n: 2, title: 'Content', body: '這個通道的欄位：Device Notifications 是 Sender、Content；Desktop OS 是 Sender、Title、Content；Email 是 Subject 與內文。不能編輯時標題旁有 Read only 標籤。' },
+          { n: 2, title: 'Content', body: '區塊標題 Content、Audience 是 14px medium（比對話框標題 16px medium 輕一級）。這個通道的欄位：Device Notifications 是 Sender、Content；Desktop OS 是 Sender、Title、Content；Email 是 Subject 與內文。不能編輯時標題旁有 Read only 標籤。' },
           { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS text）。小標題旁不顯示送達人數。' },
           { n: 4, title: 'Audience', body: '和發送流程相同的表格；SMS 多兩欄 Company phone、Personal phone。個人不加 Person 標籤（大頭照已經看得出是人；組織、群組、外部聯絡人是圖示，才需要標籤）。' },
           { n: 5, title: '基本資訊', body: FIELDS + '。' },

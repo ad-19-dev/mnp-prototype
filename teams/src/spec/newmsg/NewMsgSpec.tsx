@@ -462,9 +462,9 @@ function Dialogs() {
           ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前輸入框停用。改類型時已輸入的項目會重新比對。不提供 Names：公司超過 10 萬名員工，同名同姓很多。Emails：沒勾 Email 通道時，外部地址列為要修正，原因 Email isn’t a selected channel。Phone numbers：沒選 SMS 備援時，外部號碼列為要修正，原因 SMS fallback isn’t a selected channel。'],
           ['List', <>貼上時直接收進來（保留換行，可以貼 Excel 的一欄）；用打的時按 Enter 收進來。還沒有項目時輸入框 6 行高，提示 <Copy en="Separate with commas or new lines. A column copied from Excel works too." zh="用逗號或換行分隔；也可以直接貼上從 Excel 複製的一欄。" />；有項目後縮成 2 行，提示 <Copy en="Paste or type more, then press Enter" zh="貼上或輸入更多，按 Enter 加入" />。沒有筆數、Clear all 那一行（2026-11-16 拿掉）。</>],
           [<Copy en="{n} to fix" zh="{n} 筆要修正" />, '找不到或格式不對的項目，每筆一個可編輯的欄位（紅框），右邊紅字寫原因，最右邊 ✕ 不加入。改了就立刻重新比對，找到了就移到下方。'],
-          [<Copy en="{m} valid audiences" zh="{m} 位有效收件人" />, '找到的人（大頭照加姓名）、組織（代號）、外部聯絡人（號碼或地址），只顯示名稱、不是欄位；滑過出現 ✕ 移除。超過 12 個時其餘收成 +n more。標題旁小字 n duplicates left out：已在收件人表格裡、或在名單裡出現第二次的，自動略過，不另外列出。'],
-          ['按鈕', <>Cancel、<Copy en="Add {m} audiences" zh="加入 {m} 位收件人" />（沒有有效收件人時停用）。按下後只加入有效的，關閉對話框，toast 寫加入幾位；還有要修正的會加上「· n not added」。</>],
-          ['標題', 'Batch import，設計系統 DialogTitle 的字級（text-body-lg 16px，medium），和其他對話框一致。'],
+          [<Copy en="{m} valid audiences" zh="{m} 位有效收件人" />, '找到的人（大頭照加姓名）、組織（代號）、外部聯絡人（號碼或地址），只顯示名稱、不是欄位；每個名稱右邊一直有 ✕ 可以移除（不是滑過才出現）。超過 12 個時其餘收成 +n more。標題旁小字 n duplicates left out：已在收件人表格裡、或在名單裡出現第二次的，自動略過，不另外列出。'],
+          ['按鈕', <>左側 <Copy en="Clear all" zh="全部清除" />（text 按鈕，清空名單與輸入框重新開始；沒有內容時停用）；右側 Cancel、<Copy en="Add {m} audiences" zh="加入 {m} 位收件人" />（沒有有效收件人時停用）。按下後只加入有效的，關閉對話框，toast 寫加入幾位；還有要修正的會加上「· n not added」。</>],
+          ['標題', 'Batch import，設計系統 DialogTitle 的字級（text-body-lg 16px，medium），和其他對話框一致。對話框裡的小標題（n to fix、m valid audiences）是 14px medium，比標題輕一級。'],
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">

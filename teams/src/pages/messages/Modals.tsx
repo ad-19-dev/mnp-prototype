@@ -31,7 +31,8 @@ function Shell({ open, onClose, title, sub, width = 560, children, foot }: { ope
     </Dialog>
   )
 }
-const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-h6 font-bold">{children}</h3>
+// a heading inside a dialog: 14px medium, so the dialog title (DS: 16px medium) stays the strongest (2026-11-16)
+const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-h6 font-medium">{children}</h3>
 // a titled group of match results: heading close to its items, groups set apart from each other
 const Group = ({ children }: { children: React.ReactNode }) => <section className="flex flex-col gap-2 pt-[var(--layout-space-tight)]">{children}</section>
 
@@ -40,6 +41,7 @@ const Group = ({ children }: { children: React.ReactNode }) => <section classNam
 // every entry is matched as it comes in. Below the paste box: "{n} to fix" (each entry as an editable field, with
 // why it wasn't found, and ✕ to leave it out) and "{m} valid audiences" (names only; ✕ on hover). Entries already in
 // the audience, or twice in the list, are left out quietly ("n duplicates left out"). More can be pasted any time.
+// Each name's ✕ is always shown (not only on hover); Clear all (footer, left) empties the list.
 // Add {m} audiences adds what's valid and closes; whatever is still to fix isn't added.
 export function ImportDialog({ m }: { m: SendCtl }) {
   const imp = m.s.imp, close = () => m.set({ imp: null })
@@ -51,7 +53,9 @@ export function ImportDialog({ m }: { m: SendCtl }) {
   const take = (t: string) => { if (k) m.impTake(t) }
   return (
     <Shell open onClose={close} width={720} title={L('Batch import', '批次匯入')}
-      foot={<><Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" disabled={!n} onClick={() => m.impAddValid()}>{n ? L('Add ', '加入 ') + P(n, 'audience', '位收件人') : L('Add audiences', '加入收件人')}</Button></>}>
+      foot={<>{/* left: Clear all empties the list (and the paste box) to start over */}
+        <Button variant="text" className="mr-auto" disabled={!some && !imp.text} onClick={() => m.setImp({ vals: [], text: '' })}>{L('Clear all', '全部清除')}</Button>
+        <Button variant="tertiary" onClick={close}>{L('Cancel', '取消')}</Button><Button variant="primary" disabled={!n} onClick={() => m.impAddValid()}>{n ? L('Add ', '加入 ') + P(n, 'audience', '位收件人') : L('Add audiences', '加入收件人')}</Button></>}>
       {/* changing the type matches what's already in again */}
       <ListKindField id="imp-kind" value={k} onChange={kind => m.setImp({ kind })} />
       {/* the paste area: big before anything is in, a slim "add more" box after; a paste is taken in at once
@@ -87,7 +91,7 @@ export function ImportDialog({ m }: { m: SendCtl }) {
               <span key={x.i} className="group inline-flex items-center gap-1.5 rounded-md border border-divider bg-[var(--color-neutral-1)] py-0.5 pr-1 pl-1.5 text-body">
                 {mm.kind === 'one' ? <PAvatar p={mm.p} size={20} /> : React.createElement(mm.kind === 'org' ? Building2 : x.tag.email && x.tag.email.indexOf('@') < 0 ? Phone : Mail, { className: 'size-4 text-fg-secondary', 'aria-hidden': true })}
                 {mm.kind === 'one' ? mm.p.en + ' ' + mm.p.zh : mm.kind === 'org' ? mm.org.code : x.tag.email}
-                <button type="button" aria-label={L('Remove ', '移除 ') + x.v} className="text-fg-muted opacity-0 group-hover:opacity-100 hover:text-foreground focus-visible:opacity-100" onClick={() => m.impDrop(x.i)}><X className="size-3.5" /></button>
+                <button type="button" aria-label={L('Remove ', '移除 ') + x.v} className="rounded-sm text-fg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring" onClick={() => m.impDrop(x.i)}><X className="size-3.5" /></button>
               </span>
             )
           })}

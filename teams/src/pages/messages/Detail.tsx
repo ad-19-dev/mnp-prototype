@@ -41,7 +41,8 @@ function statText(x: { k: string; ok: number; of: number }) {
   if (x.k === 'sms') return x.of ? L(fmtN(x.ok) + ' of ' + fmtN(x.of) + ' delivered', fmtN(x.ok) + ' / ' + fmtN(x.of) + ' 已送達') : L('Not needed', '不需要')
   return L(fmtN(x.ok) + ' of ' + fmtN(x.of) + ' delivered', fmtN(x.ok) + ' / ' + fmtN(x.of) + ' 已送達')
 }
-export function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-h6 font-bold text-foreground">{children}</h3> }
+// section heading in the Detail modal: 14px medium, below the dialog title (DS: 16px medium) (2026-11-16)
+export function H3({ children }: { children: React.ReactNode }) { return <h3 className="text-h6 font-medium text-foreground">{children}</h3> }
 // who reviews the message, as people say it
 // with ICSD switched off every approval is the supervisor's
 export const reviewer = (r: Row) => (!ICSD || r.review?.by === 'mgr' ? L('your supervisor', '主管') : r.review?.by === 'both' ? L('your supervisor and the SMS reviewer', '主管和 SMS 審核人員') : L('the SMS reviewer', 'SMS 審核人員'))
