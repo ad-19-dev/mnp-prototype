@@ -298,7 +298,7 @@ const detail = async (name, text, title, list = []) => {
 };
 await detail('detail-expired', 'UX sync moves', 'UX sync moves to Tue');
 await detail('detail-rejected', 'Reminder: badge photo', 'Reminder: badge photo');
-await detail('detail-scheduled', 'out of office', 'out of office 10/27');
+await detail('detail-scheduled', 'out of office', 'out of office 12/8');
 await detail('detail-progress', 'Fire alarm', 'Fire alarm test in Building B');
 await detail('detail-error', 'On-call swap', 'On-call swap');
 await detail('detail-sent-fb', 'Design review', 'Design review with Northwind Studio: Thu 11/6');
@@ -331,7 +331,7 @@ await step('space-menu', async () => {
   await p.keyboard.press('Escape'); await wait(300);
 });
 // the urgent samples (personal space), one per status: the panel shows the reason the sender gave
-for (const [n, t] of [['urg-pending', 'Parking lot A closed'], ['urg-scheduled', 'Network maintenance tonight'], ['urg-progress', 'Water leak on 5F'], ['urg-sent', 'Elevator 3 out of service'], ['urg-error', 'Power dip in Building C'], ['urg-rejected', 'Fire drill moved'], ['urg-expired', 'Badge reader outage']]) await detail(n, t, t);
+for (const [n, t] of [['urg-pending', 'Parking lot A closed'], ['urg-scheduled', 'Network maintenance Fri'], ['urg-progress', 'Water leak on 5F'], ['urg-sent', 'Elevator 3 out of service'], ['urg-error', 'Power dip in Building C'], ['urg-rejected', 'Fire drill moved'], ['urg-expired', 'Badge reader outage']]) await detail(n, t, t);
 await step('detail-sms-notneeded', async () => {
   await space('ESH Emergency');
   await row('Earthquake drill on Oct 3').getByText('Earthquake drill on Oct 3').first().click(); await wait(800);

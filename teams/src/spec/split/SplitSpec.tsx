@@ -584,7 +584,7 @@ function Data() {
         ['SMS 備援與未送出人數', 'UX Team「Design review…」：Device Notifications 4 人未送達，SMS 補寄後仍有 1 人未送出'],
         ['待核准、已駁回、排程已過期', 'UX Team「Project Atlas demo」、「Reminder: badge photo update」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
         ['已取消的通道', 'UX Team「Badge reader outage at the B lobby until 12:00」：Email 已取消，Device Notifications (SMS) 排程已過期'],
-        ['緊急送出（七種狀態）', 'UX Team「Parking lot A closed…」（待核准）、「Network maintenance tonight…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out of service…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
+        ['緊急送出（七種狀態）', 'UX Team「Parking lot A closed…」（待核准）、「Network maintenance Fri 12/18…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out of service…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
         ['傳送錯誤', 'UX Team「On-call swap」；Fab 18「Shift handover…」；UX Team「Reminder: send design review topics」'],
       ]} />
     </Section>
