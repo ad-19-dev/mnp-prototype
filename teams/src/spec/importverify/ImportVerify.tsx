@@ -103,7 +103,7 @@ function VerifyImport({ open, onClose, onAdd, has, fix }: { open: boolean; onClo
               <div className="flex flex-col gap-[var(--layout-space-tight)]">
                 <ListKindField id="vi-kind" value={kind} onChange={setKind} />
                 <FormField id="vi-text" label="List" hint="Separate with commas or new lines.">
-                  <Textarea id="vi-text" rows={8} className="font-mono" value={text} disabled={!kind || busy} onChange={e => setText(e.target.value)}
+                  <Textarea id="vi-text" rows={8} value={text} disabled={!kind || busy} onChange={e => setText(e.target.value)}
                     placeholder={kind ? 'e.g. ' + listKindExample(kind) : 'Choose a data type first'} />
                 </FormField>
                 {/* the count follows the typing: entries in the right format (not yet looked up) */}
@@ -132,7 +132,7 @@ function VerifyImport({ open, onClose, onAdd, has, fix }: { open: boolean; onClo
                   <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
                     {check.bad.map((b, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <div className="w-56 shrink-0"><Input size="sm" className="font-mono" error disabled={busy2} aria-label={'Fix ' + b.v} value={b.v} onChange={e => { const v = e.target.value; setCheck(c => c && { ...c, bad: c.bad.map((x, j) => (j === i ? { ...x, v } : x)) }) }} /></div>
+                        <div className="w-56 shrink-0"><Input size="sm" error disabled={busy2} aria-label={'Fix ' + b.v} value={b.v} onChange={e => { const v = e.target.value; setCheck(c => c && { ...c, bad: c.bad.map((x, j) => (j === i ? { ...x, v } : x)) }) }} /></div>
                         <span className="min-w-0 flex-1 truncate text-right text-caption text-error-text">{b.why}</span>
                       </div>
                     ))}
@@ -143,7 +143,7 @@ function VerifyImport({ open, onClose, onAdd, has, fix }: { open: boolean; onClo
                     <ul className="mt-1 flex max-h-56 flex-col overflow-y-auto">
                       {check.bad.map((b, i) => (
                         <li key={i} className="flex items-center justify-between gap-3 py-1">
-                          <span className="min-w-0 truncate font-mono">{b.v}</span>
+                          <span className="min-w-0 truncate">{b.v}</span>
                           <span className="shrink-0 text-error-text">{b.why}</span>
                         </li>
                       ))}
@@ -228,6 +228,7 @@ export default function ImportVerify() {
             ['黃色清單框', '改用 DS Alert（inline、warning），不再自訂框線與底色（2026-11-17 修正）', '符合'],
             ['把整份清單放進 Alert 的說明', '新版第二層：無效清單放在 Alert 的 description 裡，超過約 8 筆時框內捲動', 'DS 建議 description 不超過 2–3 行；清單很長時建議改成折衷版的寫法（Alert 只放一句說明，清單放在下方）'],
             ['B+ 的姓名小方塊', '現在版本裡有效收件人的小方塊（大頭照、姓名、✕）是自訂樣式', '不是 DS 元件；DS 的 Tag 可以帶移除鈕（onRemove），要完全對齊 DS 可以改用 Tag'],
+            ['輸入框', 'DS Textarea、Input，沿用 DS 的字型與 focus（邊框轉主色、1px）；原本自行加的等寬字體已拿掉（2026-11-17）', '符合'],
             ['「There are n valid audiences in total.」', '一般文字（14px、次要色），數字加粗', '沒有對應元件，用 DS 文字樣式'],
           ]} />
         </Section>

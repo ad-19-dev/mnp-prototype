@@ -52,7 +52,7 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
               {/* big before anything is in, a slim "add more" box after; a paste is taken in at once (line breaks
                   kept), typing on Enter */}
               <FormField id="imp-text" label={L('List', '名單')} hint={some ? undefined : L('Separate with commas or new lines. A column copied from Excel works too.', '用逗號或換行分隔；也可以直接貼上從 Excel 複製的一欄。')}>
-                <Textarea id="imp-text" rows={some ? 2 : 6} className="font-mono" value={text} disabled={!kind}
+                <Textarea id="imp-text" rows={some ? 2 : 6} value={text} disabled={!kind}
                   placeholder={!kind ? L('Choose a data type first', '請先選擇資料類型') : some ? L('Paste or type more, then press Enter', '貼上或輸入更多，按 Enter 加入') : L('e.g. ', '例如：') + listKindExample(kind)}
                   onChange={ev => setText(ev.target.value)}
                   onPaste={ev => { ev.preventDefault(); take(text + ev.clipboardData.getData('text')) }}
@@ -64,7 +64,7 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
                   <div className="flex flex-col gap-1.5">
                     {fix.map(x => (
                       <div key={x.i} className="flex items-center gap-2">
-                        <div className="w-60 shrink-0"><Input size="sm" className="font-mono" error aria-label={L('Fix ', '修正 ') + x.v} value={x.v} onChange={ev => { const v = ev.target.value; setVals(l => l.map((y, j) => (j === x.i ? v : y))) }} /></div>
+                        <div className="w-60 shrink-0"><Input size="sm" error aria-label={L('Fix ', '修正 ') + x.v} value={x.v} onChange={ev => { const v = ev.target.value; setVals(l => l.map((y, j) => (j === x.i ? v : y))) }} /></div>
                         <span className="min-w-0 flex-1 truncate text-caption text-error-text">{tx(x.why)}</span>
                         <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Leave out ', '不加入 ') + x.v} onClick={() => drop(x.i)} />
                       </div>
