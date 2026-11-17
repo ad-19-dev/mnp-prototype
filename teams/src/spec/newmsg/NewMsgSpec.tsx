@@ -134,11 +134,9 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
               ['已在名單上', R('選項顯示 Added', '不能再選')]),
           ]} />
           <Sub id="1-4" title="批次匯入" start="Batch import 按鈕" items={[
-            D('選資料類型', 'dlg-import'), E('貼上名單，或輸入後按 Enter'), D('立即比對', 'dlg-import-result', '同一個畫面，不用另外一頁'),
-            F(['有找不到', E('直接在欄位裡修正'), R('改完立刻重新比對', '或按 ✕ 不加入')],
-              ['重複（已在收件人或名單裡出現過）', R('自動略過', '顯示 n duplicates left out')],
-              ['還要加更多', E('在同一個框再貼上'), R('接在後面一起比對')],
-              ['有有效收件人', E('Add n audiences'), T('Added n audiences', '回到步驟 1；還沒修正的不加入')]),
+            D('選資料類型', 'dlg-import'), E('貼上或輸入名單'), D('即時顯示格式正確的數量', 'dlg-import-list'), E('Add n audiences'), R('驗證中', '按鈕轉圈，全部停用'),
+            F(['全部有效', T('Added n audiences', '回到步驟 1')],
+              ['有無效的', D('Save without invalid audiences?', 'dlg-import-result'), F(['直接改欄位', E('Check again'), R('只重新驗證這幾筆', '全部找到就加入')], ['不管無效的', E('Proceed'), T('Added n audiences · n not added', '只加入有效的')], ['回去改', E('Cancel'), R('回到名單')])]),
           ]} />
           <Sub id="1-5" title="移除收件人" start="收件人表格" items={[
             E('列尾 ×'), R('直接移除這一列', '沒有篩選，也沒有全部移除'),
@@ -456,17 +454,18 @@ function Dialogs() {
           ['Leave without sending?', '任何步驟 Cancel', '480', 'Discard（紅色）'],
         ]} />
       </Section>
-      <Section eyebrow="Import" title="Batch import" lead="兩個階段：輸入名單 → 比對結果。">
-        <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-result', '貼上之後', '同一個畫面：要修正的與有效的分開列出']]} />
+      <Section eyebrow="Import" title="Batch import" lead="2026-11-17 起改為「按 Add 再驗證」的折衷版：輸入時只算格式，按 Add 才驗證；有無效的開第二層，在第二層直接修正或略過。">
+        <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-list', '輸入名單', '即時顯示格式正確的數量'], ['dlg-import-result', '有無效的', '第二層：在黃框裡直接修正，或略過']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['共用', 'Audience group 的成員也用同一個 Batch import 對話框（按鈕在搜尋列右邊，和這裡一樣），文案把 audiences 換成 members（2026-11-16）。'],
-          ['流程', 'B+（2026-11-16）：只有一個畫面，沒有第二層比對頁。貼上（或輸入後按 Enter）就立刻比對，結果直接列在輸入框下方。'],
-          ['Data type', '必填，名單裡每一筆都要是這個類型：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前輸入框停用。改類型時已輸入的項目會重新比對。不提供 Names：公司超過 10 萬名員工，同名同姓很多。Emails：沒勾 Email 通道時，外部地址列為要修正，原因 Email isn’t a selected channel。Phone numbers：沒選 SMS 備援時，外部號碼列為要修正，原因 SMS fallback isn’t a selected channel。'],
-          ['List', <>貼上時直接收進來（保留換行，可以貼 Excel 的一欄）；用打的時按 Enter 收進來。還沒有項目時輸入框 6 行高，提示 <Copy en="Separate with commas or new lines. A column copied from Excel works too." zh="用逗號或換行分隔；也可以直接貼上從 Excel 複製的一欄。" />；有項目後縮成 2 行，提示 <Copy en="Paste or type more, then press Enter" zh="貼上或輸入更多，按 Enter 加入" />。沒有筆數、Clear all 那一行（2026-11-16 拿掉）。</>],
-          [<Copy en="{n} to fix" zh="{n} 筆要修正" />, '找不到或格式不對的項目，每筆一個可編輯的欄位（紅框），右邊紅字寫原因，最右邊 ✕ 不加入。改了就立刻重新比對，找到了就移到下方。'],
-          [<Copy en="{m} valid audiences" zh="{m} 位有效收件人" />, '找到的人（大頭照加姓名）、組織（代號）、外部聯絡人（號碼或地址），只顯示名稱、不是欄位；每個名稱右邊一直有 ✕ 可以移除（不是滑過才出現）。超過 12 個時其餘收成 +n more。標題旁小字 n duplicates left out：已在收件人表格裡、或在名單裡出現第二次的，自動略過，不另外列出。'],
-          ['按鈕', <>左側 <Copy en="Clear all" zh="全部清除" />（tertiary 按鈕，清空名單與輸入框重新開始；沒有內容時停用）；右側 Cancel、<Copy en="Add {m} audiences" zh="加入 {m} 位收件人" />（沒有有效收件人時停用）。按下後只加入有效的，關閉對話框，toast 寫加入幾位；還有要修正的會加上「· n not added」。</>],
-          ['標題', 'Batch import，設計系統 DialogTitle 的字級（text-body-lg 16px，medium），和其他對話框一致。對話框裡的小標題（n to fix、m valid audiences）是 14px medium，比標題輕一級。'],
+          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框，文案把 audiences 換成 members（群組）。'],
+          ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前輸入框停用。下方不放說明文字（2026-11-17 拿掉）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
+          ['List', <>Textarea 8 行，說明 <Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />，可以貼 Excel 的一欄。DS 預設字型（不用等寬字體）。</>],
+          ['數量提示', <><Copy en="There are {n} valid audiences in total." zh="共 {n} 位收件人格式正確。" />：只檢查格式、去掉重複，還沒查人存不存在，所以驗證後的有效數量可能比較少。</>],
+          ['主彈窗按鈕', <>Cancel（tertiary）、<Copy en="Add {n} audiences" zh="加入 {n} 位收件人" />（primary；n 為 0 時停用）。按下後呼叫 API 驗證全部的值：Add 轉圈（DS Button loading），Cancel、Add 與名單都停用。全部有效就直接加入並關閉，toast <Copy en="Added n audiences" zh="已加入 n 位收件人" />。</>],
+          ['第二層', <>標題 <Copy en="Save without invalid audiences?" zh="不含無效的收件人，直接儲存？" />，右上角關閉。內文 <Copy en="There are {v} valid and {i} invalid audiences. Are you sure you want to save without the invalid audiences?" zh="{v} 筆有效、{i} 筆無效。確定要不含無效的收件人直接儲存嗎？" />。DS Alert（inline、warning）標題 <Copy en="Invalid audiences listed below:" zh="以下是無效的收件人：" />，框內每筆一個欄位（error 狀態）可直接修改、右邊紅字原因；超過約 8 筆時框內捲動。</>],
+          ['第二層按鈕', <>Cancel（tertiary，回主彈窗）、<Copy en="Check again" zh="重新驗證" />（secondary，轉圈並停用全部，只重新驗證這幾筆；全部找到就加入並關閉所有彈窗）、<Copy en="Proceed" zh="繼續" />（primary danger，只加入有效的並關閉所有彈窗，toast 加上「· n not added」）。</>],
+          ['外部聯絡人', '沒勾 Email 通道時，外部 Email 驗證為無效，原因 Email isn’t a selected channel；沒選 SMS 備援時，外部號碼無效，原因 SMS fallback isn’t a selected channel。已在收件人表格裡、或名單裡重複的，自動略過。'],
+          ['和 DS 的出入', 'DS 建議 Alert 的說明不超過 2–3 行，也沒有在 Alert 裡放欄位的例子；這裡刻意把修正欄位放進黃框，待 DS 負責人確認。'],
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">

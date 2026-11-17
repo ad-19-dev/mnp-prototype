@@ -59,14 +59,19 @@ await step('dlg-import', async () => {
   await shot('dlg-import', dlg(), [], 12);
   await dlg().getByRole('combobox').first().click(); await wait(300);
   await p.getByRole('option').first().click(); await wait(300);
-  // B+: typed (or pasted) entries are taken in on Enter and matched right away
-  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, celee\nsywangd, psyang, a19999, gywuu, cmchen'); await dlg().locator('#imp-text').press('Enter'); await wait(500);
-  await shot('dlg-import-result', dlg(), [
-    [1, dlg().getByText(/ to fix$/).first(), 'tl'],
-    [2, dlg().getByText(/ valid audiences?$/).first(), 'tl'],
-    [3, dlg().getByText(/duplicates? left out/).first(), 'tl'],
+  // verify on Add (2026-11-17): a format count while typing; Add looks everything up; the invalid ones open a second dialog
+  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, celee\nsywangd, psyang, a19999, gywuu, cmchen'); await wait(400);
+  await shot('dlg-import-list', dlg(), [
+    [1, dlg().getByText(/ in total\.$/).first(), 'tl'],
+    [2, dlg().getByRole('button', { name: /^Add \d/ }), 'tl'],
   ], 12);
-  await dlg().getByRole('button', { name: /^Add \d/ }).click(); await wait(700);
+  await dlg().getByRole('button', { name: /^Add \d/ }).click(); await wait(1700);
+  await shot('dlg-import-result', dlg(), [
+    [1, dlg().getByText('Invalid audiences listed below:').first(), 'tl'],
+    [2, dlg().getByRole('button', { name: 'Check again' }), 'tl'],
+    [3, dlg().getByRole('button', { name: 'Proceed' }), 'tl'],
+  ], 12);
+  await dlg().getByRole('button', { name: 'Proceed' }).click(); await wait(700);
   await p.keyboard.press('Escape'); await wait(300);
 });
 // only Desktop OS: someone without the desktop agent can't get it

@@ -10,7 +10,7 @@ import {
 import { Building2, Mail, Phone, Upload, X } from 'lucide-react'
 import { Notes, Section, SpecTable } from '../parts'
 import { FormField, ListKindField, PAvatar, listKindExample } from '../../components/ui'
-import { BatchImportDialog } from '../../components/BatchImport'
+import { OldBatchImportDialog } from './OldImport'
 import { EMAIL_RE, PMAP, matchAs, splitTokens, type ListKind, type Tag as RTag } from '../../lib/data'
 
 // ---------- what each demo has added so far (a stand-in for the audience table) ----------
@@ -130,7 +130,6 @@ function VerifyImport({ open, onClose, onAdd, has, fix }: { open: boolean; onClo
                   // compromise: the fields and their reasons sit inside the DS Alert (inline, warning), under its title
                   <Alert variant="warning" title="Invalid audiences listed below:" description={
                     <div className="mt-1 flex flex-col gap-2">
-                      <span>Fix them and check again, or save without them.</span>
                       <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
                         {check.bad.map((b, i) => (
                           <div key={i} className="flex items-center gap-2">
@@ -182,7 +181,7 @@ function Demo({ which }: { which: 'now' | 'new' | 'mix' }) {
       </div>
       <Added tags={tags} onClear={() => setTags([])} />
       {which === 'now'
-        ? <BatchImportDialog open={open} onClose={() => setOpen(false)} has={has} opts={{ allowExt: true }} onAdd={(ok, left) => done(ok.map(x => x.tag), left)} />
+        ? <OldBatchImportDialog open={open} onClose={() => setOpen(false)} has={has} opts={{ allowExt: true }} onAdd={(ok, left) => done(ok.map(x => x.tag), left)} />
         : <VerifyImport open={open} onClose={() => setOpen(false)} has={has} fix={which === 'mix'} onAdd={ok => done(ok)} />}
     </div>
   )
@@ -216,7 +215,7 @@ export default function ImportVerify() {
             ['3', '二次確認', <>有無效的值時開第二層彈窗。標題 <code>Save without invalid audiences?</code>，右上角關閉。內文 <code>There are {'{v}'} valid and {'{i}'} invalid audiences. Are you sure you want to save without the invalid audiences?</code>。黃色外框的清單框，標題 <code>Invalid audiences listed below:</code>，每列左邊是值、右邊是原因（紅字），沒有表頭，超過約 8 列時框內捲動。Footer：Cancel（回到主彈窗，可修改清單）、Proceed（danger，只存有效的並關閉所有彈窗）。</>],
           ]} />
           <SpecTable head={['折衷版的二次確認', '規格']} nowrap={[0]} rows={[
-            ['無效清單', <>DS Alert（inline、warning）標題 <code>Invalid audiences listed below:</code>；框內先一句說明 <code>Fix them and check again, or save without them.</code>，下面每筆一個欄位（error 狀態）可直接修改、右邊紅字原因，都在黃框裡（2026-11-17）。超過約 8 筆時框內捲動。</>],
+            ['無效清單', <>DS Alert（inline、warning）標題 <code>Invalid audiences listed below:</code>；框內每筆一個欄位（error 狀態）可直接修改、右邊紅字原因，都在黃框裡（2026-11-17）。超過約 8 筆時框內捲動。</>],
             ['Footer', <>Cancel（tertiary，回主彈窗）、<code>Check again</code>（secondary，按下轉圈並停用全部按鈕，只重新驗證這幾筆）、Proceed（primary danger，只存有效的）。</>],
             ['重新驗證後', '找到的併入 valid、內文數字跟著更新；全部都找到了就直接加入並關閉所有彈窗；還有沒找到的就留在清單、原因更新。'],
           ]} />

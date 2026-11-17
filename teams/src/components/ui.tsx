@@ -165,7 +165,7 @@ export const listKindExample = (k: ListKind) => ({
 })[k]
 export function ListKindField({ id, value, onChange, error }: { id: string; value: ListKind | null; onChange: (k: ListKind) => void; error?: string }) {
   return (
-    <FormField id={id} label={L('Data type', '資料類型')} required hint={L('Every entry in the list must be this type.', '名單裡的每一筆都要是這個類型。')} error={error}>
+    <FormField id={id} label={L('Data type', '資料類型')} required error={error}>
       <div className="w-64 max-w-full">
         <Select id={id} aria-label={L('Data type', '資料類型')} placeholder={L('Choose a type', '請選擇')} value={value || ''} onChange={v => onChange(v as ListKind)}
           options={LIST_KINDS.map(k => ({ value: k, label: listKindName(k) }))} />
