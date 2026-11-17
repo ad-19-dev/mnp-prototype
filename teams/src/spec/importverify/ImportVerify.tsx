@@ -126,18 +126,22 @@ function VerifyImport({ open, onClose, onAdd, has, fix }: { open: boolean; onClo
             <DialogBody>
               <div className="flex flex-col gap-[var(--layout-space-tight)]">
                 <p className="text-body">There {plural(nv, 'is', 'are')} {nv} valid and {nb} invalid {plural(nb, 'audience', 'audiences')}. Are you sure you want to save without the invalid {plural(nb, 'audience', 'audiences')}?</p>
-                {fix ? <>
-                  {/* compromise: the DS Alert says what to do; each invalid one is a field (error) with its reason */}
-                  <Alert variant="warning" title="Invalid audiences listed below:" description="Fix them and check again, or save without them." />
-                  <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
-                    {check.bad.map((b, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="w-56 shrink-0"><Input size="sm" error disabled={busy2} aria-label={'Fix ' + b.v} value={b.v} onChange={e => { const v = e.target.value; setCheck(c => c && { ...c, bad: c.bad.map((x, j) => (j === i ? { ...x, v } : x)) }) }} /></div>
-                        <span className="min-w-0 flex-1 truncate text-right text-caption text-error-text">{b.why}</span>
+                {fix ? (
+                  // compromise: the fields and their reasons sit inside the DS Alert (inline, warning), under its title
+                  <Alert variant="warning" title="Invalid audiences listed below:" description={
+                    <div className="mt-1 flex flex-col gap-2">
+                      <span>Fix them and check again, or save without them.</span>
+                      <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+                        {check.bad.map((b, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <div className="w-56 shrink-0"><Input size="sm" error disabled={busy2} aria-label={'Fix ' + b.v} value={b.v} onChange={e => { const v = e.target.value; setCheck(c => c && { ...c, bad: c.bad.map((x, j) => (j === i ? { ...x, v } : x)) }) }} /></div>
+                            <span className="min-w-0 flex-1 truncate text-right text-error-text">{b.why}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </> : (
+                    </div>
+                  } />
+                ) : (
                   // the DS Alert (inline, warning) holds the list: value on the left, reason on the right, no header
                   <Alert variant="warning" title="Invalid audiences listed below:" description={
                     <ul className="mt-1 flex max-h-56 flex-col overflow-y-auto">
@@ -212,7 +216,7 @@ export default function ImportVerify() {
             ['3', '二次確認', <>有無效的值時開第二層彈窗。標題 <code>Save without invalid audiences?</code>，右上角關閉。內文 <code>There are {'{v}'} valid and {'{i}'} invalid audiences. Are you sure you want to save without the invalid audiences?</code>。黃色外框的清單框，標題 <code>Invalid audiences listed below:</code>，每列左邊是值、右邊是原因（紅字），沒有表頭，超過約 8 列時框內捲動。Footer：Cancel（回到主彈窗，可修改清單）、Proceed（danger，只存有效的並關閉所有彈窗）。</>],
           ]} />
           <SpecTable head={['折衷版的二次確認', '規格']} nowrap={[0]} rows={[
-            ['無效清單', <>DS Alert（inline、warning）標題 <code>Invalid audiences listed below:</code>，說明 <code>Fix them and check again, or save without them.</code>；下方每筆一個欄位（error 狀態）可直接修改，右邊紅字原因。</>],
+            ['無效清單', <>DS Alert（inline、warning）標題 <code>Invalid audiences listed below:</code>；框內先一句說明 <code>Fix them and check again, or save without them.</code>，下面每筆一個欄位（error 狀態）可直接修改、右邊紅字原因，都在黃框裡（2026-11-17）。超過約 8 筆時框內捲動。</>],
             ['Footer', <>Cancel（tertiary，回主彈窗）、<code>Check again</code>（secondary，按下轉圈並停用全部按鈕，只重新驗證這幾筆）、Proceed（primary danger，只存有效的）。</>],
             ['重新驗證後', '找到的併入 valid、內文數字跟著更新；全部都找到了就直接加入並關閉所有彈窗；還有沒找到的就留在清單、原因更新。'],
           ]} />
@@ -226,7 +230,7 @@ export default function ImportVerify() {
           <SpecTable head={['項目', '做法', '是否符合 DS']} nowrap={[0, 2]} rows={[
             ['按鈕', 'Cancel 用 tertiary、主要動作 primary 在最右、Proceed 用 primary danger、驗證中用 Button loading', '符合（action-bar 規範：Dialog 的 Cancel 是 tertiary）'],
             ['黃色清單框', '改用 DS Alert（inline、warning），不再自訂框線與底色（2026-11-17 修正）', '符合'],
-            ['把整份清單放進 Alert 的說明', '新版第二層：無效清單放在 Alert 的 description 裡，超過約 8 筆時框內捲動', 'DS 建議 description 不超過 2–3 行；清單很長時建議改成折衷版的寫法（Alert 只放一句說明，清單放在下方）'],
+            ['把清單或欄位放進 Alert 的說明', '新版與折衷版的第二層：無效清單（折衷版是修正欄位）都放在 Alert 的 description 裡，超過約 8 筆時框內捲動', 'DS 建議 description 不超過 2–3 行，也沒有放欄位的例子；這是刻意的延伸，建議和 DS 負責人確認'],
             ['B+ 的姓名小方塊', '現在版本裡有效收件人的小方塊（大頭照、姓名、✕）是自訂樣式', '不是 DS 元件；DS 的 Tag 可以帶移除鈕（onRemove），要完全對齊 DS 可以改用 Tag'],
             ['輸入框', 'DS Textarea、Input，沿用 DS 的字型與 focus（邊框轉主色、1px）；原本自行加的等寬字體已拿掉（2026-11-17）', '符合'],
             ['「There are n valid audiences in total.」', '一般文字（14px、次要色），數字加粗', '沒有對應元件，用 DS 文字樣式'],
