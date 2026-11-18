@@ -1,5 +1,7 @@
 // Batch import (2026-11-18: proposal A, tags like an email "To" field, replacing the verify-on-Add compromise), shared
 // by the send flow (and the Detail modal's audience) and the Audience group editor.
+// Large (2026-11-18): lists can run to thousands (sign-up lists for staff events), so the dialog is 1120 wide and fills
+// the window's height (DS height="fill": it doesn't jump as tags are added); the list field takes the rest and scrolls.
 //   1. Choose the data type, then paste or type into the field: each entry becomes a tag as soon as it's entered
 //      (Enter, a comma, a new line, or a paste of a whole list) and is looked up right away.
 //   2. Found: a gray tag with the person's avatar and name (an org or outside contact: its icon and value).
@@ -71,14 +73,14 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) onClose() }}>
       {open ? (
-        <DialogContent maxWidth={720} height="hug" onEscapeKeyDown={e => { if (edit) { e.preventDefault(); setEdit(null) } }}>
+        <DialogContent maxWidth={1120} height="fill" onEscapeKeyDown={e => { if (edit) { e.preventDefault(); setEdit(null) } }}>
           <DialogHeader><DialogTitle>{L('Batch import', '批次匯入')}</DialogTitle><DialogDescription className="sr-only">{L('Batch import', '批次匯入')}</DialogDescription></DialogHeader>
           <DialogBody>
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <ListKindField id="imp-kind" value={kind} onChange={k => { setKind(k); setEdit(null) }} />
               <FormField id="imp-text" label={L('List', '名單')} hint={hits.length ? L('Click a tag to edit it.', '點標籤可以修改。') : L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
                 {/* the DS field frame (border, hover, focus), holding DS Tags and a bare input for the next entry */}
-                <div className={cn('flex max-h-72 min-h-[132px] w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
+                <div className={cn('flex h-[calc(100svh-384px)] min-h-[200px] w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
                   kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
                   onClick={e => { if (e.target === e.currentTarget && inputRef.current) inputRef.current.focus() }}>
                   {hits.map(h => edit && edit.i === h.i
@@ -89,7 +91,7 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
                           <TooltipTrigger asChild>
                             <Tag color="red" {...editable(h, h.v)} onRemove={() => drop(h.i)} removeAriaLabel={h.v}>{h.v}</Tag>
                           </TooltipTrigger>
-                          <TooltipContent side="bottom">{tx(h.why!)}</TooltipContent>
+                          <TooltipContent side="bottom" align="start">{tx(h.why!)}</TooltipContent>
                         </Tooltip>
                       ))}
                   <input ref={inputRef} id="imp-text" disabled={!kind} className="min-w-[200px] flex-1 bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted disabled:cursor-not-allowed"

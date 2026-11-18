@@ -104,7 +104,7 @@ export default function DsMap() {
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['所有對話框', comps('Dialog'), 'DialogHeader / Body / Footer；Cancel 在左、主要動作在右；按鈕沒有圖示；沒有副標。', <Own>—</Own>],
             ['確認對話框', comps('Dialog', 'Button'), '寬 480；標題、一句說明、兩個按鈕；危險動作用 danger。', <Own>Confirm：把標題、說明、按鈕組成共用的確認元件</Own>],
-            ['Batch import', comps('Dialog', 'Select', 'Tag', 'Avatar', 'Tooltip', 'Input', 'Button'), '一層 Dialog：Select（Data type）；名單欄位裡每筆一個 Tag（找到：neutral，人員帶 16px Avatar、unbounded 不截斷；找不到：red，Tooltip 顯示原因）；點任何 Tag 換成 Input（sm）修改；Footer Cancel（tertiary）、Proceed（primary）。', <Own>標籤輸入欄位的外框（沿用 DS 欄位 token）、即時比對、可編輯的標籤（DS Tag 尚無此狀態，待 DS 設計）</Own>],
+            ['Batch import', comps('Dialog', 'Select', 'Tag', 'Avatar', 'Tooltip', 'Input', 'Button'), '一層 Dialog（maxWidth 1120、height="fill"）：Select（Data type）；名單欄位裡每筆一個 Tag（找到：neutral，人員帶 16px Avatar、unbounded 不截斷；找不到：red，Tooltip 顯示原因）；點任何 Tag 換成 Input（sm）修改；Footer Cancel（tertiary）、Proceed（primary）。', <Own>標籤輸入欄位的外框（沿用 DS 欄位 token）、即時比對、可編輯的標籤（DS Tag 尚無此狀態，待 DS 設計）</Own>],
             ['Toast', comps('Toast'), 'Toaster position=bottom-center、offset=48（比預設 24px 高一點）；一則一行。', <Own>隱藏 Toast 前面的圖示（CSS）</Own>],
           ]} />
           <Notes items={[{ title: '載入中', body: <>列表載入用 {link('CircularProgress')} 加 Empty；規格見 Storybook。</> }]} />

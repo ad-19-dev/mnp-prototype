@@ -449,7 +449,7 @@ function Dialogs() {
     <>
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），按鈕不放圖示，不放副標。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
-          ['Batch import', '步驟 1 Batch import', '720', 'Proceed'],
+          ['Batch import', '步驟 1 Batch import', '1120，高度填滿視窗', 'Proceed'],
           ['{Channel}: N messages can’t be sent', '步驟 1 Message Coverage by Channel 各通道列右側的連結', '720', '無（Close）'],
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
@@ -460,9 +460,10 @@ function Dialogs() {
       <Section eyebrow="Import" title="Batch import" lead="2026-11-18 起改為批次匯入提案的 A 版（標籤，像郵件的收件人欄）：每一筆一輸入就變成標籤並立即比對；找到的是灰色標籤，找不到的是紅色標籤，點任何標籤（灰色也可以，2026-11-18）都能就地修改。只有一層對話框。">
         <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-list', '輸入名單', '灰色是找到的，紅色是找不到的（滑過看原因）'], ['dlg-import-result', '修改標籤', '點任何標籤都會變成輸入框']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
+          ['尺寸', '寬 1120，DS Dialog height="fill"（高度填滿視窗，加入標籤時外框不會跳動）。2026-11-18 從 720 加大：使用者會貼上活動報名名單，一次可能上千筆。原型試過 1,200 筆，約 1.6 秒顯示完。'],
           ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織、群組各是一列（藍色 n people 開成員名單），不展開成個人，也沒有各通道的欄位。'],
           ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前名單欄位停用（DS disabled 底色）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
-          ['List', <>DS 欄位外框（border、hover、focus 藍框，高至少 132、最多約 288，超過時框內捲動），裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
+          ['List', <>DS 欄位外框（border、hover、focus 藍框），佔滿對話框剩下的高度（至少 200），超過時框內捲動，裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
           ['找到的', <>DS Tag（neutral）：人員是 16px 大頭照加「英文名 中文名」，不截斷；組織是大樓圖示加組織代號；外部聯絡人是信封或電話圖示加 Email／號碼。每個標籤都有 ✕。</>],
           ['找不到的', <>DS Tag（red），顯示原本輸入的值；滑過顯示原因（Tooltip，在標籤下方）。</>],
           ['說明文字', <>還沒有標籤時：<Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />；有標籤之後：<Copy en="Click a tag to edit it." zh="點標籤可以修改。" /></>],
