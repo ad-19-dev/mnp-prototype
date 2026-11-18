@@ -7,6 +7,7 @@
 //   2. Found: a gray tag with the person's avatar and name (an org or outside contact: its icon and value).
 //      Not found: a red tag with what was entered, listed before the gray ones; hover for why. Any tag, gray or red, is edited in place when clicked
 //      (it shows what was entered; Enter looks it up again). Every tag has ✕. Entries twice in the list, or already added, aren't shown (with many repeats it looked messy).
+//      Once there are tags, the hint counts the valid ones: "{n} valid audiences. Click a tag to edit it." (no summary tags)
 //   3. Proceed adds the found ones; red ones are left out (the toast says how many).
 // The DS Tag has no editable state yet (the DS owner hasn't designed one): editing swaps the tag for a small DS Input.
 import * as React from 'react'
@@ -80,7 +81,7 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
           <DialogBody>
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <ListKindField id="imp-kind" value={kind} onChange={k => { setKind(k); setEdit(null) }} />
-              <FormField id="imp-text" label={L('List', '名單')} hint={hits.length ? L('Click a tag to edit it.', '點標籤可以修改。') : L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
+              <FormField id="imp-text" label={L('List', '名單')} hint={hits.length ? L(found.length + ' valid ' + (found.length === 1 ? word.replace(/s$/, '') : word) + '. Click a tag to edit it.', found.length + ' ' + word + '有效。點標籤可以修改。') : L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
                 {/* the DS field frame (border, hover, focus), holding DS Tags and a bare input for the next entry */}
                 <div className={cn('flex h-[calc(100svh-384px)] min-h-[200px] w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
                   kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}

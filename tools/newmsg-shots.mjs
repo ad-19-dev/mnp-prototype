@@ -67,7 +67,7 @@ await step('dlg-import', async () => {
   await shot('dlg-import-list', dlg(), [
     [1, dlg().getByRole('button', { name: /^(Remove|移除) / }).first(), 'tl'],
     [2, red(), 'tl'],
-    [3, dlg().getByText('Click a tag to edit it.'), 'tl'],
+    [3, dlg().getByText(/Click a tag to edit it\.$/), 'tl'],
     [4, dlg().getByRole('button', { name: /^Proceed/ }), 'tl'],
   ], 12);
   await red().click(); await wait(400);
