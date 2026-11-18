@@ -366,9 +366,10 @@ function Step2() {
           ['通道區塊', '每個勾選的通道一個有框的區塊，順序：Device Notifications、SMS、Desktop OS、Email。區塊頂端是標題列（淺灰底、下方分隔線）：通道圖示加通道名稱（半粗體），SMS 下面再一行說明；欄位在框內。區塊之間留大間距，一眼分得出哪段是哪個通道。'],
         ]} />
         <SpecTable head={['區塊', '欄位', '必填', '上限', '說明與錯誤']} nowrap={[0, 1, 2, 3]} rows={[
-          ['Device Notifications', 'Sender', '是', '26', <><Copy en="Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS)." zh="收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。" />{REQ}<Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" /></>],
-          ['', 'Content', '是', '534', <>列表上的標題取內容的第一行。{REQ}</>],
-          ['SMS', 'SMS text', '是', '534', <>區塊說明 <Copy en="Sent as a backup via SMS only if the push notification fails to send." zh="只有推播傳送失敗時，才會用 SMS 補送。" />{REQ}</>],
+          ['Device Notifications', 'Sender', '是', '26', <>說明開頭加粗強調 <Copy en="English only." zh="只能輸入英文。" />，接著 <Copy en="Recipients see this name as the notification source in the Device Notifications app (PNS)." zh="收件人會在 Device Notifications App（PNS）看到這個名稱作為通知來源。" />；提示文字 e.g. ESH Emergency。{REQ}<Copy en="English only: use half-width English letters, numbers, and spaces." zh="只能輸入英文：請使用半形英文字母、數字和空格。" /></>],
+          ['', 'Title', '是', '30', <>2026-11-18 新增（PM）。不分全半形，一個字算一個。列表上的標題就是這個欄位。{REQ}</>],
+          ['', 'Content', '是', '750', <>不分全半形（2026-11-18 由 534 改為 750）。{REQ}</>],
+          ['SMS', 'SMS content', '是', '534／267', <>欄位名稱由 SMS text 改為 SMS content（2026-11-18）。全部是半形時最多 534 字；只要有任一個全形字元（中文、全形標點等），整則算全形，最多 267 字，字數上限跟著變。說明 <Copy en="Up to 534 half-width characters, or 267 if any character is full-width." zh="半形最多 534 字；只要有任一個全形字元，最多 267 字。" />；超過時 <Copy en="Up to 267 characters when the SMS has any full-width character." zh="SMS 有任何全形字元時，最多 267 字。" />。區塊說明 <Copy en="Sent as a backup via SMS only if the push notification can’t be sent." zh="只有推播未送出時，才會用 SMS 補送。" />{REQ}</>],
           ['Desktop OS', 'Sender', '否', '26', '欄位標題 Sender (Optional)，下方沒有說明文字。錯誤同 Device Notifications 的 Sender。'],
           ['', 'Title', '是', '20', REQ],
           ['', 'Content', '是', '70', <><Copy en="Supports Chinese, English, and numbers only." zh="僅支援中文、英文、數字。" />{REQ}</>],
@@ -398,7 +399,7 @@ function Step2() {
         <SpecTable head={['情況', '紅字內容', '什麼時候出現', '擋 Next 嗎']} nowrap={[0]} rows={[
           ['必填欄位沒填', <Copy en="This field is required." zh="此欄位為必填。" />, '按過 Next 後；按 Send me a test、Save as template 時內容有錯也算', '擋'],
           ['超過字數上限', <Copy en="Up to n characters." zh="最多 n 字。" />, '即時', '擋'],
-          ['Sender 有不允許的字元', <Copy en="Please use half-width English letters, numbers, and spaces only." zh="請只使用半形英文字母、數字和空格。" />, '即時', '擋'],
+          ['Sender 有不允許的字元', <Copy en="English only: use half-width English letters, numbers, and spaces." zh="只能輸入英文：請使用半形英文字母、數字和空格。" />, '即時', '擋'],
           ['Email Content 超過 100 KB', <Copy en="Message content exceeds the 100 KB limit…" zh="訊息內容超過 100 KB 上限…" />, '即時', '擋'],
           ['Send me a test、Save as template 時內容有錯', <><Copy en="Finish the message first" zh="請先完成訊息內容" />（紅色 toast）</>, '按下按鈕當下', '—'],
         ]} />
@@ -421,7 +422,7 @@ function Step3() {
         <Gallery items={[['s3-schedule', '排程傳送'], ['s3-error', '日期錯誤'], ['s3-preview-email', '預覽 Email']]} />
         <Notes items={[
           { title: '排程錯誤', body: <>選到過去或超過 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" /></> },
-          { title: '預覽', body: 'Device Notifications 的預覽只有寄件人與內容（沒有標題欄位）；Email 預覽主旨與內文。只有一個通道時不顯示切換，只顯示通道名稱。' },
+          { title: '預覽', body: 'Device Notifications 的預覽有寄件人、標題與內容；Email 預覽主旨與內文。只有一個通道時不顯示切換，只顯示通道名稱。' },
           { title: '排程時間', body: '日曆上今天以前的日期是灰色、不能點（DS DatePicker 之後會提供這個設定，目前原型先自行處理）。選 Scheduled send 時預設明天 09:00；改回 Send now 欄位隱藏，再選回來保留上次選的時間。時間填錯的錯誤，填了值就顯示，不用等按 Create message。' },
           { title: 'Send me a test', body: '只檢查步驟 2 的內容。有錯時不寄，標記步驟 2 的錯誤並出現紅色 toast；沒錯就寄給自己。' },
         ]} />

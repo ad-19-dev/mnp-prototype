@@ -13,12 +13,12 @@ import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
   CircleCheck, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
-  CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, noPhoneCell, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
+  CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, noPhoneCell, smsMax, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Person, type Template, type Tag as RTag,
   ME,
 } from '../../lib/data'
 import {
-  SENDER_RE, approval, effEmailMode, emailTooBig, hasNotif, multiPeople, noNumber, pushTitle, reachNote, smsCoverText, smsOn, smsPhones, stepOk, unresolved,
+  SENDER_RE, approval, effEmailMode, emailTooBig, hasNotif, multiPeople, noNumber, reachNote, smsCoverText, smsOn, smsPhones, stepOk, unresolved,
   notCovered, type Compose, type CoverCh, type Errs, type NotCovered, type Reach,
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
@@ -352,7 +352,7 @@ function TplChoice({ m }: { m: SendCtl }) {
 function Step2({ m, e }: { m: SendCtl; e: Errs }) {
   const c = m.s.c, tried = c.tried || {}, hasN = hasNotif(c), lim = LIM.push, tpl = c.tplId ? m.tplById(c.tplId) : null
   const show = (k: keyof Errs, v: string, n: number) => (e[k] && (tried[2] || (v && v.length > n))) ? e[k]! : ''
-  const eSender = e.sender && (tried[2] || !SENDER_RE.test(c.sender) || c.sender.length > LIM.sender) ? e.sender : '', eContent = show('content', c.content, lim), eSms = show('sms', c.smsText, LIM.sms)
+  const eSender = e.sender && (tried[2] || !SENDER_RE.test(c.sender) || c.sender.length > LIM.sender) ? e.sender : '', eContent = show('content', c.content, lim), eSms = show('sms', c.smsText, smsMax(c.smsText)), eTitle = show('title', c.title, LIM.title)
   const edSender = e.dsender && (tried[2] || !SENDER_RE.test(c.dSender) || c.dSender.length > LIM.sender) ? e.dsender : '', edTitle = show('dtitle', c.dTitle, LIM.dTitle), edContent = show('dcontent', c.dContent, LIM.desktop)
   const noNotif = tpl && hasN && !tplHasNotif(tpl) ? <Banner tone="neutral">{L('This template has no notification text.', '這個模板沒有通知內容。')}</Banner> : null
   return (
@@ -362,17 +362,22 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
         {c.ch.push ? (
           <FormatBlock title={CHN.push.name} icon={CHN.push.icon}>
             {noNotif}
-            <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={L('Recipients will see this name as the notification source. Only applies to Device Notifications App (PNS).', '收件人會看到這個名稱作為通知來源。只適用於 Device Notifications App（PNS）。')} error={eSender}>
-              <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} />
+            <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={<><span className="font-medium text-foreground">{L('English only.', '只能輸入英文。')}</span>{L(' Recipients see this name as the notification source in the Device Notifications app (PNS).', '收件人會在 Device Notifications App（PNS）看到這個名稱作為通知來源。')}</>} error={eSender}>
+              <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. ESH Emergency', '例如：ESH Emergency')} />
+            </FormField>
+            {/* its own title (PM, 2026-11-18): 30 characters, full- or half-width alike */}
+            <FormField id="f-title" label={L('Title', '標題')} required count={c.title.length + ' / ' + LIM.title} over={c.title.length > LIM.title} error={eTitle}>
+              <Input id="f-title" value={c.title} error={!!eTitle} onChange={ev => m.setC({ title: ev.target.value })} />
             </FormField>
             <FormField id="f-content" label={L('Content', '內容')} required count={fmtN(c.content.length) + ' / ' + lim} over={c.content.length > lim} error={eContent}>
-              <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value, title: pushTitle(ev.target.value) })} />
+              <Textarea id="f-content" rows={4} value={c.content} error={!!eContent} onChange={ev => m.setC({ content: ev.target.value })} />
             </FormField>
           </FormatBlock>
         ) : null}
         {smsOn(c) ? (
           <FormatBlock title="SMS" icon={CHN.sms.icon} desc={L('Sent as a backup via SMS only if the push notification can’t be sent.', '只有推播未送出時，才會用 SMS 補送。')}>
-            <FormField id="f-sms" label={L('SMS text', 'SMS 內容')} required count={c.smsText.length + ' / ' + LIM.sms} over={c.smsText.length > LIM.sms} error={eSms}>
+            {/* 534 half-width characters, 267 as soon as any character is full-width */}
+            <FormField id="f-sms" label={L('SMS content', 'SMS 內容')} required count={c.smsText.length + ' / ' + smsMax(c.smsText)} over={c.smsText.length > smsMax(c.smsText)} hint={L('Up to 534 half-width characters, or 267 if any character is full-width.', '半形最多 534 字；只要有任一個全形字元，最多 267 字。')} error={eSms}>
               <Textarea id="f-sms" rows={2} value={c.smsText} error={!!eSms} onChange={ev => m.setC({ smsText: ev.target.value })} />
             </FormField>
           </FormatBlock>
@@ -434,7 +439,7 @@ function Preview({ c, counts }: { c: Compose; counts: Partial<Record<PreviewChan
   const [cur, setCur] = React.useState<PreviewChannel>(chs[0])
   const k = chs.indexOf(cur) >= 0 ? cur : chs[0]
   if (!k) return null
-  const d = k === 'desktop', msg = { sender: (d ? c.dSender : c.sender).trim(), title: d ? c.dTitle.trim() : '', content: (d ? c.dContent : c.content).trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
+  const d = k === 'desktop', msg = { sender: (d ? c.dSender : c.sender).trim(), title: d ? c.dTitle.trim() : c.title.trim(), content: (d ? c.dContent : c.content).trim(), smsText: c.smsText.trim(), subject: c.subject.trim(), html: cleanHtml(c.html) }
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-md border border-divider p-[var(--layout-space-tight)]">
       <div className="flex flex-wrap items-center justify-end gap-2">

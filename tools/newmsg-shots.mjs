@@ -105,7 +105,8 @@ await step('s2-empty', async () => { await foot('Next').click(); await wait(800)
 await step('s2-error', async () => { await foot('Next').click(); await wait(500); await page('s2-error') });
 await step('s2-filled', async () => {
   await p.locator('#f-sender').fill('IT Service Desk');
-  await p.locator('#f-content').fill('Network maintenance tonight 22:00–23:00\nSave your work before 22:00. Wi-Fi and VPN will be down.');
+  await p.locator('#f-title').fill('Network maintenance tonight');
+  await p.locator('#f-content').fill('The office network is down tonight 22:00–23:00. Save your work before 22:00. Wi-Fi and VPN will be down.');
   await p.locator('#f-sms').fill('Network maintenance tonight 22:00–23:00. Save your work before 22:00.');
   await p.locator('#f-subject').fill('Network maintenance tonight 22:00–23:00');
   await p.locator('#f-body [contenteditable="true"], #f-body').first().click(); await p.keyboard.type('Hi all, the office network will be down tonight from 22:00 to 23:00. Please save your work before 22:00.');

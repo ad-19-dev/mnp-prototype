@@ -1,7 +1,7 @@
 // Messages page controller: list, row actions, the 3-step send flow and its dialogs.
 import {
   BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, addMin, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
-  joinList, matchAs, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
+  joinList, matchAs, smsMax, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
   type Channel, type Group, type ListKind, type Match, type Row, type Status, type Tag, type Template,
 } from '../../lib/data'
 import {
@@ -316,7 +316,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     removeFile(id: string) { m.setC({ atts: get().c.atts.filter(a => a.id !== id), attErr: '' }) },
     copySms() {
       const c = get().c, b = (c.title.trim() ? c.title.trim() + ': ' : '') + c.content.replace(/\s+/g, ' ').trim()
-      m.setC({ smsText: b.length > LIM.sms ? b.slice(0, LIM.sms - 1).trim() + '…' : b })
+      m.setC({ smsText: b.length > smsMax(b) ? b.slice(0, smsMax(b) - 1).trim() + '…' : b })
     },
 
     // ---------- steps ----------

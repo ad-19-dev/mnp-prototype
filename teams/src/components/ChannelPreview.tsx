@@ -26,7 +26,7 @@ export function ChannelPreview({ ch, msg, zh }: { ch: PreviewChannel; msg: Previ
     <div className={cn(card, 'max-w-[400px]')}>
       <Head icon={ch === 'push' ? Smartphone : Monitor} name={ch === 'push' ? 'Device Notifications' : T('Desktop OS', '桌面通知')} when={T('now', '現在')} />
       {msg.sender ? <span className="text-caption text-fg-secondary">{msg.sender}</span> : null}
-      {ch === 'desktop' ? <span className="text-body font-semibold">{msg.title || <Placeholder>{T('Title', '標題')}</Placeholder>}</span> : null}
+      <span className="text-body font-semibold">{msg.title || <Placeholder>{T('Title', '標題')}</Placeholder>}</span>
       <span className={cn('whitespace-pre-wrap text-body', ch === 'push' ? 'line-clamp-4' : 'line-clamp-3')}>{msg.content || <Placeholder>{T('Content', '內容')}</Placeholder>}</span>
     </div>
   )

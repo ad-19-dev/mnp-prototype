@@ -12,7 +12,7 @@ import {
   Search, Send, Smartphone, Trash2, User,
 } from 'lucide-react'
 import {
-  LIM, ME, PEOPLE, PMAP, cleanHtml, fmtDT, fmtN, htmlToText, textToHtml, tplFormats, tplHasEmail,
+  LIM, ME, PEOPLE, smsMax, PMAP, cleanHtml, fmtDT, fmtN, htmlToText, textToHtml, tplFormats, tplHasEmail,
   type Template,
 } from '../../lib/data'
 import { flash, getApp, go, setApp, useApp } from '../../lib/store'
@@ -82,7 +82,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
       if (hasC && !hasT) e.title = L('Add a title, or clear the text.', '請輸入標題，或清空內文。')
       if (ed.title.length > LIM.title) e.title = tooLong(LIM.title)
       if (ed.content.length > LIM.push) e.content = tooLong(LIM.push)
-      if (ed.sms.length > LIM.sms) e.sms = tooLong(LIM.sms)
+      if (ed.sms.length > smsMax(ed.sms)) e.sms = tooLong(smsMax(ed.sms))
       if (ed.emailMode === 'own') {
         if (!ed.subject.trim()) e.subject = L('Enter a subject.', '請輸入主旨。')
         else if (ed.subject.length > LIM.subject) e.subject = tooLong(LIM.subject)
@@ -195,7 +195,7 @@ function TplEditor({ m }: { m: TCtl }) {
               </FormField>
             </Block>
             <Block icon={CHN.sms.icon} tone="warn" title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
-              <FormField id="t-sms" label={L('SMS text', 'SMS 內容')} count={ed.sms.length + ' / ' + LIM.sms} over={ed.sms.length > LIM.sms} error={show('sms')}>
+              <FormField id="t-sms" label={L('SMS content', 'SMS 內容')} count={ed.sms.length + ' / ' + smsMax(ed.sms)} over={ed.sms.length > smsMax(ed.sms)} hint={L('Up to 534 half-width characters, or 267 if any character is full-width.', '半形最多 534 字；只要有任一個全形字元，最多 267 字。')} error={show('sms')}>
                 <Textarea id="t-sms" rows={2} disabled={ro} value={ed.sms} error={!!show('sms')} onChange={ev => m.setEd({ sms: ev.target.value })} placeholder={L('Short version for SMS fallback', 'SMS 備援用的簡短版本')} />
               </FormField>
             </Block>

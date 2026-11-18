@@ -1,7 +1,7 @@
 // Send flow state and rules: receivers, reach per channel, approvals and validation.
 import {
   CAP, CH_ORDER, ICSD, LIM, ORGS, PMAP, SUPERVISOR, addMin, flatten, fromIso, fmtN, htmlToText, isExtPhone, joinList, plural,
-  tplHasEmail, tplHasNotif, type Channel, type Group, type Person, type Tag, type Template,
+  smsMax, smsWide, tplHasEmail, tplHasNotif, type Channel, type Group, type Person, type Tag, type Template,
 } from './data'
 import { L, P, joinL } from './i18n'
 
@@ -108,7 +108,9 @@ export function noNumber(c: Compose) { return smsOn(c) ? peopleTags(c).filter(p 
 
 // Sender names: half-width English letters, numbers and spaces
 export const SENDER_RE = /^[A-Za-z0-9 ]*$/
-export const SENDER_ERR = () => L('Please use half-width English letters, numbers, and spaces only.', '請只使用半形英文字母、數字和空格。')
+export const SENDER_ERR = () => L('English only: use half-width English letters, numbers, and spaces.', '只能輸入英文：請使用半形英文字母、數字和空格。')
+// the SMS limit, said with its reason
+export const SMS_ERR = (t: string) => smsWide(t) ? L('Up to 267 characters when the SMS has any full-width character.', 'SMS 有任何全形字元時，最多 267 字。') : L('Up to 534 characters.', '最多 534 字。')
 // the email's size (text, tables, embedded images) in bytes against its 100 KB limit
 export const emailTooBig = (c: Compose) => new Blob([c.html || '']).size > LIM.mail
 // Device Notifications has no title: where one is still needed (the list), it's the first line of the content
@@ -137,7 +139,9 @@ export function errs(c: Compose, groups: Group[]): Errs {
     if (!c.sender.trim()) e.sender = req
     else if (!SENDER_RE.test(c.sender)) e.sender = SENDER_ERR()
     else if (c.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
-    // Device Notifications has no title field; the list's title is the start of the content (see pushTitle)
+    // its own title (2026-11-18), shown on the list too
+    if (!c.title.trim()) e.title = req
+    else if (c.title.length > LIM.title) e.title = tooLong(LIM.title)
     if (!c.content.trim()) e.content = req
     else if (c.content.length > lim) e.content = tooLong(lim)
   }
@@ -151,7 +155,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
   }
   if (smsOn(c)) {
     if (!c.smsText.trim()) e.sms = req
-    else if (c.smsText.length > LIM.sms) e.sms = tooLong(LIM.sms)
+    else if (c.smsText.length > smsMax(c.smsText)) e.sms = SMS_ERR(c.smsText)
   }
   if (effEmailMode(c) === 'own') {
     if (!c.subject.trim()) e.subject = req

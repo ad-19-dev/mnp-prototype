@@ -18,10 +18,10 @@ import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
 import './DetailModal.css'
 import { Ban, Building2, Copy, ExternalLink, Mail, Phone, Send, Trash2, Upload, Users, X } from 'lucide-react'
 import {
-  ICSD, LIM, ORGS, PEOPLE, PMAP, noPhoneCell, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
+  ICSD, LIM, ORGS, PEOPLE, PMAP, noPhoneCell, smsMax, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
-import { SENDER_ERR, SENDER_RE, pushTitle } from '../../lib/compose'
+import { SENDER_ERR, SENDER_RE, SMS_ERR } from '../../lib/compose'
 import { flash, patchRow, useApp } from '../../lib/store'
 import { L, niceDT } from '../../lib/i18n'
 import { CHN, ErrText, FormField, NO_HIDE, StatusTag, personVal } from '../../components/ui'
@@ -56,15 +56,17 @@ export function DetailModal({ m }: { m: SendCtl }) {
 }
 
 // ---------- the form behind the dialog: content fields, audience and send time ----------
-type Vals = { sender: string; content: string; dTitle: string; sms: string; subject: string; html: string; bodyText: string; at: string }
+type Vals = { sender: string; pTitle: string; content: string; dTitle: string; sms: string; subject: string; html: string; bodyText: string; at: string }
 const isoOf = (dt: string) => dt.replace(/\//g, '-').replace(' ', 'T')
 const curTime = (r: Row, k: Channel) => (r.chSched && r.chSched[k === 'sms' ? 'push' : k]) || r.sched || r.created
 function initVals(r: Row, k: Channel): Vals {
   const d = r.desk || r, em = r.email && r.email.mode === 'own' ? r.email : null
   return {
     sender: k === 'desktop' ? d.sender : r.sender,
-    // Device Notifications has no title field: its first line is the title, so the title goes back on top
-    content: k === 'desktop' ? d.content : r.content.startsWith(r.title) ? r.content : r.title + '\n' + r.content,
+    // Device Notifications has its own title field (2026-11-18); older records that put the title on the content's
+    // first line lose that line
+    pTitle: r.title,
+    content: k === 'desktop' ? d.content : r.content.startsWith(r.title + '\n') ? r.content.slice(r.title.length + 1) : r.content,
     dTitle: d.title, sms: r.smsText || '',
     subject: em ? em.subject || '' : r.title, html: em ? em.html || '' : textToHtml(r.content), bodyText: em ? 'x' : r.content,
     at: isoOf(curTime(r, k)),
@@ -94,7 +96,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   const tOf = (x: string) => { const d = fromIso(x); return d ? d.getTime() : x }
   const timeChanged = tOf(v.at) !== tOf(init.v.at)
   // only this channel's own fields count as changes
-  const own = (o: Vals) => k === 'email' ? [o.subject, o.html] : k === 'desktop' ? [o.sender, o.dTitle, o.content] : k === 'sms' ? [o.sender, o.content, o.sms] : [o.sender, o.content]
+  const own = (o: Vals) => k === 'email' ? [o.subject, o.html] : k === 'desktop' ? [o.sender, o.dTitle, o.content] : k === 'sms' ? [o.sender, o.pTitle, o.content, o.sms] : [o.sender, o.pTitle, o.content]
   const phChanged = k === 'sms' && phOf(ph, tags) !== phOf(initPh, tags)
   const dirty = JSON.stringify(own(v)) !== JSON.stringify(own(init.v)) || tagKeys(tags) !== tagKeys(init.tags) || timeChanged || phChanged
   React.useEffect(() => { onDirty(dirty) }, [dirty])
@@ -105,9 +107,10 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   if (edit) {
     if (k === 'push' || k === 'sms') {
       if (!v.sender.trim()) e.sender = req; else if (!SENDER_RE.test(v.sender)) e.sender = SENDER_ERR(); else if (v.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
+      if (!v.pTitle.trim()) e.pTitle = req; else if (v.pTitle.length > LIM.title) e.pTitle = tooLong(LIM.title)
       if (!v.content.trim()) e.content = req; else if (v.content.length > LIM.push) e.content = tooLong(LIM.push)
     }
-    if (k === 'sms') { if (!v.sms.trim()) e.sms = req; else if (v.sms.length > LIM.sms) e.sms = tooLong(LIM.sms) }
+    if (k === 'sms') { if (!v.sms.trim()) e.sms = req; else if (v.sms.length > smsMax(v.sms)) e.sms = SMS_ERR(v.sms) }
     if (k === 'desktop') {
       if (v.sender && !SENDER_RE.test(v.sender)) e.sender = SENDER_ERR(); else if (v.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
       if (!v.dTitle.trim()) e.dTitle = req; else if (v.dTitle.length > LIM.dTitle) e.dTitle = tooLong(LIM.dTitle)
@@ -129,7 +132,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   // what was edited, as a patch to the record
   const patchOf = (): Partial<Row> => {
       const p: Partial<Row> = { fresh: Date.now() }
-      if (k === 'push' || k === 'sms') { p.sender = v.sender.trim(); p.content = v.content.trim(); p.title = pushTitle(v.content); if (k === 'sms') p.smsText = v.sms.trim() }
+      if (k === 'push' || k === 'sms') { p.sender = v.sender.trim(); p.content = v.content.trim(); p.title = v.pTitle.trim(); if (k === 'sms') p.smsText = v.sms.trim() }
       if (k === 'desktop') { const nd = { sender: v.sender.trim(), title: v.dTitle.trim(), content: v.content.trim() }; if (r.channels.indexOf('push') >= 0) p.desk = nd; else { p.sender = nd.sender; p.title = nd.title; p.content = nd.content } }
       if (k === 'email') p.email = { mode: 'own', subject: v.subject.trim(), html: cleanHtml(v.html), atts: (r.email && r.email.atts) || [] }
       if (tagKeys(tags) !== tagKeys(init.tags)) {
@@ -202,15 +205,18 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
             <span className="flex items-center gap-2"><H3>{L('Content', '內容')}</H3>{edit ? null : <ReadOnlyTag />}</span>
             {k === 'push' || k === 'sms' ? <>
               {x.fb ? <PartHead title={CHN.push.name} /> : null}
-              <FormField id="dm-sender" label={L('Sender', '寄件人')} required={edit} count={cnt(v.sender.length, LIM.sender)} over={v.sender.length > LIM.sender} error={show('sender')}>
+              <FormField id="dm-sender" label={L('Sender', '寄件人')} required={edit} count={cnt(v.sender.length, LIM.sender)} over={v.sender.length > LIM.sender} hint={edit ? L('English only.', '只能輸入英文。') : undefined} error={show('sender')}>
                 <Input id="dm-sender" mode={mode} value={v.sender} error={!!show('sender')} onChange={ev => set({ sender: ev.target.value })} />
+              </FormField>
+              <FormField id="dm-ptitle" label={L('Title', '標題')} required={edit} count={cnt(v.pTitle.length, LIM.title)} over={v.pTitle.length > LIM.title} error={show('pTitle')}>
+                <Input id="dm-ptitle" mode={mode} value={v.pTitle} error={!!show('pTitle')} onChange={ev => set({ pTitle: ev.target.value })} />
               </FormField>
               <FormField id="dm-content" label={L('Content', '內容')} required={edit} count={cnt(v.content.length, LIM.push)} over={v.content.length > LIM.push} error={show('content')}>
                 <Textarea id="dm-content" mode={mode} rows={4} value={v.content} error={!!show('content')} onChange={ev => set({ content: ev.target.value })} />
               </FormField>
               {k === 'sms' ? <>
                 <PartHead title={L('SMS fallback', 'SMS 備援')} />
-                <FormField id="dm-sms" label={L('SMS text', 'SMS 內容')} required={edit} count={cnt(v.sms.length, LIM.sms)} over={v.sms.length > LIM.sms} error={show('sms')}>
+                <FormField id="dm-sms" label={L('SMS content', 'SMS 內容')} required={edit} count={cnt(v.sms.length, smsMax(v.sms))} over={v.sms.length > smsMax(v.sms)} hint={edit ? L('Up to 534 half-width characters, or 267 if any character is full-width.', '半形最多 534 字；只要有任一個全形字元，最多 267 字。') : undefined} error={show('sms')}>
                   <Textarea id="dm-sms" mode={mode} rows={3} value={v.sms} error={!!show('sms')} onChange={ev => set({ sms: ev.target.value })} />
                 </FormField>
               </> : null}

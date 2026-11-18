@@ -106,8 +106,8 @@ await step('rows-progress', async () => {
   await unfind();
 });
 await step('rows-nofb', async () => {
-  await find('Team lunch on Fri');
-  const a = row('Team lunch on Fri', 0), c = row('Team lunch on Fri', 1);
+  await find('Team lunch Fri 11/7');
+  const a = row('Team lunch Fri 11/7', 0), c = row('Team lunch Fri 11/7', 1);
   await shot('rows-nofb', [a, c], [], 10);
   await unfind();
 });
@@ -152,7 +152,7 @@ await menuShot('menu-sent', 'Team lunch moves to 12:30');
 await menuShot('menu-pending', 'Atlas demo moves');
 await menuShot('menu-scheduled', 'out of office');
 await menuShot('menu-expired', 'UX sync moves');
-await menuShot('menu-rejected', 'Reminder: badge photo');
+await menuShot('menu-rejected', 'Badge photo update');
 await menuShot('menu-error', 'On-call swap');
 
 // ---- details
@@ -176,13 +176,13 @@ await step('detail-single', async () => {
   await find('Design review'); await main.getByText('Design review with Northwind Studio: Thu, Nov 6').first().click(); await wait(800);
   await panel('detail-email', [], true);
   await closeAside();
-  await find('Team lunch moves'); await row('Team lunch moves to 12:30').getByText('Team lunch moves to 12:30 today').first().click(); await wait(800);
+  await find('Team lunch moves'); await row('Team lunch moves to 12:30').getByText('Team lunch moves to 12:30', { exact: true }).first().click(); await wait(800);
   await panel('detail-push', [], true);
   await closeAside(); await unfind();
 });
 await step('detail-pending', async () => {
   await find('Atlas demo moves');
-  await row('Atlas demo moves').getByText('Atlas demo moves to Mon').first().click(); await wait(800);
+  await row('Atlas demo moves').getByText('Atlas demo moves to 11/10').first().click(); await wait(800);
   await panel('detail-pending', []);
   await closeAside();
 });
@@ -200,7 +200,7 @@ await step('dlg-delivery', async () => {
   // a UX Team record (the default project) with every case: PNS not sent, SMS (fallback) to company and personal
   // phones, a carrier note under Sent, Service unavailable, and Resend to not sent
   await space('UX Team');
-  await find('Fire evacuation drill'); await row('Fire evacuation drill').getByText('Fire evacuation drill').first().click(); await wait(800);
+  await find('Fire drill: Building A'); await row('Fire drill: Building A').getByText('Fire drill: Building A').first().click(); await wait(800);
   await aside().getByRole('button', { name: 'Sent details' }).click(); await wait(900);
   const d = p.getByRole('dialog').last();
   await shot('dlg-delivery', d, [
@@ -276,7 +276,7 @@ await step('status-rows', async () => {
   await space('UX Team').catch(() => {});
 });
 await step('rows', async () => {
-  const pairs = [['st-pending', 'Atlas demo moves'], ['st-expired', 'UX sync moves'], ['st-rejected', 'Reminder: badge photo'], ['st-scheduled', 'out of office'], ['st-progress', 'Fire alarm'], ['st-sent', 'Design review'], ['st-error', 'On-call swap'], ['st-mixed', 'Team lunch on Fri'], ['st-canceled', 'Badge reader']];
+  const pairs = [['st-pending', 'Atlas demo moves'], ['st-expired', 'UX sync moves'], ['st-rejected', 'Badge photo update'], ['st-scheduled', 'out of office'], ['st-progress', 'Fire alarm'], ['st-sent', 'Design review'], ['st-error', 'On-call swap'], ['st-mixed', 'Team lunch Fri 11/7'], ['st-canceled', 'Badge reader']];
   for (const [name, text] of pairs) {
     // search for the message so its rows are at the top of the list, in view
     await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500);
@@ -297,14 +297,14 @@ const detail = async (name, text, title, list = []) => {
   });
 };
 await detail('detail-expired', 'UX sync moves', 'UX sync moves to Tue');
-await detail('detail-rejected', 'Reminder: badge photo', 'Reminder: badge photo');
+await detail('detail-rejected', 'Badge photo update', 'Badge photo update');
 await detail('detail-scheduled', 'out of office', 'out of office 12/8');
 await detail('detail-progress', 'Fire alarm', 'Fire alarm test in Building B');
 await detail('detail-error', 'On-call swap', 'On-call swap');
 await detail('detail-sent-fb', 'Design review', 'Design review with Northwind Studio: Thu 11/6');
 // a canceled channel next to the other channel of the same message
 await step('detail-canceled', async () => {
-  await find('Badge reader'); await row('Badge reader', 1).getByText('Badge reader outage').first().click(); await wait(800);
+  await find('badge reader outage'); await row('badge reader outage', 1).getByText('B lobby badge reader outage').first().click(); await wait(800);
   await panel('detail-canceled', []); await closeAside(); await unfind();
 });
 // Edit content: one channel's text on its own screen
@@ -331,15 +331,15 @@ await step('space-menu', async () => {
   await p.keyboard.press('Escape'); await wait(300);
 });
 // the urgent samples (personal space), one per status: the panel shows the reason the sender gave
-for (const [n, t] of [['urg-pending', 'Parking lot A closed'], ['urg-scheduled', 'Network maintenance Fri'], ['urg-progress', 'Water leak on 5F'], ['urg-sent', 'Elevator 3 out of service'], ['urg-error', 'Power dip in Building C'], ['urg-rejected', 'Fire drill moved'], ['urg-expired', 'Badge reader outage']]) await detail(n, t, t);
+for (const [n, t] of [['urg-pending', 'Parking lot A closed'], ['urg-scheduled', 'Network maintenance Fri'], ['urg-progress', 'Water leak on 5F'], ['urg-sent', 'Elevator 3 out until'], ['urg-error', 'Power dip in Building C'], ['urg-rejected', 'Fire drill moved'], ['urg-expired', 'Badge reader outage']]) await detail(n, t, t);
 await step('detail-sms-notneeded', async () => {
   await space('ESH Emergency');
-  await row('Earthquake drill on Oct 3').getByText('Earthquake drill on Oct 3').first().click(); await wait(800);
+  await row('Earthquake drill Oct 3').getByText('Earthquake drill Oct 3').first().click(); await wait(800);
   await panel('detail-sms-notneeded', []); await closeAside();
 });
 await step('detail-urgent', async () => {
   await space('ESH Emergency');
-  await row('Typhoon update: offices reopen').getByText('Typhoon update: offices reopen').first().click(); await wait(800);
+  await row('Typhoon: offices reopen').getByText('Typhoon: offices reopen').first().click(); await wait(800);
   await panel('detail-urgent', []); await closeAside(); await space('UX Team').catch(() => {});
   await p.getByRole('button', { name: 'UX Team', exact: true }).first().click().catch(() => {}); await wait(1200);
 });

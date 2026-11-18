@@ -272,8 +272,8 @@ function Detail() {
       <Section eyebrow="Modal" title="訊息詳情" lead="設計系統 Dialog（寬 1120，填滿可用高度）。點列表上的標題開啟。標題 Message details，前面是訊息 ID 標籤；左邊是內容與收件人，右邊淺灰底是基本資訊；底部是操作。">
         <Figure label="Device Notifications (SMS)" sub="Error：只能改傳送時間" shot="detail-fb" max={760} notes={[
           { n: 1, title: '標題', body: <>訊息 ID 標籤加 <C>Message details</C>（通用標題，不用訊息標題）；右上角關閉。</> },
-          { n: 2, title: 'Content', body: '區塊標題 Content、Audience 是 14px medium（比對話框標題 16px medium 輕一級）。這個通道的欄位：Device Notifications 是 Sender、Content；Desktop OS 是 Sender、Title、Content；Email 是 Subject 與內文。不能編輯時標題旁有 Read only 標籤。' },
-          { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS text）。小標題旁不顯示送達人數。' },
+          { n: 2, title: 'Content', body: '區塊標題 Content、Audience 是 14px medium（比對話框標題 16px medium 輕一級）。這個通道的欄位：Device Notifications 是 Sender（只能輸入英文）、Title（30）、Content（750）；Desktop OS 是 Sender、Title、Content；Email 是 Subject 與內文。不能編輯時標題旁有 Read only 標籤。' },
+          { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS content，半形最多 534 字、有任一全形字元最多 267 字）。小標題旁不顯示送達人數。' },
           { n: 4, title: 'Audience', body: '和發送流程相同的表格；SMS 多兩欄 Company phone、Personal phone。個人不加 Person 標籤（大頭照已經看得出是人；組織、群組、外部聯絡人是圖示，才需要標籤）。' },
           { n: 5, title: '基本資訊', body: FIELDS + '。' },
           { n: 6, title: '底部', body: '左：Cancel sending；右：Duplicate to new message、Resend（Scheduled expired、Error）。' },
@@ -281,7 +281,7 @@ function Detail() {
         ]} />
       </Section>
       <Section eyebrow="Edit" title="編輯" lead="沒有另外的編輯模式：欄位一直都在，依狀態可編輯或 Read only。">
-        <Figure label="可以編輯" sub="Scheduled expired，改了 SMS text" shot="edit-content" max={760} notes={[
+        <Figure label="可以編輯" sub="Scheduled expired，改了 SMS content" shot="edit-content" max={760} notes={[
           { n: 1, title: '可編輯的欄位', body: '必填星號、字數計數，限制和發送流程相同。' },
           { n: 2, title: '加入收件人', body: '搜尋列（Person、Org、Group、Phone、Email）與 Batch import；每列右側 ✕ 移除。外部電話只能加在 Device Notifications (SMS)，外部 Email 只能加在 Email（其他通道輸入外部 Email 時搜尋框直接提示不能加入，公司信箱仍會加入員工）。' },
           { n: 3, title: '手機欄', body: '預設勾 Company phone；每列至少要勾一支，否則不能儲存。' },
@@ -306,7 +306,7 @@ function Detail() {
         ]} />
       </Section>
       <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 Sent details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
-        <Figure label="Sent details" sub="Device Notifications (SMS)，UX Team「Fire evacuation drill」" shot="dlg-delivery" max={980} notes={[
+        <Figure label="Sent details" sub="Device Notifications (SMS)，UX Team「Fire drill: Building A, 11/14」" shot="dlg-delivery" max={980} notes={[
           { n: 1, title: '搜尋', body: <>一個搜尋框，不用先選欄位，提示 <Copy en="Search name, employee ID, NT account, phone or job ID" zh="搜尋姓名、工號、NT 帳號、電話或 Job ID" />。姓名、電話、Email 部分比對（電話不顯示但可以搜）；工號、NT 帳號、Job ID 完全比對（由伺服器依格式判斷，名單有數萬人時才查得快）。可以一次貼多個，用逗號或空格分隔。</> },
           { n: 2, title: '篩選', body: 'Status（附數量），Device Notifications (SMS) 多一個 Channel（PNS / SMS）。都是多選，沿用列表的 FilterMenu：沒選時按鈕寫篩選名稱（Status）；只選一項時按鈕直接寫那一項（例：Not sent）；選兩項以上時是篩選名稱加數量（Status 2）。沒有 Reason 篩選：原因只在未送出時才有，已經寫在 Not sent 標籤下方。' },
           { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Not sent 標籤。Not sent 下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。Sent 代表我們送出成功；如果接收端回報沒送達，Sent 下方也寫出原因（例：Recipient has blocked SMS messages、Message is barred by customer），這些仍算送出、不列入 Resend。兩種小字（Not sent 的原因、Sent 的接收端原因）都是紅字，因為都是異常狀況。還在傳送中的紀錄只列已經送出的，沒有 Queued（2026-11-16）。全站統一用 Not sent，不用 Failed。' },
@@ -502,7 +502,7 @@ function Blocks() {
       <Section eyebrow="Left" title="Content 與 Audience">
         <SpecTable head={['通道', 'Content 的欄位']} nowrap={[0]} rows={[
           ['Device Notifications', 'Sender、Content（第一行即標題）'],
-          ['Device Notifications (SMS)', '小標題 Device Notifications：Sender、Content；小標題 SMS fallback：SMS text。送完後小標題旁 n / m sent'],
+          ['Device Notifications (SMS)', '小標題 Device Notifications：Sender、Title、Content；小標題 SMS fallback：SMS content。送完後小標題旁 n / m sent'],
           ['Desktop OS', 'Sender（選填）、Title、Content'],
           ['Email', 'Subject、內文（可以編輯時是格式編輯器；Read only 時是 readonly 底色的內文框，寬度撐滿）'],
         ]} />
@@ -579,12 +579,12 @@ function Data() {
   return (
     <Section eyebrow="Data" title="prototype 的範例資料" lead="側邊欄群組標題 Projects，四個專案（UX Team、Platform Ops、Fab 18 Communications、ESH Emergency），沒有個人空間；打開時是 UX Team。每個空間都有各種狀態的訊息。">
       <SpecTable head={['要看什麼', '去哪裡']} nowrap={[0]} rows={[
-        ['各通道狀態不同', 'UX Team「Fire alarm test…」（Device Notifications 已送出，SMS 與 Email 傳送中）；ESH「Chemical delivery at Dock 2」（推播送出、SMS 傳送錯誤）；UX Team「Team lunch on Fri 11/7」（Device Notifications 已送出、Email 傳送錯誤）'],
+        ['各通道狀態不同', 'UX Team「Fire alarm test…」（Device Notifications 已送出，SMS 與 Email 傳送中）；ESH「Chemical delivery at Dock 2」（推播送出、SMS 傳送錯誤）；UX Team「Team lunch Fri 11/7 11/7」（Device Notifications 已送出、Email 傳送錯誤）'],
         ['多種收件人', 'UX Team「Design review with Northwind Studio」；Platform Ops「tWorkspace 5.2 is live」；Fab 18「Water shutdown」；ESH「Chemical delivery」；UX Team「Usability study invitation」'],
         ['SMS 備援與未送出人數', 'UX Team「Design review…」：Device Notifications 4 人未送達，SMS 補寄後仍有 1 人未送出'],
-        ['待核准、已駁回、排程已過期', 'UX Team「Project Atlas demo」、「Reminder: badge photo update」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
-        ['已取消的通道', 'UX Team「Badge reader outage at the B lobby until 12:00」：Email 已取消，Device Notifications (SMS) 排程已過期'],
-        ['緊急送出（七種狀態）', 'UX Team「Parking lot A closed…」（待核准）、「Network maintenance Fri 12/18…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out of service…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
+        ['待核准、已駁回、排程已過期', 'UX Team「Atlas demo moves to 11/10」、「Badge photo update by 11/7」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
+        ['已取消的通道', 'UX Team「B lobby badge reader outage」：Email 已取消，Device Notifications (SMS) 排程已過期'],
+        ['緊急送出（七種狀態）', 'UX Team「Parking lot A closed…」（待核准）、「Network maintenance Fri 12/18…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out until…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
         ['傳送錯誤', 'UX Team「On-call swap」；Fab 18「Shift handover…」；UX Team「Reminder: send design review topics」'],
       ]} />
     </Section>
