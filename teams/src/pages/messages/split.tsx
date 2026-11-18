@@ -128,10 +128,10 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
         {MODAL ? null : <DropdownMenuItem startIcon={Info} onSelect={() => m.set({ det: x.id.endsWith('~msg') ? r.id : x.id })}>{L('View details', '查看詳情')}</DropdownMenuItem>}
         {lite ? null : <>
         {!MODAL && (st === 'expired' || st === 'scheduled') ? <DropdownMenuItem startIcon={Pencil} onSelect={() => m.startEditContent(r, x.k)}>{L('Edit content', '編輯內容')}</DropdownMenuItem> : null}
-        {/* Resend (2026-11-16): replaces Send now and Reschedule. Opens the Detail modal in its resend mode (content
-            and audience editable, Now or Schedule), to the whole audience. A Scheduled record has no menu item for its
-            time: it's changed in the Detail modal (open the title). */}
-        {st === 'expired' || st === 'error' ? <DropdownMenuItem startIcon={Send} onSelect={() => m.set({ det: x.id, resend: {} })}>{L('Resend', '重新傳送')}</DropdownMenuItem> : null}
+        {/* Resend (2026-11-18): opens the Detail modal, the same one as the title. For Scheduled expired and Error it is
+            editable, and its Resend sends it (a passed send time has to be changed first). A Scheduled record has no
+            menu item for its time: it's changed in the Detail modal (open the title). */}
+        {st === 'expired' || st === 'error' ? <DropdownMenuItem startIcon={Send} onSelect={() => m.set({ det: x.id })}>{L('Resend', '重新傳送')}</DropdownMenuItem> : null}
         <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
         {st === 'expired' || st === 'error' || st === 'scheduled' || st === 'pending' ? <>
           <DropdownMenuSeparator />

@@ -253,17 +253,16 @@ const dlgShot = async (name, text, item, btn) => {
   });
 };
 await dlgShot('dlg-cancel', 'UX sync moves', /^Cancel sending$/);
-// Resend from the row menu (Scheduled expired): the whole audience, in the Detail modal; then Schedule with a past time
+// Resend from the row menu (Scheduled expired, 2026-11-18): the same Detail modal, editable, with Resend in its footer
+// (no resend mode). The send time has passed, so Resend marks it red; a new time, then Resend sends it.
 await step('resend-full', async () => {
   await find('UX sync moves'); await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: /^Resend/ }).click(); await wait(800);
   const d = p.getByRole('dialog').last();
   await shot('resend-full', d, [
-    [1, d.getByRole('radio', { name: 'Now' }), 'tl'],
-    [2, d.getByRole('button', { name: 'Cancel', exact: true }), 'tl'],
+    [1, d.locator('#dm-at'), 'tl'],
+    [2, d.getByRole('button', { name: 'Resend', exact: true }), 'tl'],
   ], 12);
-  await d.getByRole('radio', { name: 'Schedule' }).click(); await wait(300);
-  await d.getByPlaceholder('YYYY/MM/DD HH:MM').fill('2026/11/01 09:00'); await wait(200);
-  await d.getByRole('button', { name: 'Schedule resend' }).click(); await wait(500);
+  await d.getByRole('button', { name: 'Resend', exact: true }).click(); await wait(500);
   await shot('resend-later', d.locator('aside').first(), [], 12);
   await p.keyboard.press('Escape'); await wait(400);
   const leave = p.getByRole('button', { name: 'Discard' }); if (await leave.count()) await leave.click(); await wait(500);
@@ -308,7 +307,7 @@ await step('detail-canceled', async () => {
   await panel('detail-canceled', []); await closeAside(); await unfind();
 });
 // Edit content: one channel's text on its own screen
-// editing in the Detail modal: change a field, the footer turns into Discard changes / Save changes
+// editing in the Detail modal: change a field; Scheduled expired keeps Resend, with Discard changes beside it
 await step('edit-content', async () => {
   await find('UX sync moves'); await openRecord('UX sync moves');
   await aside().locator('#dm-sms').fill('UX sync moved: Tue 11/4 10:00, 5F-Ocean.'); await wait(300);
@@ -317,7 +316,7 @@ await step('edit-content', async () => {
     [2, aside().getByRole('button', { name: 'Batch import' }), 'tl'],
     [3, aside().locator('[role="columnheader"]').filter({ hasText: 'Company phone' }), 'tl'],
     [4, aside().locator('#dm-at'), 'tl'],
-    [5, aside().getByRole('button', { name: 'Save changes' }), 'tl'],
+    [5, aside().getByRole('button', { name: 'Resend', exact: true }), 'tl'],
   ]);
   await aside().getByRole('button', { name: 'Discard changes' }).click(); await wait(300);
   await closeAside(); await unfind();

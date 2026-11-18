@@ -75,12 +75,15 @@ function initVals(r: Row, k: Channel): Vals {
 // how many people the edited audience reaches on this channel
 const countOf = (tags: RTag[], groups: Parameters<typeof flatten>[1]) => flatten(tags.filter(t => t.type !== 'ext'), groups).length + tags.filter(t => t.type === 'ext').length
 
-// resend: the modal's resend mode (2026-11-16, replaces Send now and Reschedule): content and audience editable,
-// the audience being the whole record's (Scheduled expired, Error) or only the people not reached (Sent details);
-// the send time is Now or Schedule; the footer is Cancel / Resend.
+// Scheduled expired and Error (2026-11-18): no separate resend mode. The details stay editable (content, audience,
+// send time) and the footer's Resend sends it again, to the whole audience, on this record. A send time that has
+// passed is not sent: Resend marks the time field red and asks for a new time.
+// resend: the resend mode, now only for Sent details' "Resend to not sent" (only the people not reached, as a new
+// record): the send time is Now or Schedule; the footer is Cancel / Resend.
 function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec; close: () => void; onDirty: (d: boolean) => void; resend: { tags?: RTag[] } | null }) {
   const app = useApp(), r = x.r, k = x.k, st = x.st, t = recText(r, k)
-  const edit = !!resend || canEditContent(st), timeEdit = !resend && canReschedule(st)
+  const again = !resend && canSendNow(st)
+  const edit = !!resend || again || canEditContent(st), timeEdit = !resend && canReschedule(st)
   const [when, setWhen] = React.useState<'now' | 'later'>('now')
   const init = React.useMemo(() => ({ v: { ...initVals(r, k), ...(resend ? { at: '' } : {}) }, tags: (resend && resend.tags) || tagsFor(r, k) }), [r.id, k, r.fresh])
   const [v, setV] = React.useState<Vals>(init.v), [tags, setTags] = React.useState<RTag[]>(init.tags)
@@ -125,6 +128,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   }
   const atD = fromIso(v.at), now = new Date(), max = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate(), now.getHours(), now.getMinutes())
   if (resend && when === 'later') { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now || atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
+  else if (again) { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now) e.at = L('This time has passed. Pick a new send time.', '這個時間已經過了，請選擇新的傳送時間。'); else if (atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
   else if (!resend && timeChanged) { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now || atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
   const show = (key: string) => (tried ? e[key] || '' : '')
 
@@ -157,7 +161,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
     const p = patchOf()
     if (resend && resend.tags) { delete p.chAud; delete p.byCh }
     onDirty(false)
-    m.resendRec(r, k, { patch: p, tags: resend && resend.tags ? tags : undefined, at: when === 'later' && atD ? atD : null })
+    m.resendRec(r, k, { patch: p, tags: resend && resend.tags ? tags : undefined, at: again ? atD : when === 'later' && atD ? atD : null })
   }
 
   // audience: added here like in the send flow; external contacts only where their channel is (phone: SMS, email: Email)
@@ -275,7 +279,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
               </FormField> : null}
             </span>
           ) : timeEdit ? (
-            <FormField id="dm-at" hint={atD && timeChanged && !e.at ? L('Sends ', '將於 ') + niceDT(atD) + L('', ' 傳送') : undefined} error={show('at')}>
+            <FormField id="dm-at" hint={atD && (timeChanged || again) && !e.at ? L('Sends ', '將於 ') + niceDT(atD) + L('', ' 傳送') : undefined} error={show('at')}>
               <DatePicker id="dm-at" showTime typeable locale={L('en-US', 'zh-TW')} value={v.at || null} error={!!show('at')} onChange={val => set({ at: val || '' })} placeholder="YYYY/MM/DD HH:MM" />
             </FormField>
           ) : null} />
@@ -288,7 +292,12 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
         <div className="flex w-full flex-wrap items-center gap-2">
           {!resend && canCancel(st) ? <Button variant="secondary" danger startIcon={Ban} disabled={dirty} onClick={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</Button> : null}
           <span className="flex-1" />
-          {resend ? <>
+          {again ? <>
+            {/* edited right here; Resend sends it (no second dialog). Not edited yet: Duplicate is offered as well */}
+            {dirty ? <Button variant="tertiary" onClick={discard}>{L('Discard changes', '捨棄變更')}</Button>
+              : <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate to new message', '複製為新訊息')}</Button>}
+            <Button variant="primary" startIcon={Send} onClick={doResend}>{L('Resend', '重新傳送')}</Button>
+          </> : resend ? <>
             {/* Cancel leaves resend mode (back to the details), without sending */}
             <Button variant="tertiary" onClick={() => { onDirty(false); m.set({ resend: null }) }}>{L('Cancel', '取消')}</Button>
             <Button variant="primary" startIcon={Send} onClick={doResend}>{when === 'later' ? L('Schedule resend', '排程重新傳送') : L('Resend', '重新傳送')}</Button>
@@ -297,7 +306,6 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
             <Button variant="primary" onClick={save}>{L('Save changes', '儲存變更')}</Button>
           </> : <>
             <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate to new message', '複製為新訊息')}</Button>
-            {canSendNow(st) ? <Button variant="primary" startIcon={Send} onClick={() => m.set({ resend: {} })}>{L('Resend', '重新傳送')}</Button> : null}
           </>}
         </div>
       </DialogFooter>
