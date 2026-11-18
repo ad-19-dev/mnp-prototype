@@ -5,7 +5,7 @@
 //   1. Choose the data type, then paste or type into the field: each entry becomes a tag as soon as it's entered
 //      (Enter, a comma, a new line, or a paste of a whole list) and is looked up right away.
 //   2. Found: a gray tag with the person's avatar and name (an org or outside contact: its icon and value).
-//      Not found: a red tag with what was entered; hover for why. Any tag, gray or red, is edited in place when clicked
+//      Not found: a red tag with what was entered, listed before the gray ones; hover for why. Any tag, gray or red, is edited in place when clicked
 //      (it shows what was entered; Enter looks it up again). Every tag has ✕. Entries twice in the list, or already added, aren't shown (with many repeats it looked messy).
 //   3. Proceed adds the found ones; red ones are left out (the toast says how many).
 // The DS Tag has no editable state yet (the DS owner hasn't designed one): editing swaps the tag for a small DS Input.
@@ -49,6 +49,8 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
     })
   }
   const found = hits.filter(h => h.ok).map(h => h.ok!), bad = hits.filter(h => h.why)
+  // red tags first (2026-11-18): in a list of thousands the few to fix are at the top; fixed ones join the gray ones
+  const shown = bad.concat(hits.filter(h => h.ok))
 
   const take = (t: string) => { const l = splitTokens(t).map(x => x.trim()).filter(Boolean); if (l.length) setVals(v => v.concat(l)); setDraft('') }
   const drop = (i: number) => setVals(l => l.filter((_, j) => j !== i))
@@ -83,7 +85,7 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
                 <div className={cn('flex h-[calc(100svh-384px)] min-h-[200px] w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
                   kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
                   onClick={e => { if (e.target === e.currentTarget && inputRef.current) inputRef.current.focus() }}>
-                  {hits.map(h => edit && edit.i === h.i
+                  {shown.map(h => edit && edit.i === h.i
                       ? <div key={h.i} className="w-48"><Input size="sm" autoFocus aria-label={L('Edit ', '修改 ') + h.v} value={edit.v} onChange={e => setEdit({ i: h.i, v: e.target.value })}
                           onBlur={saveEdit} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); saveEdit() } if (e.key === 'Escape') { e.stopPropagation(); setEdit(null) } }} /></div>
                       : h.ok ? <React.Fragment key={h.i}>{label(h)}</React.Fragment> : (
@@ -99,7 +101,7 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
                     value={draft} onChange={e => (/[\n,，;；]/.test(e.target.value) ? take(e.target.value) : setDraft(e.target.value))}
                     onKeyDown={e => {
                       if (e.key === 'Enter') { e.preventDefault(); take(draft) }
-                      else if (e.key === 'Backspace' && !draft && hits.length) drop(hits[hits.length - 1].i)
+                      else if (e.key === 'Backspace' && !draft && shown.length) drop(shown[shown.length - 1].i)
                     }}
                     onBlur={() => take(draft)} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
                 </div>

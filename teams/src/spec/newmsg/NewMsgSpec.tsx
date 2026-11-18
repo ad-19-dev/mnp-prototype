@@ -465,6 +465,7 @@ function Dialogs() {
           ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前名單欄位停用（DS disabled 底色）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
           ['List', <>DS 欄位外框（border、hover、focus 藍框），佔滿對話框剩下的高度（至少 200），超過時框內捲動，裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
           ['找到的', <>DS Tag（neutral）：人員是 16px 大頭照加「英文名 中文名」，不截斷；組織是大樓圖示加組織代號；外部聯絡人是信封或電話圖示加 Email／號碼。每個標籤都有 ✕。</>],
+          ['順序', '紅色標籤固定排在最前面，灰色在後（2026-11-18）：上千筆時要處理的幾筆一打開就看得到；修好的紅色標籤會移到灰色那一區。'],
           ['找不到的', <>DS Tag（red），顯示原本輸入的值；滑過顯示原因（Tooltip，在標籤下方）。</>],
           ['說明文字', <>還沒有標籤時：<Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />；有標籤之後：<Copy en="Click a tag to edit it." zh="點標籤可以修改。" /></>],
           ['修改', '點任何標籤（或聚焦後按 Enter），標籤換成 DS Input（sm），裡面是原本輸入的值（例如 NT 帳號，不是姓名）；Enter 或離開欄位後重新比對，Esc 取消。按標籤上的 ✕ 只會移除，不會進入修改。'],
