@@ -295,7 +295,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
           {again ? <>
             {/* edited right here; Resend sends it (no second dialog). Not edited yet: Duplicate is offered as well */}
             {dirty ? <Button variant="tertiary" onClick={discard}>{L('Discard changes', '捨棄變更')}</Button>
-              : <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate to new message', '複製為新訊息')}</Button>}
+              : <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate', '複製')}</Button>}
             <Button variant="primary" startIcon={Send} onClick={doResend}>{L('Resend', '重新傳送')}</Button>
           </> : resend ? <>
             {/* Cancel leaves resend mode (back to the details), without sending */}
@@ -305,7 +305,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
             <Button variant="tertiary" onClick={discard}>{L('Discard changes', '捨棄變更')}</Button>
             <Button variant="primary" onClick={save}>{L('Save changes', '儲存變更')}</Button>
           </> : <>
-            <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate to new message', '複製為新訊息')}</Button>
+            <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate', '複製')}</Button>
           </>}
         </div>
       </DialogFooter>
@@ -354,7 +354,7 @@ const acol = createColumnHelper<ARow>()
 // phones (Device Notifications (SMS)): Company phone / Personal phone columns, a select-all in each header;
 // set is missing when the list can't be edited (the boxes are then disabled)
 type Phones = { co: Record<string, boolean>; pp: Record<string, boolean>; set?: (which: 'co' | 'pp', keys: string[], val: boolean) => void }
-function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: (key: string) => void; phones?: Phones }) {
+export function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: (key: string) => void; phones?: Phones }) {
   const app = useApp()
   const [mem, setMem] = React.useState<MemberSet | null>(null)
   const rows: ARow[] = tags.map(t => {

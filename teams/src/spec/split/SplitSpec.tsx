@@ -127,7 +127,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           <Card kind="dialog" title="Resend（只寄沒收到的人）" when="Sent details 的 Resend to not sent (n)" shots={['resend']} then="訊息詳情的 Resend 模式，收件人只有沒收到的人；送出後是一則新訊息（新的訊息 ID）。不再進入發送流程。" />
           <Card kind="page" title="Resend（全部收件人）" when="選單的 Resend 或詳情底部的 Resend（Scheduled expired、Error）" shots={['resend-full']} then="選單的 Resend 就是打開同一個訊息詳情（2026-11-18 起不再切換到 Resend 模式）。按底部 Resend 直接送出；Send time 已經過了時，欄位紅框提醒改時間，改好再按 Resend，這一筆變成 Scheduled。" />
           <Card kind="dialog" title="Cancel sending?" when="選單或詳情底部的 Cancel sending" shots={['dlg-cancel']} then="這個通道不再送出，狀態變成 Canceled；紀錄留在列表。" />
-          <Card kind="action" title="Duplicate to new message" when="選單或詳情底部的 Duplicate to new message" then="進入發送流程，只帶入這個通道（通道、內容與它的收件人）。" />
+          <Card kind="action" title="Duplicate to new message" when="列選單的 Duplicate to new message 或詳情底部的 Duplicate" then="進入發送流程，只帶入這個通道（通道、內容與它的收件人）。" />
           <Card kind="menu" title="專案的 ⋯ 選單" when="側邊欄滑過一個專案" shots={['space-menu']} then="Project settings（開專案設定）、Leave project（確認後離開）。" />
         </div>
       </Section>
@@ -276,7 +276,7 @@ function Detail() {
           { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS content，半形最多 534 字、有任一全形字元最多 267 字）。小標題旁不顯示送達人數。' },
           { n: 4, title: 'Audience', body: '和發送流程相同的表格；SMS 多兩欄 Company phone、Personal phone。個人不加 Person 標籤（大頭照已經看得出是人；組織、群組、外部聯絡人是圖示，才需要標籤）。' },
           { n: 5, title: '基本資訊', body: FIELDS + '。' },
-          { n: 6, title: '底部', body: '左：Cancel sending；右：Duplicate to new message、Resend（Scheduled expired、Error）。' },
+          { n: 6, title: '底部', body: '左：Cancel sending；右：Duplicate（2026-11-18 從 Duplicate to new message 縮短）、Resend（Scheduled expired、Error）。' },
           { n: 7, title: 'Sent details', body: '已開始送出（In progress、Sent、Error）才有的藍字連結，開發送明細。原本的 n not sent 與 View delivery details 合併成這一個（2026-11-16）；未送出人數仍在右側 Status 下方，點了開同一個對話框、只看 Not sent。' },
         ]} />
       </Section>
@@ -483,7 +483,7 @@ function Blocks() {
           ['標題列', '訊息 ID 標籤（Tag sm neutral）加 Message details；右上角關閉，Esc 也可關閉'],
           ['左欄', 'Content、Audience 兩個區塊；內距 loose，區塊之間 1.5 × loose；自己捲動'],
           ['右欄', '寬 340，左側細分隔線，淺灰底（neutral-1，黑色 2%）；內距 loose；自己捲動'],
-          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate to new message（secondary）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
+          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate（secondary，2026-11-18 從 Duplicate to new message 縮短；列選單仍是 Duplicate to new message）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
         ]} />
       </Section>
       <Section eyebrow="Right" title="基本資訊" lead="設計系統 DescriptionList（vertical）：名稱在上（次要文字色）、值在下。列表上有的資訊都在這裡。">

@@ -104,7 +104,7 @@ export default function DsMap() {
           <SpecTable head={HEAD} nowrap={[0]} rows={[
             ['所有對話框', comps('Dialog'), 'DialogHeader / Body / Footer；Cancel 在左、主要動作在右；按鈕沒有圖示；沒有副標。', <Own>—</Own>],
             ['確認對話框', comps('Dialog', 'Button'), '寬 480；標題、一句說明、兩個按鈕；危險動作用 danger。', <Own>Confirm：把標題、說明、按鈕組成共用的確認元件</Own>],
-            ['Batch import', comps('Dialog', 'Select', 'Textarea', 'Button', 'Alert', 'Input'), '主彈窗：Select（Data type）、Textarea、數量提示文字；Add 用 Button loading。第二層 Dialog：Alert（inline、warning）裡放每筆一個 Input（error）加原因；Footer Cancel（tertiary）、Check again（secondary）、Proceed（primary danger）。', <Own>格式檢查與即時數量；把欄位放進 Alert 的 description（DS 沒有這個例子，待確認）</Own>],
+            ['Batch import', comps('Dialog', 'Select', 'Tag', 'Avatar', 'Tooltip', 'Input', 'Button'), '一層 Dialog：Select（Data type）；名單欄位裡每筆一個 Tag（找到：neutral，人員帶 16px Avatar、unbounded 不截斷；找不到：red，Tooltip 顯示原因）；點紅色 Tag 換成 Input（sm）修改；Footer Cancel（tertiary）、Proceed（primary）。', <Own>標籤輸入欄位的外框（沿用 DS 欄位 token）、即時比對、可編輯的標籤（DS Tag 尚無此狀態，待 DS 設計）</Own>],
             ['Toast', comps('Toast'), 'Toaster position=bottom-center、offset=48（比預設 24px 高一點）；一則一行。', <Own>隱藏 Toast 前面的圖示（CSS）</Own>],
           ]} />
           <Notes items={[{ title: '載入中', body: <>列表載入用 {link('CircularProgress')} 加 Empty；規格見 Storybook。</> }]} />

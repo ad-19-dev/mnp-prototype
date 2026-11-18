@@ -11,7 +11,7 @@ import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
-  CircleCheck, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
+  CircleCheck, ArrowLeft, ArrowRight, FileText, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, noPhoneCell, smsMax, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Person, type Template, type Tag as RTag,
@@ -499,20 +499,21 @@ function FootBar({ m }: { m: SendCtl }) {
   return (
     <div className="sticky bottom-0 z-10 border-t border-divider bg-surface">
       <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
-        {/* left: leave or go back (Cancel, Back); right: what this step can do, and the way forward (2026-11-18) */}
+        {/* left: leave or go back (Cancel, Back); right: what this step can do, and the way forward (2026-11-18).
+            Every button has an icon except Cancel (2026-11-18) */}
         <div className="flex flex-wrap gap-2">
           <Button variant="tertiary" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
-          {!c.only && c.step > 1 ? <Button variant="tertiary" onClick={() => m.goStep(c.step - 1)}>{L('Back', '上一步')}</Button> : null}
+          {!c.only && c.step > 1 ? <Button variant="tertiary" startIcon={ArrowLeft} onClick={() => m.goStep(c.step - 1)}>{L('Back', '上一步')}</Button> : null}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          {c.only ? <Button variant="primary" onClick={() => m.saveContent()}>{L('Save', '儲存')}</Button> : <>
+          {c.only ? <Button variant="primary" startIcon={Save} onClick={() => m.saveContent()}>{L('Save', '儲存')}</Button> : <>
             {/* this step's own action, secondary, next to the primary one */}
-            {c.step === 1 ? <Button variant="secondary" disabled={!c.receivers.length} onClick={() => m.set({ sg: { name: '', desc: '', tried: false } })}>{L('Save as group', '存成群組')}</Button> : null}
-            {c.step === 2 ? <Button variant="secondary" onClick={() => m.openSaveTpl()}>{L('Save as template', '存成模板')}</Button> : null}
-            {c.step === 3 ? <Button variant="secondary" onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
+            {c.step === 1 ? <Button variant="secondary" startIcon={UsersRound} disabled={!c.receivers.length} onClick={() => m.set({ sg: { name: '', desc: '', tried: false } })}>{L('Save as group', '存成群組')}</Button> : null}
+            {c.step === 2 ? <Button variant="secondary" startIcon={FileText} onClick={() => m.openSaveTpl()}>{L('Save as template', '存成模板')}</Button> : null}
+            {c.step === 3 ? <Button variant="secondary" startIcon={FlaskConical} onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
             {c.step < 3
-              ? <Button variant="primary" onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>
-              : <Button variant="primary" onClick={() => m.submit()}>{primary}</Button>}
+              ? <Button variant="primary" endIcon={ArrowRight} onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>
+              : <Button variant="primary" startIcon={Send} onClick={() => m.submit()}>{primary}</Button>}
           </>}
         </div>
       </div>

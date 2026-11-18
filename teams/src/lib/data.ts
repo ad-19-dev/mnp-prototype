@@ -39,7 +39,9 @@ export interface Person {
 export interface Org { code: string; no: string; name: string; count: number }
 export interface Group {
   id: string; name: string; desc: string; count: number; updated: string; creator: string
-  role: 'Owner' | 'Editor' | 'Viewer'; members?: { pid: string }[]; collabs?: { pid: string; role: string }[]; fresh?: number
+  role: 'Owner' | 'Editor' | 'Viewer'; members?: { pid: string }[]
+  // the audience as added (2026-11-18): an org or group stays one entry, so it follows that org's or group's people
+  aud?: Tag[]; collabs?: { pid: string; role: string }[]; fresh?: number
   // the team it belongs to; null means the creator's personal space
   team?: string | null
 }
@@ -208,7 +210,18 @@ export function extPerson(value: string): Person {
   }
   return PMAP[id]
 }
-export function membersFor(g: Group): { pid: string }[] {
+export function membersFor(g: Group, groups: Group[] = [], depth = 0): { pid: string }[] {
+  if (g.aud) {
+    const seen: Record<string, boolean> = {}, out: { pid: string }[] = []
+    const push = (pid?: string) => { if (pid && !seen[pid]) { seen[pid] = true; out.push({ pid }) } }
+    g.aud.forEach(t => {
+      if (t.type === 'person') push(t.id)
+      else if (t.type === 'org') orgMembers(t.id!).forEach(p => push(p.id))
+      else if (t.type === 'ext') push(extPerson(t.email!).id)
+      else if (t.type === 'group' && depth < 3) { const sub = groups.find(x => x.id === t.id); if (sub) membersFor(sub, groups, depth + 1).forEach(m => push(m.pid)) }
+    })
+    return out
+  }
   if (g.members) return g.members
   const seed = GSEED[g.id] || { m: [], fill: [null] }
   const out = seed.m.map(pid => ({ pid }))
@@ -228,7 +241,7 @@ export function flatten(tags: Tag[], groups: Group[]): { pid: string }[] {
   const push = (pid?: string) => { if (pid && !seen[pid]) { seen[pid] = true; out.push({ pid }) } }
   tags.forEach(t => {
     if (t.type === 'person') push(t.id)
-    else if (t.type === 'group') { const g = groups.find(x => x.id === t.id); if (g) membersFor(g).forEach(m => push(m.pid)) }
+    else if (t.type === 'group') { const g = groups.find(x => x.id === t.id); if (g) membersFor(g, groups).forEach(m => push(m.pid)) }
     else if (t.type === 'org') orgMembers(t.id!).forEach(p => push(p.id))
   })
   return out

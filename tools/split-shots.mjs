@@ -166,7 +166,7 @@ await step('detail-fb', async () => {
     [3, a.getByText('SMS fallback', { exact: true }).first(), 'tl'],
     [4, a.getByText('Audience', { exact: true }).first(), 'tl'],
     [5, a.getByText('Message ID', { exact: true }).first(), 'tl'],
-    [6, a.getByRole('button', { name: 'Duplicate to new message' }), 'tl'],
+    [6, a.getByRole('button', { name: 'Duplicate', exact: true }), 'tl'],
     [7, a.getByRole('button', { name: 'Sent details' }), 'tl'],
   ]);
   await closeAside();

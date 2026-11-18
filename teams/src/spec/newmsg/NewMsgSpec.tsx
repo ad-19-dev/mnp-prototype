@@ -134,9 +134,9 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
               ['已在名單上', R('選項顯示 Added', '不能再選')]),
           ]} />
           <Sub id="1-4" title="批次匯入" start="Batch import 按鈕" items={[
-            D('選資料類型', 'dlg-import'), E('貼上或輸入名單'), D('即時顯示格式正確的數量', 'dlg-import-list'), E('Add n audiences'), R('驗證中', '按鈕轉圈，全部停用'),
-            F(['全部有效', T('Added n audiences', '回到步驟 1')],
-              ['有無效的', D('Save without invalid audiences?', 'dlg-import-result'), F(['直接改欄位', E('Check again'), R('只重新驗證這幾筆', '全部找到就加入')], ['不管無效的', E('Proceed'), T('Added n audiences · n not added', '只加入有效的')], ['回去改', E('Cancel'), R('回到名單')])]),
+            D('選資料類型', 'dlg-import'), E('貼上或輸入名單'), D('每一筆變成標籤，立即比對', 'dlg-import-list'),
+            F(['紅色標籤', E('點標籤'), D('就地修改', 'dlg-import-result'), R('Enter 重新比對', '找到就變灰色標籤')], ['不要某一筆', E('標籤上的 ✕'), R('移除這一筆')]),
+            E('Proceed'), T('Added n audiences（有紅色標籤時加上 · n not added）', '只加入灰色標籤，回到步驟 1'),
           ]} />
           <Sub id="1-5" title="移除收件人" start="收件人表格" items={[
             E('列尾 ×'), R('直接移除這一列', '沒有篩選，也沒有全部移除'),
@@ -239,7 +239,7 @@ function Frame() {
           ['編輯內容', 'Cancel', 'Save'],
         ]} />
         <Notes items={[
-          { title: '按鈕樣式', body: 'Cancel、Back 是 tertiary；Save as group、Save as template、Send me a test 是 secondary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
+          { title: '按鈕樣式', body: 'Cancel、Back 是 tertiary；Save as group、Save as template、Send me a test 是 secondary；Next 與 Create message 是 primary。頁尾除了 Cancel 都有開頭圖示（2026-11-18）：Back ArrowLeft、Save as group UsersRound、Save as template FileText、Send me a test FlaskConical、Create message Send、編輯內容的 Save Save；Next 的 ArrowRight 放在文字後面（DS Button endIcon）。' },
           { title: 'Next', body: '按下時檢查這一步，有錯就留在這一步並顯示錯誤。「有人收不到訊息」（Message Coverage 的藍色連結）只是提醒，不擋 Next。' },
           { title: 'Save as group', body: '沒有收件人時停用。' },
           { title: 'Send me a test', body: '內容有錯時不寄，toast：Finish the message first；成功時 toast：Test sent via n channels（n 是這次測試用到的通道數，SMS 備援算一個；1 時用單數 channel）。' },
@@ -449,8 +449,7 @@ function Dialogs() {
     <>
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），按鈕不放圖示，不放副標。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
-          ['Batch import', '步驟 1 Batch import', '720', 'Add n audiences'],
-          ['Save without invalid audiences?', 'Batch import 按 Add 後有無效的值', '640', 'Proceed（紅色）；另有 Check again'],
+          ['Batch import', '步驟 1 Batch import', '720', 'Proceed'],
           ['{Channel}: N messages can’t be sent', '步驟 1 Message Coverage by Channel 各通道列右側的連結', '720', '無（Close）'],
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
@@ -459,18 +458,19 @@ function Dialogs() {
           ['Leave without sending?', '任何步驟 Cancel', '480', 'Discard（紅色）'],
         ]} />
       </Section>
-      <Section eyebrow="Import" title="Batch import" lead="2026-11-17 起改為「按 Add 再驗證」的折衷版：輸入時只算格式，按 Add 才驗證；有無效的開第二層，在第二層直接修正或略過。">
-        <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-list', '輸入名單', '即時顯示格式正確的數量'], ['dlg-import-result', '有無效的', '第二層：在黃框裡直接修正，或略過']]} />
+      <Section eyebrow="Import" title="Batch import" lead="2026-11-18 起改為批次匯入提案的 A 版（標籤，像郵件的收件人欄）：每一筆一輸入就變成標籤並立即比對；找到的是灰色標籤，找不到的是紅色標籤，點一下就地修改。只有一層對話框。">
+        <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-list', '輸入名單', '灰色是找到的，紅色是找不到的（滑過看原因）'], ['dlg-import-result', '修改紅色標籤', '點紅色標籤變成輸入框']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框，文案把 audiences 換成 members（群組）。'],
-          ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前輸入框停用。下方不放說明文字（2026-11-17 拿掉）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
-          ['List', <>Textarea 8 行，說明 <Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />，可以貼 Excel 的一欄。DS 預設字型（不用等寬字體）。</>],
-          ['數量提示', <><Copy en="There are {n} valid audiences in total." zh="共 {n} 位收件人格式正確。" />：只檢查格式、去掉重複，還沒查人存不存在，所以驗證後的有效數量可能比較少。</>],
-          ['主彈窗按鈕', <>Cancel（tertiary）、<Copy en="Add {n} audiences" zh="加入 {n} 位收件人" />（primary；n 為 0 時停用）。按下後呼叫 API 驗證全部的值：Add 轉圈（DS Button loading），Cancel、Add 與名單都停用。全部有效就直接加入並關閉，toast <Copy en="Added n audiences" zh="已加入 n 位收件人" />。</>],
-          ['第二層', <>標題 <Copy en="Save without invalid audiences?" zh="不含無效的收件人，直接儲存？" />，右上角關閉。內文 <Copy en="There are {v} valid and {i} invalid audiences. Are you sure you want to save without the invalid audiences?" zh="{v} 筆有效、{i} 筆無效。確定要不含無效的收件人直接儲存嗎？" />。DS Alert（inline、warning）標題 <Copy en="Invalid audiences listed below:" zh="以下是無效的收件人：" />，框內每筆一個欄位（error 狀態）可直接修改、右邊紅字原因；超過約 8 筆時框內捲動。</>],
-          ['第二層按鈕', <>Cancel（tertiary，回主彈窗）、<Copy en="Check again" zh="重新驗證" />（secondary，轉圈並停用全部，只重新驗證這幾筆；全部找到就加入並關閉所有彈窗）、<Copy en="Proceed" zh="繼續" />（primary danger，只加入有效的並關閉所有彈窗，toast 加上「· n not added」）。</>],
-          ['外部聯絡人', '沒勾 Email 通道時，外部 Email 驗證為無效，原因 Email isn’t a selected channel；沒選 SMS 備援時，外部號碼無效，原因 SMS fallback isn’t a selected channel。已在收件人表格裡、或名單裡重複的，自動略過。'],
-          ['和 DS 的出入', 'DS 建議 Alert 的說明不超過 2–3 行，也沒有在 Alert 裡放欄位的例子；這裡刻意把修正欄位放進黃框，待 DS 負責人確認。'],
+          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織、群組各是一列（藍色 n people 開成員名單），不展開成個人，也沒有各通道的欄位。'],
+          ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前名單欄位停用（DS disabled 底色）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
+          ['List', <>DS 欄位外框（border、hover、focus 藍框，高至少 132、最多約 288，超過時框內捲動），裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
+          ['找到的', <>DS Tag（neutral）：人員是 16px 大頭照加「英文名 中文名」，不截斷；組織是大樓圖示加組織代號；外部聯絡人是信封或電話圖示加 Email／號碼。每個標籤都有 ✕。</>],
+          ['找不到的', <>DS Tag（red），顯示原本輸入的值；滑過顯示原因（Tooltip，在標籤下方）；點一下（或 Enter）變成 DS Input（sm）就地修改，Enter 或離開欄位後重新比對，Esc 取消修改。</>],
+          ['說明文字', <>沒有紅色標籤時：<Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />；有紅色標籤時：<Copy en="Click a red tag to edit it." zh="點紅色標籤可以修改。" /></>],
+          ['不顯示的', '名單裡重複的、已經在收件人表格裡的，直接不顯示（重複的人很多時畫面會很亂）。也不顯示找到幾筆、找不到幾筆的總結。'],
+          ['按鈕', <>Cancel（tertiary）、<Copy en="Proceed" zh="繼續" />（primary；沒有灰色標籤、或正在修改紅色標籤時停用）。按下後只加入灰色標籤並關閉，toast <Copy en="Added n audiences" zh="已加入 n 位收件人" />，有紅色標籤時後面加 <Copy en="· n not added" zh="・n 筆未加入" />。</>],
+          ['外部聯絡人', '沒勾 Email 通道時，外部 Email 是紅色標籤，原因 Email isn’t a selected channel；沒選 SMS 備援時，外部號碼是紅色標籤，原因 SMS fallback isn’t a selected channel。'],
+          ['和 DS 的出入', 'DS Tag 還沒有可編輯的樣子（DS 負責人尚未設計）：原型先用「點紅色標籤換成 DS Input」代替。紅色標籤用 Tag 的 red 色（分類色，不是語意上的 error）。DS 沒有「標籤輸入欄位」元件，外框沿用 DS 欄位的 token。DS 的 PersonAvatarTag 只顯示大頭照，所以人員用 Tag 加 avatar。'],
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
@@ -488,7 +488,7 @@ function Dialogs() {
         <SpecTable head={['對話框', '情況', '紅字內容', '什麼時候出現', '擋什麼']} nowrap={[0]} rows={[
           ['Save as group、Save as template', '名稱沒填', <Copy en="Enter a name." zh="請輸入名稱。" />, '按 Save 後', '擋 Save'],
           ['Save as group、Save as template', '名稱超過 50 字、與這個空間已有的重名', <><Copy en="Up to 50 characters." zh="最多 50 字。" />　<Copy en="This name is taken." zh="這個名稱已經有人用了。" /></>, '即時', '擋 Save'],
-          ['Batch import', '有找不到或不符合的項目', '第二層對話框的黃框裡，每筆欄位紅框、右側紅字原因', '按 Add 驗證後', '不擋；按 Proceed 只加入有效的'],
+          ['Batch import', '有找不到或不符合的項目', '紅色標籤；滑過顯示原因', '輸入後立即', '不擋；按 Proceed 只加入灰色標籤'],
         ]} />
       </Section>
     </>
