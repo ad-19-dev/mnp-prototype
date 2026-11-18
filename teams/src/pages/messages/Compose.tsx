@@ -508,14 +508,17 @@ function FootBar({ m }: { m: SendCtl }) {
         <div className="flex flex-wrap gap-2">
           {c.step === 1 ? <Button variant="tertiary" disabled={!c.receivers.length} onClick={() => m.set({ sg: { name: '', desc: '', tried: false } })}>{L('Save as group', '存成群組')}</Button> : null}
           {c.step === 2 ? <Button variant="tertiary" onClick={() => m.openSaveTpl()}>{L('Save as template', '存成模板')}</Button> : null}
-          {c.step === 3 ? <Button variant="tertiary" onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button> : null}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Button variant="tertiary" onClick={() => m.goList()}>{L('Cancel', '取消')}</Button>
           {c.step > 1 ? <Button variant="tertiary" onClick={() => m.goStep(c.step - 1)}>{L('Back', '上一步')}</Button> : null}
           {c.step < 3
             ? <Button variant="primary" onClick={() => m.goStep(c.step + 1)}>{L('Next', '下一步')}</Button>
-            : <Button variant="primary" onClick={() => m.submit()}>{primary}</Button>}
+            : <>
+              {/* step 3: next to Create message, secondary (2026-11-18: users didn't find it on the left in testing) */}
+              <Button variant="secondary" onClick={() => m.sendTest()}>{L('Send me a test', '寄測試給我')}</Button>
+              <Button variant="primary" onClick={() => m.submit()}>{primary}</Button>
+            </>}
         </div>
         </>}
       </div>

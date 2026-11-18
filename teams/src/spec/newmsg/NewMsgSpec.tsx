@@ -235,7 +235,7 @@ function Frame() {
         <SpecTable head={['步驟', '左側', '右側']} nowrap={[0]} rows={[
           ['1', <Copy en="Save as group" zh="存成群組" />, 'Cancel、Next'],
           ['2', <Copy en="Save as template" zh="存成模板" />, 'Cancel、Back、Next'],
-          ['3', <Copy en="Send me a test" zh="寄測試給我" />, 'Cancel、Back、Create message'],
+          ['3', '—', <>Cancel、Back、<Copy en="Send me a test" zh="寄測試給我" />（secondary）、Create message。2026-11-18 從左側移到 Create message 旁邊並改成 secondary：使用者測試時沒有人發現在左邊的 Send me a test。</>],
         ]} />
         <Notes items={[
           { title: '按鈕樣式', body: 'Cancel、Back 與左側按鈕都是 tertiary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
