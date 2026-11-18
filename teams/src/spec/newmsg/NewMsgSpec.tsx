@@ -231,11 +231,12 @@ function Frame() {
           ['手機寬度', '只顯示目前步驟：圓形數字、步驟名稱與 Step n of 3。'],
         ]} />
       </Section>
-      <Section eyebrow="Footer" title="頁尾" lead="固定在畫面底部。左側是這一步的次要操作，右側是導覽。">
+      <Section eyebrow="Footer" title="頁尾" lead="固定在畫面底部。左側是離開與回上一步（tertiary）；右側是這一步可以做的事（secondary）與往下一步（primary）。2026-11-18 調整：使用者測試時沒有人發現原本放在左邊的 Send me a test。">
         <SpecTable head={['步驟', '左側', '右側']} nowrap={[0]} rows={[
-          ['1', <Copy en="Save as group" zh="存成群組" />, 'Cancel、Next'],
-          ['2', <Copy en="Save as template" zh="存成模板" />, 'Cancel、Back、Next'],
-          ['3', '—', <>Cancel、Back、<Copy en="Send me a test" zh="寄測試給我" />（secondary）、Create message。2026-11-18 從左側移到 Create message 旁邊並改成 secondary：使用者測試時沒有人發現在左邊的 Send me a test。</>],
+          ['1', 'Cancel', <><Copy en="Save as group" zh="存成群組" />（secondary，還沒有收件人時停用）、Next</>],
+          ['2', 'Cancel、Back', <><Copy en="Save as template" zh="存成模板" />（secondary）、Next</>],
+          ['3', 'Cancel、Back', <><Copy en="Send me a test" zh="寄測試給我" />（secondary）、Create message</>],
+          ['編輯內容', 'Cancel', 'Save'],
         ]} />
         <Notes items={[
           { title: '按鈕樣式', body: 'Cancel、Back 與左側按鈕都是 tertiary；Next 與 Create message 是 primary。頁尾的按鈕都沒有圖示。' },
