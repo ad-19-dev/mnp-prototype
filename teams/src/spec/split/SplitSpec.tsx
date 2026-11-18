@@ -114,7 +114,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
       <Section eyebrow="2" title="訊息詳情（modal）" lead="點標題開啟。左邊是內容與收件人，右邊淺灰底是基本資訊；能改的欄位依狀態可編輯，其他是 Read only。">
         <div className="flow-branches">
           <Card kind="page" title="不能編輯的紀錄" when="Pending approval、In progress、Sent、Rejected、Canceled" shots={['detail-fb']} then={'內容與收件人是 Read only（標題旁有 Read only 標籤）。右側：' + FIELDS + '。'} />
-          <Card kind="page" title="可以編輯的紀錄" when="Scheduled、Scheduled expired、Error" shots={['edit-content']} then="內容、收件人（搜尋、Batch import、移除；SMS 有兩欄手機）、傳送時間直接改。Scheduled 一改動，底部換成 Discard changes / Save changes；Scheduled expired、Error 底部一直是 Resend，按下就送出（2026-11-18）。" />
+          <Card kind="page" title="可以編輯的紀錄" when="Scheduled、Scheduled expired、Error" shots={['edit-content']} then="內容、收件人（搜尋、Batch import、移除；SMS 有兩欄手機）、傳送時間直接改。Scheduled 一改動，底部換成 Discard changes / Save changes；Scheduled expired、Error 的 Send time 是 Now / Schedule，底部一直是 Resend（選 Schedule 時是 Schedule resend），按下就送出（2026-11-18）。" />
           <Card kind="page" title="單一通道的紀錄" when="Email、Desktop OS、Device Notifications" shots={['detail-email', 'detail-push']} then="內容只有這個通道的欄位；收件人只列這個通道寄得到的人。" />
           <Card kind="dialog" title="Sent details" when="訊息詳情 Audience 右上角的 Sent details（已開始送出）" shots={['dlg-delivery']} then="每一則實際送出的訊息一列：可以搜尋、篩選、分頁；有人未送出時可以 Resend。" />
           <Card kind="action" title="Approval Center" when="點 View in Approval Center" then="開啟內部的 Approval Center（prototype 只顯示提示）。" />
@@ -125,7 +125,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         <div className="flow-branches">
           <Card kind="dialog" title="Sent details（只看 Not sent）" when="點狀態下的 {n} not sent（列表或訊息詳情）" shots={['dlg-fail']} then="同一個發送明細對話框，Status 已篩選成 Not sent；按鈕 Resend to {n}。" />
           <Card kind="dialog" title="Resend（只寄沒收到的人）" when="Sent details 的 Resend to not sent (n)" shots={['resend']} then="訊息詳情的 Resend 模式，收件人只有沒收到的人；送出後是一則新訊息（新的訊息 ID）。不再進入發送流程。" />
-          <Card kind="page" title="Resend（全部收件人）" when="選單的 Resend 或詳情底部的 Resend（Scheduled expired、Error）" shots={['resend-full']} then="選單的 Resend 就是打開同一個訊息詳情（2026-11-18 起不再切換到 Resend 模式）。按底部 Resend 直接送出；Send time 已經過了時，欄位紅框提醒改時間，改好再按 Resend，這一筆變成 Scheduled。" />
+          <Card kind="page" title="Resend（全部收件人）" when="選單的 Resend 或詳情底部的 Resend（Scheduled expired、Error）" shots={['resend-full']} then="選單的 Resend 就是打開同一個訊息詳情（2026-11-18 起不再切換到 Resend 模式）。Send time 選 Now 或 Schedule（預設 Schedule，帶原本的時間）；按底部按鈕直接送出。Schedule 的時間已經過了時，欄位紅框提醒改時間或改選 Now。" />
           <Card kind="dialog" title="Cancel sending?" when="選單或詳情底部的 Cancel sending" shots={['dlg-cancel']} then="這個通道不再送出，狀態變成 Canceled；紀錄留在列表。" />
           <Card kind="action" title="Duplicate to new message" when="列選單的 Duplicate to new message 或詳情底部的 Duplicate" then="進入發送流程，只帶入這個通道（通道、內容與它的收件人）。" />
           <Card kind="menu" title="專案的 ⋯ 選單" when="側邊欄滑過一個專案" shots={['space-menu']} then="Project settings（開專案設定）、Leave project（確認後離開）。" />
@@ -285,8 +285,8 @@ function Detail() {
           { n: 1, title: '可編輯的欄位', body: '必填星號、字數計數，限制和發送流程相同。' },
           { n: 2, title: '加入收件人', body: '搜尋列（Person、Org、Group、Phone、Email）與 Batch import；每列右側 ✕ 移除。外部電話只能加在 Device Notifications (SMS)，外部 Email 只能加在 Email（其他通道輸入外部 Email 時搜尋框直接提示不能加入，公司信箱仍會加入員工）。' },
           { n: 3, title: '手機欄', body: '預設勾 Company phone；每列至少要勾一支，否則不能儲存。' },
-          { n: 4, title: 'Send time', body: '日期時間欄位，預設是原本的傳送時間；改了之後狀態變成 Scheduled。' },
-          { n: 5, title: '底部', body: 'Scheduled expired、Error：主要按鈕一直是 Resend，按下就用畫面上的內容、收件人和時間送出，不另開對話框；有改動時 Duplicate 換成 Discard changes，Cancel sending 停用。Scheduled：有改動時底部換成 Discard changes / Save changes。' },
+          { n: 4, title: 'Send time', body: 'Scheduled：日期時間欄位，改了之後仍是 Scheduled。Scheduled expired、Error：Now / Schedule 兩個選項，預設 Schedule 帶原本的傳送時間。' },
+          { n: 5, title: '底部', body: 'Scheduled expired、Error：主要按鈕一直存在，選 Now 時是 Resend、選 Schedule 時是 Schedule resend，按下就用畫面上的內容、收件人和時間送出，不另開對話框；有改動時 Duplicate 換成 Discard changes，Cancel sending 停用。Scheduled：有改動時底部換成 Discard changes / Save changes。' },
         ]} />
         <SpecTable head={['狀態', 'Content', 'Audience', 'Send time']} nowrap={[0]} rows={[
           [<StatusTag s="scheduled" />, '可編輯', '可編輯', '可編輯'],
@@ -303,7 +303,7 @@ function Detail() {
           { title: '只改這個通道', body: '內容、收件人、手機與傳送時間都只改這一筆；同一個訊息 ID 的其他通道不變。' },
           { title: '沒儲存就關閉', body: <>先問 <Copy en="Discard changes?" zh="要捨棄變更嗎？" />：Keep editing / Discard。</> },
           { title: '儲存後（Scheduled）', body: <>toast <Copy en="Changes saved" zh="已儲存變更" />；有改傳送時間時是 <Copy en="Saved. Sends <時間>" zh="已儲存，將於 <時間> 傳送" />。</> },
-          { title: 'Resend 後（Scheduled expired、Error）', body: <>沒有另外的儲存：改過的內容與 Resend 一起送出。toast <Copy en="Resend scheduled for <時間>" zh="已排程重新傳送：<時間>" />。</> },
+          { title: 'Resend 後（Scheduled expired、Error）', body: <>沒有另外的儲存：改過的內容與 Resend 一起送出。toast：Now 是 <Copy en="Sending on <通道>" zh="正在以 <通道> 傳送" />，Schedule 是 <Copy en="Resend scheduled for <時間>" zh="已排程重新傳送：<時間>" />。</> },
         ]} />
       </Section>
       <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 Sent details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
@@ -361,7 +361,7 @@ function Actions() {
         [<StatusTag s="canceled" />, '', '✓', ''],
       ]} />
       <SpecTable head={['項目', '做什麼']} nowrap={[0]} rows={[
-        [<Copy en="Resend" zh="重新傳送" />, '2026-11-16 起取代 Send now 與 Reschedule；2026-11-18 起直接打開訊息詳情（和點標題相同，不再有 Resend 模式）。Scheduled expired、Error 的內容、收件人、Send time 都可以改，收件人是這一筆的全部收件人（Error 也是寄給全部的人）；底部 Resend 按下就送出，Send time 已過時先提醒改時間。不再進入發送流程。Scheduled 的紀錄沒有這個選單項目：改時間在訊息詳情裡直接改 Send time。'],
+        [<Copy en="Resend" zh="重新傳送" />, '2026-11-16 起取代 Send now 與 Reschedule；2026-11-18 起直接打開訊息詳情（和點標題相同，不再有 Resend 模式）。Scheduled expired、Error 的內容、收件人、Send time 都可以改，收件人是這一筆的全部收件人（Error 也是寄給全部的人）；右側 Send time 選 Now 或 Schedule（預設 Schedule 帶原本的時間）；底部 Resend／Schedule resend 按下就送出，Schedule 的時間已過時先提醒改時間或改選 Now。不再進入發送流程。Scheduled 的紀錄沒有這個選單項目：改時間在訊息詳情裡直接改 Send time。'],
         [<Copy en="Duplicate to new message" zh="複製為新訊息" />, '進入發送流程，只帶入這個通道：通道、它的內容與它的收件人。'],
         [<Copy en="Cancel sending" zh="取消傳送" />, '開確認對話框，確認後這個通道不再送出，狀態變成 Canceled；紀錄留在列表，可以查看與複製。紅字，上方有分隔線。'],
       ]} />
@@ -546,10 +546,11 @@ function Modals() {
         ]} />
         <Notes items={[{ title: '取消傳送的關閉按鈕', body: '用 Keep 而不是 Cancel，避免和確認按鈕 Cancel sending 混淆。' }]} />
       </Section>
-      <Section eyebrow="Resend" title="重新傳送" lead="取代原本的 Send now 與 Reschedule（2026-11-16）：在訊息詳情裡完成，不進入發送流程。2026-11-18 起，Scheduled expired、Error 的訊息詳情本身就可以編輯，按 Resend 直接送出，不再切換到另一個 Resend 畫面。核准仍然有效；只作用在這個通道。">
+      <Section eyebrow="Resend" title="重新傳送" lead="取代原本的 Send now 與 Reschedule（2026-11-16）：在訊息詳情裡完成，不進入發送流程。2026-11-18 起，Scheduled expired、Error 的訊息詳情本身就可以編輯，Send time 選 Now 或 Schedule，按底部按鈕直接送出，不再切換到另一個 Resend 畫面。核准仍然有效；只作用在這個通道。">
         <Figure label="從選單 Resend（全部收件人）" sub="Scheduled expired：和點標題開啟的訊息詳情相同" shot="resend-full" max={760} notes={[
-          { n: 1, title: 'Send time', body: '日期時間欄位，預設是原本的傳送時間（已經過了）；日曆上今天以前的日期是灰色、不能點。' },
-          { n: 2, title: 'Resend', body: <>按下時檢查所有欄位與傳送時間；時間已過就留在畫面上提醒改時間。改成現在到 3 個月內的時間後再按，就以這個時間送出，這一筆變成 Scheduled，toast <Copy en="Resend scheduled for <時間>" zh="已排程重新傳送：<時間>" />。</> },
+          { n: 1, title: 'Now', body: <>2026-11-18 加上：選 Now 時日期欄位收起，按鈕是 <C>Resend</C>，立即送出，這一筆變成 In progress，toast <Copy en="Sending on <通道>" zh="正在以 <通道> 傳送" />。</> },
+          { n: 2, title: 'Schedule（預設）', body: '日期時間欄位，預設是原本的傳送時間（通常已經過了）；日曆上今天以前的日期是灰色、不能點。' },
+          { n: 3, title: 'Schedule resend', body: <>按下時檢查所有欄位與傳送時間；時間已過就留在畫面上，提醒改時間或改選 Now。改成現在到 3 個月內的時間後再按，就以這個時間送出，這一筆變成 Scheduled，toast <Copy en="Resend scheduled for <時間>" zh="已排程重新傳送：<時間>" />。</> },
         ]} />
         <Figure label="從 Sent details 的 Resend to not sent (n)" sub="只寄沒收到的人" shot="resend" max={760} notes={[
           { n: 1, title: '標題', body: '訊息 ID 標籤加 Resend。' },
@@ -557,10 +558,10 @@ function Modals() {
           { n: 3, title: 'Send time', body: 'Now 或 Schedule。' },
           { n: 4, title: 'Resend', body: '送出後列表上多一筆新訊息；原本那一筆不變。' },
         ]} />
-        <div className="spec-gallery"><figure><figcaption><b>傳送時間已過</b><span>沒改時間就按 Resend：錯誤在欄位下方，欄位紅框，不送出。</span></figcaption><div className="spec-canvas"><Shot name="resend-later" alt="傳送時間已過" max={420} /></div></figure></div>
+        <div className="spec-gallery"><figure><figcaption><b>傳送時間已過</b><span>選 Schedule、沒改時間就按 Schedule resend：錯誤在欄位下方，欄位紅框，不送出。</span></figcaption><div className="spec-canvas"><Shot name="resend-later" alt="傳送時間已過" max={420} /></div></figure></div>
         <SpecTable head={['情況', '錯誤文案']} nowrap={[0]} rows={[
           ['沒有選日期時間', <Copy en="Pick a date and time." zh="請選擇日期和時間。" />],
-          ['Scheduled expired、Error：時間已經過了', <Copy en="This time has passed. Pick a new send time." zh="這個時間已經過了，請選擇新的傳送時間。" />],
+          ['Scheduled expired、Error：時間已經過了', <Copy en="This time has passed. Pick a new time or choose Now." zh="這個時間已經過了，請選擇新的時間，或改選立即。" />],
           ['超過 3 個月；Resend 模式選 Schedule 時是過去的時間', <Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" />],
         ]} />
       </Section>

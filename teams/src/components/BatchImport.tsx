@@ -3,8 +3,8 @@
 //   1. Choose the data type, then paste or type into the field: each entry becomes a tag as soon as it's entered
 //      (Enter, a comma, a new line, or a paste of a whole list) and is looked up right away.
 //   2. Found: a gray tag with the person's avatar and name (an org or outside contact: its icon and value).
-//      Not found: a red tag with what was entered; hover for why; click it to edit it in place (Enter to look it up again).
-//      Every tag has ✕. Entries twice in the list, or already added, aren't shown (with many repeats it looked messy).
+//      Not found: a red tag with what was entered; hover for why. Any tag, gray or red, is edited in place when clicked
+//      (it shows what was entered; Enter looks it up again). Every tag has ✕. Entries twice in the list, or already added, aren't shown (with many repeats it looked messy).
 //   3. Proceed adds the found ones; red ones are left out (the toast says how many).
 // The DS Tag has no editable state yet (the DS owner hasn't designed one): editing swaps the tag for a small DS Input.
 import * as React from 'react'
@@ -53,12 +53,19 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
   const saveEdit = () => { if (!edit) return; const l = splitTokens(edit.v).map(x => x.trim()).filter(Boolean); setVals(v => { const n = v.slice(); n.splice(edit.i, 1, ...l); return n }); setEdit(null); setTimeout(() => inputRef.current && inputRef.current.focus(), 0) }
   const word = noun === 'member' ? L('members', '位成員') : L('audiences', '位收件人')
 
+  // every tag, gray or red, opens for editing when clicked (2026-11-18); its ✕ only removes it
+  const editable = (h: Hit, name: string) => ({
+    role: 'button', tabIndex: 0, className: 'cursor-text',
+    'aria-label': L('Edit ', '修改 ') + name + (h.why ? ': ' + tx(h.why) : ''),
+    onClick: (e: React.MouseEvent) => { if (!(e.target as HTMLElement).closest('button')) setEdit({ i: h.i, v: h.v }) },
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setEdit({ i: h.i, v: h.v }) } },
+  })
   const label = (h: Hit) => {
     const t = h.ok!.tag
     // a person: the DS Tag with an avatar and the name (the DS PersonAvatarTag shows the avatar only)
-    if (t.type === 'person') { const p = PMAP[t.id!]; return <Tag unbounded avatar={<PAvatar p={p} size={16} />} onRemove={() => drop(h.i)} removeAriaLabel={pname(p)}>{pname(p)}</Tag> }
-    const phone = t.type === 'ext' && t.email!.indexOf('@') < 0
-    return <Tag icon={t.type === 'org' ? Building2 : phone ? Phone : Mail} onRemove={() => drop(h.i)} removeAriaLabel={t.type === 'org' ? t.id : t.email}>{t.type === 'org' ? t.id : t.email}</Tag>
+    if (t.type === 'person') { const p = PMAP[t.id!]; return <Tag unbounded avatar={<PAvatar p={p} size={16} />} {...editable(h, pname(p))} onRemove={() => drop(h.i)} removeAriaLabel={pname(p)}>{pname(p)}</Tag> }
+    const phone = t.type === 'ext' && t.email!.indexOf('@') < 0, name = (t.type === 'org' ? t.id : t.email) || ''
+    return <Tag icon={t.type === 'org' ? Building2 : phone ? Phone : Mail} {...editable(h, name)} onRemove={() => drop(h.i)} removeAriaLabel={name}>{name}</Tag>
   }
 
   return (
@@ -69,20 +76,18 @@ export function BatchImportDialog({ open, onClose, onAdd, has, opts, noun = 'aud
           <DialogBody>
             <div className="flex flex-col gap-[var(--layout-space-tight)]">
               <ListKindField id="imp-kind" value={kind} onChange={k => { setKind(k); setEdit(null) }} />
-              <FormField id="imp-text" label={L('List', '名單')} hint={bad.length ? L('Click a red tag to edit it.', '點紅色標籤可以修改。') : L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
+              <FormField id="imp-text" label={L('List', '名單')} hint={hits.length ? L('Click a tag to edit it.', '點標籤可以修改。') : L('Separate with commas or new lines.', '用逗號或換行分隔。')}>
                 {/* the DS field frame (border, hover, focus), holding DS Tags and a bare input for the next entry */}
                 <div className={cn('flex max-h-72 min-h-[132px] w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
                   kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
                   onClick={e => { if (e.target === e.currentTarget && inputRef.current) inputRef.current.focus() }}>
-                  {hits.map(h => h.ok ? <React.Fragment key={h.i}>{label(h)}</React.Fragment>
-                    : edit && edit.i === h.i
+                  {hits.map(h => edit && edit.i === h.i
                       ? <div key={h.i} className="w-48"><Input size="sm" autoFocus aria-label={L('Edit ', '修改 ') + h.v} value={edit.v} onChange={e => setEdit({ i: h.i, v: e.target.value })}
                           onBlur={saveEdit} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); saveEdit() } if (e.key === 'Escape') { e.stopPropagation(); setEdit(null) } }} /></div>
-                      : (
+                      : h.ok ? <React.Fragment key={h.i}>{label(h)}</React.Fragment> : (
                         <Tooltip key={h.i}>
                           <TooltipTrigger asChild>
-                            <Tag color="red" role="button" tabIndex={0} className="cursor-text" aria-label={L('Edit ', '修改 ') + h.v + ': ' + tx(h.why!)} onRemove={() => drop(h.i)} removeAriaLabel={h.v}
-                              onClick={() => setEdit({ i: h.i, v: h.v })} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEdit({ i: h.i, v: h.v }) } }}>{h.v}</Tag>
+                            <Tag color="red" {...editable(h, h.v)} onRemove={() => drop(h.i)} removeAriaLabel={h.v}>{h.v}</Tag>
                           </TooltipTrigger>
                           <TooltipContent side="bottom">{tx(h.why!)}</TooltipContent>
                         </Tooltip>

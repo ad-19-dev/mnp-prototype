@@ -84,7 +84,9 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   const app = useApp(), r = x.r, k = x.k, st = x.st, t = recText(r, k)
   const again = !resend && canSendNow(st)
   const edit = !!resend || again || canEditContent(st), timeEdit = !resend && canReschedule(st)
-  const [when, setWhen] = React.useState<'now' | 'later'>('now')
+  // Scheduled expired, Error: Now or Schedule (2026-11-18), Schedule first with the original time, so Resend points out
+  // a time that has passed; the resend mode starts on Now
+  const [when, setWhen] = React.useState<'now' | 'later'>(again ? 'later' : 'now')
   const init = React.useMemo(() => ({ v: { ...initVals(r, k), ...(resend ? { at: '' } : {}) }, tags: (resend && resend.tags) || tagsFor(r, k) }), [r.id, k, r.fresh])
   const [v, setV] = React.useState<Vals>(init.v), [tags, setTags] = React.useState<RTag[]>(init.tags)
   const [tried, setTried] = React.useState(false), [seed, setSeed] = React.useState(0)
@@ -128,7 +130,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   }
   const atD = fromIso(v.at), now = new Date(), max = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate(), now.getHours(), now.getMinutes())
   if (resend && when === 'later') { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now || atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
-  else if (again) { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now) e.at = L('This time has passed. Pick a new send time.', '這個時間已經過了，請選擇新的傳送時間。'); else if (atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
+  else if (again && when === 'later') { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now) e.at = L('This time has passed. Pick a new time or choose Now.', '這個時間已經過了，請選擇新的時間，或改選立即。'); else if (atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
   else if (!resend && timeChanged) { if (!atD) e.at = L('Pick a date and time.', '請選擇日期和時間。'); else if (atD < now || atD > max) e.at = L('Please select a date between now and next 3 months.', '請選擇現在到未來 3 個月內的日期。') }
   const show = (key: string) => (tried ? e[key] || '' : '')
 
@@ -161,7 +163,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
     const p = patchOf()
     if (resend && resend.tags) { delete p.chAud; delete p.byCh }
     onDirty(false)
-    m.resendRec(r, k, { patch: p, tags: resend && resend.tags ? tags : undefined, at: again ? atD : when === 'later' && atD ? atD : null })
+    m.resendRec(r, k, { patch: p, tags: resend && resend.tags ? tags : undefined, at: when === 'later' && atD ? atD : null })
   }
 
   // audience: added here like in the send flow; external contacts only where their channel is (phone: SMS, email: Email)
@@ -267,15 +269,15 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
         </div>
 
         <aside className="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l border-divider bg-[var(--color-neutral-1)] p-[var(--layout-space-loose)]" aria-label={L('Details', '詳細資料')}>
-          <Facts m={m} x={x} audN={edit ? countOf(tags, app.groups) : null} time={resend ? (
+          <Facts m={m} x={x} audN={edit ? countOf(tags, app.groups) : null} time={resend || again ? (
             // Resend: now, or at a time picked here
             <span className="flex flex-col gap-2">
               <RadioGroup value={when} onValueChange={val => setWhen(val as 'now' | 'later')} aria-label={L('When to resend', '何時重新傳送')} className="flex flex-col gap-2">
                 <RadioGroupItem value="now" label={L('Now', '立即')} />
                 <RadioGroupItem value="later" label={L('Schedule', '排程')} />
               </RadioGroup>
-              {when === 'later' ? <FormField id="dm-rat" error={show('at')}>
-                <DatePicker id="dm-rat" showTime typeable locale={L('en-US', 'zh-TW')} value={v.at || null} error={!!show('at')} onChange={val => set({ at: val || '' })} placeholder="YYYY/MM/DD HH:MM" />
+              {when === 'later' ? <FormField id={again ? 'dm-at' : 'dm-rat'} error={show('at')}>
+                <DatePicker id={again ? 'dm-at' : 'dm-rat'} showTime typeable locale={L('en-US', 'zh-TW')} value={v.at || null} error={!!show('at')} onChange={val => set({ at: val || '' })} placeholder="YYYY/MM/DD HH:MM" />
               </FormField> : null}
             </span>
           ) : timeEdit ? (
@@ -296,7 +298,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
             {/* edited right here; Resend sends it (no second dialog). Not edited yet: Duplicate is offered as well */}
             {dirty ? <Button variant="tertiary" onClick={discard}>{L('Discard changes', '捨棄變更')}</Button>
               : <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate', '複製')}</Button>}
-            <Button variant="primary" startIcon={Send} onClick={doResend}>{L('Resend', '重新傳送')}</Button>
+            <Button variant="primary" startIcon={Send} onClick={doResend}>{when === 'later' ? L('Schedule resend', '排程重新傳送') : L('Resend', '重新傳送')}</Button>
           </> : resend ? <>
             {/* Cancel leaves resend mode (back to the details), without sending */}
             <Button variant="tertiary" onClick={() => { onDirty(false); m.set({ resend: null }) }}>{L('Cancel', '取消')}</Button>

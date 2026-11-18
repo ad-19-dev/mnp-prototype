@@ -67,7 +67,7 @@ await step('dlg-import', async () => {
   await shot('dlg-import-list', dlg(), [
     [1, dlg().getByRole('button', { name: /^(Remove|移除) / }).first(), 'tl'],
     [2, red(), 'tl'],
-    [3, dlg().getByText('Click a red tag to edit it.'), 'tl'],
+    [3, dlg().getByText('Click a tag to edit it.'), 'tl'],
     [4, dlg().getByRole('button', { name: /^Proceed/ }), 'tl'],
   ], 12);
   await red().click(); await wait(400);
@@ -147,7 +147,7 @@ await step('dlg-leave', async () => {
 });
 await step('submit', async () => {
   await foot('Create message').click(); await wait(700);
-  if (await p.getByRole('dialog').count()) { await shot('dlg-urgent', dlg(), [], 12); await dlg().locator('button').last().click(); await wait(900) }
+  // urgent sends are created straight away (2026-11-18: no Send without SMS approval? confirm)
   await big(940); await p.screenshot({ path: `${OUT}/after-submit.jpg`, type: 'jpeg', quality: 80 }); marks['after-submit'] = { w: 1680, h: 940, marks: [] };
 });
 

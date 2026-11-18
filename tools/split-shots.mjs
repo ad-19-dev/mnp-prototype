@@ -259,10 +259,11 @@ await step('resend-full', async () => {
   await find('UX sync moves'); await openRowMenu('UX sync moves'); await p.getByRole('menuitem', { name: /^Resend/ }).click(); await wait(800);
   const d = p.getByRole('dialog').last();
   await shot('resend-full', d, [
-    [1, d.locator('#dm-at'), 'tl'],
-    [2, d.getByRole('button', { name: 'Resend', exact: true }), 'tl'],
+    [1, d.getByRole('radio', { name: 'Now' }), 'tl'],
+    [2, d.locator('#dm-at'), 'tl'],
+    [3, d.getByRole('button', { name: 'Schedule resend', exact: true }), 'tl'],
   ], 12);
-  await d.getByRole('button', { name: 'Resend', exact: true }).click(); await wait(500);
+  await d.getByRole('button', { name: 'Schedule resend', exact: true }).click(); await wait(500);
   await shot('resend-later', d.locator('aside').first(), [], 12);
   await p.keyboard.press('Escape'); await wait(400);
   const leave = p.getByRole('button', { name: 'Discard' }); if (await leave.count()) await leave.click(); await wait(500);
@@ -316,7 +317,7 @@ await step('edit-content', async () => {
     [2, aside().getByRole('button', { name: 'Batch import' }), 'tl'],
     [3, aside().locator('[role="columnheader"]').filter({ hasText: 'Company phone' }), 'tl'],
     [4, aside().locator('#dm-at'), 'tl'],
-    [5, aside().getByRole('button', { name: 'Resend', exact: true }), 'tl'],
+    [5, aside().getByRole('button', { name: 'Schedule resend', exact: true }), 'tl'],
   ]);
   await aside().getByRole('button', { name: 'Discard changes' }).click(); await wait(300);
   await closeAside(); await unfind();

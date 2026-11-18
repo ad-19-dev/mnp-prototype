@@ -135,7 +135,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           ]} />
           <Sub id="1-4" title="批次匯入" start="Batch import 按鈕" items={[
             D('選資料類型', 'dlg-import'), E('貼上或輸入名單'), D('每一筆變成標籤，立即比對', 'dlg-import-list'),
-            F(['紅色標籤', E('點標籤'), D('就地修改', 'dlg-import-result'), R('Enter 重新比對', '找到就變灰色標籤')], ['不要某一筆', E('標籤上的 ✕'), R('移除這一筆')]),
+            F(['要改某一筆（灰色或紅色）', E('點標籤'), D('就地修改', 'dlg-import-result'), R('Enter 重新比對', '找到是灰色，找不到是紅色')], ['不要某一筆', E('標籤上的 ✕'), R('移除這一筆')]),
             E('Proceed'), T('Added n audiences（有紅色標籤時加上 · n not added）', '只加入灰色標籤，回到步驟 1'),
           ]} />
           <Sub id="1-5" title="移除收件人" start="收件人表格" items={[
@@ -194,7 +194,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           ]} />
           <Sub id="3-4" title="送出" start="頁尾 Create message" items={[
             F(['任何一步有錯', X('帶回第一個有錯的步驟', undefined, '紅字一起出現')],
-              ['勾了緊急送出', D('Send without SMS approval?', 'dlg-urgent'), F(['Skip approval and send', R('送出')], ['Cancel', R('留在步驟 3')])],
+              ['勾了緊急送出', T('直接建立，不另外確認', '2026-11-18 拿掉 Send without SMS approval? 對話框')],
               ['需要核准（SMS 備援或外部收件人）', T('Sent for approval', '列表：Pending approval')],
               ['排程傳送', T('Scheduled for <時間>', '列表：Scheduled')],
               ['立即傳送', N('回到列表', 'after-submit', 'Toast：Sending to n audiences；列表：In progress')]),
@@ -454,34 +454,33 @@ function Dialogs() {
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
           ['Replace your text?', '步驟 2 選模板', '480', 'Replace'],
-          ['Send without SMS approval?', '步驟 3 緊急送出時 Create message', '480', 'Skip approval and send（紅色）'],
           ['Leave without sending?', '任何步驟 Cancel', '480', 'Discard（紅色）'],
         ]} />
       </Section>
-      <Section eyebrow="Import" title="Batch import" lead="2026-11-18 起改為批次匯入提案的 A 版（標籤，像郵件的收件人欄）：每一筆一輸入就變成標籤並立即比對；找到的是灰色標籤，找不到的是紅色標籤，點一下就地修改。只有一層對話框。">
-        <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-list', '輸入名單', '灰色是找到的，紅色是找不到的（滑過看原因）'], ['dlg-import-result', '修改紅色標籤', '點紅色標籤變成輸入框']]} />
+      <Section eyebrow="Import" title="Batch import" lead="2026-11-18 起改為批次匯入提案的 A 版（標籤，像郵件的收件人欄）：每一筆一輸入就變成標籤並立即比對；找到的是灰色標籤，找不到的是紅色標籤，點任何標籤（灰色也可以，2026-11-18）都能就地修改。只有一層對話框。">
+        <Gallery items={[['dlg-import', '開啟時', '先選資料類型'], ['dlg-import-list', '輸入名單', '灰色是找到的，紅色是找不到的（滑過看原因）'], ['dlg-import-result', '修改標籤', '點任何標籤都會變成輸入框']]} />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織、群組各是一列（藍色 n people 開成員名單），不展開成個人，也沒有各通道的欄位。'],
           ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前名單欄位停用（DS disabled 底色）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
           ['List', <>DS 欄位外框（border、hover、focus 藍框，高至少 132、最多約 288，超過時框內捲動），裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
           ['找到的', <>DS Tag（neutral）：人員是 16px 大頭照加「英文名 中文名」，不截斷；組織是大樓圖示加組織代號；外部聯絡人是信封或電話圖示加 Email／號碼。每個標籤都有 ✕。</>],
-          ['找不到的', <>DS Tag（red），顯示原本輸入的值；滑過顯示原因（Tooltip，在標籤下方）；點一下（或 Enter）變成 DS Input（sm）就地修改，Enter 或離開欄位後重新比對，Esc 取消修改。</>],
-          ['說明文字', <>沒有紅色標籤時：<Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />；有紅色標籤時：<Copy en="Click a red tag to edit it." zh="點紅色標籤可以修改。" /></>],
+          ['找不到的', <>DS Tag（red），顯示原本輸入的值；滑過顯示原因（Tooltip，在標籤下方）。</>],
+          ['說明文字', <>還沒有標籤時：<Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />；有標籤之後：<Copy en="Click a tag to edit it." zh="點標籤可以修改。" /></>],
+          ['修改', '點任何標籤（或聚焦後按 Enter），標籤換成 DS Input（sm），裡面是原本輸入的值（例如 NT 帳號，不是姓名）；Enter 或離開欄位後重新比對，Esc 取消。按標籤上的 ✕ 只會移除，不會進入修改。'],
           ['不顯示的', '名單裡重複的、已經在收件人表格裡的，直接不顯示（重複的人很多時畫面會很亂）。也不顯示找到幾筆、找不到幾筆的總結。'],
-          ['按鈕', <>Cancel（tertiary）、<Copy en="Proceed" zh="繼續" />（primary；沒有灰色標籤、或正在修改紅色標籤時停用）。按下後只加入灰色標籤並關閉，toast <Copy en="Added n audiences" zh="已加入 n 位收件人" />，有紅色標籤時後面加 <Copy en="· n not added" zh="・n 筆未加入" />。</>],
+          ['按鈕', <>Cancel（tertiary）、<Copy en="Proceed" zh="繼續" />（primary；沒有灰色標籤、或正在修改標籤時停用）。按下後只加入灰色標籤並關閉，toast <Copy en="Added n audiences" zh="已加入 n 位收件人" />，有紅色標籤時後面加 <Copy en="· n not added" zh="・n 筆未加入" />。</>],
           ['外部聯絡人', '沒勾 Email 通道時，外部 Email 是紅色標籤，原因 Email isn’t a selected channel；沒選 SMS 備援時，外部號碼是紅色標籤，原因 SMS fallback isn’t a selected channel。'],
-          ['和 DS 的出入', 'DS Tag 還沒有可編輯的樣子（DS 負責人尚未設計）：原型先用「點紅色標籤換成 DS Input」代替。紅色標籤用 Tag 的 red 色（分類色，不是語意上的 error）。DS 沒有「標籤輸入欄位」元件，外框沿用 DS 欄位的 token。DS 的 PersonAvatarTag 只顯示大頭照，所以人員用 Tag 加 avatar。'],
+          ['和 DS 的出入', 'DS Tag 還沒有可編輯的樣子（DS 負責人尚未設計）：原型先用「點標籤換成 DS Input」代替。紅色標籤用 Tag 的 red 色（分類色，不是語意上的 error）。DS 沒有「標籤輸入欄位」元件，外框沿用 DS 欄位的 token。DS 的 PersonAvatarTag 只顯示大頭照，所以人員用 Tag 加 avatar。'],
         ]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
         <Gallery items={[['dlg-unreach', '{Channel}: N messages can’t be sent', '唯讀名單：Audience、Source（從組織或群組加入的是名稱加 Org / Group 標籤；直接加入的只有 Person、Phone 或 Email 標籤；同一人有多個來源時每個一行）、Reason（Device Notifications 為 App unregistered、Desktop OS 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
-        <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-urgent', 'Send without SMS approval?'], ['dlg-leave', 'Leave without sending?']]} max={520} />
+        <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-leave', 'Leave without sending?']]} max={520} />
         <SpecTable head={['對話框', '說明', '按鈕']} nowrap={[0]} rows={[
           ['Leave without sending?', <Copy en="What you’ve written won’t be kept." zh="你填寫的內容不會保留。" />, 'Cancel、Discard（紅色）'],
           ['Replace your text?', <Copy en="“<模板>” will replace what you’ve written. Audience and channels stay the same." zh="「<模板>」會取代你寫的內容，收件人和通道不變。" />, 'Cancel、Replace'],
-          ['Send without SMS approval?', <Copy en="Only for urgent, important messages. This request will be kept on record." zh="僅限緊急且重要的訊息，此次申請將會留存紀錄。" />, 'Cancel、Skip approval and send（紅色）。說明下方兩列：Logged as（姓名與時間）、Notified（SMS 審核人員和主管）'],
         ]} />
       </Section>
       <Section eyebrow="Errors" title="對話框裡的紅字出現的時機">
@@ -505,7 +504,7 @@ function After() {
         ['需要核准（SMS 備援或外部收件人）', <Copy en="Sent for approval" zh="已送出審核" />, <StatusTag s="pending" />],
       ]} />
       <SpecTable head={['核准規則', '誰核准', '可以略過嗎']} nowrap={[0]} rows={[
-        ['選了 PNS + SMS fallback', 'SMS 審核人員', '可以：勾 It’s urgent（不用填原因），送出前要通過 Send without SMS approval? 確認'],
+        ['選了 PNS + SMS fallback', 'SMS 審核人員', '可以：勾 It’s urgent（不用填原因），按 Create message 直接建立，不另外確認（2026-11-18 拿掉確認對話框）'],
         ['有外部收件人（對應通道有勾）', '你的主管', '不行；緊急送出也一樣'],
         ['兩者都有', '兩邊都需要', '緊急送出只略過 SMS 審核人員，主管仍要核准'],
       ]} />
