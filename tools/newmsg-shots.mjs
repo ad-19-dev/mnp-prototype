@@ -182,6 +182,10 @@ await step('s1-types', async () => {
   await add('Phone', '0987654321');
   await p.getByRole('radio', { name: /PNS only/ }).click(); await wait(300);
   await add('Email', 'amy@vendor-example.com');
+  // back to the default type (Person), as a sender sees it: Email/Phone show an Add button, disabled while empty
+  await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
+  await p.getByRole('option', { name: 'Person', exact: true }).click(); await wait(300); await p.keyboard.press('Escape'); await wait(200);
+  await p.evaluate(() => document.activeElement && document.activeElement.blur()); await wait(200);
   await p.getByRole('heading', { name: 'Audience', exact: true }).scrollIntoViewIfNeeded();
   const sec = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-types', (await sec.count()) ? sec : null, [], 12);
