@@ -62,6 +62,8 @@ export interface Row {
   desk?: { sender: string; title: string; content: string } | null
   channels: Channel[]; sms: boolean; status: Status; created: string; sched: string | null
   total: number; ok: number; creator: string; aud: [string, string][]; email?: EmailBody | null
+  // who last changed it (edited, resent, sent for approval again, canceled); the creator until someone does (2026-11-19)
+  updater?: string
   fr?: string[][]; fo?: string; fw?: string[]; fx?: string[][]; err?: { title: string; text: string } | null
   byCh?: Partial<Record<Channel, [number, number]>> | null; fresh?: number; _f?: Fail[] | null
   // a channel whose own status differs from the message's (e.g. Device Notifications done while SMS still sends)
@@ -270,7 +272,7 @@ export function splitTokens(text: string) { return String(text || '').split(/[\n
 export function matchOne(tok: string, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string; noExtEmail?: boolean; noExtPhone?: boolean }): Match {
   const t = tok.trim(), low = t.toLowerCase(), digits = t.replace(/\D/g, '')
   const org = ORGS.find(o => o.code.toLowerCase() === low)
-  if (org) return { kind: 'org', org, by: 'Org code' }
+  if (org) return { kind: 'org', org, by: 'Org ID' }
   if (t.indexOf('@') > 0) {
     if (!EMAIL_RE.test(t)) return { kind: 'miss', why: 'Not a valid email address' }
     const parts = low.split('@')
@@ -322,7 +324,7 @@ export const LIST_SAMPLES: Record<ListKind, string> = {
 }
 export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string; noExtEmail?: boolean; noExtPhone?: boolean }): Match {
   const t = tok.trim(), low = t.toLowerCase(), digits = t.replace(/\D/g, '')
-  if (kind === 'org') { const org = ORGS.find(o => o.code.toLowerCase() === low); return org ? { kind: 'org', org, by: 'Org code' } : { kind: 'miss', why: 'No org with this ID' } }
+  if (kind === 'org') { const org = ORGS.find(o => o.code.toLowerCase() === low); return org ? { kind: 'org', org, by: 'Org ID' } : { kind: 'miss', why: 'No org with this ID' } }
   if (kind === 'nt') {
     if (!/^[a-z][a-z0-9._-]{1,19}$/i.test(t)) return { kind: 'miss', why: 'Not an NT account' }
     const p = PEOPLE.find(x => x.nt === low); return p ? { kind: 'one', p, by: 'NT account' } : { kind: 'miss', why: 'No employee with this NT account' }
@@ -575,8 +577,8 @@ if (SPLIT) {
     { id: 'm173', sender: UX, tpl: 't12', title: 'Usability study invitation: tWorkspace search', content: 'We’re testing the new tWorkspace search. Join a 30-minute session next week; pick a slot in the sign-up sheet.', channels: ['email'], sms: false, status: 'pending', created: '2026/11/05 09:30', sched: null, total: 61, ok: 0, creator: 'p05', team: 'tm4', aud: [['o', 'PUX'], ['g', 'g6'], ['p', 'p02'], ['e', 'pat.lin@research-example.com'], ['e', 'joy.wu@research-example.com']], review: { by: 'mgr' },
       email: { mode: 'own', subject: 'Invitation: 30-minute usability study on tWorkspace search', html: textToHtml('Hi,\n\nWe’re testing the new tWorkspace search and would love your help. Sessions are 30 minutes, next week. Pick a slot in the sign-up sheet.\n\nThanks,\nUX Team'), atts: [] } },
     // scheduled Device Notifications (SMS), already approved by ICSD: changing its audience sends it for approval again (2026-11-19)
-    { id: 'm192', sender: UX, tpl: null, title: 'Office move: 7F to 9F, 12/12', content: 'The UX team moves from 7F to 9F on Fri, Dec 12. Pack your desk by Thu 17:00; movers start at 18:00.', smsText: 'UX moves 7F to 9F Fri 12/12. Pack your desk by Thu 17:00.', channels: ['push'], sms: true, status: 'scheduled', created: '2026/11/18 10:20', sched: '2026/12/11 09:00', total: 37, ok: 0, creator: 'p01', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/18 15:40' } },
-    { id: 'm174', sender: UX, tpl: null, title: 'Design critique moves to 11/4', content: 'This week’s design critique moves to Tue, Nov 4 at 15:00 in 7F-Forest.', smsText: 'Design critique moves to Tue 11/4 15:00, 7F-Forest.', channels: ['push'], sms: true, status: 'expired', created: '2026/11/03 18:00', sched: '2026/11/04 13:00', total: 37, ok: 0, creator: 'p09', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/04 15:30' } },
+    { id: 'm192', sender: UX, tpl: null, title: 'Office move: 7F to 9F, 12/12', content: 'The UX team moves from 7F to 9F on Fri, Dec 12. Pack your desk by Thu 17:00; movers start at 18:00.', smsText: 'UX moves 7F to 9F Fri 12/12. Pack your desk by Thu 17:00.', channels: ['push'], sms: true, status: 'scheduled', created: '2026/11/18 10:20', sched: '2026/12/11 09:00', total: 37, ok: 0, creator: 'p01', updater: 'p09', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/18 15:40' } },
+    { id: 'm174', sender: UX, tpl: null, title: 'Design critique moves to 11/4', content: 'This week’s design critique moves to Tue, Nov 4 at 15:00 in 7F-Forest.', smsText: 'Design critique moves to Tue 11/4 15:00, 7F-Forest.', channels: ['push'], sms: true, status: 'expired', created: '2026/11/03 18:00', sched: '2026/11/04 13:00', total: 37, ok: 0, creator: 'p09', updater: 'p01', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/04 15:30' } },
     { id: 'm175', sender: UX, tpl: null, title: 'DS office hours Wed 15:00', content: 'Design System office hours are on Wed at 15:00 in 7F-Forest. Bring your questions about components and tokens.', smsText: 'DS office hours Wed 15:00, 7F-Forest.', channels: ['push'], sms: true, status: 'rejected', created: '2026/11/02 10:30', sched: null, total: 37, ok: 0, creator: 'p18', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/02 11:10', reason: 'SMS is for urgent or time-critical notices. Send this by Device Notifications or Email instead.' } },
     { id: 'm176', sender: UX, tpl: null, title: 'Figma library update', content: 'The Figma library has new table components and updated tokens. Update your files from the Assets panel.', channels: ['push', 'desktop'], sms: false, status: 'progress', created: '2026/11/05 14:40', sched: null, total: 37, ok: 30, creator: 'p09', team: 'tm4', aud: [['g', 'g6']],
       byCh: { push: [35, 37], desktop: [24, 37] }, chSt: { push: 'sent' } },

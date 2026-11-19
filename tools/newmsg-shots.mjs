@@ -38,6 +38,9 @@ async function shot(name, target, list = [], pad = 0) {
   marks[name] = { w: Math.round(box.width), h: Math.round(box.height), marks: out };
 }
 const dlg = () => p.getByRole('dialog').last();
+// Message Coverage by Channel is worked out on request (2026-11-19): press Check coverage / Check again when it's there
+const covSec = () => p.getByRole('heading', { name: 'Message Coverage by Channel' }).locator('xpath=ancestor::section[1]');
+const checkCov = async () => { const b = p.getByRole('button', { name: /^(Check coverage|Check again)$/ }); if (await b.count()) { await b.first().click(); await wait(1300) } };
 const big = async (h = 1300) => { await p.setViewportSize({ width: 1680, height: h }); await wait(300) };
 const page = async name => { await hideToasts(); await shot(name, null) };
 const foot = name => p.locator('[data-compose]').getByRole('button', { name, exact: true }).last();
@@ -94,6 +97,9 @@ await step('dlg-import-many', async () => {
 // only Desktop OS: someone without the desktop agent can't get it
 await step('dlg-unreach', async () => {
   await p.getByRole('checkbox', { name: 'Desktop OS', exact: true }).click(); await wait(400);
+  await covSec().scrollIntoViewIfNeeded();
+  await shot('s1-cov', covSec(), [[1, p.getByRole('button', { name: 'Check coverage' }), 'tl']], 12);
+  await checkCov();
   await page('s1-unreach');
   await p.getByRole('button', { name: /can’t be sent/ }).first().click(); await wait(600);
   await shot('dlg-unreach', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
@@ -102,7 +108,10 @@ await step('dlg-unreach', async () => {
 await step('s1-filled', async () => {
   await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
   await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(300);
-  await big(1500); await page('s1-filled');
+  // the channels changed since the last check: the numbers are gone until it's checked again
+  await covSec().scrollIntoViewIfNeeded();
+  await shot('s1-cov-stale', covSec(), [[1, p.getByRole('button', { name: 'Check again' }), 'tl']], 12);
+  await checkCov(); await big(1500); await page('s1-filled');
 });
 await step('s1-sms', async () => {
   await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(400);
@@ -198,6 +207,12 @@ await step('s1-types', async () => {
   // an outside number can only be added with SMS fallback on (2026-11-16): turn it on for that one, then back off
   await add(null, 'Chen'); await add('Org', 'PENG'); await add('Group', '');
   await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(300);
+  // the phone field: region first, then the number (2026-11-19)
+  await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
+  await p.getByRole('option', { name: 'Phone', exact: true }).click(); await wait(300); await p.keyboard.press('Escape'); await wait(200);
+  await p.getByRole('combobox', { name: 'Region' }).click(); await wait(400);
+  await shot('s1-phone-region', [p.getByRole('combobox', { name: 'Audience type' }), p.locator('[data-compose]').getByRole('textbox').first(), p.getByRole('listbox').last()], [], 16);
+  await p.keyboard.press('Escape'); await wait(300);
   await add('Phone', '0987654321');
   await p.getByRole('radio', { name: /PNS only/ }).click(); await wait(300);
   await add('Email', 'amy@vendor-example.com');
@@ -214,6 +229,7 @@ await step('s1-types', async () => {
   await big(2200);
   const aud = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-phones', (await aud.count()) ? aud : null, [], 12);
+  await checkCov();
   const reachSec = p.getByRole('heading', { name: 'Message Coverage by Channel' }).locator('xpath=ancestor::section[1]');
   await shot('s1-ext', (await reachSec.count()) ? reachSec : null, [], 12);
 });

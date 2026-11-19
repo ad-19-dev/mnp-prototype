@@ -186,7 +186,7 @@ function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
   if (!s) return list
   const key = (x: Rec): string | number => s.id === 'sender' ? recSender(x.r, x.k).toLowerCase() : s.id === 'tpl' ? m.tplName(x.r.tpl).toLowerCase() : s.id === 'aud' ? x.of
-    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created : ''
+    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'updater' ? (PMAP[x.r.updater || x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created : ''
   const out = list.slice().sort((a, b) => { const p = key(a), q = key(b); return p < q ? -1 : p > q ? 1 : 0 })
   return s.desc ? out.reverse() : out
 }
@@ -297,7 +297,9 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     // send now goes out at its created time, so it never shows a dash here
     col.accessor(x => (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116, maxWidth: 124 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     ...(app.space === 'me' ? [] : [// the DS person display, but blank (not the DS's own dash) on the message's other rows
-      col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Creator', '建立者'), meta: { width: 200, maxWidth: 220 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null })]),
+      col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Creator', '建立者'), meta: { width: 200, maxWidth: 220 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null }),
+      // who changed this channel's record last (2026-11-19); on every row, since each channel is edited on its own
+      col.accessor(x => personVal(PMAP[x.r.updater || x.r.creator] || PEOPLE[0]), { id: 'updater', header: L('Last updater', '最後更新者'), meta: { width: 200, maxWidth: 220 }, cell: i => <PersonDisplay value={i.getValue()} /> })]),
   ], [m, app.lang, app.teams, app.space, group, hdrs, s.det])
 
   // first use (nothing in this space yet): a page-level empty state, no search, filters or table frame
@@ -316,7 +318,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="w-[480px] max-w-full shrink">
-            <Input startIcon={Search} type="search" placeholder={L('Search message ID, title, content, sender, template or creator', '搜尋訊息 ID、標題、內容、寄件人、模板或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
+            <Input startIcon={Search} type="search" placeholder={L('Search task ID, title, content, sender, template or creator', '搜尋任務 ID、標題、內容、寄件人、模板或建立者')} aria-label={L('Search messages', '搜尋訊息')} value={s.q} onChange={e => m.set({ q: e.target.value, page: 1 })} />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {/* Created date: a few fixed ranges. A button and menu like Status and Channel (same hover), labelled with
@@ -406,7 +408,7 @@ function SplitDetail({ m, x }: { m: SendCtl; x: Rec }) {
         {/* the basics as vertical fields (label above value): channel, status, why it's urgent, where the approval stands */}
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
         <DescriptionList>
-          <DescriptionItem label={L('Message ID', '訊息 ID')}><span className="tabular-nums">{msgId(r)}</span></DescriptionItem>
+          <DescriptionItem label={L('Task ID', '任務 ID')}><span className="tabular-nums">{msgId(r)}</span></DescriptionItem>
           <DescriptionItem label={L('Channel', '通道')}><span className="inline-flex items-center gap-1.5"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></DescriptionItem>
           <DescriptionItem label={L('Status', '狀態')}><StatusTag s={x.fb && x.pst ? x.pst : x.st} /></DescriptionItem>
           {/* where the approval stands is in the Approval Center: a field of its own, labelled like the ones above */}

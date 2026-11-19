@@ -18,7 +18,7 @@ import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
 import './DetailModal.css'
 import { Ban, Building2, Copy, ExternalLink, Mail, Phone, Send, Trash2, Upload, Users, X } from 'lucide-react'
 import {
-  ICSD, LIM, ORGS, PEOPLE, PMAP, noPhoneCell, smsMax, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
+  ICSD, LIM, ME, ORGS, PEOPLE, PMAP, noPhoneCell, smsMax, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { SENDER_ERR, SENDER_RE, SMS_ERR } from '../../lib/compose'
@@ -141,7 +141,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   const discard = () => { setV(init.v); setTags(init.tags); setPh(initPh); setTried(false); setSeed(n => n + 1) }
   // what was edited, as a patch to the record
   const patchOf = (): Partial<Row> => {
-      const p: Partial<Row> = { fresh: Date.now() }
+      const p: Partial<Row> = { fresh: Date.now(), updater: ME }
       if (k === 'push' || k === 'sms') { p.sender = v.sender.trim(); p.content = v.content.trim(); p.title = v.pTitle.trim(); if (k === 'sms') p.smsText = v.sms.trim() }
       if (k === 'desktop') { const nd = { sender: v.sender.trim(), title: v.dTitle.trim(), content: v.content.trim() }; if (r.channels.indexOf('push') >= 0) p.desk = nd; else { p.sender = nd.sender; p.title = nd.title; p.content = nd.content } }
       if (k === 'email') p.email = { mode: 'own', subject: v.subject.trim(), html: cleanHtml(v.html), atts: (r.email && r.email.atts) || [] }
@@ -340,7 +340,7 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
   const creator = PMAP[r.creator] || PEOPLE[0]
   return (
     <DescriptionList>
-      <DescriptionItem label={L('Message ID', '訊息 ID')}><span className="tabular-nums">{msgId(r)}</span></DescriptionItem>
+      <DescriptionItem label={L('Task ID', '任務 ID')}><span className="tabular-nums">{msgId(r)}</span></DescriptionItem>
       <DescriptionItem label={L('Channel', '通道')}><span className="inline-flex items-center gap-1.5"><I className="size-4 text-fg-secondary" aria-hidden />{chName(k)}</span></DescriptionItem>
       <DescriptionItem label={L('Status', '狀態')}>
         <span className="flex flex-col items-start gap-1">
@@ -355,6 +355,7 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
       <DescriptionItem label={L('Created', '建立時間')}><span className="tabular-nums">{r.created}</span></DescriptionItem>
       <DescriptionItem label={L('Send time', '傳送時間')}>{time || <span className="tabular-nums">{curTime(r, k)}</span>}</DescriptionItem>
       <DescriptionItem label={L('Creator', '建立者')}><PersonDisplay value={personVal(creator)} /></DescriptionItem>
+      <DescriptionItem label={L('Last updater', '最後更新者')}><PersonDisplay value={personVal(PMAP[r.updater || r.creator] || creator)} /></DescriptionItem>
     </DescriptionList>
   )
 }

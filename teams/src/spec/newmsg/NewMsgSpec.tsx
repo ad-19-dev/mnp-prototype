@@ -143,7 +143,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
             E('列尾 ×'), R('直接移除這一列', '沒有篩選，也沒有全部移除'),
           ]} />
           <Sub id="1-6" title="看每個通道收得到幾人" start="有收件人、有選通道" items={[
-            N('Message Coverage by Channel', 's1-ext', '收件人下方；每個通道 n / total，開 SMS 時 Device Notifications (SMS) 合成一列'),
+            N('Message Coverage by Channel', 's1-cov', '收件人下方；按 Check coverage 才計算'), E('Check coverage'), N('每個通道 n / total', 's1-ext', '開 SMS 時 Device Notifications (SMS) 合成一列'), F(['之後又改了收件人、通道或手機', N('數字收起，提示重新檢查', 's1-cov-stale'), E('Check again'), R('重新計算')]),
             F(['都收得到', R('人數綠色，沒有提醒')],
               ['某個通道有人不在涵蓋範圍', N('通道列右側藍字 n messages can’t be sent', 's1-unreach'), E('點連結'), D('{Channel}: n messages can’t be sent', 'dlg-unreach', '唯讀，只有 Close')]),
           ]} />
@@ -285,12 +285,13 @@ function Step1() {
         ]} />
         <SpecTable head={['搜尋類型', '輸入', '下拉選單與加入方式', '錯誤與找不到']} nowrap={[0]} rows={[
           ['Person', '姓名、NT 帳號或工號', '輸入後列出符合的人（最多 8 筆）：大頭照、英文名 中文名、組織代號 · NT · 工號。點選，或按 Enter 加入第一筆。', <><Copy en="No one named “<輸入>” found." zh="找不到叫「<輸入>」的人。" />（不提示切換到 Phone、Email 或 Group）</>],
-          ['Org', '組織代碼、編號或名稱', '沒輸入也列出全部組織：代碼、編號、人數。加入後下拉選單不關，可以連續加入。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
+          ['Org', '組織 ID、編號或名稱（提示 Org ID or name）', '沒輸入也列出全部組織：代碼、編號、人數。加入後下拉選單不關，可以連續加入。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
           ['Group', '群組名稱', '沒輸入時，標題 Your groups 下列出這個空間的群組：名稱、說明、人數。加入後下拉選單不關。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
-          ['Phone', '手機號碼，例如 0912-345-678', '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。沒選 PNS + SMS fallback 時，外部號碼不能加入（收不到任何通道），員工的號碼照常加入員工。', <><Copy en="Enter 8–15 digits." zh="請輸入 8–15 碼數字。" />　<Copy en="Select SMS fallback in Channels to add outside numbers." zh="在 Channels 選擇 SMS 備援才能加入外部號碼。" /></>],
+          ['Phone', <>先選地區再輸入號碼（2026-11-19）：DS FieldControlGroup 把地區 Select（TW +886、US +1、JP +81、CN +86，預設 TW）和號碼 Input 接成一個欄位；提示文字依地區換（0912-345-678、415-555-0123、090-1234-5678、138-0013-8000）。</>, '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。沒選 PNS + SMS fallback 時，外部號碼不能加入（收不到任何通道），員工的號碼照常加入員工。', <>依地區：<Copy en="Enter a 10-digit mobile number starting with 09." zh="請輸入 09 開頭的 10 碼手機號碼。" />（TW）、<Copy en="Enter a 10-digit number." zh="請輸入 10 碼號碼。" />（US）、<Copy en="Enter a mobile number starting with 070, 080 or 090." zh="請輸入 070、080 或 090 開頭的手機號碼。" />（JP）、<Copy en="Enter an 11-digit mobile number starting with 1." zh="請輸入 1 開頭的 11 碼手機號碼。" />（CN）　<Copy en="Select SMS fallback in Channels to add outside numbers." zh="在 Channels 選擇 SMS 備援才能加入外部號碼。" /></>],
           ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。Channels 沒勾 Email 時，外部 Email 不能加入（收不到任何通道），公司信箱照常加入員工。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" />　<Copy en="Select Email in Channels to add outside addresses." zh="在 Channels 勾選 Email 才能加入外部信箱。" /></>],
           ['MVPN', '7 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。', <><Copy en="MVPN is up to 7 digits." zh="MVPN 最多 7 碼。" />　<Copy en="No one has this MVPN." zh="沒有人用這個 MVPN。" /></>],
         ]} />
+        <Gallery items={[['s1-phone-region', 'Phone：先選地區', 'DS FieldControlGroup：地區 Select 接號碼 Input'], ['s1-cov', 'Message Coverage：還沒檢查', '按 Check coverage 才計算'], ['s1-cov-stale', 'Message Coverage：要重新檢查', '收件人或通道改了之後']]} />
         <Notes items={[
           { title: '錯誤顯示位置', body: '下拉選單關著時，錯誤在搜尋框下方（紅字）；下拉選單開著時，錯誤在選單裡（紅色圖示加文字）。' },
           { title: '人數計算', body: <>Audience 右上角不顯示總人數。人數（Message Coverage by Channel 裡的 total）是展開之後的人數：組織與群組展開成人，同一個人不管從哪裡加入只算一次；外部 Email 與外部電話各算 1；群組裡存的外包人員算外部。沒有人數上限。</> },
@@ -322,7 +323,7 @@ function Step1() {
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點各通道下方的連結看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道、開 SMS 時有一列公務手機和私人手機都沒勾、外部 Email 沒勾 Email 通道、外部電話沒選 SMS 備援。' },
           { title: '通道的連動', body: 'SMS 備援是 Device Notifications 的傳送方式之一：勾了 Device Notifications 才出現 Delivery method；取消 Device Notifications 會回到 PNS only。至少要勾一個通道。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
-          { title: 'Message Coverage by Channel', body: <>有收件人、有選通道時出現在收件人下方。標題 <Copy en="Message Coverage by Channel" zh="各通道訊息涵蓋" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的 n / total（像收件人表格裡組織名稱後面接人數）（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
+          { title: 'Message Coverage by Channel', body: <>2026-11-19 起按下按鈕才計算（工程評估即時計算不容易）：框裡先是一行說明 <Copy en="See how many people each channel can reach, and who can’t get it." zh="查看每個通道可以送達多少人，以及誰收不到。" /> 與右側 <C>Check coverage</C>（secondary sm，計算機圖示，按下後轉圈）；算完才出現下面的各通道列。之後再改收件人、通道或手機，數字收起，改成黃字 <Copy en="The audience or channels changed. Check again to see who can get each channel." zh="收件人或通道改了，請重新檢查各通道誰收得到。" /> 與 <C>Check again</C>。不檢查也可以按 Next。有收件人、有選通道時出現在收件人下方。標題 <Copy en="Message Coverage by Channel" zh="各通道訊息涵蓋" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的 n / total（像收件人表格裡組織名稱後面接人數）（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
         ]} />
         <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
@@ -346,7 +347,7 @@ function Step1() {
           ['沒有收件人', <Copy en="Add at least one audience." zh="請加入至少一位收件人。" />, '紅字', '收件人表格下方；搜尋框不變紅', '按過 Next 之後', '擋'],
           ['搜尋輸入的格式不對、找不到', '見「搜尋類型」表', '紅字；搜尋框變紅框', '搜尋框下方，或下拉選單裡', '輸入後立刻', '不擋；只是這一筆加不進去'],
           ['沒有通道', <Copy en="Pick at least one channel." zh="請選擇至少一個通道。" />, '紅字', '通道下方', '按過 Next 之後', '擋'],
-          ['某個通道有人收不到', <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />, '藍色連結', 'Message Coverage by Channel 該通道列最右側', '分子小於分母時，隨勾選即時更新；SMS 合併列也顯示', '不擋'],
+          ['某個通道有人收不到', <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />, '藍色連結', 'Message Coverage by Channel 該通道列最右側', '按 Check coverage 後，分子小於分母時；SMS 合併列也顯示', '不擋'],
           ['開 SMS 時有一列沒勾任何手機', <Copy en="Choose at least one phone for each audience." zh="每一列收件人至少要選一支手機。" />, '紅字', '收件人表格下方', '按過 Next 之後', '擋'],
           ['有外部 Email，但沒勾 Email 通道', <Copy en="Outside email addresses need the Email channel. Select Email or remove them." zh="外部 Email 需要 Email 通道。請勾選 Email，或移除這些收件人。" />, '紅字', '收件人表格下方', '按過 Next 之後', '擋'],
           ['有外部電話，但沒選 SMS 備援', <Copy en="Outside phone numbers need SMS fallback. Select it or remove them." zh="外部電話需要 SMS 備援。請選擇 SMS 備援，或移除這些收件人。" />, '紅字', '收件人表格下方', '按過 Next 之後', '擋'],

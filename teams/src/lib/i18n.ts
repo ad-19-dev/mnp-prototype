@@ -63,7 +63,7 @@ const ZH: Record<string, string> = {
   '290 people received the email; 270 didn’t. Retry sends it only to the people who didn’t get it.': '290 人收到，270 人沒收到。重試只會寄給沒收到的人。',
   'The SMS text includes a personal phone number. Remove it and submit again.': 'SMS 內容有個人電話號碼，請移除後重新送審。',
   // match results
-  'Org code': '組織代碼', 'Email': 'Email', 'Employee ID': '工號', 'MVPN': 'MVPN', 'Company mobile': '公務手機',
+  'Org ID': '組織 ID', 'Email': 'Email', 'Employee ID': '工號', 'MVPN': 'MVPN', 'Company mobile': '公務手機',
   'Personal phone': '私人手機', 'Mobile number': '手機', 'NT account': 'NT 帳號', 'Name': '姓名',
   'External email': '外部 Email', 'External phone number': '外部電話',
   'Not a valid email address': 'Email 格式不對', 'No employee with this email': '找不到這個 Email 的員工', 'Email isn’t a selected channel': 'Channels 沒有選 Email', 'SMS fallback isn’t a selected channel': 'Channels 沒有選 SMS 備援',

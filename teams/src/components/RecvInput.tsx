@@ -1,7 +1,7 @@
 // Compound receiver input: pick a type on the left, find or type the receiver on the right.
 // Shared by the send flow (receivers) and the Audience Group editor (members).
 import * as React from 'react'
-import { Button, Input, Popover, PopoverAnchor, PopoverContent, Select, cn } from '@qijenchen/design-system'
+import { Button, FieldControlGroup, Input, Popover, PopoverAnchor, PopoverContent, Select, cn } from '@qijenchen/design-system'
 import { Building2, ChevronDown, ChevronRight, CircleAlert, Globe, Mail, Phone, Plus, Search, Smartphone, Users, BookUser } from 'lucide-react'
 import {
   DOMAIN, EMAIL_RE, ORGS, PEOPLE, PMAP, fmtExtPhone, membersFor, phoneDigits, plural, type Group, type Person,
@@ -10,7 +10,24 @@ import { PAvatar, Two } from './ui'
 import { L, P } from '../lib/i18n'
 
 export type RiType = 'person' | 'org' | 'group' | 'phone' | 'email' | 'mvpn'
-export interface RiState { type: RiType; q: string; open: boolean; exp: string | null }
+export interface RiState { type: RiType; q: string; open: boolean; exp: string | null; region?: Region }
+
+// Phone: the region comes first, then the number (2026-11-19: TW, US, JP, CN). norm turns what was typed into the
+// number as stored ('' when it isn't a mobile number of that region); Taiwan keeps the local 09 form, the others
+// are written with their country code.
+export type Region = 'TW' | 'US' | 'JP' | 'CN'
+const grp = (d: string, ...n: number[]) => { const out: string[] = []; let i = 0; n.forEach(k => { out.push(d.slice(i, i + k)); i += k }); return out.join('-') }
+export const REGIONS: { v: Region; code: string; ph: string; err: string; norm: (d: string) => string }[] = [
+  { v: 'TW', code: '+886', ph: '0912-345-678', err: L('Enter a 10-digit mobile number starting with 09.', '請輸入 09 開頭的 10 碼手機號碼。'),
+    norm: d => { d = d.replace(/^886/, '0'); if (/^9\d{8}$/.test(d)) d = '0' + d; return /^09\d{8}$/.test(d) ? d : '' } },
+  { v: 'US', code: '+1', ph: '415-555-0123', err: L('Enter a 10-digit number.', '請輸入 10 碼號碼。'),
+    norm: d => { if (/^1\d{10}$/.test(d)) d = d.slice(1); return /^\d{10}$/.test(d) ? '+1 ' + grp(d, 3, 3, 4) : '' } },
+  { v: 'JP', code: '+81', ph: '090-1234-5678', err: L('Enter a mobile number starting with 070, 080 or 090.', '請輸入 070、080 或 090 開頭的手機號碼。'),
+    norm: d => { d = d.replace(/^81/, '').replace(/^0/, ''); return /^[789]0\d{8}$/.test(d) ? '+81 ' + grp(d, 2, 4, 4) : '' } },
+  { v: 'CN', code: '+86', ph: '138-0013-8000', err: L('Enter an 11-digit mobile number starting with 1.', '請輸入 1 開頭的 11 碼手機號碼。'),
+    norm: d => { d = d.replace(/^86(?=1\d{10}$)/, ''); return /^1\d{10}$/.test(d) ? '+86 ' + grp(d, 3, 4, 4) : '' } },
+]
+const regionOf = (ri: RiState) => REGIONS.find(x => x.v === (ri.region || 'TW'))!
 export type RiItem = { kind: 'person' | 'org' | 'group'; id: string } | { kind: 'ext'; value: string }
 export function riKey(it: RiItem) { return it.kind === 'ext' ? 'e:' + it.value : (it.kind === 'person' ? 'p:' : it.kind === 'org' ? 'o:' : 'g:') + it.id }
 
@@ -18,9 +35,9 @@ const RI_KEYS: RiType[] = ['person', 'org', 'group', 'phone', 'email', 'mvpn']
 function riType(k: RiType) {
   return {
     person: { label: L('Person', '人員'), ph: L('Name, NT account or employee ID', '姓名、NT 帳號或工號') },
-    org: { label: L('Org', '組織'), ph: L('Org code or name', '組織代碼或名稱') },
+    org: { label: L('Org', '組織'), ph: L('Org ID or name', '組織 ID 或名稱') },
     group: { label: L('Group', '群組'), ph: L('Group name', '群組名稱') },
-    phone: { label: L('Phone', '電話'), ph: L('Mobile number, e.g. 0912-345-678', '手機號碼，例如 0912-345-678') },
+    phone: { label: L('Phone', '電話'), ph: L('Mobile number', '手機號碼') },
     email: { label: 'Email', ph: L('Email address, e.g. name@vendor.com', 'Email，例如 name@vendor.com') },
     mvpn: { label: 'MVPN', ph: L('7-digit MVPN', '7 碼 MVPN') },
   }[k]
@@ -49,14 +66,15 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
     else out.opts = PEOPLE.filter(p => p.mvpn && p.mvpn.indexOf(d) === 0).slice(0, 8).map(p => person(p, 'MVPN ' + p.mvpn))
     if (q && !out.err && !out.opts.length) out.err = L('No one has this MVPN.', '沒有人用這個 MVPN。')
   } else if (ri.type === 'phone') {
-    const d = phoneDigits(q)
+    const R = regionOf(ri), n = R.norm(q.replace(/\D/g, ''))
     if (!q) out.tip = L('For contractors. Employee numbers add the employee.', '給外包人員用。輸入員工的號碼會加入該員工。')
-    else if (!d) out.err = L('Enter 8–15 digits.', '請輸入 8–15 碼數字。')
+    else if (!n) out.err = R.err
     else {
-      const p = PEOPLE.find(x => x.co === d || x.pp === d)
-      if (p) out.opts.push(person(p, p.co === d ? L('Company mobile', '公務手機') : L('Personal phone', '私人手機')))
+      // employees' numbers are Taiwan mobiles
+      const p = R.v === 'TW' ? PEOPLE.find(x => x.co === n || x.pp === n) : undefined
+      if (p) out.opts.push(person(p, p.co === n ? L('Company mobile', '公務手機') : L('Personal phone', '私人手機')))
       else if (noExtPhone) out.err = L('Select SMS fallback in Channels to add outside numbers.', '在 Channels 選擇 SMS 備援才能加入外部號碼。')
-      else out.opts.push(ext(fmtExtPhone(d)))
+      else out.opts.push(ext(R.v === 'TW' ? fmtExtPhone(n) : n))
     }
   } else if (ri.type === 'email') {
     if (!q) out.tip = L('For contractors. Company addresses add the employee.', '給外包人員用。輸入公司信箱會加入該員工。')
@@ -69,6 +87,18 @@ function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefine
   }
   out.opts.forEach(x => { x.added = isAdded(x.item) })
   return out
+}
+
+// the phone number field: the DS FieldControlGroup joins a region select to the number (DS example: country code + number)
+function PhoneRegion({ on, region, setRegion, children }: { on: boolean; region: (typeof REGIONS)[number]; setRegion: (v: Region) => void; children: React.ReactNode }) {
+  if (!on) return <>{children}</>
+  return (
+    <FieldControlGroup block>
+      <Select className="!w-[132px]" aria-label={L('Region', '地區')} value={region.v} onChange={v => setRegion(v as Region)}
+        options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} />
+      {children}
+    </FieldControlGroup>
+  )
 }
 
 function GroupPeek({ g }: { g: Group }) {
@@ -110,14 +140,16 @@ export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, o
         <Popover open={open} onOpenChange={o => { if (!o) set({ open: false }) }}>
           <PopoverAnchor asChild>
             <div ref={anchor} className="min-w-60 flex-1">
+              <PhoneRegion on={ri.type === 'phone'} region={regionOf(ri)} setRegion={v => { set({ region: v, open: !!ri.q.trim() }); setTimeout(() => inputRef.current?.focus(), 60) }}>
               <Input
-                ref={inputRef} id={id} startIcon={icon} autoComplete="off" placeholder={T.ph} aria-label={L('Add by ', '依') + T.label + L('', '新增')}
+                ref={inputRef} id={id} startIcon={icon} autoComplete="off" placeholder={ri.type === 'phone' ? regionOf(ri).ph : T.ph} aria-label={L('Add by ', '依') + T.label + L('', '新增')} className={ri.type === 'phone' ? 'flex-1' : undefined}
                 aria-expanded={open} error={!!bad || showErr} value={ri.q}
                 onChange={e => set({ q: e.target.value, open: true })}
                 onFocus={() => { if (!ri.open) set({ open: true }) }}
                 onClick={() => { if (!ri.open) set({ open: true }) }}
                 onKeyDown={e => { if (e.key === 'Escape') set({ open: false }); if (e.key === 'Enter') { e.preventDefault(); if (first) add(first.item) } }}
               />
+              </PhoneRegion>
             </div>
           </PopoverAnchor>
           <PopoverContent

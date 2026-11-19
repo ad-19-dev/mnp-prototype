@@ -11,7 +11,7 @@ import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
-  CircleCheck, Clock, ArrowLeft, ArrowRight, FileText, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
+  CircleCheck, Clock, Calculator, ArrowLeft, ArrowRight, FileText, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
   CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, noPhoneCell, smsMax, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Person, type Template, type Tag as RTag,
@@ -239,9 +239,15 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 // Message Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
 // SMS fallback on, Device Notifications and its SMS are one row, counted together. A row that misses people has
 // "n messages can't be sent" on its right, opening that channel's list.
+// what coverage depends on: the audience, the channels and the SMS phones
+export const coverageKey = (c: Compose) => JSON.stringify([c.receivers.map(t => t.key), c.ch, smsOn(c), c.smsCO, c.smsPP])
 function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
   const app = useApp(), c = m.s.c, sms = smsOn(c)
-  const [open, setOpen] = React.useState<CoverCh | null>(null)
+  const [open, setOpen] = React.useState<CoverCh | null>(null), [busy, setBusy] = React.useState(false)
+  // worked out on request (2026-11-19): Check coverage asks the server once; the numbers stay until something they
+  // depend on changes, then the section asks to check again
+  const key = coverageKey(c), checked = c.covKey === key, stale = !!c.covKey && !checked
+  const check = () => { setBusy(true); setTimeout(() => { setBusy(false); m.setC({ covKey: coverageKey(m.s.c) }, true) }, 900) }
   const line = (k: CoverCh) => {
     const merged = k === 'push' && sms
     const I = CHN[merged ? 'sms' : k].icon, miss = notCovered(c, app.groups, k).length, got = rc.total - miss, all = !miss
@@ -261,11 +267,21 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
   }
   return (
     <Section title={L('Message Coverage by Channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
-      <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
-        {c.ch.push ? line('push') : null}
-        {c.ch.desktop ? line('desktop') : null}
-        {c.ch.email ? line('email') : null}
-      </div>
+      {checked ? (
+        <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
+          {c.ch.push ? line('push') : null}
+          {c.ch.desktop ? line('desktop') : null}
+          {c.ch.email ? line('email') : null}
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-divider px-3 py-2">
+          <span className={cn('flex-1 text-body', stale ? 'text-warning-text' : 'text-fg-secondary')}>
+            {stale ? L('The audience or channels changed. Check again to see who can get each channel.', '收件人或通道改了，請重新檢查各通道誰收得到。')
+              : L('See how many people each channel can reach, and who can’t get it.', '查看每個通道可以送達多少人，以及誰收不到。')}
+          </span>
+          <Button variant="secondary" size="sm" startIcon={Calculator} loading={busy} disabled={busy} onClick={check}>{stale ? L('Check again', '重新檢查') : L('Check coverage', '檢查涵蓋')}</Button>
+        </div>
+      )}
       <NotCoveredDialog k={open} name={open === 'push' && sms ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : open ? CHN[open].name : ''} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
     </Section>
   )

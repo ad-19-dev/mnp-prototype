@@ -47,8 +47,8 @@ const row = (text, nth = 0) => main.locator('[role="row"]').filter({ hasText: te
 // the row actions sit in their own column outside the row, so find them by their label
 const openRowMenu = async text => { await main.getByRole('button', { name: new RegExp('^Actions for .*' + text) }).first().click(); await wait(350) };
 // bring a message to the top of the list (the list is longer than the window)
-const find = async text => { await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500) };
-const unfind = async () => { await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400) };
+const find = async text => { await main.getByPlaceholder(/Search task ID/).fill(text); await wait(500) };
+const unfind = async () => { await main.getByPlaceholder(/Search task ID/).fill(''); await wait(400) };
 const closeAside = async () => { await p.keyboard.press('Escape'); await wait(400) };
 // a detail panel, cut just below its last section
 // open: unfold the content accordion first (it is folded by default)
@@ -113,7 +113,7 @@ await step('rows-nofb', async () => {
 });
 await step('status-menu', async () => {
   await main.getByRole('button', { name: /^Status/ }).first().click(); await wait(400);
-  const menu = p.getByRole('menu'), mb = await menu.boundingBox(), tb = await main.getByPlaceholder(/Search message ID/).boundingBox();
+  const menu = p.getByRole('menu'), mb = await menu.boundingBox(), tb = await main.getByPlaceholder(/Search task ID/).boundingBox();
   await shot('status-menu', { x: mb.x - 260, y: tb.y - 12, width: mb.width + 410, height: mb.y + mb.height - tb.y + 24 });
   await p.keyboard.press('Escape'); await wait(250);
   await main.getByRole('button', { name: /^Channel/ }).first().click(); await wait(400);
@@ -131,9 +131,9 @@ await step('filtered', async () => {
   await p.keyboard.press('Escape'); await wait(300);
 });
 await step('empty', async () => {
-  await main.getByPlaceholder(/Search message ID/).fill('zzzz'); await wait(500);
+  await main.getByPlaceholder(/Search task ID/).fill('zzzz'); await wait(500);
   await shot('empty', null);
-  await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
+  await main.getByPlaceholder(/Search task ID/).fill(''); await wait(400);
 });
 
 // ---- row menus
@@ -165,7 +165,7 @@ await step('detail-fb', async () => {
     [2, a.getByText('Content', { exact: true }).first(), 'tl'],
     [3, a.getByText('SMS fallback', { exact: true }).first(), 'tl'],
     [4, a.getByText('Audience', { exact: true }).first(), 'tl'],
-    [5, a.getByText('Message ID', { exact: true }).first(), 'tl'],
+    [5, a.getByText('Task ID', { exact: true }).first(), 'tl'],
     [6, a.getByRole('button', { name: 'Duplicate', exact: true }), 'tl'],
     [7, a.getByRole('button', { name: 'Sent details' }), 'tl'],
   ]);
@@ -279,21 +279,21 @@ await step('rows', async () => {
   const pairs = [['st-pending', 'Atlas demo moves'], ['st-expired', 'UX sync moves'], ['st-rejected', 'Badge photo update'], ['st-scheduled', 'out of office'], ['st-progress', 'Fire alarm'], ['st-sent', 'Design review'], ['st-error', 'On-call swap'], ['st-mixed', 'Team lunch Fri 11/7'], ['st-canceled', 'Badge reader']];
   for (const [name, text] of pairs) {
     // search for the message so its rows are at the top of the list, in view
-    await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500);
+    await main.getByPlaceholder(/Search task ID/).fill(text); await wait(500);
     const rs = main.locator('[role="row"]').filter({ hasText: text });
     const n = await rs.count();
     await shot(name, n > 1 ? [rs.nth(0), rs.nth(n - 1)] : [rs.nth(0)], [], 10);
   }
-  await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
+  await main.getByPlaceholder(/Search task ID/).fill(''); await wait(400);
 });
 // ---- one detail per status
 const detail = async (name, text, title, list = []) => {
   await step(name, async () => {
     // search first so the message is at the top of the list, in view
-    await main.getByPlaceholder(/Search message ID/).fill(text); await wait(500);
+    await main.getByPlaceholder(/Search task ID/).fill(text); await wait(500);
     await main.getByText(title).first().click(); await wait(800);
     await panel(name, list); await closeAside();
-    await main.getByPlaceholder(/Search message ID/).fill(''); await wait(400);
+    await main.getByPlaceholder(/Search task ID/).fill(''); await wait(400);
   });
 };
 await detail('detail-expired', 'UX sync moves', 'UX sync moves to Tue');

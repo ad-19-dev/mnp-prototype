@@ -66,7 +66,7 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Message ID、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Creator：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
+const FIELDS = 'Task ID（2026-11-19 從 Message ID 改名）、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Creator、Last updater（2026-11-19 加）：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
@@ -190,6 +190,7 @@ function ListTab() {
           [<Copy en="Created" zh="建立時間" />, '116，最多 124', '日期、時間兩行。', '可'],
           [<Copy en="Send time" zh="傳送時間" />, '116，最多 124', '這個通道的傳送時間：排程的是排程時間（單獨重新排程後是新的時間），立即傳送的是建立時間。', '可'],
           [<Copy en="Creator" zh="建立者" />, '200，最多 220', '人員（大頭照與姓名；沒有照片時是姓名第一個字母）。只在團隊空間顯示。', '可'],
+          [<Copy en="Last updater" zh="最後更新者" />, '200，最多 220', '人員顯示。最後一次改動這一筆的人（在訊息詳情裡儲存、重新送審、重新傳送，或取消傳送）；還沒人改過時是建立者。每一列都顯示（每個通道各自編輯）。2026-11-19 加。只在團隊空間顯示。', '可'],
           ['（列尾）', '依內容', '⋮ 一個圖示按鈕（xs）', '—'],
         ]} />
       </Section>

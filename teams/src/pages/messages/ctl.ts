@@ -161,7 +161,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     },
     cancelCh(id: string, k: Channel) {
       set({ cf: null })
-      m.setCh(id, k, 'canceled', null)
+      m.setCh(id, k, 'canceled', null); patchRow(id, { updater: ME })
       flash(L('Canceled on ', '已取消：') + CHN[k].name, 'ok')
     },
     // expired: approved too late for its schedule. Send it now, ignoring the old time

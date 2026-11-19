@@ -63,7 +63,7 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Message ID、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Creator：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
+const FIELDS = 'Task ID（2026-11-19 從 Message ID 改名）、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Creator、Last updater（2026-11-19 加）：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   const L = ({ k, children }: { k: TabKey; children: React.ReactNode }) => <button type="button" className="flow-spec-link" onClick={() => go(k)}>{children}</button>
@@ -164,7 +164,7 @@ function Detail() {
       </Section>
       <Section eyebrow="Right" title="基本資訊" lead="設計系統 DescriptionList（vertical）：名稱在上（次要文字色）、值在下。列表上有的資訊都在這裡。">
         <SpecTable head={['欄位', '值', '出現條件']} nowrap={[0]} rows={[
-          ['Message ID', '訊息 ID（例：10154），同一次發送的各通道相同', '每一筆'],
+          ['Task ID', '任務 ID（例：10154），同一次發送的各通道相同（2026-11-19 從 Message ID 改名）', '每一筆'],
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤；下方紅字 n not sent 連結（有未送出時）', '每一筆'],
           ['Approval record', '連結按鈕 View in Approval Center（sm，外連圖示）', 'Device Notifications (SMS)，或需要核准的訊息'],
@@ -174,6 +174,7 @@ function Detail() {
           ['Created', '建立時間', '每一筆'],
           ['Send time', '傳送時間；可以改時是日期時間欄位', '每一筆'],
           ['Created by', '設計系統 PersonDisplay', '每一筆'],
+          ['Last updater', '設計系統 PersonDisplay；最後一次儲存、重新送審、重新傳送或取消傳送的人，還沒人改過時是建立者（2026-11-19 加）', '每一筆'],
         ]} />
       </Section>
       <Section eyebrow="Left" title="Content 與 Audience">
