@@ -8,7 +8,7 @@
 //   C: A, plus Enter on a fixed tag moves straight to the next red one (for long lists).
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
-import { Button, Popover, PopoverAnchor, PopoverContent, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
+import { Button, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
 import { Building2, Mail, Phone } from 'lucide-react'
 import { Notes, Section, SpecTable } from '../parts'
 import { ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, listKindName, pname } from '../../components/ui'
@@ -18,7 +18,9 @@ import { DOMAIN, ORGS, PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type Lis
 type Mode = 'now' | 'A' | 'B' | 'C'
 // pin: picked from the dropdown for a number several people share: a person's id, or '#' for the number itself
 type Item = { id: number; v: string; pin?: string }
-type Ok = { key: string; label: string; p?: string; icon?: typeof Mail; shared?: string[] }
+// label: the person's name (or the org, the number); val: the value as entered, formatted; who: shown on hover
+type Ok = { key: string; label: string; val: string; who?: string; p?: string; icon?: typeof Mail; shared?: string[] }
+type Show = 'value' | 'name'
 type Hit = { id: number; v: string; ok?: Ok; why?: string }
 
 // ---------- numbers: who they belong to ----------
@@ -48,8 +50,9 @@ const whatName = (x: Num) => (x.what === 'co' ? 'Company mobile' : x.what === 'p
 // phone), unless a person was picked from the dropdown.
 function byNumber(x: Num, pin?: string): Ok {
   const one = pin && pin !== '#' && x.owners.indexOf(pin) >= 0 ? pin : x.owners.length === 1 ? x.owners[0] : null
-  if (one) { const p = PMAP[one]; return { key: 'p:' + one, label: pname(p) + ' · ' + showNum(x), p: one } }
-  return { key: 'n:' + x.n, label: showNum(x) + ' · Shared by ' + x.owners.length, icon: Phone, shared: x.owners }
+  const val = x.what === 'mvpn' ? x.n : fmtExtPhone(x.n)
+  if (one) { const p = PMAP[one]; return { key: 'p:' + one, label: pname(p) + ' · ' + showNum(x), val, who: pname(p) + ' · ' + p.org + ' · ' + whatName(x) + (x.owners.length > 1 ? ' (shared)' : ''), p: one } }
+  return { key: 'n:' + x.n, label: showNum(x) + ' · Shared by ' + x.owners.length, val, who: 'Shared by ' + x.owners.map(id => pname(PMAP[id])).join(', ') + '. One SMS goes to this number.', icon: Phone, shared: x.owners }
 }
 
 // phone numbers: by the chosen region, or by their own +code
@@ -61,15 +64,15 @@ function matchPhone(v: string, region: Region, pin?: string): Ok | string {
   if (!n) return R.err.replace(/\.$/, '')
   if (R.v === 'TW') { const x = PHONES.find(y => y.n === n); if (x) return byNumber(x, pin) }
   const shown = R.v === 'TW' ? fmtExtPhone(n) : n
-  return { key: 'e:' + shown, label: shown, icon: Phone }
+  return { key: 'e:' + shown, label: shown, val: shown, who: 'Outside number', icon: Phone }
 }
 function look(kind: ListKind, region: Region, v: string, pin?: string): Ok | string {
   if (kind === 'phone') return matchPhone(v, region, pin)
   if (kind === 'mvpn') { const d = v.trim(); const x = MVPNS.find(y => y.n === d); return x ? byNumber(x, pin) : /^\d+$/.test(d) ? 'No one uses this MVPN' : 'Not an MVPN' }
   const mm = matchAs(v, kind, { allowExt: true })
-  if (mm.kind === 'one') return { key: 'p:' + mm.p.id, label: pname(mm.p), p: mm.p.id }
-  if (mm.kind === 'org') return { key: 'o:' + mm.org.code, label: mm.org.code, icon: Building2 }
-  if (mm.kind === 'ext') return { key: 'e:' + mm.email, label: mm.email, icon: Mail }
+  if (mm.kind === 'one') return { key: 'p:' + mm.p.id, label: pname(mm.p), val: v.trim(), who: pname(mm.p) + ' · ' + mm.p.org, p: mm.p.id }
+  if (mm.kind === 'org') return { key: 'o:' + mm.org.code, label: mm.org.code, val: mm.org.code, who: mm.org.name + ' · ' + mm.org.count + ' people', icon: Building2 }
+  if (mm.kind === 'ext') return { key: 'e:' + mm.email, label: mm.email, val: mm.email, who: 'Outside email', icon: Mail }
   return mm.kind === 'miss' ? mm.why : 'More than one match'
 }
 
@@ -120,7 +123,7 @@ const SAMPLE: Record<string, string> = {
   mvpn: '8861588, 8860217, 8860218, 8861119, 8899999',
 }
 
-function Demo({ mode }: { mode: Mode }) {
+function Demo({ mode, show }: { mode: Mode; show: Show }) {
   const [kind, setKind] = React.useState<ListKind | null>('nt'), [region, setRegion] = React.useState<Region>('TW')
   const [items, setItems] = React.useState<Item[]>([]), [draft, setDraft] = React.useState('')
   const [seq, setSeq] = React.useState<number[]>([])        // A, C: the order, set when entries come in
@@ -171,8 +174,19 @@ function Demo({ mode }: { mode: Mode }) {
     // typing again clears an earlier pick; picking from the dropdown sets it
     const nextItems = items.map(x => (x.id === edit.id ? { ...x, v, pin: over ? over.pin : (v === x.v ? x.pin : undefined) } : x))
     setItems(nextItems)
-    const now = hitsOf(nextItems).find(h => h.id === edit.id)
-    if (was && was.why && now && now.ok) { setFlash(edit.id); setTimeout(() => setFlash(f => (f === edit.id ? null : f)), 1600) }
+    const nowHits = hitsOf(nextItems), now = nowHits.find(h => h.id === edit.id)
+    const blink = (id: number) => { setFlash(id); setTimeout(() => setFlash(f => (f === id ? null : f)), 900) }
+    if (was && was.why && now && now.ok) blink(edit.id)
+    // the edit made it a repeat of a tag already in the list (e.g. another number of the same person): drop it and
+    // flash the one that's there, so it doesn't just vanish
+    if (!now && kind) {
+      const r = look(kind, region, v, over ? over.pin : undefined), same = typeof r !== 'string' && nowHits.find(h => h.ok && h.ok.key === r.key)
+      if (same) {
+        setItems(nextItems.filter(x => x.id !== edit.id)); setSeq(q => q.filter(x => x !== edit.id)); setEdit(null); blink(same.id)
+        setTimeout(() => { boxRef.current?.querySelector<HTMLElement>('[data-tagid="' + same.id + '"]')?.scrollIntoView({ block: 'nearest' }); inputRef.current?.focus({ preventScroll: true }) }, 0)
+        return
+      }
+    }
     setEdit(null)
     if (goNext && mode === 'C') {
       const list = seq.map(id => hitsOf(nextItems).find(h => h.id === id)).filter(Boolean) as Hit[]
@@ -183,7 +197,8 @@ function Demo({ mode }: { mode: Mode }) {
     const id = edit.id
     setTimeout(() => {
       const el = mode === 'now' ? null : boxRef.current?.querySelector<HTMLElement>('[data-tagid="' + id + '"]')
-      if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }) } else inputRef.current?.focus()
+      // back to the input at the end without scrolling, and keep the edited tag in view (no focus ring on it)
+      if (el) { inputRef.current?.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }) } else inputRef.current?.focus()
     }, 0)
   }
   const goNextToFix = () => {
@@ -195,22 +210,24 @@ function Demo({ mode }: { mode: Mode }) {
 
   const editable = (h: Hit) => ({
     role: 'button', tabIndex: 0, className: 'cursor-text', 'data-tagid': h.id,
-    'aria-label': 'Edit ' + (h.ok ? h.ok.label : h.v) + (h.why ? ': ' + h.why : ''),
+    'aria-label': 'Edit ' + (h.ok ? (show === 'name' ? h.ok.label : h.ok.val) : h.v) + (h.why ? ': ' + h.why : ''),
     onClick: (e: React.MouseEvent) => { if (!(e.target as HTMLElement).closest('button')) openEdit(h) },
     onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openEdit(h) } },
   })
   const tag = (h: Hit) => {
     const fl = flash === h.id
     if (h.ok) {
-      const p = h.ok.p ? PMAP[h.ok.p] : null
-      const t = <Tag key={h.id} unbounded avatar={p ? <PAvatar p={p} size={16} /> : undefined} icon={p ? undefined : h.ok.icon} {...editable(h)}
-        className={cn('cursor-text transition-shadow', fl && 'ring-2 ring-[var(--color-green-6,#22a06b)]')} onRemove={() => drop(h.id)} removeAriaLabel={h.ok.label}>{h.ok.label}</Tag>
-      // a shared number: hover lists the people on it; one SMS goes to the number itself
-      if (!h.ok.shared) return t
+      // value: what was entered (formatted), no avatar or icon; name: the person's name with their avatar
+      const p = h.ok.p ? PMAP[h.ok.p] : null, byName = show === 'name', text = byName ? h.ok.label : h.ok.val
+      const t = <Tag key={h.id} unbounded avatar={byName && p ? <PAvatar p={p} size={16} /> : undefined} icon={byName && !p ? h.ok.icon : undefined} {...editable(h)}
+        className={cn('cursor-text transition-shadow duration-300', fl && 'ring-1 ring-[var(--color-green-6,#22a06b)]')} onRemove={() => drop(h.id)} removeAriaLabel={text}>{text}</Tag>
+      // hover: who it is (value), or who shares the number (both)
+      const tip = byName ? (h.ok.shared ? h.ok.who : null) : h.ok.who
+      if (!tip) return t
       return (
         <Tooltip key={h.id}>
           <TooltipTrigger asChild>{t}</TooltipTrigger>
-          <TooltipContent side="bottom" align="start">{'Shared by ' + h.ok.shared.map(id => pname(PMAP[id])).join(', ') + '. One SMS goes to this number.'}</TooltipContent>
+          <TooltipContent side="bottom" align="start">{tip}</TooltipContent>
         </Tooltip>
       )
     }
@@ -321,11 +338,13 @@ function Demo({ mode }: { mode: Mode }) {
 }
 
 export default function ImportTags() {
+  // what a found tag shows (2026-11-19): the value as entered (suggested), or the person's name
+  const [show, setShow] = React.useState<Show>('value')
   const col = (mode: Mode, title: string, badge: React.ReactNode, desc: string) => (
     <div className="flex flex-col gap-2">
       <span className="flex items-center gap-2"><b className="text-body">{title}</b>{badge}</span>
       <span className="text-caption text-fg-secondary">{desc}</span>
-      <Demo mode={mode} />
+      <Demo mode={mode} show={show} />
     </div>
   )
   return (
@@ -350,6 +369,14 @@ export default function ImportTags() {
         </Section>
 
         <Section eyebrow="Try" title="直接試試" lead="每一個都先按 Paste a sample list，再把一個紅色標籤改好，看看它去哪裡。">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-body">找到的標籤顯示</span>
+            <SegmentedControl size="sm" value={show} onValueChange={v => v && setShow(v as Show)} aria-label="Tag shows">
+              <SegmentedControlItem value="value">輸入的值（建議）</SegmentedControlItem>
+              <SegmentedControlItem value="name">姓名</SegmentedControlItem>
+            </SegmentedControl>
+            <span className="text-caption text-fg-secondary">四個示範一起切換</span>
+          </div>
           <div className="grid gap-[var(--layout-space-loose)] xl:grid-cols-2">
             {col('now', '現在', <Tag size="sm" color="neutral">原型目前的做法</Tag>, '點標籤換成有外框的輸入框；紅色永遠排最前面，修好就跳到灰色區。')}
             {col('A', 'A：變回文字、原地變色', <Tag size="sm" color="green">建議</Tag>, '點標籤變回純文字（游標在字裡）；只有加入名單時把紅色排到前面，修好的標籤留在原地變灰色，閃一下綠框。')}
@@ -395,6 +422,20 @@ export default function ImportTags() {
           ]} cols />
         </Section>
 
+        <Section eyebrow="Label" title="找到的標籤顯示什麼" lead="2026-11-19：原本找到人就把標籤換成姓名，但 Phone numbers、MVPN 會變成「姓名 · 號碼」很長，名單裡又混著人名、號碼、Email（外部的仍是號碼或 Email），反而干擾。建議改成標籤一律顯示輸入的值，是誰放在滑過的提示裡。">
+          <SpecTable head={['', '輸入的值（建議）', '姓名（原本）']} nowrap={[0]} rows={[
+            ['標籤文字', '使用者輸入的值，整理成同一種格式（號碼加連字號），同一份名單長得都一樣', '人名（號碼類再加「· 號碼」）；外部聯絡人、共用號碼是號碼或 Email'],
+            ['圖示、大頭照', '沒有', '人有大頭照；組織、外部、共用號碼有圖示'],
+            ['怎麼知道是誰', '滑過：姓名 · 組織（號碼類加 Company mobile／Personal phone／MVPN；共用號碼列出共用的人）', '直接看得到'],
+            ['灰色／紅色的意思', '灰色：找到了；紅色：找不到（滑過看原因）', '同左'],
+            ['加入之後', '收件人表格照常顯示人名與大頭照', '同左'],
+          ]} />
+          <Notes items={[
+            { title: '為什麼建議顯示值', body: '這一步的工作是「確認名單裡每一筆都對得到」，不是認人；輸入什麼就看到什麼，最容易對照原本的名單（Excel）。要確認是誰，滑過就有；加入後收件人表格也會顯示人名。' },
+            { title: '打字時的選單仍顯示人', body: '輸入時跳出的選單照樣有大頭照與姓名，幫使用者挑對人；選了之後，標籤顯示的是那個人的值（例如 NT 帳號）。' },
+          ]} cols />
+        </Section>
+
         <Section eyebrow="Guard" title="切換資料類型前先確認" lead="名單裡的值是照資料類型比對的（例如 NT 帳號），換了類型就比對不了，所以切換會清空名單。名單是空的時候直接切換；名單有東西時先問。">
           <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
             ['對話框', '設計系統 Dialog，寬 480（和其他確認對話框相同），疊在 Batch import 之上。'],
@@ -425,7 +466,8 @@ export default function ImportTags() {
             ['修改', '點任何標籤（或聚焦後 Enter／Space），標籤變回純文字：沒有外框、沒有底色，字的大小、位置和標籤裡的字相同，游標在字的最後面，寬度跟著字變長。內容是原本輸入的值（例如 NT 帳號，不是姓名）。'],
             ['結束修改', 'Enter 或點別處：重新比對，變回標籤；Esc：取消修改；把字刪光再結束：移除這一筆。'],
             ['順序', '貼上、Enter、逗號把新的值加進來時，整份名單重新整理一次：紅色在前、灰色在後（各自保持輸入順序）。修改、移除不重新整理。'],
-            ['修好之後', '標籤留在原地，變成灰色，外圍閃一下綠框（約 1.5 秒）。改了還是找不到：仍是紅色、留在原地，原因更新。'],
+            ['改成重複的', '改完發現是名單裡已經有的（例如同一個人的另一支號碼）：這一筆移除，名單裡原本那個標籤閃一下綠框，畫面捲到它。'],
+            ['修好之後', '標籤留在原地，變成灰色，外圍閃一下細的綠框（不到 1 秒）；游標回到名單最後面但畫面不捲動，標籤上不出現藍色焦點框。改了還是找不到：仍是紅色、留在原地，原因更新。'],
             ['說明文字', '不變：{n} valid audiences. Click a tag to edit it.'],
           ]} />
         </Section>
