@@ -249,8 +249,8 @@ function Frame() {
         <SpecTable head={['進入方式', '入口', '頁首標題', '預填內容']} nowrap={[0, 2]} rows={[
           ['新訊息', '列表右上角 New message', 'New message', '全部空白，從步驟 1 開始。'],
           ['複製', '列表選單 Duplicate to new message（單一通道的紀錄）', 'Duplicate message', '只有那一個通道（SMS 的紀錄會勾 Device Notifications 加 SMS 備援）、它的內容與模板；收件人是這個通道收得到的人（外部電話只跟 SMS 的紀錄，外部 Email 只跟 Email 的紀錄）。傳送時間不帶入，預設立即傳送。三個步驟都已解鎖，可以直接點步驟列。'],
-          ['重寄', '（2026-11-16 起不再進入發送流程）', '—', '列表選單的 Resend 在訊息詳情裡直接送出；Sent details 的 Resend to not sent (n) 在訊息詳情的 Resend 模式裡完成。見 Send messages 設計規格。'],
-          ['編輯內容', '不經過發送流程：在訊息詳情（modal）裡直接改（Scheduled 與 Scheduled expired）', '—', '內容、收件人與傳送時間都在訊息詳情裡改，細節見「Send messages 設計規格」。'],
+          ['重寄', '（2026-11-16 起不再進入發送流程）', '—', '列表選單的 Resend 開訊息詳情，選 Now 或 Schedule 後直接送出；Sent details 的 Resend to not sent (n) 在訊息詳情的 Resend 模式裡完成。見「Message details 與重新傳送」設計規格。'],
+          ['編輯內容', '不經過發送流程：在訊息詳情（modal）裡直接改（Scheduled 儲存；Scheduled expired、Error 改完直接 Resend）', '—', '內容、收件人與傳送時間都在訊息詳情裡改，細節見「Message details 與重新傳送」設計規格。'],
         ]} />
       </Section>
       <Section eyebrow="Rules" title="移動與離開的規則">
