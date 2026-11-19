@@ -78,6 +78,19 @@ await step('dlg-import', async () => {
   await dlg().getByRole('button', { name: /^Proceed/ }).click(); await wait(700);
   await p.keyboard.press('Escape'); await wait(300);
 });
+// a long list (2026-11-19): the ones not found come first, even when typed last
+await step('dlg-import-many', async () => {
+  await p.getByRole('button', { name: 'Batch import' }).click(); await wait(600);
+  await dlg().getByRole('combobox').first().click(); await wait(300);
+  await p.getByRole('option').first().click(); await wait(300);
+  const nts = 'gywu,cmchen,kylin,chlinb,ycchenz,ycchenq,ycchenm,bhhuang,ytchang,celee,sywangd,thtsai,psyang,chhsu,shcheng,ythsieh,hykuo,prhung,yttseng,chchiu,ycliao,shlai,cnchou,thliu';
+  await dlg().locator('#imp-text').fill(nts + ',' + nts + ',a19999,gywuu,cm.chen,'); await wait(700);
+  await shot('dlg-import-many', dlg(), [
+    [1, dlg().getByRole('button', { name: /^Edit a19999/ }), 'tl'],
+    [2, dlg().getByText(/valid audiences\. Click a tag/), 'tl'],
+  ], 12);
+  await p.keyboard.press('Escape'); await wait(400);
+});
 // only Desktop OS: someone without the desktop agent can't get it
 await step('dlg-unreach', async () => {
   await p.getByRole('checkbox', { name: 'Desktop OS', exact: true }).click(); await wait(400);
@@ -203,6 +216,19 @@ await step('s1-types', async () => {
   await shot('s1-ext', (await reachSec.count()) ? reachSec : null, [], 12);
 });
 
+// the Audience group editor opens the same dialog; it adds members
+await step('dlg-import-group', async () => {
+  await p.setViewportSize({ width: 1680, height: 940 });
+  await p.goto('http://localhost:4190/index.html'); await wait(1500);
+  await p.getByRole('tab', { name: 'Audience groups' }).first().click().catch(async () => { await p.getByText('Audience groups').first().click() }); await wait(800);
+  await p.getByRole('button', { name: /^New group/ }).first().click(); await wait(800);
+  await p.getByRole('button', { name: 'Batch import' }).click(); await wait(600);
+  await dlg().getByRole('combobox').first().click(); await wait(300);
+  await p.getByRole('option').first().click(); await wait(300);
+  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, a19999,'); await wait(600);
+  await shot('dlg-import-group', dlg(), [[1, dlg().getByText(/valid members\. Click a tag/), 'tl']], 12);
+  await p.keyboard.press('Escape'); await wait(300);
+});
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));
 console.log(errs.length ? 'errors:\n' + errs.join('\n') : 'no errors');
 await b.close();
