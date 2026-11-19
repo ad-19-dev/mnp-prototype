@@ -20,7 +20,9 @@ type Mode = 'now' | 'A' | 'B' | 'C'
 type Item = { id: number; v: string; pin?: string }
 // label: the person's name (or the org, the number); val: the value as entered, formatted; who: shown on hover
 type Ok = { key: string; label: string; val: string; who?: string; p?: string; icon?: typeof Mail; shared?: string[] }
-type Show = 'value' | 'name'
+// type (suggested): names for NT accounts and Employee IDs (codes nobody can read; every match is a person),
+// the entered value for the rest
+type Show = 'type' | 'value' | 'name'
 type Hit = { id: number; v: string; ok?: Ok; why?: string }
 
 // ---------- numbers: who they belong to ----------
@@ -51,7 +53,8 @@ const whatName = (x: Num) => (x.what === 'co' ? 'Company mobile' : x.what === 'p
 function byNumber(x: Num, pin?: string): Ok {
   const one = pin && pin !== '#' && x.owners.indexOf(pin) >= 0 ? pin : x.owners.length === 1 ? x.owners[0] : null
   const val = x.what === 'mvpn' ? x.n : fmtExtPhone(x.n)
-  if (one) { const p = PMAP[one]; return { key: 'p:' + one, label: pname(p) + ' · ' + showNum(x), val, who: pname(p) + ' · ' + p.org + ' · ' + whatName(x) + (x.owners.length > 1 ? ' (shared)' : ''), p: one } }
+  // keyed by the number: two numbers of one person are two entries, an SMS to each (2026-11-19)
+  if (one) { const p = PMAP[one]; return { key: 'n:' + x.n, label: pname(p) + ' · ' + showNum(x), val, who: pname(p) + ' · ' + p.org + ' · ' + whatName(x) + (x.owners.length > 1 ? ' (shared)' : ''), p: one } }
   return { key: 'n:' + x.n, label: showNum(x) + ' · Shared by ' + x.owners.length, val, who: 'Shared by ' + x.owners.map(id => pname(PMAP[id])).join(', ') + '. One SMS goes to this number.', icon: Phone, shared: x.owners }
 }
 
@@ -208,9 +211,10 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
   }
   React.useEffect(() => { setItems([]); setSeq([]); setEdit(null) }, [kind])
 
+  const byNameOf = () => show === 'name' || (show === 'type' && (kind === 'nt' || kind === 'emp'))
   const editable = (h: Hit) => ({
     role: 'button', tabIndex: 0, className: 'cursor-text', 'data-tagid': h.id,
-    'aria-label': 'Edit ' + (h.ok ? (show === 'name' ? h.ok.label : h.ok.val) : h.v) + (h.why ? ': ' + h.why : ''),
+    'aria-label': 'Edit ' + (h.ok ? (byNameOf() ? h.ok.label : h.ok.val) : h.v) + (h.why ? ': ' + h.why : ''),
     onClick: (e: React.MouseEvent) => { if (!(e.target as HTMLElement).closest('button')) openEdit(h) },
     onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openEdit(h) } },
   })
@@ -218,11 +222,12 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
     const fl = flash === h.id
     if (h.ok) {
       // value: what was entered (formatted), no avatar or icon; name: the person's name with their avatar
-      const p = h.ok.p ? PMAP[h.ok.p] : null, byName = show === 'name', text = byName ? h.ok.label : h.ok.val
+      const p = h.ok.p ? PMAP[h.ok.p] : null, byName = byNameOf(), text = byName ? h.ok.label : h.ok.val
       const t = <Tag key={h.id} unbounded avatar={byName && p ? <PAvatar p={p} size={16} /> : undefined} icon={byName && !p ? h.ok.icon : undefined} {...editable(h)}
         className={cn('cursor-text transition-shadow duration-300', fl && 'ring-1 ring-[var(--color-green-6,#22a06b)]')} onRemove={() => drop(h.id)} removeAriaLabel={text}>{text}</Tag>
       // hover: who it is (value), or who shares the number (both)
-      const tip = byName ? (h.ok.shared ? h.ok.who : null) : h.ok.who
+      // by name: hover shows the value and the org (a shared number: who shares it); by value: who it is
+      const tip = byName ? (p ? h.ok.val + ' · ' + p.org : h.ok.shared ? h.ok.who : null) : h.ok.who
       if (!tip) return t
       return (
         <Tooltip key={h.id}>
@@ -339,7 +344,7 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
 
 export default function ImportTags() {
   // what a found tag shows (2026-11-19): the value as entered (suggested), or the person's name
-  const [show, setShow] = React.useState<Show>('value')
+  const [show, setShow] = React.useState<Show>('type')
   const col = (mode: Mode, title: string, badge: React.ReactNode, desc: string) => (
     <div className="flex flex-col gap-2">
       <span className="flex items-center gap-2"><b className="text-body">{title}</b>{badge}</span>
@@ -372,8 +377,9 @@ export default function ImportTags() {
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-body">找到的標籤顯示</span>
             <SegmentedControl size="sm" value={show} onValueChange={v => v && setShow(v as Show)} aria-label="Tag shows">
-              <SegmentedControlItem value="value">輸入的值（建議）</SegmentedControlItem>
-              <SegmentedControlItem value="name">姓名</SegmentedControlItem>
+              <SegmentedControlItem value="type">依資料類型（建議）</SegmentedControlItem>
+              <SegmentedControlItem value="value">都是輸入的值</SegmentedControlItem>
+              <SegmentedControlItem value="name">都是姓名</SegmentedControlItem>
             </SegmentedControl>
             <span className="text-caption text-fg-secondary">四個示範一起切換</span>
           </div>
@@ -412,7 +418,7 @@ export default function ImportTags() {
           <SpecTable head={['選單', '規格']} nowrap={[0]} rows={[
             ['一個人的號碼', '大頭照、姓名；下一行號碼 · Company mobile／Personal phone／MVPN'],
             ['共用號碼', '第一項是號碼本身：電話圖示、號碼（shared）；下一行 Shared by 三個人的名字。接著每個人各一項（縮排）：姓名；下一行號碼 · only this person'],
-            ['同一個人出現兩次', '例如用他的兩個 MVPN：只加入一次（用第一個號碼），和其他重複的值一樣不顯示'],
+            ['同一個人的兩個號碼都在名單裡', '兩個都保留，兩支都寄（例如他的兩個 MVPN）；只有完全相同的號碼才算重複（2026-11-19）'],
             ['直接打完按 Enter（不選）', '一個人的號碼 → 那個人；共用號碼 → 號碼本身（同選單第一項）'],
           ]} />
           <Notes items={[
@@ -422,17 +428,19 @@ export default function ImportTags() {
           ]} cols />
         </Section>
 
-        <Section eyebrow="Label" title="找到的標籤顯示什麼" lead="2026-11-19：原本找到人就把標籤換成姓名，但 Phone numbers、MVPN 會變成「姓名 · 號碼」很長，名單裡又混著人名、號碼、Email（外部的仍是號碼或 Email），反而干擾。建議改成標籤一律顯示輸入的值，是誰放在滑過的提示裡。">
-          <SpecTable head={['', '輸入的值（建議）', '姓名（原本）']} nowrap={[0]} rows={[
-            ['標籤文字', '使用者輸入的值，整理成同一種格式（號碼加連字號），同一份名單長得都一樣', '人名（號碼類再加「· 號碼」）；外部聯絡人、共用號碼是號碼或 Email'],
-            ['圖示、大頭照', '沒有', '人有大頭照；組織、外部、共用號碼有圖示'],
-            ['怎麼知道是誰', '滑過：姓名 · 組織（號碼類加 Company mobile／Personal phone／MVPN；共用號碼列出共用的人）', '直接看得到'],
-            ['灰色／紅色的意思', '灰色：找到了；紅色：找不到（滑過看原因）', '同左'],
-            ['加入之後', '收件人表格照常顯示人名與大頭照', '同左'],
+        <Section eyebrow="Label" title="找到的標籤顯示什麼" lead="2026-11-19：原本找到人就把標籤換成姓名，但 Phone numbers、MVPN 會變成「姓名 · 號碼」很長，名單裡又混著人名、號碼、Email（外部的仍是號碼或 Email），反而干擾。建議依資料類型決定：NT accounts、Employee IDs 顯示姓名，其他顯示輸入的值。">
+          <SpecTable head={['資料類型', '找到的標籤顯示', '滑過顯示', '為什麼']} nowrap={[0]} rows={[
+            ['NT accounts', '大頭照、英文名 中文名', 'NT 帳號 · 組織', '帳號、工號是代碼，看不出對不對；找到的一定是人，名單不會混雜'],
+            ['Employee IDs', '大頭照、英文名 中文名', '工號 · 組織', '同上'],
+            ['Emails', '輸入的 Email', '姓名 · 組織；外部的寫 Outside email', 'Email 本身看得懂；名單裡有員工也有外部信箱，都顯示 Email 比較一致'],
+            ['Phone numbers', '輸入的號碼（整理成同一種格式）', '姓名 · 組織 · Company mobile／Personal phone；共用號碼列出共用的人；外部的寫 Outside number', '號碼本身就是要寄的地方；名單裡有員工、外部號碼、共用號碼'],
+            ['MVPN', '輸入的 MVPN', '同 Phone numbers', '同 Phone numbers'],
+            ['Org IDs', '組織代號', '組織名稱 · 人數', '代號就是組織的名字'],
           ]} />
           <Notes items={[
-            { title: '為什麼建議顯示值', body: '這一步的工作是「確認名單裡每一筆都對得到」，不是認人；輸入什麼就看到什麼，最容易對照原本的名單（Excel）。要確認是誰，滑過就有；加入後收件人表格也會顯示人名。' },
-            { title: '打字時的選單仍顯示人', body: '輸入時跳出的選單照樣有大頭照與姓名，幫使用者挑對人；選了之後，標籤顯示的是那個人的值（例如 NT 帳號）。' },
+            { title: '打字時的選單', body: '不論哪種類型，選單都有大頭照與姓名，幫使用者挑對人；選了之後，標籤照上表顯示。' },
+            { title: '加入之後', body: '收件人表格照常顯示人名與大頭照。' },
+            { title: '比較', body: '上方的切換可以把四個示範一起換成「都是輸入的值」或「都是姓名」比較。' },
           ]} cols />
         </Section>
 
@@ -466,7 +474,7 @@ export default function ImportTags() {
             ['修改', '點任何標籤（或聚焦後 Enter／Space），標籤變回純文字：沒有外框、沒有底色，字的大小、位置和標籤裡的字相同，游標在字的最後面，寬度跟著字變長。內容是原本輸入的值（例如 NT 帳號，不是姓名）。'],
             ['結束修改', 'Enter 或點別處：重新比對，變回標籤；Esc：取消修改；把字刪光再結束：移除這一筆。'],
             ['順序', '貼上、Enter、逗號把新的值加進來時，整份名單重新整理一次：紅色在前、灰色在後（各自保持輸入順序）。修改、移除不重新整理。'],
-            ['改成重複的', '改完發現是名單裡已經有的（例如同一個人的另一支號碼）：這一筆移除，名單裡原本那個標籤閃一下綠框，畫面捲到它。'],
+            ['改成重複的', '改完發現和名單裡已經有的相同（同一個 NT 帳號、工號、同一支號碼）：這一筆移除，名單裡原本那個標籤閃一下綠框，畫面捲到它。'],
             ['修好之後', '標籤留在原地，變成灰色，外圍閃一下細的綠框（不到 1 秒）；游標回到名單最後面但畫面不捲動，標籤上不出現藍色焦點框。改了還是找不到：仍是紅色、留在原地，原因更新。'],
             ['說明文字', '不變：{n} valid audiences. Click a tag to edit it.'],
           ]} />
