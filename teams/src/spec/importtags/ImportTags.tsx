@@ -16,22 +16,56 @@ import { REGIONS, type Region } from '../../components/RecvInput'
 import { DOMAIN, ORGS, PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type ListKind, type Person } from '../../lib/data'
 
 type Mode = 'now' | 'A' | 'B' | 'C'
-type Item = { id: number; v: string }
-type Hit = { id: number; v: string; ok?: { key: string; label: string; p?: string; icon?: typeof Mail }; why?: string }
+// pin: picked from the dropdown for a number several people share: a person's id, or '#' for the number itself
+type Item = { id: number; v: string; pin?: string }
+type Ok = { key: string; label: string; p?: string; icon?: typeof Mail; shared?: string[] }
+type Hit = { id: number; v: string; ok?: Ok; why?: string }
+
+// ---------- numbers: who they belong to ----------
+// A person can have several company mobiles or MVPNs; one number can belong to several people (an on-call phone).
+// The prototype's people have one of each, so this demo adds: a second company mobile for Jimmy Chen, and an ESH
+// on-call mobile and MVPN shared by three people.
+const EXTRA_CO: Record<string, string[]> = { p02: ['0918555210'] }
+const SHARED_CO: Record<string, string[]> = { '0919000119': ['p13', 'p19', 'p07'] }
+const EXTRA_MVPN: Record<string, string[]> = { p02: ['8860218'] }
+const SHARED_MVPN: Record<string, string[]> = { '8861119': ['p13', 'p19', 'p07'] }
+type Num = { n: string; what: 'co' | 'pp' | 'mvpn'; owners: string[] }
+const STAFF = PEOPLE.filter(p => !p.extKind && !p.gen)
+function dir(kind: 'phone' | 'mvpn'): Num[] {
+  const m: Record<string, Num> = {}
+  const add = (n: string, what: Num['what'], pid: string) => { if (!n) return; (m[n] = m[n] || { n, what, owners: [] }).owners.push(pid) }
+  STAFF.forEach(p => {
+    if (kind === 'phone') { add(p.co, 'co', p.id); add(p.pp, 'pp', p.id); (EXTRA_CO[p.id] || []).forEach(n => add(n, 'co', p.id)) }
+    else { add(p.mvpn, 'mvpn', p.id); (EXTRA_MVPN[p.id] || []).forEach(n => add(n, 'mvpn', p.id)) }
+  })
+  Object.entries(kind === 'phone' ? SHARED_CO : SHARED_MVPN).forEach(([n, ps]) => ps.forEach(pid => add(n, kind === 'phone' ? 'co' : 'mvpn', pid)))
+  return Object.values(m)
+}
+const PHONES = dir('phone'), MVPNS = dir('mvpn')
+const showNum = (x: Num) => (x.what === 'mvpn' ? 'MVPN ' + x.n : fmtExtPhone(x.n))
+const whatName = (x: Num) => (x.what === 'co' ? 'Company mobile' : x.what === 'pp' ? 'Personal phone' : 'MVPN')
+// one owner: that person, with SMS going to this number. Several: the number itself (one SMS to the shared
+// phone), unless a person was picked from the dropdown.
+function byNumber(x: Num, pin?: string): Ok {
+  const one = pin && pin !== '#' && x.owners.indexOf(pin) >= 0 ? pin : x.owners.length === 1 ? x.owners[0] : null
+  if (one) { const p = PMAP[one]; return { key: 'p:' + one, label: pname(p) + ' · ' + showNum(x), p: one } }
+  return { key: 'n:' + x.n, label: showNum(x) + ' · Shared by ' + x.owners.length, icon: Phone, shared: x.owners }
+}
 
 // phone numbers: by the chosen region, or by their own +code
-function matchPhone(v: string, region: Region): NonNullable<Hit['ok']> | string {
+function matchPhone(v: string, region: Region, pin?: string): Ok | string {
   const t = v.trim(), d = t.replace(/\D/g, '')
   const byCode = t.startsWith('+') ? REGIONS.find(r => d.startsWith(r.code.slice(1))) : undefined
   if (t.startsWith('+') && !byCode) return 'Only TW, US, JP and CN numbers'
   const R = byCode || REGIONS.find(r => r.v === region)!, n = R.norm(byCode ? d.slice(R.code.length - 1) : d)
   if (!n) return R.err.replace(/\.$/, '')
-  if (R.v === 'TW') { const p = PEOPLE.find(x => x.co === n || x.pp === n); if (p) return { key: 'p:' + p.id, label: pname(p), p: p.id } }
+  if (R.v === 'TW') { const x = PHONES.find(y => y.n === n); if (x) return byNumber(x, pin) }
   const shown = R.v === 'TW' ? fmtExtPhone(n) : n
   return { key: 'e:' + shown, label: shown, icon: Phone }
 }
-function look(kind: ListKind, region: Region, v: string): NonNullable<Hit['ok']> | string {
-  if (kind === 'phone') return matchPhone(v, region)
+function look(kind: ListKind, region: Region, v: string, pin?: string): Ok | string {
+  if (kind === 'phone') return matchPhone(v, region, pin)
+  if (kind === 'mvpn') { const d = v.trim(); const x = MVPNS.find(y => y.n === d); return x ? byNumber(x, pin) : /^\d+$/.test(d) ? 'No one uses this MVPN' : 'Not an MVPN' }
   const mm = matchAs(v, kind, { allowExt: true })
   if (mm.kind === 'one') return { key: 'p:' + mm.p.id, label: pname(mm.p), p: mm.p.id }
   if (mm.kind === 'org') return { key: 'o:' + mm.org.code, label: mm.org.code, icon: Building2 }
@@ -41,27 +75,49 @@ function look(kind: ListKind, region: Region, v: string): NonNullable<Hit['ok']>
 
 // suggestions while typing (2026-11-19): the people (or orgs) the typed text could be, for the data types that point
 // at someone. Picking one adds the value of that data type (an NT account, an employee ID…), not the name.
-//   NT accounts: NT account starts with it, or the name has it · Employee IDs / MVPN: starts with it (2+ digits)
-//   Emails: company addresses only (the part before @) · Phone numbers: Taiwan employees' company or personal mobile
-//   (4+ digits) · Org IDs: orgs (code or name). Outside emails and numbers never match anyone, so nothing shows.
-type Sug = { value: string; p?: Person; org?: typeof ORGS[number]; sub: string }
-function suggest(kind: ListKind, region: Region, q: string, taken: (v: string) => boolean): Sug[] {
+//   NT accounts: NT account starts with it, or the name has it · Employee IDs: starts with it (2+ digits)
+//   Emails: company addresses only (the part before @) · Org IDs: orgs (code or name)
+//   Phone numbers (TW, 4+ digits) / MVPN (2+ digits): every number that has it; a number with one owner is that
+//   person; a shared one is offered as the number itself first, then each person on it
+type Sug = { value: string; pin?: string; p?: Person; org?: typeof ORGS[number]; shared?: string[]; sub: string }
+function suggest(kind: ListKind, region: Region, q: string, taken: (v: string, pin?: string) => boolean): Sug[] {
   const t = q.trim(), low = t.toLowerCase(), d = t.replace(/\D/g, '')
-  const ppl = PEOPLE.filter(p => !p.extKind && !p.gen)
+  const ppl = STAFF
   let out: Sug[] = []
+  const nums = (list: Num[], hit: (x: Num) => boolean): Sug[] => list.filter(hit).flatMap((x): Sug[] => x.owners.length === 1
+    ? [{ value: x.n, pin: x.owners[0], p: PMAP[x.owners[0]], sub: showNum(x) + ' · ' + whatName(x) }]
+    : ([{ value: x.n, pin: '#', shared: x.owners, sub: 'Shared by ' + x.owners.map(id => PMAP[id].en).join(', ') }] as Sug[])
+      .concat(x.owners.map(id => ({ value: x.n, pin: id, p: PMAP[id], sub: showNum(x) + ' · only this person' })) as Sug[]))
   if (kind === 'nt' && t.length >= 2) out = ppl.filter(p => p.nt.startsWith(low) || (p.en + ' ' + p.zh).toLowerCase().includes(low)).map(p => ({ value: p.nt, p, sub: p.nt + ' · ' + p.org }))
   else if (kind === 'emp' && d.length >= 2 && d === t) out = ppl.filter(p => p.emp.startsWith(d)).map(p => ({ value: p.emp, p, sub: p.emp + ' · ' + p.org }))
-  else if (kind === 'mvpn' && d.length >= 2 && d === t) out = ppl.filter(p => p.mvpn && p.mvpn.startsWith(d)).map(p => ({ value: p.mvpn, p, sub: 'MVPN ' + p.mvpn + ' · ' + p.org }))
+  else if (kind === 'mvpn' && d.length >= 2 && d === t) out = nums(MVPNS, x => x.n.startsWith(d))
   else if (kind === 'email' && t.length >= 2) { const [a, b] = low.split('@'); if (b === undefined || DOMAIN.startsWith(b)) out = ppl.filter(p => p.nt.startsWith(a)).map(p => ({ value: p.nt + '@' + DOMAIN, p, sub: p.nt + '@' + DOMAIN })) }
-  else if (kind === 'phone' && region === 'TW' && !t.startsWith('+') && d.length >= 4) out = ppl.flatMap(p => [p.co, p.pp].filter(n => n && n.includes(d.replace(/^886/, '0'))).map(n => ({ value: n, p, sub: fmtExtPhone(n) + (n === p.co ? ' · Company mobile' : ' · Personal phone') })))
+  else if (kind === 'phone' && region === 'TW' && !t.startsWith('+') && d.length >= 4) out = nums(PHONES, x => x.n.includes(d.replace(/^886/, '0')))
   else if (kind === 'org' && t.length >= 1) out = ORGS.filter(o => o.code.toLowerCase().startsWith(low) || o.name.toLowerCase().includes(low)).map(o => ({ value: o.code, org: o, sub: o.name + ' · ' + o.count + ' people' }))
-  return out.filter(x => !taken(x.value) && !(x.p && taken(x.p.nt))).slice(0, 6)
+  return out.filter(x => !taken(x.value, x.pin)).slice(0, 8)
+}
+
+// the dropdown under the field being typed in (the list's input, or a tag being edited)
+function SugList({ sugs, hi, setHi, onPick }: { sugs: Sug[]; hi: number; setHi: (i: number) => void; onPick: (x: Sug) => void }) {
+  return (
+    <div role="listbox" aria-label="Matches">
+      {sugs.map((x, i) => (
+        <button key={x.value + (x.pin || '')} type="button" role="option" aria-selected={i === hi} onMouseDown={e => e.preventDefault()} onMouseEnter={() => setHi(i)} onClick={() => onPick(x)}
+          className={cn('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left', i === hi && 'bg-neutral-hover', x.p && x.pin && x.pin !== '#' && sugs.some(y => y.pin === '#' && y.value === x.value) && 'pl-6')}>
+          {x.p ? <PAvatar p={x.p} size={24} /> : <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">{x.org ? <Building2 className="size-3.5 text-fg-secondary" aria-hidden /> : <Phone className="size-3.5 text-fg-secondary" aria-hidden />}</span>}
+          <span className="flex min-w-0 flex-col"><span className="truncate text-body">{x.p ? pname(x.p) : x.org ? x.org.code : (x.sub.startsWith('Shared') && MVPNS.some(m => m.n === x.value) ? 'MVPN ' + x.value : fmtExtPhone(x.value)) + ' (shared)'}</span><span className="truncate text-caption text-fg-secondary">{x.sub}</span></span>
+        </button>
+      ))}
+    </div>
+  )
 }
 
 const SAMPLE: Record<string, string> = {
   // ytchang and thliu are left out, so fixing a red tag to them gives a new person (not a repeat)
   nt: 'gywu, cmchen, kylin, chlinb, ycchenz, ycchenq, a19999, ycchenm, bhhuang, celee, sywangd, thtsai, gywuu, psyang, chhsu, shcheng, ythsieh, hykuo, prhung, cm.chen, yttseng, chchiu, ycliao, shlai, cnchou, cmchen',
-  phone: '0918226588, 0912337415, 0987654321, 091234, +1 415 555 0123, +81 90 1234 5678, +86 138 0013 8000, +44 20 7946 0958',
+  // 0918555210: Jimmy Chen's second company mobile · 0919000119: the ESH on-call mobile, shared by three people
+  phone: '0918226588, 0912337415, 0918555210, 0919000119, 0987654321, 091234, +1 415 555 0123, +81 90 1234 5678, +86 138 0013 8000, +44 20 7946 0958',
+  mvpn: '8861588, 8860217, 8860218, 8861119, 8899999',
 }
 
 function Demo({ mode }: { mode: Mode }) {
@@ -78,7 +134,7 @@ function Demo({ mode }: { mode: Mode }) {
     if (!kind) return []
     const seen: Record<string, boolean> = {}, out: Hit[] = []
     list.forEach(it => {
-      const r = look(kind, region, it.v)
+      const r = look(kind, region, it.v, it.pin)
       if (typeof r === 'string') { const k = 'x:' + it.v.toLowerCase(); if (seen[k]) return; seen[k] = true; out.push({ id: it.id, v: it.v, why: r }) }
       else { if (seen[r.key]) return; seen[r.key] = true; out.push({ id: it.id, v: it.v, ok: r }) }
     })
@@ -93,11 +149,11 @@ function Demo({ mode }: { mode: Mode }) {
   const bad = hits.filter(h => h.why), good = hits.filter(h => h.ok)
 
   // entries come in: A and C sort red first now (and only now)
-  const take = (t: string) => {
+  const take = (t: string, pin?: string) => {
     const l = splitTokens(t).map(x => x.trim()).filter(Boolean)
     setDraft('')
     if (!l.length) return
-    const add = l.map(v => ({ id: nextId.current++, v })), all = items.concat(add)
+    const add = l.map(v => ({ id: nextId.current++, v, pin })), all = items.concat(add)
     setItems(all)
     if (mode === 'A' || mode === 'C') setSeq(redFirst(hitsOf(all)).map(h => h.id))
   }
@@ -107,11 +163,12 @@ function Demo({ mode }: { mode: Mode }) {
     const reds = list.filter(h => h.why && h.id !== after), i = after == null ? -1 : list.findIndex(h => h.id === after)
     return reds.find(h => list.indexOf(h) > i) || reds[0]
   }
-  const saveEdit = (goNext?: boolean) => {
+  const saveEdit = (goNext?: boolean, over?: { v: string; pin?: string }) => {
     if (!edit) return
-    const was = byId[edit.id], v = edit.v.trim()
+    const was = byId[edit.id], v = (over ? over.v : edit.v).trim()
     if (!v) { drop(edit.id); setEdit(null); return }
-    const nextItems = items.map(x => (x.id === edit.id ? { ...x, v } : x))
+    // typing again clears an earlier pick; picking from the dropdown sets it
+    const nextItems = items.map(x => (x.id === edit.id ? { ...x, v, pin: over ? over.pin : (v === x.v ? x.pin : undefined) } : x))
     setItems(nextItems)
     const now = hitsOf(nextItems).find(h => h.id === edit.id)
     if (was && was.why && now && now.ok) { setFlash(edit.id); setTimeout(() => setFlash(f => (f === edit.id ? null : f)), 1600) }
@@ -145,8 +202,16 @@ function Demo({ mode }: { mode: Mode }) {
     const fl = flash === h.id
     if (h.ok) {
       const p = h.ok.p ? PMAP[h.ok.p] : null
-      return <Tag key={h.id} unbounded avatar={p ? <PAvatar p={p} size={16} /> : undefined} icon={p ? undefined : h.ok.icon} {...editable(h)}
+      const t = <Tag key={h.id} unbounded avatar={p ? <PAvatar p={p} size={16} /> : undefined} icon={p ? undefined : h.ok.icon} {...editable(h)}
         className={cn('cursor-text transition-shadow', fl && 'ring-2 ring-[var(--color-green-6,#22a06b)]')} onRemove={() => drop(h.id)} removeAriaLabel={h.ok.label}>{h.ok.label}</Tag>
+      // a shared number: hover lists the people on it; one SMS goes to the number itself
+      if (!h.ok.shared) return t
+      return (
+        <Tooltip key={h.id}>
+          <TooltipTrigger asChild>{t}</TooltipTrigger>
+          <TooltipContent side="bottom" align="start">{'Shared by ' + h.ok.shared.map(id => pname(PMAP[id])).join(', ') + '. One SMS goes to this number.'}</TooltipContent>
+        </Tooltip>
+      )
     }
     return (
       <Tooltip key={h.id}>
@@ -156,19 +221,48 @@ function Demo({ mode }: { mode: Mode }) {
     )
   }
   // editing: Now = a small DS-looking input; A/B/C = the entry as plain text with a caret, in the same spot
-  const editor = (h: Hit) => mode === 'now'
-    ? <input key={h.id} data-editing autoFocus aria-label={'Edit ' + h.v} value={edit!.v} onChange={e => setEdit({ id: h.id, v: e.target.value })}
-        onBlur={() => saveEdit()} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); saveEdit() } if (e.key === 'Escape') { e.stopPropagation(); setEdit(null) } }}
-        className="h-8 w-48 rounded-md border border-primary bg-surface px-2 text-body outline-none" />
-    : <input key={h.id} data-editing autoFocus aria-label={'Edit ' + h.v} value={edit!.v} size={Math.max(edit!.v.length, 3)} onChange={e => setEdit({ id: h.id, v: e.target.value })}
-        onBlur={() => saveEdit()} onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Tab') { if (e.key === 'Enter' || mode === 'C') { e.preventDefault(); saveEdit(true) } } if (e.key === 'Escape') { e.stopPropagation(); setEdit(null) } }}
-        className="h-6 min-w-[2ch] bg-transparent px-0.5 text-body text-foreground outline-none" style={{ fieldSizing: 'content' } as React.CSSProperties} />
+  // editing: Now = a small DS-looking input; A/B/C = the entry as plain text with a caret, in the same spot. Both show
+  // the matches under them; ↑↓ and Enter pick one (2026-11-19)
+  const editor = (h: Hit) => {
+    const keys = (e: React.KeyboardEvent) => {
+      const open = esugs.length > 0
+      if (open && e.key === 'ArrowDown') { e.preventDefault(); setEhi(i => Math.min(i + 1, esugs.length - 1)) }
+      else if (open && e.key === 'ArrowUp') { e.preventDefault(); setEhi(i => Math.max(i - 1, 0)) }
+      else if (e.key === 'Escape') { e.stopPropagation(); setEdit(null) }
+      else if (e.key === 'Enter' || (e.key === 'Tab' && mode === 'C')) {
+        e.preventDefault()
+        if (open && e.key === 'Enter') { const x = esugs[Math.min(ehi, esugs.length - 1)]; saveEdit(mode === 'C', { v: x.value, pin: x.pin }) }
+        else saveEdit(mode === 'C')
+      }
+    }
+    const input = mode === 'now'
+      ? <input data-editing autoFocus aria-label={'Edit ' + h.v} value={edit!.v} onChange={e => { setEhi(0); setEdit({ id: h.id, v: e.target.value }) }}
+          onBlur={() => saveEdit()} onKeyDown={keys} className="h-8 w-48 rounded-md border border-primary bg-surface px-2 text-body outline-none" />
+      : <input data-editing autoFocus aria-label={'Edit ' + h.v} value={edit!.v} size={Math.max(edit!.v.length, 3)} onChange={e => { setEhi(0); setEdit({ id: h.id, v: e.target.value }) }}
+          onBlur={() => saveEdit()} onKeyDown={keys}
+          className="h-6 min-w-[2ch] bg-transparent px-0.5 text-body text-foreground outline-none" style={{ fieldSizing: 'content' } as React.CSSProperties} />
+    return (
+      <Popover key={h.id} open={esugs.length > 0}>
+        <PopoverAnchor asChild><span className="inline-flex">{input}</span></PopoverAnchor>
+        <PopoverContent align="start" sideOffset={6} className="w-96 p-1" onOpenAutoFocus={e => e.preventDefault()}>
+          <SugList sugs={esugs} hi={Math.min(ehi, esugs.length - 1)} setHi={setEhi} onPick={x => saveEdit(mode === 'C', { v: x.value, pin: x.pin })} />
+        </PopoverContent>
+      </Popover>
+    )
+  }
 
   // people (or orgs) the typed text could be; already in the list are left out
-  const inList = (v: string) => items.some(x => x.v.toLowerCase() === v.toLowerCase()) || hits.some(h => h.ok && h.ok.p && (PMAP[h.ok.p].nt === v || PMAP[h.ok.p].emp === v))
-  const sugs = kind && draft.trim() ? suggest(kind, region, draft, inList) : []
-  const showSug = sugOpen && sugs.length > 0
-  const pick = (x: Sug) => { take(x.value); setHi(0); setTimeout(() => inputRef.current?.focus(), 0) }
+  // already in the list (the tag being edited doesn't count): a person by any of their values, or the same number
+  const keys = (skip?: number) => hits.filter(h => h.ok && h.id !== skip).map(h => h.ok!.key)
+  const takenBy = (skip?: number) => { const ks = keys(skip); return (v: string, pin?: string) => {
+    const r = kind ? look(kind, region, v, pin) : ''; if (typeof r !== 'string') return ks.indexOf(r.key) >= 0
+    const p = STAFF.find(x => x.nt === v || x.emp === v || x.nt + '@' + DOMAIN === v); return !!p && ks.indexOf('p:' + p.id) >= 0 } }
+  const sugs = kind && draft.trim() ? suggest(kind, region, draft, takenBy()) : []
+  const showSug = sugOpen && !edit && sugs.length > 0
+  const pick = (x: Sug) => { take(x.value, x.pin); setHi(0); setTimeout(() => inputRef.current?.focus(), 0) }
+  // editing a tag: the same dropdown under it
+  const [ehi, setEhi] = React.useState(0)
+  const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
@@ -203,22 +297,14 @@ function Demo({ mode }: { mode: Mode }) {
               </span>
             </PopoverAnchor>
             {/* the people (or orgs) it could be: avatar, name, the matched value; Enter or a click adds it */}
-            <PopoverContent align="start" sideOffset={6} className="w-80 p-1" onOpenAutoFocus={e => e.preventDefault()}>
-              <div role="listbox" aria-label="Matches">
-                {sugs.map((x, i) => (
-                  <button key={x.value} type="button" role="option" aria-selected={i === hi} onMouseDown={e => e.preventDefault()} onMouseEnter={() => setHi(i)} onClick={() => pick(x)}
-                    className={cn('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left', i === hi && 'bg-neutral-hover')}>
-                    {x.p ? <PAvatar p={x.p} size={24} /> : <span className="inline-flex size-6 items-center justify-center rounded-full bg-muted"><Building2 className="size-3.5 text-fg-secondary" aria-hidden /></span>}
-                    <span className="flex min-w-0 flex-col"><span className="truncate text-body">{x.p ? pname(x.p) : x.org!.code}</span><span className="truncate text-caption text-fg-secondary">{x.sub}</span></span>
-                  </button>
-                ))}
-              </div>
+            <PopoverContent align="start" sideOffset={6} className="w-96 p-1" onOpenAutoFocus={e => e.preventDefault()}>
+              <SugList sugs={sugs} hi={Math.min(hi, sugs.length - 1)} setHi={setHi} onPick={pick} />
             </PopoverContent>
           </Popover>
         </div>
       </FormField>
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="sm" disabled={!kind || (kind !== 'nt' && kind !== 'phone')} onClick={() => take(SAMPLE[kind === 'phone' ? 'phone' : 'nt'])}>Paste a sample list</Button>
+        <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null) }}>Clear</Button>
         <span className="text-caption text-fg-secondary">Try: fix a red tag (a19999 → ytchang, gywuu → thliu), then look for it.</span>
       </div>
@@ -264,19 +350,40 @@ export default function ImportTags() {
           </div>
         </Section>
 
-        <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="四個示範都有：在名單欄位打字時，比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
+        <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="四個示範都有：在名單欄位打字時，以及修改標籤時（2026-11-19 加），比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
           <SpecTable head={['資料類型', '比對得到人嗎', '怎麼比對', '從第幾個字開始']} nowrap={[0, 3]} rows={[
             ['NT accounts', '可以', 'NT 帳號開頭相符，或英文名、中文名含有輸入的字（例：打 chen 會出現 cmchen、ycchenz…）', '2 個字'],
             ['Employee IDs', '可以', '工號開頭相符（只有數字時）', '2 碼'],
             ['Emails', '只有公司信箱', '@ 前面是 NT 帳號，開頭相符；外部信箱不會對到任何人，不出現選單', '2 個字'],
-            ['Phone numbers', '只有台灣員工的手機', '公務或私人手機含有輸入的數字；地區不是 TW、或以 + 開頭的外部號碼，不出現選單', '4 碼'],
-            ['MVPN', '可以', 'MVPN 開頭相符', '2 碼'],
+            ['Phone numbers', '只有台灣員工的手機', '號碼含有輸入的數字；每個號碼一項（一個人有兩支公務手機就是兩項）；多人共用的號碼見下一節。地區不是 TW、或以 + 開頭的外部號碼，不出現選單', '4 碼'],
+            ['MVPN', '可以', 'MVPN 開頭相符；同 Phone numbers，一個 MVPN 一項，多人共用的見下一節', '2 碼'],
             ['Org IDs', '對到的是組織', '組織代號開頭相符，或名稱含有輸入的字；選單顯示組織圖示、代號、名稱與人數', '1 個字'],
           ]} />
           <Notes items={[
             { title: '不選也可以', body: '選單只是提示：不選、直接按 Enter 或逗號，就照打的字加入並比對（和現在一樣）。貼上整份名單時不出現選單。' },
             { title: '試試', body: '在任一個示範打 chen、12、ch 或 0918（Phone numbers）。' },
             { title: '正式版', body: '實際上公司超過 10 萬人，選單要向伺服器查詢（輸入停一下才查，例如 300ms），查詢中顯示載入中。' },
+          ]} cols />
+        </Section>
+
+        <Section eyebrow="Numbers" title="Phone numbers 與 MVPN：一人多號、一號多人" lead="名單是用號碼給的，代表使用者要寄到「這一支」。所以用號碼加入的人，SMS 寄到這個號碼，不走「選人時系統隨機挑一支公務手機」的舊機制；共用號碼（值班機）預設當成一支號碼，只寄一封 SMS 給它。">
+          <SpecTable head={['情況', '例子（示範資料）', '變成什麼', '標籤']} nowrap={[0]} rows={[
+            ['號碼只屬於一個人', '0918226588（Grace Wu 的公務手機）', '加入這個人；SMS 寄到這個號碼', '灰色：大頭照、姓名 · 0918-226-588'],
+            ['一個人有多個號碼', '0918555210（Jimmy Chen 的第二支公務手機）；MVPN 8860218', '同上：用的是哪支，就寄哪支（不隨機）', '灰色：姓名 · 那支號碼'],
+            ['一個號碼屬於多個人（值班機）', '0919000119、MVPN 8861119（ESH 值班，三個人）', '預設加入「這支號碼」：只寄一封 SMS 到這支，不加入這三個人（不會收到 App 推播）', '灰色：電話圖示、0919-000-119 · Shared by 3；滑過列出三個人'],
+            ['共用號碼但要寄給某一個人', '在選單裡選那個人', '加入那個人；SMS 寄到這支共用號碼', '灰色：姓名 · 0919-000-119'],
+            ['不屬於任何員工', '0987654321；MVPN 8899999', 'Phone numbers：外部號碼；MVPN：紅色，No one uses this MVPN', '電話圖示加號碼；或紅色'],
+          ]} />
+          <SpecTable head={['選單', '規格']} nowrap={[0]} rows={[
+            ['一個人的號碼', '大頭照、姓名；下一行號碼 · Company mobile／Personal phone／MVPN'],
+            ['共用號碼', '第一項是號碼本身：電話圖示、號碼（shared）；下一行 Shared by 三個人的名字。接著每個人各一項（縮排）：姓名；下一行號碼 · only this person'],
+            ['同一個人出現兩次', '例如用他的兩個 MVPN：只加入一次（用第一個號碼），和其他重複的值一樣不顯示'],
+            ['直接打完按 Enter（不選）', '一個人的號碼 → 那個人；共用號碼 → 號碼本身（同選單第一項）'],
+          ]} />
+          <Notes items={[
+            { title: '要和工程確認', body: '「用號碼加入的人，SMS 寄到那支號碼」需要後端能記住每位收件人指定的號碼。舊系統選人時是隨機挑一支公務手機；如果後端做不到指定，退而求其次是：一個人的號碼照樣加入那個人（但 SMS 可能寄到他另一支公務手機，標籤就不顯示號碼），共用號碼仍當成一支號碼。' },
+            { title: '為什麼共用號碼不展開成人', body: '值班機掛在誰身上會輪替，寄給「掛著的每個人」會讓不在值班的人也收到 App 推播與 SMS；使用者給的是號碼，意思通常是「打給值班的那一支」。' },
+            { title: '試試', body: 'Data type 選 Phone numbers 打 0919 或 0918；選 MVPN 打 8861 或 88602；也可以按 Paste a sample list。' },
           ]} cols />
         </Section>
 
