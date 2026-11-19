@@ -8,12 +8,12 @@
 //   C: A, plus Enter on a fixed tag moves straight to the next red one (for long lists).
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
-import { Button, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
+import { Button, Popover, PopoverAnchor, PopoverContent, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
 import { Building2, Mail, Phone } from 'lucide-react'
 import { Notes, Section, SpecTable } from '../parts'
 import { FormField, ListKindField, PAvatar, listKindExample, pname } from '../../components/ui'
 import { REGIONS, type Region } from '../../components/RecvInput'
-import { PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type ListKind } from '../../lib/data'
+import { DOMAIN, ORGS, PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type ListKind, type Person } from '../../lib/data'
 
 type Mode = 'now' | 'A' | 'B' | 'C'
 type Item = { id: number; v: string }
@@ -39,6 +39,25 @@ function look(kind: ListKind, region: Region, v: string): NonNullable<Hit['ok']>
   return mm.kind === 'miss' ? mm.why : 'More than one match'
 }
 
+// suggestions while typing (2026-11-19): the people (or orgs) the typed text could be, for the data types that point
+// at someone. Picking one adds the value of that data type (an NT account, an employee ID…), not the name.
+//   NT accounts: NT account starts with it, or the name has it · Employee IDs / MVPN: starts with it (2+ digits)
+//   Emails: company addresses only (the part before @) · Phone numbers: Taiwan employees' company or personal mobile
+//   (4+ digits) · Org IDs: orgs (code or name). Outside emails and numbers never match anyone, so nothing shows.
+type Sug = { value: string; p?: Person; org?: typeof ORGS[number]; sub: string }
+function suggest(kind: ListKind, region: Region, q: string, taken: (v: string) => boolean): Sug[] {
+  const t = q.trim(), low = t.toLowerCase(), d = t.replace(/\D/g, '')
+  const ppl = PEOPLE.filter(p => !p.extKind && !p.gen)
+  let out: Sug[] = []
+  if (kind === 'nt' && t.length >= 2) out = ppl.filter(p => p.nt.startsWith(low) || (p.en + ' ' + p.zh).toLowerCase().includes(low)).map(p => ({ value: p.nt, p, sub: p.nt + ' · ' + p.org }))
+  else if (kind === 'emp' && d.length >= 2 && d === t) out = ppl.filter(p => p.emp.startsWith(d)).map(p => ({ value: p.emp, p, sub: p.emp + ' · ' + p.org }))
+  else if (kind === 'mvpn' && d.length >= 2 && d === t) out = ppl.filter(p => p.mvpn && p.mvpn.startsWith(d)).map(p => ({ value: p.mvpn, p, sub: 'MVPN ' + p.mvpn + ' · ' + p.org }))
+  else if (kind === 'email' && t.length >= 2) { const [a, b] = low.split('@'); if (b === undefined || DOMAIN.startsWith(b)) out = ppl.filter(p => p.nt.startsWith(a)).map(p => ({ value: p.nt + '@' + DOMAIN, p, sub: p.nt + '@' + DOMAIN })) }
+  else if (kind === 'phone' && region === 'TW' && !t.startsWith('+') && d.length >= 4) out = ppl.flatMap(p => [p.co, p.pp].filter(n => n && n.includes(d.replace(/^886/, '0'))).map(n => ({ value: n, p, sub: fmtExtPhone(n) + (n === p.co ? ' · Company mobile' : ' · Personal phone') })))
+  else if (kind === 'org' && t.length >= 1) out = ORGS.filter(o => o.code.toLowerCase().startsWith(low) || o.name.toLowerCase().includes(low)).map(o => ({ value: o.code, org: o, sub: o.name + ' · ' + o.count + ' people' }))
+  return out.filter(x => !taken(x.value) && !(x.p && taken(x.p.nt))).slice(0, 6)
+}
+
 const SAMPLE: Record<string, string> = {
   // ytchang and thliu are left out, so fixing a red tag to them gives a new person (not a repeat)
   nt: 'gywu, cmchen, kylin, chlinb, ycchenz, ycchenq, a19999, ycchenm, bhhuang, celee, sywangd, thtsai, gywuu, psyang, chhsu, shcheng, ythsieh, hykuo, prhung, cm.chen, yttseng, chchiu, ycliao, shlai, cnchou, cmchen',
@@ -50,6 +69,7 @@ function Demo({ mode }: { mode: Mode }) {
   const [items, setItems] = React.useState<Item[]>([]), [draft, setDraft] = React.useState('')
   const [seq, setSeq] = React.useState<number[]>([])        // A, C: the order, set when entries come in
   const [edit, setEdit] = React.useState<{ id: number; v: string } | null>(null)
+  const [hi, setHi] = React.useState(0), [sugOpen, setSugOpen] = React.useState(false)
   const [flash, setFlash] = React.useState<number | null>(null)
   const nextId = React.useRef(1), inputRef = React.useRef<HTMLInputElement>(null), boxRef = React.useRef<HTMLDivElement>(null)
 
@@ -144,6 +164,11 @@ function Demo({ mode }: { mode: Mode }) {
         onBlur={() => saveEdit()} onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Tab') { if (e.key === 'Enter' || mode === 'C') { e.preventDefault(); saveEdit(true) } } if (e.key === 'Escape') { e.stopPropagation(); setEdit(null) } }}
         className="h-6 min-w-[2ch] bg-transparent px-0.5 text-body text-foreground outline-none" style={{ fieldSizing: 'content' } as React.CSSProperties} />
 
+  // people (or orgs) the typed text could be; already in the list are left out
+  const inList = (v: string) => items.some(x => x.v.toLowerCase() === v.toLowerCase()) || hits.some(h => h.ok && h.ok.p && (PMAP[h.ok.p].nt === v || PMAP[h.ok.p].emp === v))
+  const sugs = kind && draft.trim() ? suggest(kind, region, draft, inList) : []
+  const showSug = sugOpen && sugs.length > 0
+  const pick = (x: Sug) => { take(x.value); setHi(0); setTimeout(() => inputRef.current?.focus(), 0) }
   const n = good.length
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
@@ -160,11 +185,36 @@ function Demo({ mode }: { mode: Mode }) {
           kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
           onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
           {shown.map(h => (edit && edit.id === h.id ? editor(h) : tag(h)))}
-          <input ref={inputRef} id={'t-' + mode} disabled={!kind} className="min-w-[160px] flex-1 bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted"
-            placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
-            value={draft} onChange={e => (/[\n,，;；]/.test(e.target.value) ? take(e.target.value) : setDraft(e.target.value))}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); take(draft) } else if (e.key === 'Backspace' && !draft && shown.length) drop(shown[shown.length - 1].id) }}
-            onBlur={() => take(draft)} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
+          <Popover open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
+            <PopoverAnchor asChild>
+              <span className="flex min-w-[160px] flex-1">
+                <input ref={inputRef} id={'t-' + mode} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" autoComplete="off"
+                  role="combobox" aria-expanded={showSug} aria-autocomplete="list"
+                  placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
+                  value={draft} onChange={e => { setHi(0); setSugOpen(true); if (/[\n,，;；]/.test(e.target.value)) take(e.target.value); else setDraft(e.target.value) }}
+                  onKeyDown={e => {
+                    if (showSug && e.key === 'ArrowDown') { e.preventDefault(); setHi(i => Math.min(i + 1, sugs.length - 1)) }
+                    else if (showSug && e.key === 'ArrowUp') { e.preventDefault(); setHi(i => Math.max(i - 1, 0)) }
+                    else if (e.key === 'Escape' && showSug) { e.stopPropagation(); setSugOpen(false) }
+                    else if (e.key === 'Enter') { e.preventDefault(); if (showSug) pick(sugs[Math.min(hi, sugs.length - 1)]); else take(draft) }
+                    else if (e.key === 'Backspace' && !draft && shown.length) drop(shown[shown.length - 1].id)
+                  }}
+                  onBlur={() => { take(draft); setSugOpen(false) }} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
+              </span>
+            </PopoverAnchor>
+            {/* the people (or orgs) it could be: avatar, name, the matched value; Enter or a click adds it */}
+            <PopoverContent align="start" sideOffset={6} className="w-80 p-1" onOpenAutoFocus={e => e.preventDefault()}>
+              <div role="listbox" aria-label="Matches">
+                {sugs.map((x, i) => (
+                  <button key={x.value} type="button" role="option" aria-selected={i === hi} onMouseDown={e => e.preventDefault()} onMouseEnter={() => setHi(i)} onClick={() => pick(x)}
+                    className={cn('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left', i === hi && 'bg-neutral-hover')}>
+                    {x.p ? <PAvatar p={x.p} size={24} /> : <span className="inline-flex size-6 items-center justify-center rounded-full bg-muted"><Building2 className="size-3.5 text-fg-secondary" aria-hidden /></span>}
+                    <span className="flex min-w-0 flex-col"><span className="truncate text-body">{x.p ? pname(x.p) : x.org!.code}</span><span className="truncate text-caption text-fg-secondary">{x.sub}</span></span>
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </FormField>
       <div className="flex flex-wrap items-center gap-2">
@@ -212,6 +262,22 @@ export default function ImportTags() {
             {col('B', 'B：照輸入順序，用 Next 找下一筆', <Tag size="sm" color="neutral">替代</Tag>, '不排序；說明文字寫「n to fix」與 Next to fix，按了直接打開下一個紅色標籤。')}
             {col('C', 'C：A 加上 Enter 接著改下一筆', <Tag size="sm" color="neutral">A 的加強</Tag>, '和 A 相同；改好按 Enter 會直接打開下一個紅色標籤，不用再找。')}
           </div>
+        </Section>
+
+        <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="四個示範都有：在名單欄位打字時，比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
+          <SpecTable head={['資料類型', '比對得到人嗎', '怎麼比對', '從第幾個字開始']} nowrap={[0, 3]} rows={[
+            ['NT accounts', '可以', 'NT 帳號開頭相符，或英文名、中文名含有輸入的字（例：打 chen 會出現 cmchen、ycchenz…）', '2 個字'],
+            ['Employee IDs', '可以', '工號開頭相符（只有數字時）', '2 碼'],
+            ['Emails', '只有公司信箱', '@ 前面是 NT 帳號，開頭相符；外部信箱不會對到任何人，不出現選單', '2 個字'],
+            ['Phone numbers', '只有台灣員工的手機', '公務或私人手機含有輸入的數字；地區不是 TW、或以 + 開頭的外部號碼，不出現選單', '4 碼'],
+            ['MVPN', '可以', 'MVPN 開頭相符', '2 碼'],
+            ['Org IDs', '對到的是組織', '組織代號開頭相符，或名稱含有輸入的字；選單顯示組織圖示、代號、名稱與人數', '1 個字'],
+          ]} />
+          <Notes items={[
+            { title: '不選也可以', body: '選單只是提示：不選、直接按 Enter 或逗號，就照打的字加入並比對（和現在一樣）。貼上整份名單時不出現選單。' },
+            { title: '試試', body: '在任一個示範打 chen、12、ch 或 0918（Phone numbers）。' },
+            { title: '正式版', body: '實際上公司超過 10 萬人，選單要向伺服器查詢（輸入停一下才查，例如 300ms），查詢中顯示載入中。' },
+          ]} cols />
         </Section>
 
         <Section eyebrow="Compare" title="比較">
