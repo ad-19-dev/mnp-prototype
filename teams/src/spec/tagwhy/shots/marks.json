@@ -1,0 +1,67 @@
+{
+ "nt-paste": {
+  "w": 1184,
+  "h": 433,
+  "marks": []
+ },
+ "nt-edit": {
+  "w": 1150,
+  "h": 137,
+  "marks": []
+ },
+ "nt-edit-sug": {
+  "w": 1150,
+  "h": 137,
+  "marks": []
+ },
+ "nt-fixed": {
+  "w": 1150,
+  "h": 165,
+  "marks": []
+ },
+ "nt-type-sug": {
+  "w": 1150,
+  "h": 304,
+  "marks": []
+ },
+ "now-edit": {
+  "w": 1150,
+  "h": 173,
+  "marks": []
+ },
+ "phone-paste": {
+  "w": 1184,
+  "h": 433,
+  "marks": []
+ },
+ "phone-hover": {
+  "w": 1150,
+  "h": 110,
+  "marks": []
+ },
+ "phone-shared": {
+  "w": 1150,
+  "h": 131,
+  "marks": []
+ },
+ "phone-names": {
+  "w": 1150,
+  "h": 81,
+  "marks": []
+ },
+ "region": {
+  "w": 1150,
+  "h": 226,
+  "marks": []
+ },
+ "confirm": {
+  "w": 496,
+  "h": 228,
+  "marks": []
+ },
+ "org": {
+  "w": 1150,
+  "h": 90,
+  "marks": []
+ }
+}

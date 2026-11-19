@@ -12,6 +12,7 @@
 - The batch import comparison (B+ now vs. verify on Add with a second confirm dialog vs. the compromise that fixes invalid entries in that dialog, 2026-11-17) is `teams/importverify.html` (`teams/src/spec/importverify/`); it does not change the prototype.
 - The batch import tag study (edit a tag as plain text; where a fixed tag goes; phone region; options Now / A / B / C, 2026-11-19) is `teams/importtags.html` (`teams/src/spec/importtags/`); it does not change the prototype.
 - The Not sent / Resend demo (answers to two prototype questions, 2026-11-16) is `teams/notsent.html` (`teams/src/spec/notsent/`); it does not change the prototype.
+- The batch import tag design and why page (screenshots of the tag study's option A with labels by data type, each part with its reason; answers "why not show the person for a phone number", 2026-11-19) is `teams/tagwhy.html` (`teams/src/spec/tagwhy/`, screenshots by `tools/tagwhy-shots.mjs` from the tag study served on :4191); it does not change the prototype.
 - The phone-number de-duplication study is `teams/phone-dedupe.html` (`teams/src/spec/phone/`).
 - The DS component map for developers is `teams/dsmap.html` (`teams/src/spec/dsmap/`).
 - The "which phone gets the SMS" comparison for PM is `teams/smsphone.html` (`teams/src/spec/smsphone/`); it does not change the prototype.
