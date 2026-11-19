@@ -3,7 +3,8 @@
 //   Now: a click swaps the tag for a small DS Input (a field inside the field); red tags are always sorted first, so
 //        a fixed one jumps to the gray ones at once.
 //   A (suggested): a click turns the tag back into plain text in the same spot; the order is set only when entries
-//        come in (red first then), and a fixed tag stays where it is, turning gray with a short green flash.
+//        come in, and a fixed tag stays where it is, turning gray with a short green flash. Entries that come in later
+//        don't move the tags already there: new red ones go first, new gray ones last (2026-11-19).
 //   B: the order you typed is kept; the hint counts what's left to fix, and Next to fix jumps to the next red tag.
 //   C: A, plus Enter on a fixed tag moves straight to the next red one (for long lists).
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
@@ -125,6 +126,11 @@ const SAMPLE: Record<string, string> = {
   phone: '0918226588, 0912337415, 0918555210, 0919000119, 0987654321, 091234, +1 415 555 0123, +81 90 1234 5678, +86 138 0013 8000, +44 20 7946 0958',
   mvpn: '8861588, 8860217, 8860218, 8861119, 8899999',
 }
+// a second batch: two not found, one new person, one already in the list
+const MORE: Record<string, string> = {
+  nt: 'kylln, thliu, a20001, psyang',
+  phone: '0918120113, 0918777, 0912337415',
+}
 
 function Demo({ mode, show }: { mode: Mode; show: Show }) {
   const [kind, setKind] = React.useState<ListKind | null>('nt'), [region, setRegion] = React.useState<Region>('TW')
@@ -155,14 +161,19 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
     : seq.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => seq.indexOf(h.id) < 0))
   const bad = hits.filter(h => h.why), good = hits.filter(h => h.ok)
 
-  // entries come in: A and C sort red first now (and only now)
+  // entries come in: A and C place only the new ones (red first, gray last); the tags already there keep their order
   const take = (t: string, pin?: string) => {
     const l = splitTokens(t).map(x => x.trim()).filter(Boolean)
     setDraft('')
     if (!l.length) return
     const add = l.map(v => ({ id: nextId.current++, v, pin })), all = items.concat(add)
     setItems(all)
-    if (mode === 'A' || mode === 'C') setSeq(redFirst(hitsOf(all)).map(h => h.id))
+    if (mode === 'A' || mode === 'C') {
+      const ids = new Set(add.map(x => x.id)), fresh = hitsOf(all).filter(h => ids.has(h.id))
+      setSeq(fresh.filter(h => h.why).map(h => h.id).concat(seq, fresh.filter(h => h.ok).map(h => h.id)))
+      // new red tags at the top: bring them into view
+      if (fresh.some(h => h.why)) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0)
+    }
   }
   const drop = (id: number) => { setItems(l => l.filter(x => x.id !== id)); setSeq(s => s.filter(x => x !== id)) }
   const openEdit = (h: Hit) => setEdit({ id: h.id, v: h.v })
@@ -330,8 +341,9 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
       </FormField>
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
+        <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null) }}>Clear</Button>
-        <span className="text-caption text-fg-secondary">Try: fix a red tag (a19999 → ytchang, gywuu → thliu), then look for it.</span>
+        <span className="text-caption text-fg-secondary">Try: fix a red tag (a19999 → ytchang), then look for it; then Paste more.</span>
       </div>
       <ConfirmDialog onClose={() => setPend(null)} cf={pend ? {
         title: 'Change the data type?',
@@ -358,7 +370,7 @@ export default function ImportTags() {
         <div className="spec-wrap flex flex-col gap-1 pt-4 pb-3">
           <span className="spec-eyebrow">MNP · Batch import · 標籤的修改與位置</span>
           <h1 className="spec-h1">批次匯入：點標籤怎麼改、改好之後去哪</h1>
-          <span className="text-caption text-fg-secondary">2026/11/19 · 四個版本都可以直接操作（按 Paste a sample list 貼上 26 筆，其中 3 筆找不到；把 a19999 改成 ytchang、gywuu 改成 thliu 試試），用的是原型的範例資料與比對規則；不影響原型。</span>
+          <span className="text-caption text-fg-secondary">2026/11/19 · 四個版本都可以直接操作（按 Paste a sample list 貼上 26 筆，其中 3 筆找不到；把 a19999 改成 ytchang，再按 Paste more 貼第二批試試），用的是原型的範例資料與比對規則；不影響原型。</span>
         </div>
       </div>
       <main className="spec-wrap spec-main">
@@ -458,12 +470,12 @@ export default function ImportTags() {
         <Section eyebrow="Compare" title="比較">
           <SpecTable head={['', '修改的樣子', '紅色在哪', '修好之後', '名單很長時']} nowrap={[0]} rows={[
             ['現在', '欄位裡的輸入框', '永遠在最前面', '立刻跳到後面（找不到）', '要處理的在最前面'],
-            ['A（建議）', '變回純文字', '加入名單時排到前面', '原地變灰色、閃一下綠框', '要處理的在最前面；修好的不動'],
+            ['A（建議）', '變回純文字', '新加入的紅色排到最前面', '原地變灰色、閃一下綠框', '要處理的在最前面；已經在畫面上的不動'],
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
           ]} />
           <Notes items={[
-            { title: '建議 A', body: '保留「要處理的在最前面」，又不會讓剛改好的標籤消失：排序只發生在名單「進來」的那一刻（貼上、按 Enter、輸入逗號），修改不會觸發排序。修好的標籤在原地變灰並閃一下綠框，使用者看得到結果。下一次再貼上新名單時才重新整理順序。' },
+            { title: '建議 A', body: '保留「要處理的在最前面」，又不會讓剛改好的標籤消失：排序只發生在名單「進來」的那一刻（貼上、按 Enter、輸入逗號），修改不會觸發排序。修好的標籤在原地變灰並閃一下綠框，使用者看得到結果。之後再貼上一批，也只安排新進來的：新的紅色放最前面、新的灰色接在最後，已經在畫面上的標籤順序不變。' },
             { title: '要不要加 C', body: 'C 的 Enter 接著改下一筆，對一次要修十幾筆的人很快；但只改一兩筆的人可能會被突然打開的下一筆嚇到。可以先上 A，看使用者測試再決定。' },
             { title: 'B 的取捨', body: 'B 完全不動順序，最容易預期；但紅色散在名單各處，名單很長時要靠 Next to fix，多一個要學的東西，也會讓「n to fix」的數字回到畫面上（之前拿掉過總結標籤）。' },
           ]} />
@@ -473,7 +485,7 @@ export default function ImportTags() {
           <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
             ['修改', '點任何標籤（或聚焦後 Enter／Space），標籤變回純文字：沒有外框、沒有底色，字的大小、位置和標籤裡的字相同，游標在字的最後面，寬度跟著字變長。內容是原本輸入的值（例如 NT 帳號，不是姓名）。'],
             ['結束修改', 'Enter 或點別處：重新比對，變回標籤；Esc：取消修改；把字刪光再結束：移除這一筆。'],
-            ['順序', '貼上、Enter、逗號把新的值加進來時，整份名單重新整理一次：紅色在前、灰色在後（各自保持輸入順序）。修改、移除不重新整理。'],
+            ['順序', '貼上、Enter、逗號把新的值加進來時，只安排新進來的：找不到的（紅色）放在名單最前面，找到的（灰色）接在最後，各自保持輸入順序；已經在名單裡的標籤（包括還沒修的紅色和修好的灰色）順序不變。有新的紅色時，名單捲回最上方。修改、移除不重新排序。'],
             ['改成重複的', '改完發現和名單裡已經有的相同（同一個 NT 帳號、工號、同一支號碼）：這一筆移除，名單裡原本那個標籤閃一下綠框，畫面捲到它。'],
             ['修好之後', '標籤留在原地，變成灰色，外圍閃一下細的綠框（不到 1 秒）；游標回到名單最後面但畫面不捲動，標籤上不出現藍色焦點框。改了還是找不到：仍是紅色、留在原地，原因更新。'],
             ['說明文字', '不變：{n} valid audiences. Click a tag to edit it.'],

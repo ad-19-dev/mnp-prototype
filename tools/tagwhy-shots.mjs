@@ -48,6 +48,11 @@ await step('nt-fixed', async () => {
   const inp = box('A').locator('[data-editing]'); await inp.fill('ytchang'); await wait(250); await inp.press('Enter'); await wait(120)
   await shot('nt-fixed', box('A'))
 });
+// 4b. a second batch: new red ones go first, the new person last, the tags already there keep their order
+await step('more', async () => {
+  await wait(1000); await p.mouse.move(0, 0); await shot('more-before', box('A'))
+  await demo('A').getByRole('button', { name: 'Paste more' }).click(); await wait(300); await p.mouse.move(0, 0); await shot('more-after', box('A'))
+});
 // 5. typing at the end: suggestions
 await step('nt-type-sug', async () => {
   await wait(1000); await clear('A'); const inp = demo('A').locator('#t-A'); await inp.click(); await inp.pressSequentially('chen', { delay: 30 }); await wait(300)
