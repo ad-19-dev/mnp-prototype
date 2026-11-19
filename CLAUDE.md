@@ -14,4 +14,5 @@
 - The phone-number de-duplication study is `teams/phone-dedupe.html` (`teams/src/spec/phone/`).
 - The DS component map for developers is `teams/dsmap.html` (`teams/src/spec/dsmap/`).
 - The "which phone gets the SMS" comparison for PM is `teams/smsphone.html` (`teams/src/spec/smsphone/`); it does not change the prototype.
+- The prototype artifact's page title is "MNP Prototype (Final)" (since 2026-11-19); lock it with that title.
 - The lock password is never written into this repo.
