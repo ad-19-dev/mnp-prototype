@@ -322,7 +322,7 @@ export const LIST_SAMPLES: Record<ListKind, string> = {
 }
 export function matchAs(tok: string, kind: ListKind, opts: { allowExt?: boolean; extWhy?: string; phoneBy?: string; noExtEmail?: boolean; noExtPhone?: boolean }): Match {
   const t = tok.trim(), low = t.toLowerCase(), digits = t.replace(/\D/g, '')
-  if (kind === 'org') { const org = ORGS.find(o => o.code.toLowerCase() === low); return org ? { kind: 'org', org, by: 'Org code' } : { kind: 'miss', why: 'No org with this code' } }
+  if (kind === 'org') { const org = ORGS.find(o => o.code.toLowerCase() === low); return org ? { kind: 'org', org, by: 'Org code' } : { kind: 'miss', why: 'No org with this ID' } }
   if (kind === 'nt') {
     if (!/^[a-z][a-z0-9._-]{1,19}$/i.test(t)) return { kind: 'miss', why: 'Not an NT account' }
     const p = PEOPLE.find(x => x.nt === low); return p ? { kind: 'one', p, by: 'NT account' } : { kind: 'miss', why: 'No employee with this NT account' }

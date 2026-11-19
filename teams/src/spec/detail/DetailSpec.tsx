@@ -139,7 +139,7 @@ function Detail() {
           { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS content，半形最多 534 字、有任一全形字元最多 267 字）。小標題旁不顯示送達人數。' },
           { n: 4, title: 'Audience', body: '和發送流程相同的表格；SMS 多兩欄 Company phone、Personal phone。個人不加 Person 標籤（大頭照已經看得出是人；組織、群組、外部聯絡人是圖示，才需要標籤）。' },
           { n: 5, title: '基本資訊', body: FIELDS + '。' },
-          { n: 6, title: '底部', body: '左：Cancel sending；右：Duplicate（2026-11-18 從 Duplicate to new message 縮短）、Resend（Scheduled expired、Error）。' },
+          { n: 6, title: '底部', body: '左：Cancel sending；右：Duplicate（2026-11-18 從 Duplicate to new message 縮短，列選單也一樣）、Resend（Scheduled expired、Error）。' },
           { n: 7, title: 'Sent details', body: '已開始送出（In progress、Sent、Error）才有的藍字連結，開發送明細。原本的 n not sent 與 View delivery details 合併成這一個（2026-11-16）；未送出人數仍在右側 Status 下方，點了開同一個對話框、只看 Not sent。' },
         ]} />
       </Section>
@@ -159,7 +159,7 @@ function Detail() {
           ['標題列', '訊息 ID 標籤（Tag sm neutral）加 Message details；右上角關閉，Esc 也可關閉'],
           ['左欄', 'Content、Audience 兩個區塊；內距 loose，區塊之間 1.5 × loose；自己捲動'],
           ['右欄', '寬 340，左側細分隔線，淺灰底（neutral-1，黑色 2%）；內距 loose；自己捲動'],
-          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate（secondary，2026-11-18 從 Duplicate to new message 縮短；列選單仍是 Duplicate to new message）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary），Device Notifications (SMS) 動到收件人或手機時是 Resend approval（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
+          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate（secondary，2026-11-18 從 Duplicate to new message 縮短，列選單 2026-11-19 也改）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary），Device Notifications (SMS) 動到收件人或手機時是 Resend approval（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
         ]} />
       </Section>
       <Section eyebrow="Right" title="基本資訊" lead="設計系統 DescriptionList（vertical）：名稱在上（次要文字色）、值在下。列表上有的資訊都在這裡。">
@@ -274,7 +274,7 @@ function Delivery() {
         ]} />
         <SpecTable head={['欄位', '內容']} nowrap={[0]} rows={[
           ['Job ID', '每一則送出的訊息的編號（訊息 ID 加序號），依送出順序'],
-          ['Recipient', '人員顯示加手機標籤（Company phone 藍、Personal phone 紫）；外部聯絡人顯示電話或 Email'],
+          ['Audience', '人員顯示加手機標籤（Company phone 藍、Personal phone 紫）；外部聯絡人顯示電話或 Email'],
           ['Employee ID', '工號，查案最常用；外部聯絡人 —'],
           ['Channel', 'PNS、SMS (fallback)、SMS（外部號碼）、Desktop OS、Email。推播沒送到後改寄的 SMS 是同一人的另一列'],
           ['Status', '標籤加原因（見上）'],

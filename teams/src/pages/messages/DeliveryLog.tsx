@@ -144,7 +144,7 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
     col.accessor('sn', { header: L('Job ID', 'Job ID'), meta: { width: 140, maxWidth: 140 }, cell: i => <span className="tabular-nums">{i.getValue()}</span> }),
     // the person, and which phone it went to as a tag (company and personal in different colours); not on Desktop
     // OS or Email lines
-    col.display({ id: 'who', header: L('Recipient', '收件人'), meta: { width: 300 }, cell: i => { const l = i.row.original; return (
+    col.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 300 }, cell: i => { const l = i.row.original; return (
       <span className="flex min-w-0 items-center gap-2">
         {l.p ? <PersonDisplay value={personVal(l.p)} /> : <span className="truncate">{l.who}</span>}
         {l.phone ? <DsTag size="sm" color={l.phone === 'co' ? 'blue' : 'purple'} className="shrink-0">{l.phone === 'co' ? L('Company phone', '公務手機') : L('Personal phone', '私人手機')}</DsTag> : null}

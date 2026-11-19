@@ -157,7 +157,7 @@ export function FilterMenu<K extends string>({ label, opts, sel, toggle, clear }
 // What a pasted list holds; chosen before pasting, one kind per list
 export const listKindName = (k: ListKind) => ({
   nt: L('NT accounts', 'NT 帳號'), emp: L('Employee IDs', '工號'), name: L('Names', '姓名'), email: L('Emails', 'Email'),
-  phone: L('Phone numbers', '電話號碼'), mvpn: L('MVPN', 'MVPN'), org: L('Org codes', '組織代碼'),
+  phone: L('Phone numbers', '電話號碼'), mvpn: L('MVPN', 'MVPN'), org: L('Org IDs', '組織 ID'),
 })[k]
 export const listKindExample = (k: ListKind) => ({
   nt: 'gywu, cmchen', emp: '120588, 112306', name: L('陳怡君, Kevin Lin', '陳怡君, Kevin Lin'), email: 'gywu@tsmc.com, partner@example.com',

@@ -132,7 +132,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
             editable, and its Resend sends it (a passed send time has to be changed first). A Scheduled record has no
             menu item for its time: it's changed in the Detail modal (open the title). */}
         {st === 'expired' || st === 'error' ? <DropdownMenuItem startIcon={Send} onSelect={() => m.set({ det: x.id })}>{L('Resend', '重新傳送')}</DropdownMenuItem> : null}
-        <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate to new message', '複製為新訊息')}</DropdownMenuItem>
+        <DropdownMenuItem startIcon={Copy} onSelect={() => duplicateCh(m, x)}>{L('Duplicate', '複製')}</DropdownMenuItem>
         {st === 'expired' || st === 'error' || st === 'scheduled' || st === 'pending' ? <>
           <DropdownMenuSeparator />
           <DropdownMenuItem startIcon={Ban} className="text-error-text" onSelect={() => askCancel(m, x)}>{L('Cancel sending', '取消傳送')}</DropdownMenuItem>
