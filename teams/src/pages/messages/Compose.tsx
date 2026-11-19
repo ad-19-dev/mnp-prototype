@@ -1,7 +1,7 @@
 // Send flow: 1 Receivers & channels, 2 Message, 3 Review, plus the approval result
 import * as React from 'react'
 import {
-  Button, Checkbox, DataTable, DatePicker, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Empty, FileItem, FileUpload, Input, Pagination, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
+  Alert, Button, Checkbox, DataTable, DatePicker, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Empty, FileItem, FileUpload, Input, Pagination, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
@@ -462,7 +462,8 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
   const counts: Partial<Record<PreviewChannel, number>> = { push: rc.push, sms: rc.smsable + rc.extP, desktop: rc.desktop, email: rc.email }
   const tomorrow9 = toIso(new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() + 1, 9, 0))
   const opts = [
-    ['now', Zap, L('Send now', '立即傳送'), undefined],
+    // needs approval (SMS fallback not urgent, or outside contacts): Send now waits for it (2026-11-19)
+    ['now', Zap, L('Send now', '立即傳送'), ap.need ? L('Sends once approved', '核准後立即傳送') : undefined],
     ['schedule', CalendarClock, L('Scheduled send', '排程傳送'), L('Up to 3 months ahead', '3 個月內任一時間')],
   ] as const
   return (
@@ -477,6 +478,10 @@ function Step3({ m, e }: { m: SendCtl; e: Errs }) {
               </label>
             ))}
           </RadioGroup>
+          {c.sendMode === 'now' && ap.need ? (
+            <Alert variant="info" title={L('Not sent right away', '不會立即傳送')}
+              description={L('It needs approval from ' + ap.who.join(' and ') + ' first, and goes out as soon as it’s approved.', '需要先經過' + ap.who.join('與') + '核准，核准後立即傳送。')} />
+          ) : null}
           {c.sendMode === 'schedule' ? (
             <FormField id="f-sched" label={L('Date and time', '日期和時間')} hint={schedD && !e.sched ? L('Sends ', '將於 ') + niceDT(schedD) + L(ap.need ? ' if approved by then' : '', ap.need ? ' 傳送（需先核准）' : ' 傳送') : undefined} error={schedErr} className="max-w-sm">
               <DatePicker id="f-sched" showTime typeable locale={L('en-US', 'zh-TW')} value={c.schedAt || null} error={!!schedErr} onChange={v => m.setC({ schedAt: v })} placeholder="YYYY/MM/DD HH:MM" />

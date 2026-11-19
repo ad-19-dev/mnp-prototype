@@ -186,7 +186,7 @@ function GroupEditor({ m }: { m: GCtl }) {
           <div className="flex flex-col gap-[var(--layout-space-tight)]">
             {/* the send flow's search and Batch import; the list below is the send flow's audience list (2026-11-18): an org
                 or group is one row with a link to its people, no per-channel columns */}
-            <RecvInput id="ri-group" ri={ed.ri} setRi={ri => m.setEd({ ri }, true)} groups={app.groups.filter(g => groupInSpace(g))} excludeGroup={ed.id || undefined}
+            <RecvInput id="ri-group" noGroups ri={ed.ri} setRi={ri => m.setEd({ ri }, true)} groups={[]}
               isAdded={it => ed.aud.some(x => x.key === riKey(it))}
               onAdd={it => m.addItem(it)}
               extra={<Button variant="tertiary" startIcon={Upload} onClick={() => setImp(true)}>{L('Batch import', '批次匯入')}</Button>} />

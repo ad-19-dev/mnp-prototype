@@ -322,6 +322,18 @@ await step('edit-content', async () => {
   await aside().getByRole('button', { name: 'Discard changes' }).click(); await wait(300);
   await closeAside(); await unfind();
 });
+// scheduled Device Notifications (SMS), approved: changing the audience turns Save changes into Resend approval (2026-11-19)
+await step('edit-reapprove', async () => {
+  await find('Office move'); await openRecord('Office move');
+  await aside().locator('#dm-ri').fill('Chen'); await wait(600); await p.keyboard.press('Enter'); await wait(400);
+  await aside().getByRole('heading').first().click(); await wait(300);
+  await panel('edit-reapprove', [
+    [1, aside().getByText(/sends this message for SMS approval again/), 'tl'],
+    [2, aside().getByRole('button', { name: 'Resend approval' }), 'tl'],
+  ]);
+  await aside().getByRole('button', { name: 'Discard changes' }).click(); await wait(300);
+  await closeAside(); await unfind();
+});
 // a shared space's ⋯ menu in the sidebar
 await step('space-menu', async () => {
   await p.getByRole('button', { name: 'Platform Ops', exact: true }).hover(); await wait(300);

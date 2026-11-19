@@ -111,6 +111,8 @@ await step('s1-sms', async () => {
 await step('s1-urgent', async () => {
   await p.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(400);
   await page('s1-urgent');
+  // untick it again: the rest of the flow needs SMS approval, so step 3 shows Send now's note (2026-11-19)
+  await p.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(300);
 });
 await step('dlg-save-group', async () => {
   await foot('Save as group').click(); await wait(500);

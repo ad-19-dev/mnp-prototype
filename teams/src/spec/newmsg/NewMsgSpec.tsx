@@ -149,7 +149,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
           ]} />
           <Sub id="1-7" title="存成群組" start="頁尾 Save as group（有收件人才可按）" items={[
             D('Save as group', 'dlg-save-group'),
-            F(['名稱空白、太長、重名', X('欄位下方紅字', undefined, '不能存')], ['Save', T('Group saved', '回到步驟 1')]),
+            F(['名稱空白、太長、重名', X('欄位下方紅字', undefined, '不能存')], ['Save', T('Group saved', '回到步驟 1；個人、組織、外部聯絡人照原樣存，加入的群組換成它的成員（群組裡不能再有群組）')]),
           ]} />
           <Sub id="1-8" title="前往步驟 2" start="頁尾 Next" items={[
             F(['沒收件人、沒通道、開 SMS 時有一列沒勾手機、外部聯絡人缺對應通道', X('留在步驟 1', 's1-error', '紅字一起出現')],
@@ -404,7 +404,7 @@ function ImportTab() {
       <Section eyebrow="Spec" title="規格" lead="2026-11-18 起改為批次匯入提案的 A 版（標籤，像郵件的收件人欄）：每一筆一輸入就變成標籤並立即比對；找到的是灰色標籤，找不到的是紅色標籤，點任何標籤（灰色也可以，2026-11-18）都能就地修改。只有一層對話框。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['尺寸', '寬 1120，DS Dialog height="fill"（高度填滿視窗，加入標籤時外框不會跳動）。2026-11-18 從 720 加大：使用者會貼上活動報名名單，一次可能上千筆。原型試過 1,200 筆，約 1.6 秒顯示完。'],
-          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織、群組各是一列（藍色 n people 開成員名單），不展開成個人，也沒有各通道的欄位。'],
+          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織是一列（藍色 n people 開成員名單），不展開成個人，也沒有各通道的欄位。搜尋列沒有 Group 類型：群組裡不能再放群組（2026-11-19，層層套疊太複雜）。'],
           ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org codes。沒選之前名單欄位停用（DS disabled 底色）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
           ['List', <>DS 欄位外框（border、hover、focus 藍框），佔滿對話框剩下的高度（至少 200），超過時框內捲動，裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
           ['找到的', <>DS Tag（neutral）：人員是 16px 大頭照加「英文名 中文名」，不截斷；組織是大樓圖示加組織代號；外部聯絡人是信封或電話圖示加 Email／號碼。每個標籤都有 ✕。</>],
@@ -480,9 +480,10 @@ function Step3() {
   return (
     <>
       <Section eyebrow="Step 3" title="Schedule & preview" lead={<>頁面說明 <Copy en="Choose when to send and review all settings before submission." zh="選擇傳送時間，並在送出前確認所有設定。" /></>}>
-        <Big name="s3-now" title="立即傳送（預設）" />
+        <Big name="s3-now" title="立即傳送（預設）" sub="勾了 SMS 備援、需要核准時的樣子" />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['Schedule', <>區塊說明 Taipei time (GMT+8)。兩張選項卡片：<Copy en="Send now" zh="立即傳送" />、<Copy en="Scheduled send" zh="排程傳送" />（說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />）。</>],
+          ['Schedule', <>區塊說明 Taipei time (GMT+8)。兩張選項卡片：<Copy en="Send now" zh="立即傳送" />（需要核准時說明 <Copy en="Sends once approved" zh="核准後立即傳送" />）、<Copy en="Scheduled send" zh="排程傳送" />（說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />）。</>],
+          ['需要核准時的提示', <>選 Send now 且需要核准（勾了 SMS 備援但沒勾 It’s urgent，或有外部收件人）時，卡片下方出現 DS Alert（info、inline）：標題 <Copy en="Not sent right away" zh="不會立即傳送" />，說明 <Copy en="It needs approval from <核准人> first, and goes out as soon as it’s approved." zh="需要先經過<核准人>核准，核准後立即傳送。" />（核准人：the SMS reviewer、your supervisor）。2026-11-19 加：避免使用者以為按下就送出。</>],
           ['Date and time', '選 Scheduled send 才出現；預設隔天 09:00。欄位下方提示 Sends <日期時間>；需要核准時加 if approved by then。'],
           ['Preview', <>區塊標題 <Copy en="Preview" zh="預覽" />，標題正下方是說明 <Copy en="For reference only. Actual appearance may vary depending on recipient’s device and settings." zh="僅供參考。實際呈現會因收件人的裝置與設定而不同。" />；下面一個框，右上角切換通道（Device Notifications、SMS、Desktop OS、Email），框內是預覽，不顯示人數。</>],
         ]} />

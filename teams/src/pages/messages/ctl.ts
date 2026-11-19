@@ -1,6 +1,6 @@
 // Messages page controller: list, row actions, the 3-step send flow and its dialogs.
 import {
-  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, addMin, audToTags, cleanHtml, failList, flatten, fmtDT, fromIso, htmlToText,
+  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, addMin, audToTags, cleanHtml, failList, flatten, membersFor, fmtDT, fromIso, htmlToText,
   joinList, matchAs, smsMax, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
   type Channel, type Group, type ListKind, type Match, type Row, type Status, type Tag, type Template,
 } from '../../lib/data'
@@ -443,8 +443,19 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     saveGroup() {
       const s = get(), sg = s.sg!, name = sg.name.trim(), groups = app().groups
       if (!name || name.length > 50 || sg.desc.length > 200 || groups.some(g => groupInSpace(g) && g.name.toLowerCase() === name.toLowerCase())) { set({ sg: { ...sg, tried: true } }); return }
-      const members = flatten(s.c.receivers, groups)
-      const g = { id: 'gs' + (++seq), team: s.c.team, name, desc: sg.desc.trim(), count: members.length, updated: fmtDT(new Date()), creator: ME, role: 'Owner' as const, members, collabs: [{ pid: ME, role: 'Owner' }], fresh: Date.now() }
+      // as the Audience group editor keeps it (2026-11-19): people, orgs and outside contacts as added; a group can't hold a
+      // group, so an added group comes in as its members
+      const seen: Record<string, boolean> = {}, aud: Tag[] = []
+      const push = (t: Tag) => { if (!seen[t.key]) { seen[t.key] = true; aud.push(t) } }
+      s.c.receivers.forEach(t => {
+        if (t.type !== 'group') { push(t); return }
+        const sub = groups.find(x => x.id === t.id)
+        if (!sub) return
+        if (sub.aud) sub.aud.filter(x => x.type !== 'group').forEach(push)
+        else membersFor(sub).forEach(x => { const p = PMAP[x.pid]; push(p && p.extKind ? { key: 'e:' + p.value, type: 'ext', email: p.value } : { key: 'p:' + x.pid, type: 'person', id: x.pid }) })
+      })
+      const count = membersFor({ aud } as Group, groups).length
+      const g = { id: 'gs' + (++seq), team: s.c.team, name, desc: sg.desc.trim(), count, updated: fmtDT(new Date()), creator: ME, role: 'Owner' as const, aud, collabs: [{ pid: ME, role: 'Owner' }], fresh: Date.now() }
       setApp({ groups: [g as Group].concat(groups) })
       set({ sg: null })
       flash(L('Group saved', '已存成群組'), 'ok')

@@ -95,6 +95,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         <div className="flow-branches">
           <Card kind="page" title="不能編輯" when="Pending approval、In progress、Sent、Rejected、Canceled" shots={['detail-pending']} then="內容與收件人是 Read only（標題旁有 Read only 標籤），傳送時間不能改。" />
           <Card kind="page" title="編輯後儲存" when="Scheduled" then="內容、收件人、傳送時間直接改；一改動，底部換成 Discard changes / Save changes。儲存後仍是 Scheduled。" />
+          <Card kind="page" title="重新送審" when="Scheduled 的 Device Notifications (SMS)，ICSD 已核准，動到收件人或手機" shots={['edit-reapprove']} then="和核准的內容不符，所以 Save changes 換成 Resend approval；按下後這一筆變成 Pending approval，toast Sent for approval。只改內容或傳送時間不用重審（2026-11-19 與 PM 決定）。" />
           <Card kind="page" title="編輯後重新傳送" when="Scheduled expired、Error" shots={['edit-content']} then="內容、收件人直接改；Send time 選 Now 或 Schedule；底部按鈕 Resend（Now）或 Schedule resend（Schedule）按下就送出，不另存。" />
           <Card kind="dialog" title="Discard changes?" when="改過內容沒儲存或送出就關閉" then="Keep editing 回到訊息詳情；Discard 捨棄並關閉。" />
         </div>
@@ -158,7 +159,7 @@ function Detail() {
           ['標題列', '訊息 ID 標籤（Tag sm neutral）加 Message details；右上角關閉，Esc 也可關閉'],
           ['左欄', 'Content、Audience 兩個區塊；內距 loose，區塊之間 1.5 × loose；自己捲動'],
           ['右欄', '寬 340，左側細分隔線，淺灰底（neutral-1，黑色 2%）；內距 loose；自己捲動'],
-          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate（secondary，2026-11-18 從 Duplicate to new message 縮短；列選單仍是 Duplicate to new message）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
+          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate（secondary，2026-11-18 從 Duplicate to new message 縮短；列選單仍是 Duplicate to new message）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary），Device Notifications (SMS) 動到收件人或手機時是 Resend approval（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
         ]} />
       </Section>
       <Section eyebrow="Right" title="基本資訊" lead="設計系統 DescriptionList（vertical）：名稱在上（次要文字色）、值在下。列表上有的資訊都在這裡。">
@@ -204,6 +205,10 @@ function Edit() {
           { n: 4, title: 'Send time', body: 'Scheduled：日期時間欄位，改了之後仍是 Scheduled。Scheduled expired、Error：Now / Schedule 兩個選項，預設 Schedule 帶原本的傳送時間。' },
           { n: 5, title: '底部', body: 'Scheduled expired、Error：主要按鈕一直存在，選 Now 時是 Resend、選 Schedule 時是 Schedule resend，按下就用畫面上的內容、收件人和時間送出，不另開對話框；有改動時 Duplicate 換成 Discard changes，Cancel sending 停用。Scheduled：有改動時底部換成 Discard changes / Save changes。' },
         ]} />
+        <Figure label="重新送審" sub="Scheduled 的 Device Notifications (SMS)，加了一位收件人" shot="edit-reapprove" max={760} notes={[
+          { n: 1, title: '說明', body: 'Audience 表格下方的次要文字：更改收件人或手機要重新送 SMS 審核（捲到下方才看得到）。' },
+          { n: 2, title: 'Resend approval', body: '動到收件人或手機後取代 Save changes；按下後變成 Pending approval。' },
+        ]} />
         <SpecTable head={['狀態', 'Content', 'Audience', 'Send time']} nowrap={[0]} rows={[
           [<StatusTag s="scheduled" />, '可編輯', '可編輯', '可編輯'],
           [<StatusTag s="expired" />, '可編輯', '可編輯', '可編輯'],
@@ -218,6 +223,7 @@ function Edit() {
           { title: 'Read only 欄位', body: '設計系統欄位的 readonly 狀態：淺灰底、無外框，文字維持正常顏色，可以選取複製。focus 時不顯示藍框，避免看起來像可編輯（2026-11-11 與設計師討論，待 DS 負責人確認）。' },
           { title: '只改這個通道', body: '內容、收件人、手機與傳送時間都只改這一筆；同一個訊息 ID 的其他通道不變。' },
           { title: '沒儲存就關閉', body: <>先問 <Copy en="Discard changes?" zh="要捨棄變更嗎？" />：Keep editing / Discard。</> },
+          { title: '重新送審（Scheduled 的 Device Notifications (SMS)）', body: <>ICSD 核准的是當時的收件人。動到 Audience（加入、移除）或手機欄時，Audience 下方先有說明 <Copy en="Changing the audience or phones sends this message for SMS approval again." zh="更改收件人或手機，這則訊息需要重新送 SMS 審核。" />；改動後主要按鈕從 Save changes 換成 <C>Resend approval</C>，按下後這一筆變成 Pending approval（傳送時間保留），toast <Copy en="Sent for approval" zh="已送出審核" />。只改內容或傳送時間仍是 Save changes。緊急送出（略過 ICSD）的紀錄不適用。</> },
           { title: '儲存後（Scheduled）', body: <>toast <Copy en="Changes saved" zh="已儲存變更" />；有改傳送時間時是 <Copy en="Saved. Sends <時間>" zh="已儲存，將於 <時間> 傳送" />。</> },
           { title: 'Resend 後（Scheduled expired、Error）', body: <>沒有另外的儲存：改過的內容與 Resend 一起送出。toast：Now 是 <Copy en="Sending on <通道>" zh="正在以 <通道> 傳送" />，Schedule 是 <Copy en="Resend scheduled for <時間>" zh="已排程重新傳送：<時間>" />。</> },
         ]} />

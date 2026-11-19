@@ -81,8 +81,9 @@ function GroupPeek({ g }: { g: Group }) {
   )
 }
 
-export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, onAdd, extra, noExtEmail, noExtPhone }: {
-  id: string; ri: RiState; setRi: (r: RiState) => void; groups: Group[]; excludeGroup?: string; bad?: boolean
+// noGroups: no Group type (the Audience group editor: a group inside a group nests too deep, 2026-11-19)
+export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, onAdd, extra, noExtEmail, noExtPhone, noGroups }: {
+  id: string; ri: RiState; setRi: (r: RiState) => void; groups: Group[]; excludeGroup?: string; bad?: boolean; noGroups?: boolean
   isAdded: (it: RiItem) => boolean; onAdd: (it: RiItem) => void; extra?: React.ReactNode; noExtEmail?: boolean; noExtPhone?: boolean
 }) {
   const T = riType(ri.type), r = riOptions(ri, groups, excludeGroup, isAdded, noExtEmail, noExtPhone)
@@ -102,7 +103,7 @@ export function RecvInput({ id, ri, setRi, groups, excludeGroup, bad, isAdded, o
           <Select
             aria-label={L('Audience type', '收件人類型')}
             value={ri.type}
-            options={RI_KEYS.map(k => ({ value: k, label: riType(k).label }))}
+            options={RI_KEYS.filter(k => !(noGroups && k === 'group')).map(k => ({ value: k, label: riType(k).label }))}
             onChange={v => { set({ type: v as RiType, q: '', open: true, exp: null }); setTimeout(() => inputRef.current?.focus(), 60) }}
           />
         </div>

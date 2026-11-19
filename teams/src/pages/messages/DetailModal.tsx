@@ -103,6 +103,10 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   // only this channel's own fields count as changes
   const own = (o: Vals) => k === 'email' ? [o.subject, o.html] : k === 'desktop' ? [o.sender, o.dTitle, o.content] : k === 'sms' ? [o.sender, o.pTitle, o.content, o.sms] : [o.sender, o.pTitle, o.content]
   const phChanged = k === 'sms' && phOf(ph, tags) !== phOf(initPh, tags)
+  // Scheduled Device Notifications (SMS) approved by ICSD (2026-11-19, with PM): changing who gets it (the audience
+  // or the phones) no longer matches what was approved, so saving sends it back for approval. Text and time don't.
+  const audChanged = tagKeys(tags) !== tagKeys(init.tags) || phChanged
+  const reapprove = ICSD && st === 'scheduled' && k === 'sms' && !r.bypass && audChanged
   const dirty = JSON.stringify(own(v)) !== JSON.stringify(own(init.v)) || tagKeys(tags) !== tagKeys(init.tags) || timeChanged || phChanged
   React.useEffect(() => { onDirty(dirty) }, [dirty])
 
@@ -153,6 +157,11 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   const save = () => {
     if (Object.keys(e).length) { setTried(true); return }
     if (edit) patchRow(r.id, patchOf())
+    if (reapprove) {
+      m.setCh(r.id, k, 'pending', atD ? fmtDT(atD) : undefined); patchRow(r.id, { review: { by: 'icsd' } })
+      setTried(false); onDirty(false); close()
+      flash(L('Sent for approval', '已送出審核'), 'ok'); return
+    }
     if (timeChanged && atD) m.setCh(r.id, k, 'scheduled', fmtDT(atD))
     flash(timeChanged && atD ? L('Saved. Sends ', '已儲存，將於 ') + niceDT(atD) + L('', ' 傳送') : L('Changes saved', '已儲存變更'), 'ok')
     setTried(false)
@@ -265,6 +274,8 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
             <AudTable tags={tags} onRemove={edit ? key => setTags(l => l.filter(x => x.key !== key)) : undefined}
               phones={k === 'sms' ? { co: ph.co, pp: ph.pp, set: edit ? (which, keys, val) => setPh(o => ({ ...o, [which]: { ...o[which], ...Object.fromEntries(keys.map(kk => [kk, val])) } })) : undefined } : undefined} />
             {show('aud') ? <ErrText>{show('aud')}</ErrText> : null}
+            {/* approved SMS: say before the change that the audience goes back for approval */}
+            {ICSD && st === 'scheduled' && k === 'sms' && !r.bypass ? <span className="text-caption text-fg-secondary">{L('Changing the audience or phones sends this message for SMS approval again.', '更改收件人或手機，這則訊息需要重新送 SMS 審核。')}</span> : null}
           </section>
         </div>
 
@@ -305,7 +316,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
             <Button variant="primary" startIcon={Send} onClick={doResend}>{when === 'later' ? L('Schedule resend', '排程重新傳送') : L('Resend', '重新傳送')}</Button>
           </> : dirty ? <>
             <Button variant="tertiary" onClick={discard}>{L('Discard changes', '捨棄變更')}</Button>
-            <Button variant="primary" onClick={save}>{L('Save changes', '儲存變更')}</Button>
+            <Button variant="primary" onClick={save}>{reapprove ? L('Resend approval', '重新送審') : L('Save changes', '儲存變更')}</Button>
           </> : <>
             <Button variant="secondary" startIcon={Copy} onClick={() => { close(); duplicateCh(m, x) }}>{L('Duplicate', '複製')}</Button>
           </>}
