@@ -10,6 +10,7 @@
 - The per-recipient delivery details proposals (Detail modal) are `teams/sendlog.html` (`teams/src/spec/sendlog/`); they do not change the prototype.
 - The batch import proposals (match inline, no second match page) are `teams/importlive.html` (`teams/src/spec/importlive/`); they do not change the prototype. B+ was in the prototype 2026-11-16/17, then the verify-on-Add compromise from `teams/importverify.html` (2026-11-17); since 2026-11-18 the prototype uses option A (tags) without the summary tags, the gray-tag sentence or repeated entries, and with Proceed as the button.
 - The batch import comparison (B+ now vs. verify on Add with a second confirm dialog vs. the compromise that fixes invalid entries in that dialog, 2026-11-17) is `teams/importverify.html` (`teams/src/spec/importverify/`); it does not change the prototype.
+- The batch import tag study (edit a tag as plain text; where a fixed tag goes; phone region; options Now / A / B / C, 2026-11-19) is `teams/importtags.html` (`teams/src/spec/importtags/`); it does not change the prototype.
 - The Not sent / Resend demo (answers to two prototype questions, 2026-11-16) is `teams/notsent.html` (`teams/src/spec/notsent/`); it does not change the prototype.
 - The phone-number de-duplication study is `teams/phone-dedupe.html` (`teams/src/spec/phone/`).
 - The DS component map for developers is `teams/dsmap.html` (`teams/src/spec/dsmap/`).
