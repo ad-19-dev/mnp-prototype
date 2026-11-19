@@ -11,7 +11,7 @@ import * as React from 'react'
 import { Button, Popover, PopoverAnchor, PopoverContent, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
 import { Building2, Mail, Phone } from 'lucide-react'
 import { Notes, Section, SpecTable } from '../parts'
-import { FormField, ListKindField, PAvatar, listKindExample, pname } from '../../components/ui'
+import { ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, listKindName, pname } from '../../components/ui'
 import { REGIONS, type Region } from '../../components/RecvInput'
 import { DOMAIN, ORGS, PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type ListKind, type Person } from '../../lib/data'
 
@@ -126,6 +126,7 @@ function Demo({ mode }: { mode: Mode }) {
   const [seq, setSeq] = React.useState<number[]>([])        // A, C: the order, set when entries come in
   const [edit, setEdit] = React.useState<{ id: number; v: string } | null>(null)
   const [hi, setHi] = React.useState(0), [sugOpen, setSugOpen] = React.useState(false)
+  const [pend, setPend] = React.useState<ListKind | null>(null)
   const [flash, setFlash] = React.useState<number | null>(null)
   const nextId = React.useRef(1), inputRef = React.useRef<HTMLInputElement>(null), boxRef = React.useRef<HTMLDivElement>(null)
 
@@ -267,7 +268,9 @@ function Demo({ mode }: { mode: Mode }) {
   return (
     <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
       <div className="flex flex-wrap items-end gap-2">
-        <div className="w-56"><ListKindField id={'k-' + mode} value={kind} onChange={k => setKind(k)} /></div>
+        {/* changing the data type clears the list (the entries can't be looked up as another type): asked first when the
+            list isn't empty (2026-11-19) */}
+        <div className="w-56"><ListKindField id={'k-' + mode} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
         {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mode} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
       </div>
       <FormField id={'t-' + mode} label="List" hint={
@@ -308,6 +311,11 @@ function Demo({ mode }: { mode: Mode }) {
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null) }}>Clear</Button>
         <span className="text-caption text-fg-secondary">Try: fix a red tag (a19999 → ytchang, gywuu → thliu), then look for it.</span>
       </div>
+      <ConfirmDialog onClose={() => setPend(null)} cf={pend ? {
+        title: 'Change the data type?',
+        text: 'Changing to ' + listKindName(pend) + ' clears the list. The ' + hits.length + (hits.length === 1 ? ' entry' : ' entries') + ' you added can’t be looked up as another type.',
+        cancel: 'Cancel', ok: 'Clear and change', danger: true, run: () => { setKind(pend); setPend(null) },
+      } : null} />
     </div>
   )
 }
@@ -385,6 +393,17 @@ export default function ImportTags() {
             { title: '為什麼共用號碼不展開成人', body: '值班機掛在誰身上會輪替，寄給「掛著的每個人」會讓不在值班的人也收到 App 推播與 SMS；使用者給的是號碼，意思通常是「打給值班的那一支」。' },
             { title: '試試', body: 'Data type 選 Phone numbers 打 0919 或 0918；選 MVPN 打 8861 或 88602；也可以按 Paste a sample list。' },
           ]} cols />
+        </Section>
+
+        <Section eyebrow="Guard" title="切換資料類型前先確認" lead="名單裡的值是照資料類型比對的（例如 NT 帳號），換了類型就比對不了，所以切換會清空名單。名單是空的時候直接切換；名單有東西時先問。">
+          <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
+            ['對話框', '設計系統 Dialog，寬 480（和其他確認對話框相同），疊在 Batch import 之上。'],
+            ['標題', 'Change the data type?'],
+            ['說明', 'Changing to <新的類型> clears the list. The <n> entries you added can’t be looked up as another type.'],
+            ['按鈕', 'Cancel（tertiary，資料類型維持原本的）、Clear and change（primary danger，清空名單並換成新的類型）。'],
+            ['不會問的時候', '名單是空的；選回同一個類型；Phone numbers 換 Region（只會重新比對沒有 + 的號碼，不清空）。'],
+          ]} />
+          <Notes items={[{ title: '試試', body: '任一個示範先貼上名單，再把 Data type 換成別的。' }]} />
         </Section>
 
         <Section eyebrow="Compare" title="比較">
