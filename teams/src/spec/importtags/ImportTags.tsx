@@ -7,6 +7,8 @@
 //        don't move the tags already there: new red ones go first, new gray ones last (2026-11-19).
 //   B: the order you typed is kept; the hint counts what's left to fix, and Next to fix jumps to the next red tag.
 //   C: A, plus Enter on a fixed tag moves straight to the next red one (for long lists).
+//   D (2026-11-20): the order you typed is kept, no sorting; the hint says how many aren't found, with Show only these
+//        (only the red tags; the ones fixed there stay until Show all) and Remove all (drops every red tag).
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
 import { Button, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
@@ -16,7 +18,7 @@ import { ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, list
 import { REGIONS, type Region } from '../../components/RecvInput'
 import { DOMAIN, ORGS, PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type ListKind, type Person } from '../../lib/data'
 
-type Mode = 'now' | 'A' | 'B' | 'C'
+type Mode = 'now' | 'A' | 'B' | 'C' | 'D'
 // pin: picked from the dropdown for a number several people share: a person's id, or '#' for the number itself
 type Item = { id: number; v: string; pin?: string }
 // label: the person's name (or the org, the number); val: the value as entered, formatted; who: shown on hover
@@ -104,6 +106,16 @@ function suggest(kind: ListKind, region: Region, q: string, taken: (v: string, p
   return out.filter(x => !taken(x.value, x.pin)).slice(0, 8)
 }
 
+// D's hint: the parts with a dot between them
+function DHint({ parts }: { parts: React.ReactNode[] }) {
+  const l = parts.filter(Boolean)
+  return (
+    <span className="flex flex-wrap items-center gap-x-1">
+      {l.map((x, i) => <React.Fragment key={i}>{i ? <span aria-hidden>·</span> : null}<span className="inline-flex items-center">{x}</span></React.Fragment>)}
+    </span>
+  )
+}
+
 // the dropdown under the field being typed in (the list's input, or a tag being edited)
 function SugList({ sugs, hi, setHi, onPick }: { sugs: Sug[]; hi: number; setHi: (i: number) => void; onPick: (x: Sug) => void }) {
   return (
@@ -140,6 +152,7 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
   const [hi, setHi] = React.useState(0), [sugOpen, setSugOpen] = React.useState(false)
   const [pend, setPend] = React.useState<ListKind | null>(null)
   const [flash, setFlash] = React.useState<number | null>(null)
+  const [only, setOnly] = React.useState<number[] | null>(null)  // D: the red tags shown by Show only these
   const nextId = React.useRef(1), inputRef = React.useRef<HTMLInputElement>(null), boxRef = React.useRef<HTMLDivElement>(null)
 
   // look every entry up; repeats drop out (they aren't shown)
@@ -158,6 +171,7 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
   // what is shown, in which order
   const shown: Hit[] = mode === 'now' ? redFirst(hits)
     : mode === 'B' ? hits
+    : mode === 'D' ? (only ? hits.filter(h => only.indexOf(h.id) >= 0) : hits)
     : seq.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => seq.indexOf(h.id) < 0))
   const bad = hits.filter(h => h.why), good = hits.filter(h => h.ok)
 
@@ -168,6 +182,8 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
     if (!l.length) return
     const add = l.map(v => ({ id: nextId.current++, v, pin })), all = items.concat(add)
     setItems(all)
+    setOnly(null)
+    if (mode === 'D') setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
     if (mode === 'A' || mode === 'C') {
       const ids = new Set(add.map(x => x.id)), fresh = hitsOf(all).filter(h => ids.has(h.id))
       setSeq(fresh.filter(h => h.why).map(h => h.id).concat(seq, fresh.filter(h => h.ok).map(h => h.id)))
@@ -220,7 +236,14 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
     setEdit({ id: n.id, v: n.v })
     setTimeout(() => { const el = boxRef.current?.querySelector('[data-editing]'); el && el.scrollIntoView({ block: 'nearest' }) }, 0)
   }
-  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null) }, [kind])
+  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null) }, [kind])
+  // D: show only the red tags, or drop them all
+  const showOnly = () => { setEdit(null); setOnly(bad.map(h => h.id)); setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0) }
+  const removeAll = () => {
+    const gone = bad.map(h => h.id); setEdit(null)
+    setItems(l => l.filter(x => gone.indexOf(x.id) < 0))
+    if (only && only.every(id => gone.indexOf(id) >= 0)) setOnly(null)
+  }
 
   const byNameOf = () => show === 'name' || (show === 'type' && (kind === 'nt' || kind === 'emp'))
   const editable = (h: Hit) => ({
@@ -310,6 +333,14 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
         !hits.length ? 'Separate with commas or new lines.'
           : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
           : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
+          : mode === 'D' ? <DHint parts={[
+              only ? <>{bad.length ? <span className="text-error-text">{bad.length} not found</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
+                : <>{n} valid audiences{bad.length ? null : '. Click a tag to edit it.'}</>,
+              !only && bad.length ? <span><span className="text-error-text">{bad.length} not found</span>&nbsp;(click a tag to edit it)</span> : null,
+              bad.length && !only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={showOnly}>Show only these</Button> : null,
+              bad.length ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={removeAll}>Remove all</Button> : null,
+              only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
+            ]} />
           : n + ' valid audiences. Click a tag to edit it.'}>
         <div ref={boxRef} className={cn('flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
           kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
@@ -342,8 +373,8 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
-        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null) }}>Clear</Button>
-        <span className="text-caption text-fg-secondary">Try: fix a red tag (a19999 → ytchang), then look for it; then Paste more.</span>
+        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null) }}>Clear</Button>
+        <span className="text-caption text-fg-secondary">{mode === 'D' ? 'Try: Show only these, fix a19999 → ytchang, then Show all; or Remove all.' : 'Try: fix a red tag (a19999 → ytchang), then look for it; then Paste more.'}</span>
       </div>
       <ConfirmDialog onClose={() => setPend(null)} cf={pend ? {
         title: 'Change the data type?',
@@ -370,7 +401,7 @@ export default function ImportTags() {
         <div className="spec-wrap flex flex-col gap-1 pt-4 pb-3">
           <span className="spec-eyebrow">MNP · Batch import · 標籤的修改與位置</span>
           <h1 className="spec-h1">批次匯入：點標籤怎麼改、改好之後去哪</h1>
-          <span className="text-caption text-fg-secondary">2026/11/19 · 四個版本都可以直接操作（按 Paste a sample list 貼上 26 筆，其中 3 筆找不到；把 a19999 改成 ytchang，再按 Paste more 貼第二批試試），用的是原型的範例資料與比對規則；不影響原型。</span>
+          <span className="text-caption text-fg-secondary">2026/11/19（D 為 11/20 加）· 五個版本都可以直接操作（按 Paste a sample list 貼上 26 筆，其中 3 筆找不到；把 a19999 改成 ytchang，再按 Paste more 貼第二批試試），用的是原型的範例資料與比對規則；不影響原型。</span>
         </div>
       </div>
       <main className="spec-wrap spec-main">
@@ -393,17 +424,36 @@ export default function ImportTags() {
               <SegmentedControlItem value="value">都是輸入的值</SegmentedControlItem>
               <SegmentedControlItem value="name">都是姓名</SegmentedControlItem>
             </SegmentedControl>
-            <span className="text-caption text-fg-secondary">四個示範一起切換</span>
+            <span className="text-caption text-fg-secondary">五個示範一起切換</span>
           </div>
           <div className="grid gap-[var(--layout-space-loose)] xl:grid-cols-2">
             {col('now', '現在', <Tag size="sm" color="neutral">原型目前的做法</Tag>, '點標籤換成有外框的輸入框；紅色永遠排最前面，修好就跳到灰色區。')}
             {col('A', 'A：變回文字、原地變色', <Tag size="sm" color="green">建議</Tag>, '點標籤變回純文字（游標在字裡）；只有加入名單時把紅色排到前面，修好的標籤留在原地變灰色，閃一下綠框。')}
             {col('B', 'B：照輸入順序，用 Next 找下一筆', <Tag size="sm" color="neutral">替代</Tag>, '不排序；說明文字寫「n to fix」與 Next to fix，按了直接打開下一個紅色標籤。')}
             {col('C', 'C：A 加上 Enter 接著改下一筆', <Tag size="sm" color="neutral">A 的加強</Tag>, '和 A 相同；改好按 Enter 會直接打開下一個紅色標籤，不用再找。')}
+            {col('D', 'D：照輸入順序，只看找不到的、全部移除', <Tag size="sm" color="blue">11/20 新增</Tag>, '不排序；說明文字寫「n not found」，接著 Show only these（名單只顯示紅色標籤，在這裡改）與 Remove all（一次移除所有紅色標籤）。')}
           </div>
         </Section>
 
-        <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="四個示範都有：在名單欄位打字時，以及修改標籤時（2026-11-19 加），比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
+        <Section eyebrow="Order" title="要不要把紅色排到最前面" lead="2026-11-20 重新檢討：「紅色排最前面」只在名單很長、錯的很少、只貼一次時有用，卻帶出三條規則（什麼時候排、修好的去哪、第二批放哪）。D 改從使用者要完成的事出發，不靠位置。">
+          <SpecTable head={['使用者要做的事', 'A（排序）怎麼做', 'D（不排序）怎麼做']} nowrap={[0]} rows={[
+            ['知道有沒有錯、錯幾筆', '紅色在最前面，看位置猜', '說明文字直接寫 3 not found'],
+            ['到每一筆錯的', '名單短時一眼看到；很長時紅色還是要捲動', 'Show only these：名單只剩紅色標籤，再長都一眼看完'],
+            ['知道為什麼錯', '滑過紅色標籤看原因', '同 A'],
+            ['對回原始清單（Excel、Email）', '順序被打亂，要自己找', '和原始清單同一個順序'],
+            ['處理：打錯字', '點標籤改，打字時有選單', '同 A；在 Show only these 裡改，改好的留在原地變灰，按 Show all 回到完整名單'],
+            ['處理：查無此人（離職、外部）', '一筆一筆按 ×', 'Remove all 一次移除'],
+            ['再貼一批', '新的紅色放最前面、新的灰色放最後（另一條規則）', '接在最後，不需要規則；貼上時關閉 Show only these'],
+          ]} />
+          <Notes items={[
+            { title: '試試', body: '在 D 按 Paste a sample list → Show only these → 把 a19999 改成 ytchang（留在畫面上變灰）→ Show all，看它回到原本的位置；或直接按 Remove all。' },
+            { title: '和之前拿掉的總結的差別', body: '2026-11-18 拿掉過總結標籤與「n to fix」。D 只用一行說明文字加兩個連結，沒有標籤；找不到的有 0 筆時只寫 n valid audiences。' },
+            { title: 'Remove all 不先確認', body: '找不到的值本來就寄不出去，移除不會少寄任何人；名單照輸入順序，要找回也容易。如果使用者測試覺得太快，再加一個 Undo。' },
+            { title: '要先問的事', body: '一般名單多長、錯的比例多高、錯了是改還是刪？名單大多很短的話，D 可以只留 Remove all，省掉 Show only these。' },
+          ]} cols />
+        </Section>
+
+        <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="每個示範都有：在名單欄位打字時，以及修改標籤時（2026-11-19 加），比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
           <SpecTable head={['資料類型', '比對得到人嗎', '怎麼比對', '從第幾個字開始']} nowrap={[0, 3]} rows={[
             ['NT accounts', '可以', 'NT 帳號開頭相符，或英文名、中文名含有輸入的字（例：打 chen 會出現 cmchen、ycchenz…）', '2 個字'],
             ['Employee IDs', '可以', '工號開頭相符（只有數字時）', '2 碼'],
@@ -452,7 +502,7 @@ export default function ImportTags() {
           <Notes items={[
             { title: '打字時的選單', body: '不論哪種類型，選單都有大頭照與姓名，幫使用者挑對人；選了之後，標籤照上表顯示。' },
             { title: '加入之後', body: '收件人表格照常顯示人名與大頭照。' },
-            { title: '比較', body: '上方的切換可以把四個示範一起換成「都是輸入的值」或「都是姓名」比較。' },
+            { title: '比較', body: '上方的切換可以把五個示範一起換成「都是輸入的值」或「都是姓名」比較。' },
           ]} cols />
         </Section>
 
@@ -473,6 +523,7 @@ export default function ImportTags() {
             ['A（建議）', '變回純文字', '新加入的紅色排到最前面', '原地變灰色、閃一下綠框', '要處理的在最前面；已經在畫面上的不動'],
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
+            ['D', '變回純文字', '照輸入順序；說明文字寫幾筆找不到', '原地變灰色、閃一下綠框', 'Show only these 只看紅色；Remove all 一次移除'],
           ]} />
           <Notes items={[
             { title: '建議 A', body: '保留「要處理的在最前面」，又不會讓剛改好的標籤消失：排序只發生在名單「進來」的那一刻（貼上、按 Enter、輸入逗號），修改不會觸發排序。修好的標籤在原地變灰並閃一下綠框，使用者看得到結果。之後再貼上一批，也只安排新進來的：新的紅色放最前面、新的灰色接在最後，已經在畫面上的標籤順序不變。' },
