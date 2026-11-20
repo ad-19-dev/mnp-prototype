@@ -320,67 +320,71 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
   return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
-      <div className="flex flex-wrap items-end gap-2">
-        {/* changing the data type clears the list (the entries can't be looked up as another type): asked first when the
-            list isn't empty (2026-11-19) */}
-        <div className="w-56"><ListKindField id={'k-' + mode} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
-        {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mode} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
-      </div>
-      <FormField id={'t-' + mode} label="List" hint={
-        !hits.length ? 'Separate with commas or new lines.'
-          : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
-          : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
-          : mode === 'D' ? <DHint parts={[
-              only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
-                : <>{n} valid</>,
-              // "m invalid" is itself the way to show only the invalid ones (2026-11-20): styled like "n not sent" in the
-              // list, red with an underline on hover only, so it's found by those who need it without competing with the count
-              !only && bad.length ? <span className="inline-flex items-center">
-                <Tooltip><TooltipTrigger asChild><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text hover:!text-error-text hover:underline [&>span]:!px-0" onClick={showOnly}>{bad.length} invalid</Button></TooltipTrigger><TooltipContent>Show only invalid</TooltipContent></Tooltip>
-                &nbsp;(click a tag to edit it)</span> : null,
-              only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
-            ]} />
-          : n + ' valid audiences. Click a tag to edit it.'}>
-        <div ref={boxRef} className={cn('flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
-          kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
-          onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
-          {shown.map(h => (edit && edit.id === h.id ? editor(h) : tag(h)))}
-          <Popover open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
-            <PopoverAnchor asChild>
-              <span className="flex min-w-[160px] flex-1">
-                <input ref={inputRef} id={'t-' + mode} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" autoComplete="off"
-                  role="combobox" aria-expanded={showSug} aria-autocomplete="list"
-                  placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
-                  value={draft} onChange={e => { setHi(0); setSugOpen(true); if (/[\n,，;；]/.test(e.target.value)) take(e.target.value); else setDraft(e.target.value) }}
-                  onKeyDown={e => {
-                    if (showSug && e.key === 'ArrowDown') { e.preventDefault(); setHi(i => Math.min(i + 1, sugs.length - 1)) }
-                    else if (showSug && e.key === 'ArrowUp') { e.preventDefault(); setHi(i => Math.max(i - 1, 0)) }
-                    else if (e.key === 'Escape' && showSug) { e.stopPropagation(); setSugOpen(false) }
-                    else if (e.key === 'Enter') { e.preventDefault(); if (showSug) pick(sugs[Math.min(hi, sugs.length - 1)]); else take(draft) }
-                    else if (e.key === 'Backspace' && !draft && shown.length) drop(shown[shown.length - 1].id)
-                  }}
-                  onBlur={() => { take(draft); setSugOpen(false) }} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
-              </span>
-            </PopoverAnchor>
-            {/* the people (or orgs) it could be: avatar, name, the matched value; Enter or a click adds it */}
-            <PopoverContent align="start" sideOffset={6} className="w-96 p-1" onOpenAutoFocus={e => e.preventDefault()}>
-              <SugList sugs={sugs} hi={Math.min(hi, sugs.length - 1)} setHi={setHi} onPick={pick} />
-            </PopoverContent>
-          </Popover>
+    <div className="flex flex-col gap-2" data-demo={mode}>
+      <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
+        <div className="flex flex-wrap items-end gap-2">
+          {/* changing the data type clears the list (the entries can't be looked up as another type): asked first when the
+              list isn't empty (2026-11-19) */}
+          <div className="w-56"><ListKindField id={'k-' + mode} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
+          {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mode} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
         </div>
-      </FormField>
-      <div className="flex flex-wrap items-center gap-2">
+        <FormField id={'t-' + mode} label="List" hint={
+          !hits.length ? 'Separate with commas or new lines.'
+            : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
+            : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
+            : mode === 'D' ? <DHint parts={[
+                only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
+                  : <>{n} valid</>,
+                // "m invalid" is itself the way to show only the invalid ones (2026-11-20): styled like "n not sent" in the
+                // list, red with an underline on hover only, so it's found by those who need it without competing with the count
+                !only && bad.length ? <span className="inline-flex items-center">
+                  <Tooltip><TooltipTrigger asChild><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text hover:!text-error-text hover:underline [&>span]:!px-0" onClick={showOnly}>{bad.length} invalid</Button></TooltipTrigger><TooltipContent>Show only invalid</TooltipContent></Tooltip>
+                  &nbsp;(click a tag to edit it)</span> : null,
+                only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
+              ]} />
+            : n + ' valid audiences. Click a tag to edit it.'}>
+          <div ref={boxRef} className={cn('flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
+            kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
+            onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
+            {shown.map(h => (edit && edit.id === h.id ? editor(h) : tag(h)))}
+            <Popover open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
+              <PopoverAnchor asChild>
+                <span className="flex min-w-[160px] flex-1">
+                  <input ref={inputRef} id={'t-' + mode} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" autoComplete="off"
+                    role="combobox" aria-expanded={showSug} aria-autocomplete="list"
+                    placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
+                    value={draft} onChange={e => { setHi(0); setSugOpen(true); if (/[\n,，;；]/.test(e.target.value)) take(e.target.value); else setDraft(e.target.value) }}
+                    onKeyDown={e => {
+                      if (showSug && e.key === 'ArrowDown') { e.preventDefault(); setHi(i => Math.min(i + 1, sugs.length - 1)) }
+                      else if (showSug && e.key === 'ArrowUp') { e.preventDefault(); setHi(i => Math.max(i - 1, 0)) }
+                      else if (e.key === 'Escape' && showSug) { e.stopPropagation(); setSugOpen(false) }
+                      else if (e.key === 'Enter') { e.preventDefault(); if (showSug) pick(sugs[Math.min(hi, sugs.length - 1)]); else take(draft) }
+                      else if (e.key === 'Backspace' && !draft && shown.length) drop(shown[shown.length - 1].id)
+                    }}
+                    onBlur={() => { take(draft); setSugOpen(false) }} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
+                </span>
+              </PopoverAnchor>
+              {/* the people (or orgs) it could be: avatar, name, the matched value; Enter or a click adds it */}
+              <PopoverContent align="start" sideOffset={6} className="w-96 p-1" onOpenAutoFocus={e => e.preventDefault()}>
+                <SugList sugs={sugs} hi={Math.min(hi, sugs.length - 1)} setHi={setHi} onPick={pick} />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </FormField>
+        <ConfirmDialog onClose={() => setPend(null)} cf={pend ? {
+          title: 'Change the data type?',
+          text: 'Changing to ' + listKindName(pend) + ' clears the list. The ' + hits.length + (hits.length === 1 ? ' entry' : ' entries') + ' you added can’t be looked up as another type.',
+          cancel: 'Cancel', ok: 'Clear and change', danger: true, run: () => { setKind(pend); setPend(null) },
+        } : null} />
+      </div>
+      {/* demo controls: only for trying the proposal, not part of the design (2026-11-20: moved out of the card) */}
+      <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border px-3 py-2">
+        <span className="text-caption font-medium text-fg-secondary">示範用</span>
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null) }}>Clear</Button>
-        <span className="text-caption text-fg-secondary">{mode === 'D' ? 'Try: click “3 invalid”, fix a19999 → ytchang, then Show all.' : 'Try: fix a red tag (a19999 → ytchang), then look for it; then Paste more.'}</span>
+        <span className="text-caption text-fg-secondary">{mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
-      <ConfirmDialog onClose={() => setPend(null)} cf={pend ? {
-        title: 'Change the data type?',
-        text: 'Changing to ' + listKindName(pend) + ' clears the list. The ' + hits.length + (hits.length === 1 ? ' entry' : ' entries') + ' you added can’t be looked up as another type.',
-        cancel: 'Cancel', ok: 'Clear and change', danger: true, run: () => { setKind(pend); setPend(null) },
-      } : null} />
     </div>
   )
 }

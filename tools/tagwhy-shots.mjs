@@ -23,7 +23,9 @@ async function shot(name, target, pad = 8, extra = []) {
   marks[name] = { w: Math.round(box.width), h: Math.round(box.height), marks: [] };
 }
 await p.goto('http://localhost:4191/importtags.html'); await wait(800);
-const demo = m => p.locator('div.rounded-lg.border').filter({ has: p.locator('#t-' + m) }).last();
+// the demo: the card (what the design looks like) plus the demo buttons under it
+const demo = m => p.locator('[data-demo="' + m + '"]');
+const card = m => demo(m).locator('div.rounded-lg.border').first();
 const box = m => demo(m).locator('#t-' + m).locator('xpath=ancestor::div[contains(@class,"h-56")]');
 const tag = (m, text) => box(m).getByRole('button', { name: new RegExp('^Edit ' + text) }).first();
 const hint = m => demo(m).locator('span.gap-x-1').first();
@@ -36,7 +38,7 @@ const reset = async () => { await p.keyboard.press('Escape'); await p.locator('h
 const scrollTo = async m => { await reset(); await demo(m).scrollIntoViewIfNeeded(); await wait(150) };
 
 // 1. NT accounts: pasted, red ones first, names with avatars
-await step('nt-paste', async () => { await scrollTo('D'); await paste('D'); await p.mouse.move(0, 0); await shot('nt-paste', demo('D')) });
+await step('nt-paste', async () => { await scrollTo('D'); await paste('D'); await p.mouse.move(0, 0); await shot('nt-paste', card('D')) });
 // 2. click a red tag: plain text with a caret, in the same spot
 await step('nt-edit', async () => { await tag('D', 'a19999').click(); await wait(200); await shot('nt-edit', box('D')) });
 // 3. typing while editing: the people it could be
@@ -73,7 +75,7 @@ await step('nt-type-sug', async () => {
 await step('now-edit', async () => { await scrollTo('now'); await paste('now'); await tag('now', 'a19999').click(); await wait(200); await shot('now-edit', box('now')); await p.keyboard.press('Escape') });
 // 7. Phone numbers: entered values; region next to the data type
 await step('phone-paste', async () => {
-  await scrollTo('D'); await clear('D'); await setKind('D', 'Phone numbers'); await paste('D'); await p.mouse.move(0, 0); await wait(200); await shot('phone-paste', demo('D'))
+  await scrollTo('D'); await clear('D'); await setKind('D', 'Phone numbers'); await paste('D'); await p.mouse.move(0, 0); await wait(200); await shot('phone-paste', card('D'))
 });
 // 8. hover a number: who it is
 await step('phone-hover', async () => {
