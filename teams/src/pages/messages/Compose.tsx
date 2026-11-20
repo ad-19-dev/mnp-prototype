@@ -4,7 +4,7 @@ import {
   Button, Checkbox, DataTable, DatePicker, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Empty, FileItem, FileUpload, Input, Pagination, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
-import { NO_HIDE, Tip } from '../../components/ui'
+import { NO_HIDE, PageSize, Tip } from '../../components/ui'
 import { groupInSpace, spaceName, tplInSpace } from '../../lib/teams'
 import { scopeLabel } from './ctl'
 import { } from '../../lib/store'
@@ -103,15 +103,15 @@ function PhoneHead({ m, k, label }: { m: SendCtl; k: 'co' | 'pp'; label: string 
   return <span className="inline-flex items-center gap-2"><Checkbox checked={all ? true : on ? 'indeterminate' : false} disabled={!rows.length} onCheckedChange={setAll} aria-label={L('All: ', '全部：') + label} />{label}</span>
 }
 
-const RECV_PER = 10
 function RecvTable({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, c = s.c, sms = smsOn(c)
   const [mem, setMem] = React.useState<MemberSet | null>(null)
-  // 10 per page, like the other tables in the flow (2026-11-20, it scrolled in a 320px box before). Adding goes to the
-  // page with the first new row (one person: the last page; a batch: where it starts); removing the last row of a page
-  // goes back one.
-  const [page, setPage] = React.useState(1), n = c.receivers.length, pages = Math.max(1, Math.ceil(n / RECV_PER)), prevN = React.useRef(n)
-  React.useEffect(() => { if (n > prevN.current) setPage(Math.floor(prevN.current / RECV_PER) + 1); else if (page > pages) setPage(pages); prevN.current = n }, [n])
+  // pages like the Send messages list (2026-11-20, it scrolled in a 320px box before): 20 per page by default, 10 / 20 /
+  // 50 to pick. Adding goes to the page with the first new row (one person: the last page; a batch: where it starts);
+  // removing the last row of a page goes back one.
+  const [per, setPer] = React.useState(20)
+  const [page, setPage] = React.useState(1), n = c.receivers.length, pages = Math.max(1, Math.ceil(n / per)), prevN = React.useRef(n)
+  React.useEffect(() => { if (n > prevN.current) setPage(Math.floor(prevN.current / per) + 1); else if (page > pages) setPage(pages); prevN.current = n }, [n])
   const rows: RRow[] = c.receivers.map(t => {
     let label = '', sub = '', ppl: any[] = [], cnt = 1, warn = false, badge = '', badgeBtn = false
     if (t.type === 'person') {
@@ -165,9 +165,12 @@ function RecvTable({ m }: { m: SendCtl }) {
   if (!c.receivers.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
     <div className="flex flex-col gap-2">
-      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows.slice((page - 1) * RECV_PER, page * RECV_PER)} bordered getRowId={x => x.t.key}
+      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows.slice((page - 1) * per, page * per)} bordered getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
-      {n > RECV_PER ? <div className="flex justify-end"><Pagination total={n} pageSize={RECV_PER} page={Math.min(page, pages)} onPageChange={setPage} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} /></div> : null}
+      <div className="flex items-center justify-end gap-3">
+        <Pagination total={n} pageSize={per} page={Math.min(page, pages)} onPageChange={setPage} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
+        <PageSize value={per} onChange={v => { setPer(v); setPage(1) }} />
+      </div>
       <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
   )
