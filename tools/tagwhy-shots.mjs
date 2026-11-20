@@ -37,7 +37,7 @@ const clear = async m => { const c = demo(m).getByRole('button', { name: 'Clear'
 const reset = async () => { await p.keyboard.press('Escape'); await p.locator('h1').click(); await wait(150) };
 const scrollTo = async m => { await reset(); await demo(m).scrollIntoViewIfNeeded(); await wait(150) };
 
-// 1. NT accounts: pasted, red ones first, names with avatars
+// 1. NT accounts: pasted in the order typed, names with avatars
 await step('nt-paste', async () => { await scrollTo('D'); await paste('D'); await p.mouse.move(0, 0); await shot('nt-paste', card('D')) });
 // 2. click a red tag: plain text with a caret, in the same spot
 await step('nt-edit', async () => { await tag('D', 'a19999').click(); await wait(200); await shot('nt-edit', box('D')) });
@@ -51,9 +51,9 @@ await step('nt-fixed', async () => {
   const inp = box('D').locator('[data-editing]'); await inp.fill('ytchang'); await wait(250); await inp.press('Enter'); await wait(120)
   await shot('nt-fixed', box('D'), 8, [hint('D')])
 });
-// 4b. a second batch: new red ones go first, the new person last, the tags already there keep their order
+// 4b. a second batch: added at the end; the tags already there do not move
 await step('more', async () => {
-  await wait(1000); await p.mouse.move(0, 0); await shot('more-before', box('D'), 8, [hint('D')])
+  await wait(1000); await p.mouse.move(0, 0)
   await demo('D').getByRole('button', { name: 'Paste more' }).click(); await wait(300); await p.mouse.move(0, 0); await shot('more-after', box('D'), 8, [hint('D')])
 });
 // 4c. Show only invalid: only the red tags; fix one there; back to the whole list
@@ -61,7 +61,7 @@ await step('only', async () => {
   await clear('D'); await paste('D'); await p.mouse.move(0, 0)
   const inv = demo('D').getByRole('button', { name: /^\d+ invalid$/ }); await inv.hover(); await wait(700)
   await shot('invalid-hover', hint('D'), 8, [p.getByRole('tooltip').last()])
-  await inv.click(); await wait(250); await shot('only', box('D'), 8, [hint('D')])
+  await inv.click(); await wait(250)
   await tag('D', 'a19999').click(); await wait(150); const inp = box('D').locator('[data-editing]'); await inp.fill('ytchang'); await inp.press('Enter'); await wait(1100)
   await shot('only-fixed', box('D'), 8, [hint('D')])
   await demo('D').getByRole('button', { name: 'Show all' }).click(); await wait(250); await p.mouse.move(0, 0); await shot('only-back', box('D'), 8, [hint('D')])
@@ -81,14 +81,6 @@ await step('now-edit', async () => { await scrollTo('now'); await paste('now'); 
 // 7. Phone numbers: entered values; region next to the data type
 await step('phone-paste', async () => {
   await scrollTo('D'); await clear('D'); await setKind('D', 'Phone numbers'); await paste('D'); await p.mouse.move(0, 0); await wait(200); await shot('phone-paste', card('D'))
-});
-// 8. hover a number: who it is
-await step('phone-hover', async () => {
-  await tag('D', '0918-226-588').hover(); await wait(700); await shot('phone-hover', box('D'), 8, [p.getByRole('tooltip').last()]); await p.mouse.move(0, 0); await wait(900)
-});
-// 9. hover a shared number: who shares it
-await step('phone-shared', async () => {
-  const t = tag('D', '0919-000-119'); const bb = await t.boundingBox(); await p.mouse.move(bb.x + 20, bb.y + 8); await wait(150); await p.mouse.move(bb.x + 30, bb.y + 10); await wait(800); await shot('phone-shared', box('D'), 8, [p.getByRole('tooltip').last()]); await p.mouse.move(0, 0); await wait(900)
 });
 // 10. the same list with names: half names, half numbers
 await step('phone-names', async () => { await show('都是姓名'); await scrollTo('D'); await p.mouse.move(0, 0); await shot('phone-names', box('D')); await show('依資料類型（建議）') });

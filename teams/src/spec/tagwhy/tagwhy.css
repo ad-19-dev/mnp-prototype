@@ -1,0 +1,10 @@
+/* The why page (teams/tagwhy.html) reads as prose for PM and designers: text one step larger than the other spec
+   pages (2026-11-20). Scoped to .tw so the live demo inside keeps the design system's own sizes. */
+.tw .tw-sub { font: 400 14px/20px var(--spec-font); color: var(--spec-muted); }
+.tw .spec-lead { font-size: 15px; line-height: 24px; }
+.tw .spec-frame figcaption b { font-size: 15px; line-height: 22px; }
+.tw .spec-frame figcaption span { font-size: 14px; line-height: 22px; }
+.tw .spec-notes b { font-size: 15px; line-height: 22px; }
+.tw .spec-notes p { font-size: 14px; line-height: 22px; }
+.tw .spec-table { font-size: 14px; line-height: 22px; }
+.tw .spec-callout { font-size: 15px; line-height: 24px; }

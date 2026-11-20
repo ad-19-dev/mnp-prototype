@@ -283,7 +283,10 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
         className={cn('cursor-text transition-shadow duration-300', fl && 'ring-1 ring-[var(--color-green-6,#22a06b)]')} onRemove={() => drop(h.id)} removeAriaLabel={text}>{text}</Tag>
       // hover: who it is (value), or who shares the number (both)
       // by name: hover shows the value and the org (a shared number: who shares it); by value: who it is
-      const tip = byName ? (p ? h.ok.val + ' · ' + p.org : h.ok.shared ? h.ok.who : null) : h.ok.who
+      // 2026-11-20: phone numbers, MVPN and emails show what was entered, so no hover (shared numbers included); a hover
+      // only where the tag doesn't show what was typed (names for codes) or a code needs its name (Org IDs)
+      const tip = byName ? (p ? h.ok.val + ' · ' + p.org : h.ok.shared ? h.ok.who : null)
+        : kind === 'phone' || kind === 'mvpn' || kind === 'email' ? null : h.ok.who
       if (!tip) return t
       return (
         <Tooltip key={h.id}>
@@ -515,7 +518,7 @@ export default function ImportTags() {
           <SpecTable head={['情況', '例子（示範資料）', '變成什麼', '標籤']} nowrap={[0]} rows={[
             ['號碼只屬於一個人', '0918226588（Grace Wu 的公務手機）', '加入這個人；SMS 寄到這個號碼', '灰色：大頭照、姓名 · 0918-226-588'],
             ['一個人有多個號碼', '0918555210（Jimmy Chen 的第二支公務手機）；MVPN 8860218', '同上：用的是哪支，就寄哪支（不隨機）', '灰色：姓名 · 那支號碼'],
-            ['一個號碼屬於多個人（值班機）', '0919000119、MVPN 8861119（ESH 值班，三個人）', '預設加入「這支號碼」：只寄一封 SMS 到這支，不加入這三個人（不會收到 App 推播）', '灰色：電話圖示、0919-000-119 · Shared by 3；滑過列出三個人'],
+            ['一個號碼屬於多個人（值班機）', '0919000119、MVPN 8861119（ESH 值班，三個人）', '預設加入「這支號碼」：只寄一封 SMS 到這支，不加入這三個人（不會收到 App 推播）', '灰色：0919-000-119（「都是姓名」時：電話圖示、0919-000-119 · Shared by 3）'],
             ['共用號碼但要寄給某一個人', '在選單裡選那個人', '加入那個人；SMS 寄到這支共用號碼', '灰色：姓名 · 0919-000-119'],
             ['不屬於任何員工', '0987654321；MVPN 8899999', 'Phone numbers：外部號碼；MVPN：紅色，No one uses this MVPN', '電話圖示加號碼；或紅色'],
           ]} />
@@ -536,9 +539,9 @@ export default function ImportTags() {
           <SpecTable head={['資料類型', '找到的標籤顯示', '滑過顯示', '為什麼']} nowrap={[0]} rows={[
             ['NT accounts', '大頭照、英文名 中文名', 'NT 帳號 · 組織', '帳號、工號是代碼，看不出對不對；找到的一定是人，名單不會混雜'],
             ['Employee IDs', '大頭照、英文名 中文名', '工號 · 組織', '同上'],
-            ['Emails', '輸入的 Email', '姓名 · 組織；外部的寫 Outside email', 'Email 本身看得懂；名單裡有員工也有外部信箱，都顯示 Email 比較一致'],
-            ['Phone numbers', '輸入的號碼（整理成同一種格式）', '姓名 · 組織 · Company mobile／Personal phone；共用號碼列出共用的人；外部的寫 Outside number', '號碼本身就是要寄的地方；名單裡有員工、外部號碼、共用號碼'],
-            ['MVPN', '輸入的 MVPN', '同 Phone numbers', '同 Phone numbers'],
+            ['Emails', '輸入的 Email', '不顯示（11/20）', 'Email 本身看得懂；名單裡有員工也有外部信箱，都顯示 Email 比較一致'],
+            ['Phone numbers', '輸入的號碼（整理成同一種格式）', '不顯示（11/20），共用號碼也是', '號碼本身就是要寄的地方；名單裡有員工、外部號碼、共用號碼'],
+            ['MVPN', '輸入的 MVPN', '不顯示（11/20）', '同 Phone numbers'],
             ['Org IDs', '組織代號', '組織名稱 · 人數', '代號就是組織的名字'],
           ]} />
           <Notes items={[

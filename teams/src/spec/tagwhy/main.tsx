@@ -7,6 +7,7 @@ import TagWhy from './TagWhy'
 import marks from './shots/marks.json'
 import '../../globals.css'
 import '../spec.css'
+import './tagwhy.css'
 
 setLang('en')
 createRoot(document.getElementById('root')!).render(
