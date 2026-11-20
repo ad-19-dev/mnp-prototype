@@ -14,7 +14,7 @@
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
 import { Button, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
-import { Building2, Mail, Phone } from 'lucide-react'
+import { Building2, Loader2, Mail, Phone } from 'lucide-react'
 import { Notes, Section, SpecTable } from '../parts'
 import { ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, listKindName, pname } from '../../components/ui'
 import { REGIONS, type Region } from '../../components/RecvInput'
@@ -147,7 +147,13 @@ const MORE: Record<string, string> = {
 }
 
 // also used live at the top of the why page (teams/tagwhy.html)
-export function Demo({ mode, show }: { mode: Mode; show: Show }) {
+// slow (2026-11-20): a simulated slow check for D. Pasted entries show at once as faded tags that can't be used yet,
+// a few at a time turn into their results (top first), the hint says "Checking x of y…", and Proceed waits for it.
+const SLOW_STEP = 3, SLOW_MS = 700
+export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: boolean }) {
+  const mid = slow ? 'S' : mode   // ids on the page: the slow demo is a second D
+  const [pendingIds, setPendingIds] = React.useState<number[]>([]), [proceeded, setProceeded] = React.useState('')
+  React.useEffect(() => { if (!pendingIds.length) return; const t = setTimeout(() => setPendingIds(l => l.slice(SLOW_STEP)), SLOW_MS); return () => clearTimeout(t) }, [pendingIds])
   const [kind, setKind] = React.useState<ListKind | null>('nt'), [region, setRegion] = React.useState<Region>('TW')
   const [items, setItems] = React.useState<Item[]>([]), [draft, setDraft] = React.useState('')
   const [seq, setSeq] = React.useState<number[]>([])        // A, C: the order, set when entries come in
@@ -176,7 +182,8 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
     : mode === 'B' ? hits
     : mode === 'D' ? (only ? hits.filter(h => only.indexOf(h.id) >= 0) : hits)
     : seq.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => seq.indexOf(h.id) < 0))
-  const bad = hits.filter(h => h.why), good = hits.filter(h => h.ok)
+  const isPending = (h: Hit) => pendingIds.indexOf(h.id) >= 0, checking = hits.some(isPending)
+  const bad = hits.filter(h => h.why && !isPending(h)), good = hits.filter(h => h.ok && !isPending(h))
 
   // entries come in: A and C place only the new ones (red first, gray last); the tags already there keep their order
   const take = (t: string, pin?: string) => {
@@ -185,7 +192,8 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
     if (!l.length) return
     const add = l.map(v => ({ id: nextId.current++, v, pin })), all = items.concat(add)
     setItems(all)
-    setOnly(null)
+    setOnly(null); setProceeded('')
+    if (slow) setPendingIds(l => l.concat(add.map(x => x.id)))
     if (mode === 'D') setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
     if (mode === 'A' || mode === 'C') {
       const ids = new Set(add.map(x => x.id)), fresh = hitsOf(all).filter(h => ids.has(h.id))
@@ -239,7 +247,7 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
     setEdit({ id: n.id, v: n.v })
     setTimeout(() => { const el = boxRef.current?.querySelector('[data-editing]'); el && el.scrollIntoView({ block: 'nearest' }) }, 0)
   }
-  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null) }, [kind])
+  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]) }, [kind])
   // D: show only the red tags
   const showOnly = () => { setEdit(null); setOnly(bad.map(h => h.id)); setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0) }
 
@@ -275,6 +283,8 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
     onKeyDown: tagKeys(h),
   })
   const tag = (h: Hit) => {
+    // still being checked: what was entered, faded, not usable yet (no edit, no ×)
+    if (isPending(h)) return <Tag key={h.id} data-tagid={h.id} aria-disabled className="opacity-50">{h.v}</Tag>
     const fl = flash === h.id
     if (h.ok) {
       // value: what was entered (formatted), no avatar or icon; name: the person's name with their avatar
@@ -347,18 +357,19 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
   return (
-    <div className="flex flex-col gap-2" data-demo={mode}>
+    <div className="flex flex-col gap-2" data-demo={mid}>
       <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
         <div className="flex flex-wrap items-end gap-2">
           {/* changing the data type clears the list (the entries can't be looked up as another type): asked first when the
               list isn't empty (2026-11-19) */}
-          <div className="w-56"><ListKindField id={'k-' + mode} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
-          {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mode} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
+          <div className="w-56"><ListKindField id={'k-' + mid} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
+          {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
         </div>
-        <FormField id={'t-' + mode} label="List" hint={
+        <FormField id={'t-' + mid} label="List" hint={
           !hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
+            : mode === 'D' && checking ? <span className="inline-flex items-center gap-1.5"><Loader2 className="size-3.5 animate-spin" aria-hidden />Checking {hits.length - hits.filter(isPending).length} of {hits.length}…</span>
             : mode === 'D' ? <DHint parts={[
                 only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
                   : <>{n} valid</>,
@@ -377,7 +388,7 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
             <Popover open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
               <PopoverAnchor asChild>
                 <span className="flex min-w-[160px] flex-1">
-                  <input ref={inputRef} id={'t-' + mode} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" autoComplete="off"
+                  <input ref={inputRef} id={'t-' + mid} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" autoComplete="off"
                     role="combobox" aria-expanded={showSug} aria-autocomplete="list"
                     placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
                     value={draft} onChange={e => { setHi(0); setSugOpen(true); if (/[\n,，;；]/.test(e.target.value)) take(e.target.value); else setDraft(e.target.value) }}
@@ -399,6 +410,16 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
             </Popover>
           </div>
         </FormField>
+        {slow ? (
+          // the dialog's footer: Proceed waits for the check
+          <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
+            {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span> : null}
+            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
+            {checking ? (
+              <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Checking the list…</TooltipContent></Tooltip>
+            ) : <Button variant="primary" disabled={!good.length} onClick={() => setProceeded('示範：回到 Audience，加入 ' + good.length + ' 筆')}>Proceed</Button>}
+          </div>
+        ) : null}
         <ConfirmDialog onClose={() => setPend(null)} cf={pend ? {
           title: 'Change the data type?',
           text: 'Changing to ' + listKindName(pend) + ' clears the list. The ' + hits.length + (hits.length === 1 ? ' entry' : ' entries') + ' you added can’t be looked up as another type.',
@@ -410,8 +431,8 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
         <span className="text-caption font-medium text-fg-secondary">示範用</span>
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
-        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null) }}>Clear</Button>
-        <span className="text-caption text-fg-secondary">{mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
+        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setProceeded('') }}>Clear</Button>
+        <span className="text-caption text-fg-secondary">{slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
     </div>
   )
@@ -465,6 +486,16 @@ export default function ImportTags() {
             {col('C', 'C：A 加上 Enter 接著改下一筆', <Tag size="sm" color="neutral">A 的加強</Tag>, '和 A 相同；改好按 Enter 會直接打開下一個紅色標籤，不用再找。')}
             {col('D', 'D：照輸入順序，只看有問題的', <Tag size="sm" color="green">建議（11/20）</Tag>, '不排序；說明文字寫「n valid · m invalid (click a tag to edit it)」，只有「m invalid」是紅色；點它，名單只顯示紅色標籤，在這裡改。')}
           </div>
+        </Section>
+
+        <Section eyebrow="Checking" title="確認要一段時間時（D，模擬）" lead="2026-11-20。工程說一次貼幾千筆時，確認可能要一段時間。這裡用 26 筆模擬：每 0.7 秒確認 3 筆。">
+          <div className="max-w-[880px]"><Demo mode="D" show={show} slow /></div>
+          <Notes items={[
+            { title: '確認中', body: '貼上的值馬上變成標籤，但是淡的、還不能點（像停用），顯示貼上的原值。說明文字寫 Checking x of y…，前面一個轉圈圖示；Proceed 停用，滑過提示 Checking the list…。Cancel 隨時可按。' },
+            { title: '一批一批出結果', body: '由上而下，確認完的那幾個換成結果：找到的變成姓名（灰色），有問題的變紅色。全部確認完，說明文字回到 n valid · m invalid，Proceed 可以按。' },
+            { title: '確認中還能做的事', body: '已經確認完的標籤可以改、可以刪；可以再貼一批，新的接在最後一起排隊確認。' },
+            { title: '還要決定', body: '格式明顯不對的值（例如 Email 沒有 @）可以不等伺服器、貼上當下就變紅；確認中要不要先顯示目前的 valid／invalid 數字；幾千筆實際要幾秒（決定要不要換成進度條）。' },
+          ]} cols />
         </Section>
 
         <Section eyebrow="Order" title="要不要把紅色排到最前面" lead="2026-11-20 重新檢討：「紅色排最前面」只在名單很長、錯的很少、只貼一次時有用，卻帶出三條規則（什麼時候排、修好的去哪、第二批放哪）。D 改從使用者要完成的事出發，不靠位置。">
