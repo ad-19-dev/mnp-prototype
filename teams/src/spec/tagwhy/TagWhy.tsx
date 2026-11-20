@@ -40,7 +40,7 @@ export default function TagWhy() {
           <Notes cols items={[
             { title: '貼上', body: '按 Paste a sample list，貼上 26 筆 NT 帳號，其中 3 筆有問題（紅色）。' },
             { title: '修改', body: '點紅色標籤 a19999，改成 ytchang（打 ytch 選單就會出現），按 Enter。也可以把 Data type 換成 Phone numbers 或 Org IDs，滑過標籤看是誰。' },
-            { title: '只看有問題的', body: '按 Show only invalid，改好的留在畫面上；再按 Show all 回到完整名單。按 Paste more 貼第二批，看它們接在最後。' },
+            { title: '只看有問題的', body: '點說明文字裡紅色的「3 invalid」，只看有問題的；改好的留在畫面上；再按 Show all 回到完整名單。按 Paste more 貼第二批，看它們接在最後。' },
           ]} />
         </Section>
 
@@ -56,7 +56,7 @@ export default function TagWhy() {
 
         <Section eyebrow="Paste" title="貼上之後：照輸入順序，說明文字寫幾筆有問題">
           <Why shot="nt-paste" title="貼上 26 筆 NT 帳號，3 筆有問題" max={1184}
-            how="每一筆變成一個標籤，照貼上的順序排；有問題的是紅色，留在原本的位置。重複的只留一個，不顯示。說明文字寫 22 valid · 3 invalid (click a tag to edit it) · Show only invalid，只有「3 invalid」是紅色。"
+            how="每一筆變成一個標籤，照貼上的順序排；有問題的是紅色，留在原本的位置。重複的只留一個，不顯示。說明文字寫 22 valid · 3 invalid (click a tag to edit it)，只有「3 invalid」是紅色。"
             why="使用者常要回原始清單（Excel、Email）查這一筆是誰、原本想填什麼，同一個順序最好對。錯幾筆直接寫出來，不靠位置猜。和收件人欄位長得一樣，學一次就會。"
             not="把紅色排到最前面（11/19 的做法）：名單短時用不到，名單長時紅色還是要捲動；順序和原始清單對不起來，而且修好的去哪、再貼一批放哪，都要另外的規則。另外開一個比對頁面列出結果：多一個步驟，看完還要回到原本的地方改。" />
         </Section>
@@ -91,16 +91,17 @@ export default function TagWhy() {
             not="每次修完就重新排序（紅色永遠在最前面，原型目前的做法）：修好的那一筆馬上跳走。明顯的綠底或動畫：太搶眼。" />
         </Section>
 
-        <Section eyebrow="Show only invalid" title="名單很長時：只看有問題的" lead="不排序之後，紅色標籤散在名單各處。名單短時一眼就看到；名單長、要捲動時，按 Show only invalid。">
+        <Section eyebrow="Show only invalid" title="名單很長時：只看有問題的" lead="不排序之後，紅色標籤散在名單各處。名單短時一眼就看到；名單長、要捲動時，點說明文字裡的「3 invalid」。">
           <Pair items={[
-            ['only', '按 Show only invalid', '名單只剩 3 個紅色標籤；說明文字變成 3 invalid (showing 3 of 25) · Show all'],
+            ['invalid-hover', '滑過「3 invalid」', '出現底線和提示 Show only invalid；平常只是紅字，不搶數字的注意力'],
+            ['only', '點「3 invalid」', '名單只剩 3 個紅色標籤；說明文字變成 3 invalid (showing 3 of 25) · Show all'],
             ['only-fixed', '在這裡把 a19999 改成 ytchang', 'Tina Chang 留在畫面上變灰色，不會因為已經修好就消失；說明文字變成 2 invalid'],
             ['only-back', '按 Show all', '回到完整名單，Tina Chang 在她原本的位置（第 7 個）'],
           ]} />
           <Notes items={[
-            { title: '做法', body: '說明文字裡有問題時才出現 Show only invalid。按了以後名單只顯示當下的紅色標籤，在這裡改、按 × 刪都可以；改好的留在畫面上變灰，直到按 Show all。再貼上或打新的值時，自動回到完整名單。' },
+            { title: '做法', body: '說明文字裡紅色的「m invalid」可以點，樣子和列表上的「n not sent」一樣：紅字，滑過才有底線，並提示 Show only invalid。點了以後名單只顯示當下的紅色標籤，在這裡改、按 × 刪都可以；改好的留在畫面上變灰，直到按 Show all。再貼上或打新的值時，自動回到完整名單。' },
             { title: '依據', body: '幾百筆的名單裡有幾筆錯，一筆一筆捲著找很慢；只看有問題的，再長的名單也一眼看完。改好的不立刻消失，使用者才看得到「剛剛那筆好了」。' },
-            { title: '沒有這樣做', body: 'Remove all（一次移除所有有問題的）：說明文字一行兩個連結太複雜；在 Show only invalid 裡紅色都在一起，逐一按 × 也很快。Next to fix（一次跳到下一筆）：要按很多次，而且一次只看得到一筆。' },
+            { title: '沒有這樣做', body: 'Remove all（一次移除所有有問題的）：說明文字多一個連結太複雜；在只看 invalid 的畫面裡紅色都在一起，逐一按 × 也很快。Next to fix（一次跳到下一筆）：要按很多次，而且一次只看得到一筆。' },
           ]} />
         </Section>
 
@@ -173,9 +174,9 @@ export default function TagWhy() {
 
         <Section eyebrow="Copy" title="說明文字與按鈕">
           <SpecTable head={['項目', '內容', '依據']} nowrap={[0]} rows={[
-            ['說明文字（有問題時）', '{n} valid · {m} invalid (click a tag to edit it) · Show only invalid', '數字讓人確認匯入多少、還有幾筆要處理；只有「{m} invalid」是紅色，因為要處理的只有它，正常的數字不上色。用 invalid 不用 not found：紅色不一定是查無此人，也可能是格式不對或少打一個字'],
+            ['說明文字（有問題時）', '{n} valid · {m} invalid (click a tag to edit it)；「{m} invalid」可以點，只看有問題的', '數字讓人確認匯入多少、還有幾筆要處理；只有「{m} invalid」是紅色，因為要處理的只有它，正常的數字不上色。用 invalid 不用 not found：紅色不一定是查無此人，也可能是格式不對或少打一個字'],
             ['說明文字（都沒問題）', '{n} valid', '沒有要處理的，就不提'],
-            ['說明文字（Show only invalid 時）', '{m} invalid (showing {x} of {total}) · Show all', '讓人知道現在看的不是整份名單，以及怎麼回去；全部修好時寫 All fixed'],
+            ['說明文字（只看 invalid 時）', '{m} invalid (showing {x} of {total}) · Show all', '讓人知道現在看的不是整份名單，以及怎麼回去；全部修好時寫 All fixed'],
             ['主要按鈕', 'Proceed', '按了是回到收件人欄位，不是直接寄出；寫 Add 或 Send 會讓人以為按了就寄'],
           ]} />
         </Section>

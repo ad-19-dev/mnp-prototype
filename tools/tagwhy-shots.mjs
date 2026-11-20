@@ -57,7 +57,9 @@ await step('more', async () => {
 // 4c. Show only invalid: only the red tags; fix one there; back to the whole list
 await step('only', async () => {
   await clear('D'); await paste('D'); await p.mouse.move(0, 0)
-  await demo('D').getByRole('button', { name: 'Show only invalid' }).click(); await wait(250); await shot('only', box('D'), 8, [hint('D')])
+  const inv = demo('D').getByRole('button', { name: /^\d+ invalid$/ }); await inv.hover(); await wait(700)
+  await shot('invalid-hover', hint('D'), 8, [p.getByRole('tooltip').last()])
+  await inv.click(); await wait(250); await shot('only', box('D'), 8, [hint('D')])
   await tag('D', 'a19999').click(); await wait(150); const inp = box('D').locator('[data-editing]'); await inp.fill('ytchang'); await inp.press('Enter'); await wait(1100)
   await shot('only-fixed', box('D'), 8, [hint('D')])
   await demo('D').getByRole('button', { name: 'Show all' }).click(); await wait(250); await p.mouse.move(0, 0); await shot('only-back', box('D'), 8, [hint('D')])

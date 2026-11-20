@@ -9,7 +9,8 @@
 //   C: A, plus Enter on a fixed tag moves straight to the next red one (for long lists).
 //   D (suggested since 2026-11-20): the order you typed is kept, no sorting; the hint says how many aren't found, with Show only invalid
 //        (only the red tags; the ones fixed there stay until Show all). 2026-11-20: "n valid · m invalid (click a tag to
-//        edit it) · Show only invalid"; "m invalid" in red, nothing else colored; Remove all dropped (too much in one line).
+//        edit it)"; "m invalid" in red, nothing else colored; clicking "m invalid" shows only the invalid ones (it was a separate
+//        Show only invalid link, too loud next to the count); no Remove all.
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
 import { Button, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
@@ -333,8 +334,11 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
           : mode === 'D' ? <DHint parts={[
               only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
                 : <>{n} valid</>,
-              !only && bad.length ? <span><span className="text-error-text">{bad.length} invalid</span>&nbsp;(click a tag to edit it)</span> : null,
-              bad.length && !only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={showOnly}>Show only invalid</Button> : null,
+              // "m invalid" is itself the way to show only the invalid ones (2026-11-20): styled like "n not sent" in the
+              // list, red with an underline on hover only, so it's found by those who need it without competing with the count
+              !only && bad.length ? <span className="inline-flex items-center">
+                <Tooltip><TooltipTrigger asChild><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text hover:!text-error-text hover:underline [&>span]:!px-0" onClick={showOnly}>{bad.length} invalid</Button></TooltipTrigger><TooltipContent>Show only invalid</TooltipContent></Tooltip>
+                &nbsp;(click a tag to edit it)</span> : null,
               only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
             ]} />
           : n + ' valid audiences. Click a tag to edit it.'}>
@@ -370,7 +374,7 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null) }}>Clear</Button>
-        <span className="text-caption text-fg-secondary">{mode === 'D' ? 'Try: Show only invalid, fix a19999 → ytchang, then Show all.' : 'Try: fix a red tag (a19999 → ytchang), then look for it; then Paste more.'}</span>
+        <span className="text-caption text-fg-secondary">{mode === 'D' ? 'Try: click “3 invalid”, fix a19999 → ytchang, then Show all.' : 'Try: fix a red tag (a19999 → ytchang), then look for it; then Paste more.'}</span>
       </div>
       <ConfirmDialog onClose={() => setPend(null)} cf={pend ? {
         title: 'Change the data type?',
@@ -427,25 +431,25 @@ export default function ImportTags() {
             {col('A', 'A：變回文字、原地變色', <Tag size="sm" color="neutral">11/19 的建議</Tag>, '點標籤變回純文字（游標在字裡）；只有加入名單時把紅色排到前面，修好的標籤留在原地變灰色，閃一下綠框。')}
             {col('B', 'B：照輸入順序，用 Next 找下一筆', <Tag size="sm" color="neutral">替代</Tag>, '不排序；說明文字寫「n to fix」與 Next to fix，按了直接打開下一個紅色標籤。')}
             {col('C', 'C：A 加上 Enter 接著改下一筆', <Tag size="sm" color="neutral">A 的加強</Tag>, '和 A 相同；改好按 Enter 會直接打開下一個紅色標籤，不用再找。')}
-            {col('D', 'D：照輸入順序，只看有問題的', <Tag size="sm" color="green">建議（11/20）</Tag>, '不排序；說明文字寫「n valid · m invalid (click a tag to edit it) · Show only invalid」，只有 m 是紅色；Show only invalid 讓名單只顯示紅色標籤，在這裡改。')}
+            {col('D', 'D：照輸入順序，只看有問題的', <Tag size="sm" color="green">建議（11/20）</Tag>, '不排序；說明文字寫「n valid · m invalid (click a tag to edit it)」，只有「m invalid」是紅色；點它，名單只顯示紅色標籤，在這裡改。')}
           </div>
         </Section>
 
         <Section eyebrow="Order" title="要不要把紅色排到最前面" lead="2026-11-20 重新檢討：「紅色排最前面」只在名單很長、錯的很少、只貼一次時有用，卻帶出三條規則（什麼時候排、修好的去哪、第二批放哪）。D 改從使用者要完成的事出發，不靠位置。">
           <SpecTable head={['使用者要做的事', 'A（排序）怎麼做', 'D（不排序）怎麼做']} nowrap={[0]} rows={[
             ['知道有沒有錯、錯幾筆', '紅色在最前面，看位置猜', '說明文字直接寫 3 invalid（紅色）'],
-            ['到每一筆錯的', '名單短時一眼看到；很長時紅色還是要捲動', 'Show only invalid：名單只剩紅色標籤，再長都一眼看完'],
+            ['到每一筆錯的', '名單短時一眼看到；很長時紅色還是要捲動', '點「3 invalid」：名單只剩紅色標籤，再長都一眼看完'],
             ['知道為什麼錯', '滑過紅色標籤看原因', '同 A'],
             ['對回原始清單（Excel、Email）', '順序被打亂，要自己找', '和原始清單同一個順序'],
-            ['處理：打錯字', '點標籤改，打字時有選單', '同 A；在 Show only invalid 裡改，改好的留在原地變灰，按 Show all 回到完整名單'],
-            ['處理：查無此人（離職、外部）', '一筆一筆按 ×', '在 Show only invalid 裡一筆一筆按 ×（紅色都在一起，很快）'],
-            ['再貼一批', '新的紅色放最前面、新的灰色放最後（另一條規則）', '接在最後，不需要規則；貼上時關閉 Show only invalid'],
+            ['處理：打錯字', '點標籤改，打字時有選單', '同 A；在只看 invalid 的畫面裡改，改好的留在原地變灰，按 Show all 回到完整名單'],
+            ['處理：查無此人（離職、外部）', '一筆一筆按 ×', '在只看 invalid 的畫面裡一筆一筆按 ×（紅色都在一起，很快）'],
+            ['再貼一批', '新的紅色放最前面、新的灰色放最後（另一條規則）', '接在最後，不需要規則；貼上時回到完整名單'],
           ]} />
           <Notes items={[
-            { title: '試試', body: '在 D 按 Paste a sample list → Show only invalid → 把 a19999 改成 ytchang（留在畫面上變灰）→ Show all，看它回到原本的位置。' },
-            { title: '說明文字', body: '2026-11-20 簡化：n valid · m invalid (click a tag to edit it) · Show only invalid。只有「m invalid」是紅色（要處理的只有它；n 是正常狀態，不上色），其他字維持說明文字的灰色；m 是 0 時只寫 n valid。用 invalid 不用 not found：紅色不一定是查無此人，也可能是格式不對或少打一個字。' },
+            { title: '試試', body: '在 D 按 Paste a sample list → 點說明文字裡的「3 invalid」→ 把 a19999 改成 ytchang（留在畫面上變灰）→ Show all，看它回到原本的位置。' },
+            { title: '說明文字', body: '2026-11-20 簡化：n valid · m invalid (click a tag to edit it)。點「m invalid」只看有問題的（原本是另一個 Show only invalid 連結，比數字還顯眼，所以拿掉；「m invalid」和列表上的「n not sent」一樣是紅字、滑過才有底線，需要的人自然會發現，滑過也有提示 Show only invalid）。只有「m invalid」是紅色（要處理的只有它；n 是正常狀態，不上色），其他字維持說明文字的灰色；m 是 0 時只寫 n valid。用 invalid 不用 not found：紅色不一定是查無此人，也可能是格式不對或少打一個字。' },
             { title: '和之前拿掉的總結的差別', body: '2026-11-18 拿掉過總結標籤與「n to fix」。D 只有一行說明文字和一個連結，沒有標籤。' },
-            { title: '為什麼沒有 Remove all', body: '一行裡兩個連結太複雜；在 Show only invalid 裡，紅色都在一起，逐一按 × 也很快。' },
+            { title: '為什麼沒有 Remove all', body: '一行裡多一個連結太複雜；在只看 invalid 的畫面裡，紅色都在一起，逐一按 × 也很快。' },
           ]} cols />
         </Section>
 
@@ -519,10 +523,10 @@ export default function ImportTags() {
             ['A（11/19 的建議）', '變回純文字', '新加入的紅色排到最前面', '原地變灰色、閃一下綠框', '要處理的在最前面；已經在畫面上的不動'],
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
-            ['D（建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', 'Show only invalid 只看紅色'],
+            ['D（建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', '點「m invalid」只看紅色'],
           ]} />
           <Notes items={[
-            { title: '建議 D（2026-11-20）', body: '不排序，標籤和使用者的原始清單同一個順序；說明文字直接寫幾筆 invalid，名單長時用 Show only invalid 只看有問題的。修好的留在原地、再貼一批接在最後，都不需要另外的規則。見上面「要不要把紅色排到最前面」。' },
+            { title: '建議 D（2026-11-20）', body: '不排序，標籤和使用者的原始清單同一個順序；說明文字直接寫幾筆 invalid，名單長時點「m invalid」只看有問題的。修好的留在原地、再貼一批接在最後，都不需要另外的規則。見上面「要不要把紅色排到最前面」。' },
             { title: 'A（11/19 的建議）', body: '保留「要處理的在最前面」，又不會讓剛改好的標籤消失：排序只發生在名單「進來」的那一刻（貼上、按 Enter、輸入逗號），修改不會觸發排序。修好的標籤在原地變灰並閃一下綠框，使用者看得到結果。之後再貼上一批，也只安排新進來的：新的紅色放最前面、新的灰色接在最後，已經在畫面上的標籤順序不變。' },
             { title: '要不要加 C', body: 'C 的 Enter 接著改下一筆，對一次要修十幾筆的人很快；但只改一兩筆的人可能會被突然打開的下一筆嚇到。可以先上 D，看使用者測試再決定要不要加。' },
             { title: 'B 的取捨', body: 'B 完全不動順序，最容易預期；但紅色散在名單各處，名單很長時要靠 Next to fix，多一個要學的東西，也會讓「n to fix」的數字回到畫面上（之前拿掉過總結標籤）。' },
