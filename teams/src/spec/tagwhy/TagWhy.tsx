@@ -30,7 +30,7 @@ export default function TagWhy() {
         <div className="spec-wrap flex flex-col gap-1 pt-4 pb-3">
           <span className="spec-eyebrow">MNP · Batch import · 標籤</span>
           <h1 className="spec-h1">批次匯入標籤的設計依據</h1>
-          <span className="text-caption text-fg-secondary">2026/11/19 · 截圖取自批次匯入標籤研究頁的 A 版本（依資料類型顯示），用原型的範例資料</span>
+          <span className="text-caption text-fg-secondary">2026/11/19，11/20 改成 D 版本 · 截圖取自批次匯入標籤研究頁的 D 版本（依資料類型顯示），用原型的範例資料</span>
         </div>
       </div>
       <main className="spec-wrap spec-main">
@@ -40,15 +40,15 @@ export default function TagWhy() {
             ['Emails', '輸入的 Email', '是誰 · 組織（外部信箱：Outside email）', '使用者對的是自己清單上的 Email；外部信箱沒有人可以顯示'],
             ['Phone numbers、MVPN', '輸入的號碼（統一格式）', '是誰 · 組織 · 哪一種號碼；共用號碼列出共用的人', '見下面「為什麼電話不顯示成人」'],
             ['Org IDs', '組織代碼', '組織名稱 · 人數', '一個代碼是一群人，不是一個人'],
-            ['找不到的', '紅色，輸入的值', '找不到的原因', '要讓人一眼看到、直接改'],
+            ['有問題的（invalid）', '紅色，輸入的值', '為什麼有問題', '要讓人一眼看到、直接改'],
           ]} />
         </Section>
 
-        <Section eyebrow="Paste" title="貼上之後：紅色排在最前面">
-          <Why shot="nt-paste" title="貼上 26 筆 NT 帳號，3 筆找不到" max={1184}
-            how="每一筆變成一個標籤。找不到的是紅色，貼上（或按 Add）的那一刻排到最前面；之後不再重新排序。重複的只留一個，不顯示。"
-            why="一次貼上幾百、幾千筆時，要處理的幾筆一打開就看得到，不用捲到後面找。和收件人欄位長得一樣，學一次就會。"
-            not="另外開一個比對頁面列出結果：多一個步驟，看完還要回到原本的地方改。" />
+        <Section eyebrow="Paste" title="貼上之後：照輸入順序，說明文字寫幾筆有問題">
+          <Why shot="nt-paste" title="貼上 26 筆 NT 帳號，3 筆有問題" max={1184}
+            how="每一筆變成一個標籤，照貼上的順序排；有問題的是紅色，留在原本的位置。重複的只留一個，不顯示。說明文字寫 22 valid · 3 invalid (click a tag to edit it) · Show only invalid，只有「3 invalid」是紅色。"
+            why="使用者常要回原始清單（Excel、Email）查這一筆是誰、原本想填什麼，同一個順序最好對。錯幾筆直接寫出來，不靠位置猜。和收件人欄位長得一樣，學一次就會。"
+            not="把紅色排到最前面（11/19 的做法）：名單短時用不到，名單長時紅色還是要捲動；順序和原始清單對不起來，而且修好的去哪、再貼一批放哪，都要另外的規則。另外開一個比對頁面列出結果：多一個步驟，看完還要回到原本的地方改。" />
         </Section>
 
         <Section eyebrow="Edit" title="點標籤：變回純文字">
@@ -75,21 +75,34 @@ export default function TagWhy() {
         </Section>
 
         <Section eyebrow="Fixed" title="修好之後：留在原地，輕輕閃一下">
-          <Why shot="nt-fixed" title="a19999 改成 ytchang" sub="Tina Chang 留在第一個位置，變成灰色，外圍閃一下細的綠框（不到 1 秒）"
+          <Why shot="nt-fixed" title="a19999 改成 ytchang" sub="Tina Chang 留在原本的位置（第 7 個），變成灰色，外圍閃一下細的綠框（不到 1 秒）；說明文字變成 23 valid · 2 invalid"
             how="修好的標籤不移動；游標回到名單最後，但畫面不捲動。改完剛好和另一筆重複時，這一筆拿掉，原本那一筆閃一下。"
             why="使用者要確認剛剛改的那一筆真的好了。標籤跳走，名單長的時候就找不到它。訪談時「修好就跳走」被說很錯愕；綠框要很輕，使用者回饋只要「輕輕閃一下」。"
-            not="每次修完就重新排序（紅色永遠在最前面）：修好的那一筆馬上跳到灰色區的最後。明顯的綠底或動畫：太搶眼。" />
+            not="每次修完就重新排序（紅色永遠在最前面，原型目前的做法）：修好的那一筆馬上跳走。明顯的綠底或動畫：太搶眼。" />
         </Section>
 
-        <Section eyebrow="Paste more" title="再貼一批：已經在畫面上的不動" lead="使用者常常分好幾批貼、邊貼邊修。第二批進來時，只安排新進來的標籤。">
+        <Section eyebrow="Show only invalid" title="名單很長時：只看有問題的" lead="不排序之後，紅色標籤散在名單各處。名單短時一眼就看到；名單長、要捲動時，按 Show only invalid。">
           <Pair items={[
-            ['more-before', '修好 a19999 之後', 'Tina Chang 在第一個位置；gywuu、cm.chen 還沒修'],
-            ['more-after', '再貼一批：kylln, thliu, a20001, psyang', '兩筆找不到的排到最前面，新的人 Jason Liu 接在最後；psyang 已經在名單裡，不重複顯示。Tina Chang、gywuu、cm.chen 和其他標籤的順序不變'],
+            ['only', '按 Show only invalid', '名單只剩 3 個紅色標籤；說明文字變成 3 invalid (showing 3 of 25) · Show all'],
+            ['only-fixed', '在這裡把 a19999 改成 ytchang', 'Tina Chang 留在畫面上變灰色，不會因為已經修好就消失；說明文字變成 2 invalid'],
+            ['only-back', '按 Show all', '回到完整名單，Tina Chang 在她原本的位置（第 7 個）'],
           ]} />
           <Notes items={[
-            { title: '做法', body: '新進來的找不到的（紅色）放在名單最前面，新進來的找到的（灰色）接在最後，各自照輸入順序。已經在名單裡的標籤，包括還沒修的紅色和修好的灰色，順序都不變（前面多了新的紅色，所以整體往後挪，但彼此的前後不變）。有新的紅色時，名單捲回最上方。' },
-            { title: '依據', body: '使用者記得剛剛修好、剛剛看過的標籤在哪裡。重新排整份名單，修好的標籤又跳回當初輸入的位置，使用者會懷疑「剛剛那筆還在嗎」，只好重新掃一遍；這也和「修好的留在原地」是同一個原則。新的紅色放最前面，貼完一眼就看到這一批要修什麼；新的灰色接在最後，和在輸入框一筆一筆打的結果一樣。' },
-            { title: '沒有這樣做', body: '每次貼上都把整份名單重新排序（紅色在前、灰色照輸入順序）：修好的標籤會跳走。把所有紅色集中到最前面、灰色不動：紅色雖然都在一起，但前一批沒修的紅色會被搬動，畫面還是在變；剩下幾筆要修，說明文字已經會講。' },
+            { title: '做法', body: '說明文字裡有問題時才出現 Show only invalid。按了以後名單只顯示當下的紅色標籤，在這裡改、按 × 刪都可以；改好的留在畫面上變灰，直到按 Show all。再貼上或打新的值時，自動回到完整名單。' },
+            { title: '依據', body: '幾百筆的名單裡有幾筆錯，一筆一筆捲著找很慢；只看有問題的，再長的名單也一眼看完。改好的不立刻消失，使用者才看得到「剛剛那筆好了」。' },
+            { title: '沒有這樣做', body: 'Remove all（一次移除所有有問題的）：說明文字一行兩個連結太複雜；在 Show only invalid 裡紅色都在一起，逐一按 × 也很快。Next to fix（一次跳到下一筆）：要按很多次，而且一次只看得到一筆。' },
+          ]} />
+        </Section>
+
+        <Section eyebrow="Paste more" title="再貼一批：接在最後，已經在畫面上的不動" lead="使用者常常分好幾批貼、邊貼邊修。">
+          <Pair items={[
+            ['more-before', '修好 a19999 之後', 'Tina Chang 在原本的位置；gywuu、cm.chen 還沒修：23 valid · 2 invalid'],
+            ['more-after', '再貼一批：kylln, thliu, a20001, psyang', '新的值照順序接在最後（kylln、Jason Liu、a20001）；psyang 已經在名單裡，不重複顯示。原本的標籤都不動：24 valid · 4 invalid'],
+          ]} />
+          <Notes items={[
+            { title: '做法', body: '新的值照輸入順序接在名單最後，和在輸入框一筆一筆打一樣；名單捲到最後，讓新加的出現在畫面裡。說明文字的數字跟著更新。' },
+            { title: '依據', body: '使用者記得剛剛修好、剛剛看過的標籤在哪裡，畫面上的東西不該自己移動。不排序，就不需要為第二批另外訂規則。' },
+            { title: '沒有這樣做', body: '新的紅色放最前面、新的灰色放最後（11/19 的做法）：多一條規則，而且前面插進新的標籤，整份名單還是會往後挪。' },
           ]} />
         </Section>
 
@@ -150,7 +163,9 @@ export default function TagWhy() {
 
         <Section eyebrow="Copy" title="說明文字與按鈕">
           <SpecTable head={['項目', '內容', '依據']} nowrap={[0]} rows={[
-            ['說明文字', '{n} valid audiences. Click a tag to edit it.', '數字讓人確認匯入多少；後半句告訴人標籤可以點來改'],
+            ['說明文字（有問題時）', '{n} valid · {m} invalid (click a tag to edit it) · Show only invalid', '數字讓人確認匯入多少、還有幾筆要處理；只有「{m} invalid」是紅色，因為要處理的只有它，正常的數字不上色。用 invalid 不用 not found：紅色不一定是查無此人，也可能是格式不對或少打一個字'],
+            ['說明文字（都沒問題）', '{n} valid', '沒有要處理的，就不提'],
+            ['說明文字（Show only invalid 時）', '{m} invalid (showing {x} of {total}) · Show all', '讓人知道現在看的不是整份名單，以及怎麼回去；全部修好時寫 All fixed'],
             ['主要按鈕', 'Proceed', '按了是回到收件人欄位，不是直接寄出；寫 Add 或 Send 會讓人以為按了就寄'],
           ]} />
         </Section>

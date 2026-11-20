@@ -2,12 +2,12 @@
 // with the prototype's sample people and matching; nothing here changes the prototype.
 //   Now: a click swaps the tag for a small DS Input (a field inside the field); red tags are always sorted first, so
 //        a fixed one jumps to the gray ones at once.
-//   A (suggested): a click turns the tag back into plain text in the same spot; the order is set only when entries
+//   A (suggested until 2026-11-20): a click turns the tag back into plain text in the same spot; the order is set only when entries
 //        come in, and a fixed tag stays where it is, turning gray with a short green flash. Entries that come in later
 //        don't move the tags already there: new red ones go first, new gray ones last (2026-11-19).
 //   B: the order you typed is kept; the hint counts what's left to fix, and Next to fix jumps to the next red tag.
 //   C: A, plus Enter on a fixed tag moves straight to the next red one (for long lists).
-//   D (2026-11-20): the order you typed is kept, no sorting; the hint says how many aren't found, with Show only invalid
+//   D (suggested since 2026-11-20): the order you typed is kept, no sorting; the hint says how many aren't found, with Show only invalid
 //        (only the red tags; the ones fixed there stay until Show all). 2026-11-20: "n valid · m invalid (click a tag to
 //        edit it) · Show only invalid"; "m invalid" in red, nothing else colored; Remove all dropped (too much in one line).
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
@@ -423,10 +423,10 @@ export default function ImportTags() {
           </div>
           <div className="grid gap-[var(--layout-space-loose)] xl:grid-cols-2">
             {col('now', '現在', <Tag size="sm" color="neutral">原型目前的做法</Tag>, '點標籤換成有外框的輸入框；紅色永遠排最前面，修好就跳到灰色區。')}
-            {col('A', 'A：變回文字、原地變色', <Tag size="sm" color="green">建議</Tag>, '點標籤變回純文字（游標在字裡）；只有加入名單時把紅色排到前面，修好的標籤留在原地變灰色，閃一下綠框。')}
+            {col('A', 'A：變回文字、原地變色', <Tag size="sm" color="neutral">11/19 的建議</Tag>, '點標籤變回純文字（游標在字裡）；只有加入名單時把紅色排到前面，修好的標籤留在原地變灰色，閃一下綠框。')}
             {col('B', 'B：照輸入順序，用 Next 找下一筆', <Tag size="sm" color="neutral">替代</Tag>, '不排序；說明文字寫「n to fix」與 Next to fix，按了直接打開下一個紅色標籤。')}
             {col('C', 'C：A 加上 Enter 接著改下一筆', <Tag size="sm" color="neutral">A 的加強</Tag>, '和 A 相同；改好按 Enter 會直接打開下一個紅色標籤，不用再找。')}
-            {col('D', 'D：照輸入順序，只看有問題的', <Tag size="sm" color="blue">11/20 新增</Tag>, '不排序；說明文字寫「n valid · m invalid (click a tag to edit it) · Show only invalid」，只有 m 是紅色；Show only invalid 讓名單只顯示紅色標籤，在這裡改。')}
+            {col('D', 'D：照輸入順序，只看有問題的', <Tag size="sm" color="green">建議（11/20）</Tag>, '不排序；說明文字寫「n valid · m invalid (click a tag to edit it) · Show only invalid」，只有 m 是紅色；Show only invalid 讓名單只顯示紅色標籤，在這裡改。')}
           </div>
         </Section>
 
@@ -515,14 +515,15 @@ export default function ImportTags() {
         <Section eyebrow="Compare" title="比較">
           <SpecTable head={['', '修改的樣子', '紅色在哪', '修好之後', '名單很長時']} nowrap={[0]} rows={[
             ['現在', '欄位裡的輸入框', '永遠在最前面', '立刻跳到後面（找不到）', '要處理的在最前面'],
-            ['A（建議）', '變回純文字', '新加入的紅色排到最前面', '原地變灰色、閃一下綠框', '要處理的在最前面；已經在畫面上的不動'],
+            ['A（11/19 的建議）', '變回純文字', '新加入的紅色排到最前面', '原地變灰色、閃一下綠框', '要處理的在最前面；已經在畫面上的不動'],
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
-            ['D', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', 'Show only invalid 只看紅色'],
+            ['D（建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', 'Show only invalid 只看紅色'],
           ]} />
           <Notes items={[
-            { title: '建議 A', body: '保留「要處理的在最前面」，又不會讓剛改好的標籤消失：排序只發生在名單「進來」的那一刻（貼上、按 Enter、輸入逗號），修改不會觸發排序。修好的標籤在原地變灰並閃一下綠框，使用者看得到結果。之後再貼上一批，也只安排新進來的：新的紅色放最前面、新的灰色接在最後，已經在畫面上的標籤順序不變。' },
-            { title: '要不要加 C', body: 'C 的 Enter 接著改下一筆，對一次要修十幾筆的人很快；但只改一兩筆的人可能會被突然打開的下一筆嚇到。可以先上 A，看使用者測試再決定。' },
+            { title: '建議 D（2026-11-20）', body: '不排序，標籤和使用者的原始清單同一個順序；說明文字直接寫幾筆 invalid，名單長時用 Show only invalid 只看有問題的。修好的留在原地、再貼一批接在最後，都不需要另外的規則。見上面「要不要把紅色排到最前面」。' },
+            { title: 'A（11/19 的建議）', body: '保留「要處理的在最前面」，又不會讓剛改好的標籤消失：排序只發生在名單「進來」的那一刻（貼上、按 Enter、輸入逗號），修改不會觸發排序。修好的標籤在原地變灰並閃一下綠框，使用者看得到結果。之後再貼上一批，也只安排新進來的：新的紅色放最前面、新的灰色接在最後，已經在畫面上的標籤順序不變。' },
+            { title: '要不要加 C', body: 'C 的 Enter 接著改下一筆，對一次要修十幾筆的人很快；但只改一兩筆的人可能會被突然打開的下一筆嚇到。可以先上 D，看使用者測試再決定要不要加。' },
             { title: 'B 的取捨', body: 'B 完全不動順序，最容易預期；但紅色散在名單各處，名單很長時要靠 Next to fix，多一個要學的東西，也會讓「n to fix」的數字回到畫面上（之前拿掉過總結標籤）。' },
           ]} />
         </Section>
