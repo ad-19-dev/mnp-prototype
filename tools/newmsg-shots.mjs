@@ -97,7 +97,7 @@ await step('dlg-import-many', async () => {
 // only Desktop OS: someone without the desktop agent can't get it
 await step('dlg-unreach', async () => {
   await p.getByRole('checkbox', { name: 'Desktop OS', exact: true }).click(); await wait(400);
-  await covSec().scrollIntoViewIfNeeded();
+  await covSec().evaluate(el => el.scrollIntoView({ block: 'center' }));
   await shot('s1-cov', covSec(), [[1, p.getByRole('button', { name: 'Check coverage' }), 'tl']], 12);
   await checkCov();
   await page('s1-unreach');
@@ -109,7 +109,7 @@ await step('s1-filled', async () => {
   await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
   await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(300);
   // the channels changed since the last check: the numbers are gone until it's checked again
-  await covSec().scrollIntoViewIfNeeded();
+  await covSec().evaluate(el => el.scrollIntoView({ block: 'center' }));
   await shot('s1-cov-stale', covSec(), [[1, p.getByRole('button', { name: 'Check again' }), 'tl']], 12);
   await checkCov(); await big(1500); await page('s1-filled');
 });
