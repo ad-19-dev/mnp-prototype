@@ -8,3 +8,6 @@
 .tw .spec-notes p { font-size: 14px; line-height: 22px; }
 .tw .spec-table { font-size: 14px; line-height: 22px; }
 .tw .spec-callout { font-size: 15px; line-height: 24px; }
+/* what was set aside: a thin line on the left marks it apart from the design (2026-11-20) */
+.tw .tw-alt { border-left: 3px solid var(--spec-line); padding-left: 16px; }
+.tw .tw-alt-cap { font: 400 14px/22px var(--spec-font); color: var(--spec-muted); }

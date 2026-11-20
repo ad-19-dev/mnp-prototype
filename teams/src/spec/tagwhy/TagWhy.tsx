@@ -6,11 +6,32 @@ import * as React from 'react'
 import { Figure, Notes, Section, Shot, SpecTable, type Note } from '../parts'
 import { Demo } from '../importtags/ImportTags'
 
-// one design decision: the screenshot, then what it does, why, and what was set aside
-function Why({ shot, title, sub, how, why, not, max }: { shot: string; title: string; sub?: string; how: React.ReactNode; why: React.ReactNode; not?: React.ReactNode; max?: number }) {
+// one design decision: the screenshot, then what it does and why; what was set aside follows with its own screenshot(s)
+// (2026-11-20: every set-aside way has a picture to compare)
+function Why({ shot, title, sub, how, why, not, notShots, max }: { shot: string; title: string; sub?: string; how: React.ReactNode; why: React.ReactNode; not?: React.ReactNode; notShots?: [string, string][]; max?: number }) {
   const notes: Note[] = [{ title: '做法', body: how }, { title: '依據', body: why }]
-  if (not) notes.push({ title: '沒有這樣做', body: not })
-  return <Figure label={title} sub={sub} shot={shot} max={max} notes={notes} wideNotes />
+  if (not && !notShots) notes.push({ title: '沒有這樣做', body: not })
+  return (
+    <>
+      <Figure label={title} sub={sub} shot={shot} max={max} notes={notes} wideNotes />
+      {notShots ? <Alt text={not} shots={notShots} /> : null}
+    </>
+  )
+}
+
+// what was set aside: the reason, then the screenshot(s) of how it looks
+function Alt({ text, shots }: { text: React.ReactNode; shots: [string, string][] }) {
+  return (
+    <figure className="spec-frame tw-alt">
+      <figcaption><b>沒有這樣做</b><span>{text}</span></figcaption>
+      {shots.map(([n, c]) => (
+        <div key={n} className="flex flex-col gap-1">
+          {c ? <span className="tw-alt-cap">{c}</span> : null}
+          <div className="spec-canvas"><Shot name={n} alt={c || '沒有這樣做'} pins={false} /></div>
+        </div>
+      ))}
+    </figure>
+  )
 }
 
 // screenshots one above the other, each with a caption
@@ -52,7 +73,8 @@ export default function TagWhy() {
           <Why shot="nt-paste" title="貼上 26 筆 NT 帳號，3 筆有問題" max={1184}
             how="照貼上的順序；有問題的是紅色，留在原位。重複的只留一個。說明文字寫幾筆 valid、幾筆 invalid。"
             why="使用者常要回原始清單（Excel、Email）查某一筆，同一個順序最好對。"
-            not="紅色排最前面：名單長時還是要捲動，順序也對不回原始清單。" />
+            not="紅色排最前面：名單長時還是要捲動，順序也對不回原始清單。"
+            notShots={[['alt-redfirst', '同一份名單，紅色排最前面（原型目前的做法）']]} />
         </Section>
 
         <Section eyebrow="Edit" title="修改：點標籤變回文字">
@@ -81,7 +103,8 @@ export default function TagWhy() {
           <Why shot="nt-fixed" title="a19999 改成 ytchang" sub="Tina Chang 留在原位，變灰色，外框閃一下綠色"
             how="修好的標籤不移動，說明文字的數字跟著更新。"
             why="使用者要看到剛改的那筆真的好了；標籤跳走就找不到。"
-            not="修好就重新排序（原型目前的做法）。" />
+            not="修好就重新排序（原型目前的做法）。"
+            notShots={[['alt-jump', 'a19999 原本排第一個；改成 ytchang 之後，Tina Chang 跳到第 9 個，夾在一般的標籤裡']]} />
         </Section>
 
         <Section eyebrow="Show only invalid" title="名單很長時：只看有問題的">
@@ -93,8 +116,8 @@ export default function TagWhy() {
           <Notes cols items={[
             { title: '做法', body: '在這裡也能修改、刪除、新增。新增後回到完整名單，因為新加的有對有錯，要在完整名單才看得到全部。' },
             { title: '依據', body: '幾百筆裡找幾筆錯，捲著找很慢。名單短時用不到，所以入口只是那個數字，不另外放按鈕。' },
-            { title: '沒有這樣做', body: '另外放 Show only invalid、Remove all 連結：比數字還顯眼，畫面變複雜。' },
           ]} />
+          <Alt text="另外放 Show only invalid、Remove all 連結：比數字還顯眼，畫面變複雜。" shots={[['alt-links', '']]} />
         </Section>
 
         <Section eyebrow="Paste more" title="再貼一批：接在最後">
@@ -107,7 +130,8 @@ export default function TagWhy() {
           <Why shot="key-focus" title="從輸入框按 ← 移到標籤上" sub="有焦點框；紅色標籤同時顯示原因"
             how="整個欄位只佔一個 Tab 位置，用左右鍵在標籤之間移動（見下表）。"
             why="使用者習慣 Gmail、Outlook 的操作；名單有幾百筆時，按 Tab 不必經過每個標籤。"
-            not="空的輸入框按 Backspace 直接刪掉最後一個標籤：容易誤刪。" />
+            not="空的輸入框按 Backspace 直接刪掉最後一個標籤：容易誤刪。"
+            notShots={[['alt-bs-before', '游標在名單最後，輸入框是空的'], ['alt-bs-after', '按一次 Backspace：Yvonne Chou 直接被刪掉']]} />
           <SpecTable head={['在哪裡', '按鍵', '結果']} nowrap={[0, 1]} rows={[
             ['輸入框', '←（游標在最前面）', '移到最後一個標籤'],
             ['輸入框（空的）', 'Backspace', '移到最後一個標籤；再按一次才刪'],

@@ -74,10 +74,37 @@ await step('key-focus', async () => {
 // 5. typing at the end: suggestions
 await step('nt-type-sug', async () => {
   await wait(1000); await clear('D'); const inp = demo('D').locator('#t-D'); await inp.click(); await inp.pressSequentially('chen', { delay: 30 }); await wait(300)
-  await shot('nt-type-sug', box('D'), 8, [pop()]); await inp.press('Escape'); await inp.fill('')
+  // the dropdown hangs below the card: hide the demo-only buttons there for this shot
+  const strip = demo('D').locator('.border-dashed'); await strip.evaluate(e => { e.style.visibility = 'hidden' })
+  await shot('nt-type-sug', box('D'), 8, [pop()]); await strip.evaluate(e => { e.style.visibility = '' }); await inp.press('Escape'); await inp.fill('')
 });
 // 6. the old way (Now): a bordered input inside the field
 await step('now-edit', async () => { await scrollTo('now'); await paste('now'); await tag('now', 'a19999').click(); await wait(200); await shot('now-edit', box('now')); await p.keyboard.press('Escape') });
+// set aside, for comparison on the why page (2026-11-20)
+// a. red first after pasting (the prototype today, the Now demo)
+await step('alt-redfirst', async () => { await scrollTo('now'); await clear('now'); await paste('now'); await p.mouse.move(0, 0); await shot('alt-redfirst', card('now')) });
+// b. fixed, then sorted again: Tina Chang jumps behind the red ones
+await step('alt-jump', async () => {
+  await tag('now', 'a19999').click(); await wait(150); const inp = box('now').locator('[data-editing]'); await inp.fill('ytchang'); await inp.press('Enter'); await wait(1100); await p.mouse.move(0, 0)
+  await shot('alt-jump', box('now'))
+});
+// c. the hint with two more links (the version earlier on 11/20), drawn onto D's hint
+await step('alt-links', async () => {
+  await scrollTo('D'); await clear('D'); await paste('D'); await p.mouse.move(0, 0)
+  await hint('D').evaluate(h => {
+    const inv = [...h.querySelectorAll('button')].find(b => /invalid$/.test(b.textContent))
+    const add = t => { const dot = document.createElement('span'); dot.textContent = '·'; const b = inv.cloneNode(true); b.className = b.className.replace(/\S*text-error-text\S*|hover:underline/g, ''); b.textContent = t; h.append(dot, b) }
+    add('Show only invalid'); add('Remove all')
+  })
+  await shot('alt-links', box('D'), 8, [hint('D')])
+});
+// d. the old Backspace: one press in an empty input removed the last tag
+await step('alt-backspace', async () => {
+  await scrollTo('D'); await clear('D'); await paste('D'); await p.mouse.move(0, 0); await demo('D').locator('#t-D').focus(); await wait(150)
+  await shot('alt-bs-before', box('D'))
+  await box('D').getByRole('button', { name: /^Edit Yvonne/ }).locator('button').click(); await demo('D').locator('#t-D').focus(); await wait(200)
+  await shot('alt-bs-after', box('D'))
+});
 // 7. Phone numbers: entered values; region next to the data type
 await step('phone-paste', async () => {
   await scrollTo('D'); await clear('D'); await setKind('D', 'Phone numbers'); await paste('D'); await p.mouse.move(0, 0); await wait(200); await shot('phone-paste', card('D'))

@@ -54,6 +54,31 @@
   "h": 173,
   "marks": []
  },
+ "alt-redfirst": {
+  "w": 1184,
+  "h": 393,
+  "marks": []
+ },
+ "alt-jump": {
+  "w": 1150,
+  "h": 165,
+  "marks": []
+ },
+ "alt-links": {
+  "w": 1150,
+  "h": 265,
+  "marks": []
+ },
+ "alt-bs-before": {
+  "w": 1150,
+  "h": 165,
+  "marks": []
+ },
+ "alt-bs-after": {
+  "w": 1150,
+  "h": 137,
+  "marks": []
+ },
  "phone-paste": {
   "w": 1184,
   "h": 393,
