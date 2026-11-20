@@ -66,6 +66,11 @@ await step('only', async () => {
   await shot('only-fixed', box('D'), 8, [hint('D')])
   await demo('D').getByRole('button', { name: 'Show all' }).click(); await wait(250); await p.mouse.move(0, 0); await shot('only-back', box('D'), 8, [hint('D')])
 });
+// 4d. keyboard: ← from the input moves onto the tags; a focused tag shows its focus ring (and a red one its reason)
+await step('key-focus', async () => {
+  await clear('D'); await paste('D'); await p.mouse.move(0, 0); const inp = demo('D').locator('#t-D'); await inp.focus(); await p.keyboard.press('ArrowLeft'); await wait(100)
+  await tag('D', 'cm.chen').focus(); await wait(700); await shot('key-focus', box('D'), 8, [p.getByRole('tooltip').last()]); await p.keyboard.press('Escape'); await wait(200)
+});
 // 5. typing at the end: suggestions
 await step('nt-type-sug', async () => {
   await wait(1000); await clear('D'); const inp = demo('D').locator('#t-D'); await inp.click(); await inp.pressSequentially('chen', { delay: 30 }); await wait(300)

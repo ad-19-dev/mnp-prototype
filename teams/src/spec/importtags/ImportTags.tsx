@@ -244,11 +244,35 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
   const showOnly = () => { setEdit(null); setOnly(bad.map(h => h.id)); setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0) }
 
   const byNameOf = () => show === 'name' || (show === 'type' && (kind === 'nt' || kind === 'emp'))
+  // keyboard (2026-11-20), as in a mail recipient field: the tags are one stop with the input (Tab leaves the field);
+  // ← at the start of the input goes to the last tag, ←/→ move between tags (→ past the last one is the input again),
+  // Enter edits, Backspace/Delete removes and moves to the tag beside it, typing goes back to the input, Esc too.
+  // Backspace in an empty input only goes to the last tag; a second Backspace removes it.
+  const focusTag = (id: number | undefined) => {
+    const el = id == null ? null : boxRef.current?.querySelector<HTMLElement>('[data-tagid="' + id + '"]')
+    if (el) { el.focus(); el.scrollIntoView({ block: 'nearest' }) } else inputRef.current?.focus()
+  }
+  // the × inside each tag isn't a Tab stop either (it stays clickable; Backspace/Delete do it from the keyboard)
+  React.useEffect(() => { boxRef.current?.querySelectorAll<HTMLElement>('[data-tagid] button').forEach(b => { b.tabIndex = -1 }) })
+  const tagKeys = (h: Hit) => (e: React.KeyboardEvent) => {
+    if (e.target !== e.currentTarget) return
+    const i = shown.findIndex(x => x.id === h.id), prev = shown[i - 1], next = shown[i + 1]
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') { e.preventDefault(); openEdit(h) }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); if (prev) focusTag(prev.id) }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); focusTag(next?.id) }
+    else if (e.key === 'Home') { e.preventDefault(); focusTag(shown[0]?.id) }
+    else if (e.key === 'End' || e.key === 'Escape') { e.preventDefault(); inputRef.current?.focus() }
+    else if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault(); const to = e.key === 'Backspace' ? (prev || next) : (next || prev)
+      drop(h.id); setTimeout(() => focusTag(to?.id), 0)
+    }
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setDraft(d => d + e.key); setSugOpen(true); inputRef.current?.focus() }
+  }
   const editable = (h: Hit) => ({
-    role: 'button', tabIndex: 0, className: 'cursor-text', 'data-tagid': h.id,
+    role: 'button', tabIndex: -1, className: 'cursor-text', 'data-tagid': h.id,
     'aria-label': 'Edit ' + (h.ok ? (byNameOf() ? h.ok.label : h.ok.val) : h.v) + (h.why ? ': ' + h.why : ''),
     onClick: (e: React.MouseEvent) => { if (!(e.target as HTMLElement).closest('button')) openEdit(h) },
-    onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openEdit(h) } },
+    onKeyDown: tagKeys(h),
   })
   const tag = (h: Hit) => {
     const fl = flash === h.id
@@ -359,7 +383,8 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
                       else if (showSug && e.key === 'ArrowUp') { e.preventDefault(); setHi(i => Math.max(i - 1, 0)) }
                       else if (e.key === 'Escape' && showSug) { e.stopPropagation(); setSugOpen(false) }
                       else if (e.key === 'Enter') { e.preventDefault(); if (showSug) pick(sugs[Math.min(hi, sugs.length - 1)]); else take(draft) }
-                      else if (e.key === 'Backspace' && !draft && shown.length) drop(shown[shown.length - 1].id)
+                      else if (e.key === 'Backspace' && !draft && shown.length) { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
+                      else if (e.key === 'ArrowLeft' && !showSug && shown.length && e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
                     }}
                     onBlur={() => { take(draft); setSugOpen(false) }} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
                 </span>
@@ -455,6 +480,19 @@ export default function ImportTags() {
             { title: '和之前拿掉的總結的差別', body: '2026-11-18 拿掉過總結標籤與「n to fix」。D 只有一行說明文字和一個連結，沒有標籤。' },
             { title: '為什麼沒有 Remove all', body: '一行裡多一個連結太複雜；在只看 invalid 的畫面裡，紅色都在一起，逐一按 × 也很快。' },
           ]} cols />
+        </Section>
+
+        <Section eyebrow="Keyboard" title="鍵盤操作" lead="2026-11-20 加，五個示範都有。整個欄位只佔一個 Tab 位置，在欄位裡用左右鍵在標籤之間移動，和 Gmail、Outlook 的收件人欄一樣。">
+          <SpecTable head={['在哪裡', '按鍵', '結果']} nowrap={[0, 1]} rows={[
+            ['名單最後的輸入框', '←（游標在最前面或輸入框是空的）', '移到最後一個標籤'],
+            ['名單最後的輸入框', 'Backspace（輸入框是空的）', '只移到最後一個標籤，不刪；再按一次才刪，避免誤刪'],
+            ['標籤上', '← / →', '移到前一個或後一個標籤；最後一個再按 → 回到輸入框'],
+            ['標籤上', 'Home / End', '第一個標籤 / 回到輸入框'],
+            ['標籤上', 'Enter（或空白鍵、F2）', '開始修改，和點一下一樣'],
+            ['標籤上', 'Backspace / Delete', '刪掉這個標籤，焦點移到旁邊那一個（Backspace 往前、Delete 往後）'],
+            ['標籤上', '直接打字、Esc', '回到輸入框，打的字接在最後'],
+            ['欄位裡任何地方', 'Tab', '直接離開這個欄位，不會一個一個經過標籤和 ×'],
+          ]} />
         </Section>
 
         <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="每個示範都有：在名單欄位打字時，以及修改標籤時（2026-11-19 加），比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
