@@ -88,16 +88,6 @@ await step('alt-jump', async () => {
   await tag('now', 'a19999').click(); await wait(150); const inp = box('now').locator('[data-editing]'); await inp.fill('ytchang'); await inp.press('Enter'); await wait(1100); await p.mouse.move(0, 0)
   await shot('alt-jump', box('now'))
 });
-// c. the hint with two more links (the version earlier on 11/20), drawn onto D's hint
-await step('alt-links', async () => {
-  await scrollTo('D'); await clear('D'); await paste('D'); await p.mouse.move(0, 0)
-  await hint('D').evaluate(h => {
-    const inv = [...h.querySelectorAll('button')].find(b => /invalid$/.test(b.textContent))
-    const add = t => { const dot = document.createElement('span'); dot.textContent = '·'; const b = inv.cloneNode(true); b.className = b.className.replace(/\S*text-error-text\S*|hover:underline/g, ''); b.textContent = t; h.append(dot, b) }
-    add('Show only invalid'); add('Remove all')
-  })
-  await shot('alt-links', box('D'), 8, [hint('D')])
-});
 // d. the old Backspace: one press in an empty input removed the last tag
 await step('alt-backspace', async () => {
   await scrollTo('D'); await clear('D'); await paste('D'); await p.mouse.move(0, 0); await demo('D').locator('#t-D').focus(); await wait(150)

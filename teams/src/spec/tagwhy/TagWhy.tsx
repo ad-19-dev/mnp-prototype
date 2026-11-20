@@ -117,7 +117,6 @@ export default function TagWhy() {
             { title: '做法', body: '在這裡也能修改、刪除、新增。新增後回到完整名單，因為新加的有對有錯，要在完整名單才看得到全部。' },
             { title: '依據', body: '幾百筆裡找幾筆錯，捲著找很慢。名單短時用不到，所以入口只是那個數字，不另外放按鈕。' },
           ]} />
-          <Alt text="另外放 Show only invalid、Remove all 連結：比數字還顯眼，畫面變複雜。" shots={[['alt-links', '']]} />
         </Section>
 
         <Section eyebrow="Paste more" title="再貼一批：接在最後">
