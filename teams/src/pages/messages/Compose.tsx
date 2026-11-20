@@ -4,7 +4,7 @@ import {
   Button, Checkbox, DataTable, DatePicker, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Empty, FileItem, FileUpload, Input, Pagination, PersonDisplay, RadioGroup, RadioGroupItem, SegmentedControl, Select,
   SegmentedControlItem, StepItem, StepLabel, Steps, Tag, Textarea, cn, useIsNarrowViewport,
 } from '@qijenchen/design-system'
-import { NO_HIDE, PageSize, Tip } from '../../components/ui'
+import { NO_HIDE, Tip } from '../../components/ui'
 import { groupInSpace, spaceName, tplInSpace } from '../../lib/teams'
 import { scopeLabel } from './ctl'
 import { } from '../../lib/store'
@@ -106,12 +106,21 @@ function PhoneHead({ m, k, label }: { m: SendCtl; k: 'co' | 'pp'; label: string 
 function RecvTable({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, c = s.c, sms = smsOn(c)
   const [mem, setMem] = React.useState<MemberSet | null>(null)
-  // pages like the Send messages list (2026-11-20, it scrolled in a 320px box before): 20 per page by default, 10 / 20 /
-  // 50 to pick. Adding goes to the page with the first new row (one person: the last page; a batch: where it starts);
-  // removing the last row of a page goes back one.
-  const [per, setPer] = React.useState(20)
-  const [page, setPage] = React.useState(1), n = c.receivers.length, pages = Math.max(1, Math.ceil(n / per)), prevN = React.useRef(n)
-  React.useEffect(() => { if (n > prevN.current) setPage(Math.floor(prevN.current / per) + 1); else if (page > pages) setPage(pages); prevN.current = n }, [n])
+  // no pages (2026-11-20, tried and taken back): the list is a field in the form, so past 8 rows it scrolls in its own box
+  // and the rest of the form stays where it is. Adding scrolls to the first new row (one person: the end; a batch: where
+  // it starts).
+  const n = c.receivers.length, prevN = React.useRef(n), wrapRef = React.useRef<HTMLDivElement>(null)
+  React.useEffect(() => {
+    const from = prevN.current; prevN.current = n
+    if (n <= from) return
+    requestAnimationFrame(() => {
+      const box = wrapRef.current; if (!box) return
+      // the DS table scrolls its own box (overflow hidden, with its own scrollbar): the first one that's taller inside
+      const sc = [...box.querySelectorAll<HTMLElement>('*')].find(e => e.clientHeight > 100 && e.scrollHeight > e.clientHeight + 1)
+      const row = [...box.querySelectorAll<HTMLElement>('[role="row"]')].filter(r => r.querySelector('[aria-label^="' + L('Remove ', '移除 ') + '"]'))[from]
+      if (sc && row) sc.scrollTop += row.getBoundingClientRect().top - sc.getBoundingClientRect().top - 40
+    })
+  }, [n])
   const rows: RRow[] = c.receivers.map(t => {
     let label = '', sub = '', ppl: any[] = [], cnt = 1, warn = false, badge = '', badgeBtn = false
     if (t.type === 'person') {
@@ -164,13 +173,9 @@ function RecvTable({ m }: { m: SendCtl }) {
 
   if (!c.receivers.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
-    <div className="flex flex-col gap-2">
-      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows.slice((page - 1) * per, page * per)} bordered getRowId={x => x.t.key}
+    <div ref={wrapRef} className="flex flex-col gap-2">
+      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={rows.length > 8 ? '360px' : 'auto'} getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
-      <div className="flex items-center justify-end gap-3">
-        <Pagination total={n} pageSize={per} page={Math.min(page, pages)} onPageChange={setPage} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} />
-        <PageSize value={per} onChange={v => { setPer(v); setPage(1) }} />
-      </div>
       <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
   )

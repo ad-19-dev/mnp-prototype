@@ -280,7 +280,7 @@ function Step1() {
           ['類型選單', '搜尋框左側：Person、Org、Group、Phone、Email、MVPN。決定搜尋框找什麼，各類型見下表。'],
           ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；搜尋框下方沒有說明文字。已在名單上的選項顯示 Added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
-          ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、Phone、Email）；組織與群組後面接藍字總人數 n people，點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。表格下方右側是分頁和每頁筆數，和 Send messages 列表相同：預設 20 筆一頁，可選 10 / 20 / 50（不顯示總數）；加了收件人會跳到新加的第一列所在的那一頁（加一個人就是最後一頁，批次匯入就是那一批的開頭）（2026-11-20）。'],
+          ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、Phone、Email）；組織與群組後面接藍字總人數 n people，點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。沒有分頁：超過 8 列時表格固定高度（約 8 列），在框內捲動，表單其他部分位置不變；加了收件人會捲到新加的第一列（加一個人就是最後面，批次匯入就是那一批的開頭）（2026-11-20）。'],
           ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audience yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
         ]} />
         <SpecTable head={['搜尋類型', '輸入', '下拉選單與加入方式', '錯誤與找不到']} nowrap={[0]} rows={[
