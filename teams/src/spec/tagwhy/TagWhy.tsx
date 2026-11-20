@@ -1,8 +1,9 @@
-// Batch import tags: the design (option A of the tag study, with labels by data type) and why each part is the way it
+// Batch import tags: the design (option D of the tag study since 2026-11-20, with labels by data type; a live demo at the top) and why each part is the way it
 // is, with screenshots of the study (tools/tagwhy-shots.mjs). For answering "why not show the person" (2026-11-19).
 // Nothing here changes the prototype.
 import * as React from 'react'
 import { Figure, Notes, Section, Shot, SpecTable, type Note } from '../parts'
+import { Demo } from '../importtags/ImportTags'
 
 
 // one design decision: the screenshot, then what it does, why, and what was set aside
@@ -34,6 +35,15 @@ export default function TagWhy() {
         </div>
       </div>
       <main className="spec-wrap spec-main">
+        <Section eyebrow="Try" title="先試試" lead="這是現在的設計，可以直接操作，用的是原型的範例資料與比對規則。下面每一節說明它為什麼這樣做。">
+          <Demo mode="D" show="type" />
+          <Notes cols items={[
+            { title: '貼上', body: '按 Paste a sample list，貼上 26 筆 NT 帳號，其中 3 筆有問題（紅色）。' },
+            { title: '修改', body: '點紅色標籤 a19999，改成 ytchang（打 ytch 選單就會出現），按 Enter。也可以把 Data type 換成 Phone numbers 或 Org IDs，滑過標籤看是誰。' },
+            { title: '只看有問題的', body: '按 Show only invalid，改好的留在畫面上；再按 Show all 回到完整名單。按 Paste more 貼第二批，看它們接在最後。' },
+          ]} />
+        </Section>
+
         <Section eyebrow="Summary" title="一句話" lead="標籤顯示什麼，看使用者手上的清單是什麼。NT 帳號、Employee ID 是看不出是誰的代碼，所以顯示姓名；Email、電話、MVPN 顯示輸入的值，因為使用者要拿它對回自己的清單，而且這幾種常混著找不到人的號碼。">
           <SpecTable head={['資料類型', '找到的標籤顯示', 'hover 顯示', '一句話依據']} nowrap={[0]} rows={[
             ['NT accounts、Employee IDs', '大頭照與姓名', '輸入的值 · 組織', '代碼看不出是誰；打錯一個字可能是另一個真的人，只有看姓名才發現'],

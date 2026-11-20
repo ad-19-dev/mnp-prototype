@@ -26,7 +26,7 @@ type Item = { id: number; v: string; pin?: string }
 type Ok = { key: string; label: string; val: string; who?: string; p?: string; icon?: typeof Mail; shared?: string[] }
 // type (suggested): names for NT accounts and Employee IDs (codes nobody can read; every match is a person),
 // the entered value for the rest
-type Show = 'type' | 'value' | 'name'
+export type Show = 'type' | 'value' | 'name'
 type Hit = { id: number; v: string; ok?: Ok; why?: string }
 
 // ---------- numbers: who they belong to ----------
@@ -145,7 +145,8 @@ const MORE: Record<string, string> = {
   phone: '0918120113, 0918777, 0912337415',
 }
 
-function Demo({ mode, show }: { mode: Mode; show: Show }) {
+// also used live at the top of the why page (teams/tagwhy.html)
+export function Demo({ mode, show }: { mode: Mode; show: Show }) {
   const [kind, setKind] = React.useState<ListKind | null>('nt'), [region, setRegion] = React.useState<Region>('TW')
   const [items, setItems] = React.useState<Item[]>([]), [draft, setDraft] = React.useState('')
   const [seq, setSeq] = React.useState<number[]>([])        // A, C: the order, set when entries come in
