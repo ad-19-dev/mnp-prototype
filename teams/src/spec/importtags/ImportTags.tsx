@@ -13,8 +13,8 @@
 //        Show only invalid link, too loud next to the count); no Remove all.
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
-import { Button, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
-import { Building2, Loader2, Mail, Phone } from 'lucide-react'
+import { Button, CircularProgress, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
+import { Building2, Mail, Phone } from 'lucide-react'
 import { Notes, Section, SpecTable } from '../parts'
 import { ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, listKindName, pname } from '../../components/ui'
 import { REGIONS, type Region } from '../../components/RecvInput'
@@ -369,7 +369,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
           !hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
-            : mode === 'D' && checking ? <span className="inline-flex items-center gap-1.5"><Loader2 className="size-3.5 animate-spin" aria-hidden />Checking {hits.length - hits.filter(isPending).length} of {hits.length}…</span>
+            : mode === 'D' && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {hits.length - hits.filter(isPending).length} of {hits.length}…</span>
             : mode === 'D' ? <DHint parts={[
                 only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
                   : <>{n} valid</>,
