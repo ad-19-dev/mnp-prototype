@@ -10,8 +10,7 @@
 //   D (suggested since 2026-11-20): the order you typed is kept, no sorting; the hint says how many aren't found, with Show only invalid
 //        (only the red tags; the ones fixed there stay until Show all). 2026-11-20: "n valid · m invalid (click a tag to
 //        edit it)"; "m invalid" in red, nothing else colored; clicking "m invalid" shows only the invalid ones (it was a separate
-//        Show only invalid link, too loud next to the count); no Remove all. Showing only the invalid ones is for fixing
-//        only: no input to add more there (Show all first), and it never closes by itself, all fixed included.
+//        Show only invalid link, too loud next to the count); no Remove all.
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
 import { Button, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
@@ -232,10 +231,7 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
     setTimeout(() => {
       const el = mode === 'now' ? null : boxRef.current?.querySelector<HTMLElement>('[data-tagid="' + id + '"]')
       // back to the input at the end without scrolling, and keep the edited tag in view (no focus ring on it)
-      // showing only the invalid ones (no input): focus goes to the list itself, so the fixed tag shows its green flash
-      // without a focus ring or tooltip over it; ←/→ from there carry on from that tag
-      if (el && only) { lastRef.current = id; boxRef.current?.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }) }
-      else if (el) { inputRef.current?.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }) } else inputRef.current?.focus()
+      if (el) { inputRef.current?.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }) } else inputRef.current?.focus()
     }, 0)
   }
   const goNextToFix = () => {
@@ -252,16 +248,6 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
   // ← at the start of the input goes to the last tag, ←/→ move between tags (→ past the last one is the input again),
   // Enter edits, Backspace/Delete removes and moves to the tag beside it, typing goes back to the input, Esc too.
   // Backspace in an empty input only goes to the last tag; a second Backspace removes it.
-  const lastRef = React.useRef<number | null>(null)
-  const boxKeys = (e: React.KeyboardEvent) => {
-    if (e.target !== e.currentTarget || !shown.length) return
-    const i = shown.findIndex(x => x.id === lastRef.current), at = i < 0 ? null : shown[i]
-    if (e.key === 'ArrowLeft') { e.preventDefault(); focusTag((i > 0 ? shown[i - 1] : at || shown[shown.length - 1]).id) }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); focusTag((i >= 0 && shown[i + 1] ? shown[i + 1] : at || shown[0]).id) }
-    else if (e.key === 'Home') { e.preventDefault(); focusTag(shown[0].id) }
-    else if (e.key === 'End') { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
-    else if ((e.key === 'Enter' || e.key === 'F2') && at) { e.preventDefault(); openEdit(at) }
-  }
   const focusTag = (id: number | undefined) => {
     const el = id == null ? null : boxRef.current?.querySelector<HTMLElement>('[data-tagid="' + id + '"]')
     if (el) { el.focus(); el.scrollIntoView({ block: 'nearest' }) } else inputRef.current?.focus()
@@ -273,17 +259,17 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
     const i = shown.findIndex(x => x.id === h.id), prev = shown[i - 1], next = shown[i + 1]
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') { e.preventDefault(); openEdit(h) }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); if (prev) focusTag(prev.id) }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); if (next || !only) focusTag(next?.id) }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); focusTag(next?.id) }
     else if (e.key === 'Home') { e.preventDefault(); focusTag(shown[0]?.id) }
-    else if (e.key === 'End' || e.key === 'Escape') { e.preventDefault(); if (only) focusTag(shown[shown.length - 1]?.id); else inputRef.current?.focus() }
+    else if (e.key === 'End' || e.key === 'Escape') { e.preventDefault(); inputRef.current?.focus() }
     else if (e.key === 'Backspace' || e.key === 'Delete') {
       e.preventDefault(); const to = e.key === 'Backspace' ? (prev || next) : (next || prev)
-      drop(h.id); setTimeout(() => { if (to || !only) focusTag(to?.id) }, 0)
+      drop(h.id); setTimeout(() => focusTag(to?.id), 0)
     }
-    else if (!only && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setDraft(d => d + e.key); setSugOpen(true); inputRef.current?.focus() }
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setDraft(d => d + e.key); setSugOpen(true); inputRef.current?.focus() }
   }
   const editable = (h: Hit) => ({
-    role: 'button', tabIndex: only && shown[0]?.id === h.id ? 0 : -1, className: 'cursor-text', 'data-tagid': h.id,
+    role: 'button', tabIndex: -1, className: 'cursor-text', 'data-tagid': h.id,
     'aria-label': 'Edit ' + (h.ok ? (byNameOf() ? h.ok.label : h.ok.val) : h.v) + (h.why ? ': ' + h.why : ''),
     onClick: (e: React.MouseEvent) => { if (!(e.target as HTMLElement).closest('button')) openEdit(h) },
     onKeyDown: tagKeys(h),
@@ -384,15 +370,13 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
                 only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
               ]} />
             : n + ' valid audiences. Click a tag to edit it.'}>
-          <div ref={boxRef} className={cn('flex h-56 w-full outline-none flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
+          <div ref={boxRef} className={cn('flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
             kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
-            tabIndex={only ? -1 : undefined} onKeyDown={boxKeys}
-          onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
+            onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
             {shown.map(h => (edit && edit.id === h.id ? editor(h) : tag(h)))}
             <Popover open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
               <PopoverAnchor asChild>
-                {/* D, showing only the invalid ones: fix only, no input to add more (Show all first, 2026-11-20) */}
-                <span className={cn('flex min-w-[160px] flex-1', only && 'hidden')}>
+                <span className="flex min-w-[160px] flex-1">
                   <input ref={inputRef} id={'t-' + mode} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" autoComplete="off"
                     role="combobox" aria-expanded={showSug} aria-autocomplete="list"
                     placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
@@ -424,8 +408,8 @@ export function Demo({ mode, show }: { mode: Mode; show: Show }) {
       {/* demo controls: only for trying the proposal, not part of the design (2026-11-20: moved out of the card) */}
       <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border px-3 py-2">
         <span className="text-caption font-medium text-fg-secondary">示範用</span>
-        <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind] || !!only} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
-        <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length || !!only} onClick={() => take(MORE[kind!])}>Paste more</Button>
+        <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
+        <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null) }}>Clear</Button>
         <span className="text-caption text-fg-secondary">{mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
@@ -491,7 +475,7 @@ export default function ImportTags() {
             ['對回原始清單（Excel、Email）', '順序被打亂，要自己找', '和原始清單同一個順序'],
             ['處理：打錯字', '點標籤改，打字時有選單', '同 A；在只看 invalid 的畫面裡改，改好的留在原地變灰，按 Show all 回到完整名單'],
             ['處理：查無此人（離職、外部）', '一筆一筆按 ×', '在只看 invalid 的畫面裡一筆一筆按 ×（紅色都在一起，很快）'],
-            ['再貼一批', '新的紅色放最前面、新的灰色放最後（另一條規則）', '接在最後，不需要規則；只看 invalid 時不能新增，先按 Show all'],
+            ['再貼一批', '新的紅色放最前面、新的灰色放最後（另一條規則）', '接在最後，不需要規則；貼上時回到完整名單'],
           ]} />
           <Notes items={[
             { title: '試試', body: '在 D 按 Paste a sample list → 點說明文字裡的「3 invalid」→ 把 a19999 改成 ytchang（留在畫面上變灰）→ Show all，看它回到原本的位置。' },

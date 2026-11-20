@@ -87,12 +87,11 @@ export default function TagWhy() {
         <Section eyebrow="Show only invalid" title="名單很長時：只看有問題的">
           <Shots items={[
             ['invalid-hover', '滑過「3 invalid」', '和列表上的「n not sent」一樣，滑過才有底線'],
-            ['only-fixed', '點下去', '只剩有問題的，沒有輸入框；在這裡修好的留在畫面上'],
+            ['only-fixed', '點下去', '只剩有問題的；在這裡修好的留在畫面上'],
             ['only-back', '按 Show all', '回到完整名單，修好的在原位'],
           ]} />
           <Notes cols items={[
-            { title: '做法', body: '這個畫面只能修改、刪除，不能新增；要新增先按 Show all。只有按 Show all 才會離開，全部修好也不自動跳回。' },
-            { title: '依據', body: '幾百筆裡找幾筆錯，捲著找很慢；入口只是那個數字，名單短時用不到也不佔位置。進出都由使用者自己按，畫面不會自己切換。' },
+            { title: '依據', body: '幾百筆裡找幾筆錯，捲著找很慢。名單短時用不到，所以入口只是那個數字，不另外放按鈕。' },
             { title: '沒有這樣做', body: '另外放 Show only invalid、Remove all 連結：比數字還顯眼，畫面變複雜。' },
           ]} />
         </Section>
