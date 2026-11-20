@@ -280,7 +280,7 @@ function Step1() {
           ['類型選單', '搜尋框左側：Person、Org、Group、Phone、Email、MVPN。決定搜尋框找什麼，各類型見下表。'],
           ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；搜尋框下方沒有說明文字。已在名單上的選項顯示 Added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
-          ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、Phone、Email）；組織與群組後面接藍字總人數 n people，點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。'],
+          ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、Phone、Email）；組織與群組後面接藍字總人數 n people，點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。一頁 10 列，超過時表格下方右側出現分頁（不顯示總數，和 Message Coverage 的收不到名單相同）；加了收件人會跳到新加的第一列所在的那一頁（加一個人就是最後一頁，批次匯入就是那一批的開頭）（2026-11-20）。'],
           ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audience yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
         ]} />
         <SpecTable head={['搜尋類型', '輸入', '下拉選單與加入方式', '錯誤與找不到']} nowrap={[0]} rows={[
@@ -323,7 +323,7 @@ function Step1() {
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點各通道下方的連結看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道、開 SMS 時有一列公務手機和私人手機都沒勾、外部 Email 沒勾 Email 通道、外部電話沒選 SMS 備援。' },
           { title: '通道的連動', body: 'SMS 備援是 Device Notifications 的傳送方式之一：勾了 Device Notifications 才出現 Delivery method；取消 Device Notifications 會回到 PNS only。至少要勾一個通道。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
-          { title: 'Message Coverage by Channel', body: <>2026-11-19 起按下按鈕才計算（工程評估即時計算不容易）：框裡先是一行說明 <Copy en="See how many people each channel can reach, and who can’t get it." zh="查看每個通道可以送達多少人，以及誰收不到。" /> 與右側 <C>Check coverage</C>（secondary sm，計算機圖示，按下後轉圈）；算完才出現下面的各通道列。之後再改收件人、通道或手機，數字收起，改成黃字 <Copy en="The audience or channels changed. Check again to see who can get each channel." zh="收件人或通道改了，請重新檢查各通道誰收得到。" /> 與 <C>Check again</C>。不檢查也可以按 Next。有收件人、有選通道時出現在收件人下方。標題 <Copy en="Message Coverage by Channel" zh="各通道訊息涵蓋" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的 n / total（像收件人表格裡組織名稱後面接人數）（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
+          { title: 'Message Coverage by Channel', body: <>2026-11-19 起按下按鈕才計算（工程評估即時計算不容易）：框裡先是一行說明 <Copy en="Check reachable and undeliverable messages for each channel." zh="查看每個通道可送達與無法送達的訊息。" /> 與右側 <C>Check coverage</C>（secondary sm，計算機圖示，按下後轉圈）；算完才出現下面的各通道列。之後再改收件人、通道或手機，數字收起，改成黃字 <Copy en="Audience or channels updated. Check again to refresh coverage." zh="收件人或通道已更新，請重新檢查以更新涵蓋範圍。" /> 與 <C>Check again</C>。不檢查也可以按 Next。有收件人、有選通道時出現在收件人下方。標題 <Copy en="Message Coverage by Channel" zh="各通道訊息涵蓋" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的 n / total（像收件人表格裡組織名稱後面接人數）（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
         ]} />
         <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>

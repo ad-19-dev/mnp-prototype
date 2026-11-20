@@ -103,9 +103,15 @@ function PhoneHead({ m, k, label }: { m: SendCtl; k: 'co' | 'pp'; label: string 
   return <span className="inline-flex items-center gap-2"><Checkbox checked={all ? true : on ? 'indeterminate' : false} disabled={!rows.length} onCheckedChange={setAll} aria-label={L('All: ', '全部：') + label} />{label}</span>
 }
 
+const RECV_PER = 10
 function RecvTable({ m }: { m: SendCtl }) {
   const app = useApp(), s = m.s, c = s.c, sms = smsOn(c)
   const [mem, setMem] = React.useState<MemberSet | null>(null)
+  // 10 per page, like the other tables in the flow (2026-11-20, it scrolled in a 320px box before). Adding goes to the
+  // page with the first new row (one person: the last page; a batch: where it starts); removing the last row of a page
+  // goes back one.
+  const [page, setPage] = React.useState(1), n = c.receivers.length, pages = Math.max(1, Math.ceil(n / RECV_PER)), prevN = React.useRef(n)
+  React.useEffect(() => { if (n > prevN.current) setPage(Math.floor(prevN.current / RECV_PER) + 1); else if (page > pages) setPage(pages); prevN.current = n }, [n])
   const rows: RRow[] = c.receivers.map(t => {
     let label = '', sub = '', ppl: any[] = [], cnt = 1, warn = false, badge = '', badgeBtn = false
     if (t.type === 'person') {
@@ -159,8 +165,9 @@ function RecvTable({ m }: { m: SendCtl }) {
   if (!c.receivers.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
     <div className="flex flex-col gap-2">
-      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={rows.length > 6 ? '320px' : 'auto'} getRowId={x => x.t.key}
+      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows.slice((page - 1) * RECV_PER, page * RECV_PER)} bordered getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
+      {n > RECV_PER ? <div className="flex justify-end"><Pagination total={n} pageSize={RECV_PER} page={Math.min(page, pages)} onPageChange={setPage} showTotal={false} prevAriaLabel={L('Previous page', '上一頁')} nextAriaLabel={L('Next page', '下一頁')} /></div> : null}
       <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
   )
@@ -276,8 +283,8 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
       ) : (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-divider px-3 py-2">
           <span className={cn('flex-1 text-body', stale ? 'text-warning-text' : 'text-fg-secondary')}>
-            {stale ? L('The audience or channels changed. Check again to see who can get each channel.', '收件人或通道改了，請重新檢查各通道誰收得到。')
-              : L('See how many people each channel can reach, and who can’t get it.', '查看每個通道可以送達多少人，以及誰收不到。')}
+            {stale ? L('Audience or channels updated. Check again to refresh coverage.', '收件人或通道已更新，請重新檢查以更新涵蓋範圍。')
+              : L('Check reachable and undeliverable messages for each channel.', '查看每個通道可送達與無法送達的訊息。')}
           </span>
           <Button variant="secondary" size="sm" startIcon={Calculator} loading={busy} disabled={busy} onClick={check}>{stale ? L('Check again', '重新檢查') : L('Check coverage', '檢查涵蓋')}</Button>
         </div>
