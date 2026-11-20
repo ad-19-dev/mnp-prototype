@@ -9,7 +9,7 @@
 //   C: A, plus Enter on a fixed tag moves straight to the next red one (for long lists).
 //   D (2026-11-20): the order you typed is kept, no sorting; the hint says how many aren't found, with Show only these
 //        (only the red tags; the ones fixed there stay until Show all). 2026-11-20: "n valid · m invalid (click a tag to
-//        edit it) · Show only these"; m in red, nothing else colored; Remove all dropped (too much in one line).
+//        edit it) · Show only these"; "m invalid" in red, nothing else colored; Remove all dropped (too much in one line).
 // Phone numbers get a region (TW / US / JP / CN) next to the data type; numbers starting with + keep their own code.
 import * as React from 'react'
 import { Button, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
@@ -330,9 +330,9 @@ function Demo({ mode, show }: { mode: Mode; show: Show }) {
           : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
           : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
           : mode === 'D' ? <DHint parts={[
-              only ? <>{bad.length ? <span><span className="text-error-text">{bad.length}</span> invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
+              only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
                 : <>{n} valid</>,
-              !only && bad.length ? <span><span><span className="text-error-text">{bad.length}</span> invalid</span>&nbsp;(click a tag to edit it)</span> : null,
+              !only && bad.length ? <span><span className="text-error-text">{bad.length} invalid</span>&nbsp;(click a tag to edit it)</span> : null,
               bad.length && !only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={showOnly}>Show only these</Button> : null,
               only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
             ]} />
@@ -442,7 +442,7 @@ export default function ImportTags() {
           ]} />
           <Notes items={[
             { title: '試試', body: '在 D 按 Paste a sample list → Show only these → 把 a19999 改成 ytchang（留在畫面上變灰）→ Show all，看它回到原本的位置。' },
-            { title: '說明文字', body: '2026-11-20 簡化：n valid · m invalid (click a tag to edit it) · Show only these。只有 m 這個數字是紅色（要處理的只有它；n 是正常狀態，不上色），其他字維持說明文字的灰色；m 是 0 時只寫 n valid。用 invalid 不用 not found：紅色不一定是查無此人，也可能是格式不對或少打一個字。' },
+            { title: '說明文字', body: '2026-11-20 簡化：n valid · m invalid (click a tag to edit it) · Show only these。只有「m invalid」是紅色（要處理的只有它；n 是正常狀態，不上色），其他字維持說明文字的灰色；m 是 0 時只寫 n valid。用 invalid 不用 not found：紅色不一定是查無此人，也可能是格式不對或少打一個字。' },
             { title: '和之前拿掉的總結的差別', body: '2026-11-18 拿掉過總結標籤與「n to fix」。D 只有一行說明文字和一個連結，沒有標籤。' },
             { title: '為什麼沒有 Remove all', body: '一行裡兩個連結太複雜；在 Show only these 裡，紅色都在一起，逐一按 × 也很快。' },
           ]} cols />
