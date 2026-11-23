@@ -38,7 +38,7 @@ const H3 = ({ children }: { children: React.ReactNode }) => <h3 className="text-
 const Group = ({ children }: { children: React.ReactNode }) => <section className="flex flex-col gap-2 pt-[var(--layout-space-tight)]">{children}</section>
 
 // ---------- batch import ----------
-// the shared B+ dialog (components/BatchImport), adding to the send flow's audience; outside contacts only with
+// the shared Batch import dialog (components/BatchImport, the tag study's option E since 2026-11-23), adding to the send flow's audience; outside contacts only with
 // their channel (Email; SMS fallback)
 export function ImportDialog({ m }: { m: SendCtl }) {
   const c = m.s.c, close = () => m.set({ imp: null })

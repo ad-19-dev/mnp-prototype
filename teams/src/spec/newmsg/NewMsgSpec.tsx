@@ -135,9 +135,9 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
               ['已在名單上', R('選項顯示 Added', '不能再選')]),
           ]} />
           <Sub id="1-4" title="批次匯入（完整流程見 Batch import 分頁）" start="Batch import 按鈕" items={[
-            D('選資料類型', 'dlg-import'), E('貼上或輸入名單'), D('每一筆變成標籤，立即比對', 'dlg-import-list'),
-            F(['要改某一筆（灰色或紅色）', E('點標籤'), D('就地修改', 'dlg-import-result'), R('Enter 重新比對', '找到是灰色，找不到是紅色')], ['不要某一筆', E('標籤上的 ✕'), R('移除這一筆')]),
-            E('Proceed'), T('Added n audiences（有紅色標籤時加上 · n not added）', '只加入灰色標籤，回到步驟 1'),
+            D('選資料類型', 'dlg-import'), E('貼上名單'), D('查完後，無效的集中到最後', 'dlg-import-list'),
+            F(['要改某一筆', E('點標籤'), D('就地變回文字修改', 'dlg-import-result')], ['不要某一筆', E('標籤上的 ✕，或 Remove invalid'), R('移除')]),
+            E('Save（沒有紅色標籤時）'), T('Added n audiences', '回到步驟 1'),
           ]} />
           <Sub id="1-5" title="移除收件人" start="收件人表格" items={[
             E('列尾 ×'), R('直接移除這一列', '沒有篩選，也沒有全部移除'),
@@ -366,57 +366,60 @@ function Step1() {
 function ImportTab() {
   return (
     <>
-      <Section eyebrow="Flow" title="Batch import 的流程" lead="手上有一份名單時用（例如活動報名名單，一次可能上千筆）。一層對話框：選資料類型 → 貼上或輸入，每一筆立刻變成標籤並比對 → 修正或移除 → Proceed 只加入找到的。">
+      <Section eyebrow="Flow" title="Batch import 的流程" lead="手上有一份名單時用（例如活動報名名單，一次可能上千筆）。一層對話框：選資料類型 → 貼上名單（一進來就辨識，查完無效的集中到最後）或逐筆輸入（留在原位）→ 修正或移除無效的 → Save。2026-11-23 起是批次匯入標籤研究的 E 版，設計與原因見「批次匯入標籤設計說明」。">
         <div className="sf-list">
           <Sub id="I-1" title="輸入名單" start="步驟 1 收件人搜尋框右側的 Batch import" items={[
-            D('開啟', 'dlg-import', '名單欄位停用，提示先選資料類型'), E('選 Data type'),
-            F(['逐筆輸入', E('Enter 或逗號'), R('變成一個標籤')],
-              ['貼上整份名單（Excel 一欄、文字檔、信件）', E('貼上'), R('依換行、逗號切成一筆一筆的標籤')]),
+            D('開啟', 'dlg-import', '名單欄位停用，提示先選資料類型'), E('選 Data type（Phone numbers 時多一個 Region）'),
+            F(['貼上整份名單（Excel 一欄、文字檔、信件）', E('貼上'), D('格式錯的馬上變紅；其他的保持原值、變淡，下面跑 Checking x of y…', 'dlg-import-checking'), R('全部查完才一起換成結果；紅的（含之前的）集中到最後')],
+              ['逐筆輸入', E('逗號、換行、Enter 或離開輸入處'), R('留在原位', '選了選單裡的人：馬上是結果；沒選：灰色（原值），按 Save 才驗證；格式錯，或 NT 帳號、工號、Org ID 在選單裡沒有完全相同的：紅色')]),
           ]} />
-          <Sub id="I-2" title="比對結果" start="每一筆變成標籤時" items={[
-            D('立即比對', 'dlg-import-list', '說明文字顯示有效數量'),
-            F(['找到', R('灰色標籤', '人員：大頭照加英文名、中文名；組織：代號；外部聯絡人：Email 或號碼')],
-              ['找不到、格式不對、通道沒選', X('紅色標籤，排在最前面', undefined, '滑過看原因')],
+          <Sub id="I-2" title="比對結果" start="查完時" items={[
+            D('依資料類型顯示', 'dlg-import-list', 'NT 帳號、工號顯示人；電話、MVPN、Email 顯示輸入的值；Org ID 顯示代號（滑過看名稱和人數）'),
+            F(['找到', R('一般標籤')],
+              ['找不到、格式不對、通道沒選', X('紅色標籤', undefined, '滑過看原因；有紅色時 Save 停用')],
               ['名單裡重複、已經在收件人裡', R('不顯示', '不算錯誤，也不加入')]),
           ]} />
-          <Sub id="I-3" title="修正" start="任何一個標籤（灰色或紅色）" items={[
-            F(['要改', E('點標籤（或聚焦後 Enter）'), D('變成輸入框，內容是原本輸入的值', 'dlg-import-result'),
-              F(['Enter 或點別處', R('重新比對', '找到變灰色，否則仍是紅色')], ['Esc', R('取消修改', '對話框不會關閉')])],
-              ['不要', E('標籤上的 ✕'), R('移除這一筆')],
-              ['輸入處空著時按 Backspace', R('移除最後一個標籤')]),
+          <Sub id="I-3" title="修正" start="任何一個標籤" items={[
+            F(['要改', E('點標籤（或選取後 Enter）'), D('變回原本輸入的文字，游標在字裡，位置不變；下方出現比對到的人', 'dlg-import-result'),
+              F(['選單裡選一個', R('馬上是結果')], ['Enter 或點別處', R('灰色（按 Save 再驗證）', '格式錯或選單裡沒有：紅色')], ['Esc', R('取消修改', '對話框不會關閉')])],
+              ['不要', E('標籤上的 ✕'), R('移除這一筆', '重複的也一起移除')],
+              ['全部無效的都不要', E('說明文字後面的 Remove invalid'), R('一次移除')]),
           ]} />
-          <Sub id="I-4" title="加入" start="對話框底部" items={[
-            F(['Proceed（有灰色標籤、沒有正在修改時）', T('Added n audiences', '有紅色標籤時加上 · n not added'), R('回到步驟 1，收件人表格多出這些人')],
+          <Sub id="I-4" title="儲存" start="對話框底部" items={[
+            F(['Save（沒有紅色標籤時）', R('灰色的先驗證', '原位變淡、Save 轉圈'), F(['全部有效', T('Added n audiences'), R('回到步驟 1，收件人表格多出這些人')], ['驗出無效的', R('移到最後，Save 停用')])],
               ['Cancel、Esc、右上角關閉', R('關閉，什麼都不加入')]),
           ]} />
         </div>
       </Section>
-      <Section eyebrow="Long list" title="名單很長時" lead="對話框寬 1120、高度填滿視窗，名單欄位佔滿剩下的高度，超過時框內捲動。紅色標籤固定排在最前面，就算是最後才輸入的，打開就看得到要處理的幾筆；修好後移到灰色那一區。原型試過 1,200 筆，約 1.6 秒顯示完。">
-        <Gallery items={[['dlg-import-many', '找不到的排在最前面', 'a19999、gywuu、cm.chen 是最後才輸入的；重複的與已經在收件人裡的不顯示']]} />
+      <Section eyebrow="Long list" title="名單很長時" lead="對話框寬 1120、高度填滿視窗，名單欄位佔滿剩下的高度，超過時框內捲動。貼上的名單查完時，無效的集中到最後、緊接輸入處，名單捲到那裡；打字、修改時標籤都不移動。">
+        <Gallery items={[['dlg-import-many', '查完後無效的集中到最後', 'a19999、gywuu、cm.chen；重複的與已經在收件人裡的不顯示']]} />
       </Section>
       <Section eyebrow="Entry points" title="其他入口" lead="同一個對話框，只有下面幾點不同。">
         <SpecTable head={['入口', '差別']} nowrap={[0]} rows={[
-          ['New message 步驟 1', '外部 Email 要勾 Email 通道、外部電話要選 SMS 備援，否則是紅色標籤（原因寫哪個通道沒選）。'],
+          ['New message 步驟 1', '外部 Email 要勾 Email 通道、外部電話（含多人共用的號碼）要選 SMS 備援，否則是紅色標籤（原因寫哪個通道沒選）。'],
           ['訊息詳情的 Audience（可以編輯的紀錄）', '只加到這一個通道：外部電話只能加在 Mobile notifications (SMS)，外部 Email 只能加在 Email；其他的會被略過並提示。'],
-          ['Audience group 的 Audience', <>文案用 members：<Copy en="{n} valid members. Click a tag to edit it." zh="{n} 位成員有效。點標籤可以修改。" />、toast <Copy en="Added n members" zh="已加入 n 位成員" />。不檢查通道，外部 Email、電話都可以加。</>],
+          ['Audience group 的 Audience', <>toast <Copy en="Added n members" zh="已加入 n 位成員" />。不檢查通道，外部 Email、電話都可以加。</>],
         ]} />
-        <Gallery items={[['dlg-import-group', 'Audience group 的 Batch import', '同一個對話框，說明文字寫 members']]} />
+        <Gallery items={[['dlg-import-group', 'Audience group 的 Batch import', '同一個對話框']]} />
       </Section>
-      <Section eyebrow="Spec" title="規格" lead="2026-11-18 起改為批次匯入提案的 A 版（標籤，像郵件的收件人欄）：每一筆一輸入就變成標籤並立即比對；找到的是灰色標籤，找不到的是紅色標籤，點任何標籤（灰色也可以，2026-11-18）都能就地修改。只有一層對話框。">
+      <Section eyebrow="Spec" title="規格" lead="2026-11-23 起是批次匯入標籤研究的 E 版（之前是 11-18 的提案 A）。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-          ['尺寸', '寬 1120，DS Dialog height="fill"（高度填滿視窗，加入標籤時外框不會跳動）。2026-11-18 從 720 加大：使用者會貼上活動報名名單，一次可能上千筆。原型試過 1,200 筆，約 1.6 秒顯示完。'],
-          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織是一列（藍色 n audiences 開成員名單），不展開成個人，也沒有各通道的欄位。搜尋列沒有 Group 類型：群組裡不能再放群組（2026-11-19，層層套疊太複雜）。'],
-          ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org IDs（2026-11-19 從 Org codes 改名）。沒選之前名單欄位停用（DS disabled 底色）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
-          ['List', <>DS 欄位外框（border、hover、focus 藍框），佔滿對話框剩下的高度（至少 200），超過時框內捲動，裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
-          ['找到的', <>DS Tag（neutral）：人員是 16px 大頭照加「英文名 中文名」，不截斷；組織是大樓圖示加組織代號；外部聯絡人是信封或電話圖示加 Email／號碼。每個標籤都有 ✕。</>],
-          ['順序', '紅色標籤固定排在最前面，灰色在後（2026-11-18）：上千筆時要處理的幾筆一打開就看得到；修好的紅色標籤會移到灰色那一區。'],
-          ['找不到的', <>DS Tag（red），顯示原本輸入的值；滑過顯示原因（Tooltip，在標籤下方）。</>],
-          ['說明文字', <>還沒有標籤時：<Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />；有標籤之後：<Copy en="{n} valid audiences. Click a tag to edit it." zh="{n} 位收件人有效。點標籤可以修改。" />（n 是灰色標籤的數量，跟著修改即時更新；1 時用單數 audience；群組裡是 members）。只用說明文字，不用總結標籤（2026-11-18）。</>],
-          ['修改', '點任何標籤（或聚焦後按 Enter），標籤換成 DS Input（sm），裡面是原本輸入的值（例如 NT 帳號，不是姓名）；Enter 或離開欄位後重新比對，Esc 取消。按標籤上的 ✕ 只會移除，不會進入修改。'],
-          ['不顯示的', '名單裡重複的、已經在收件人表格裡的，直接不顯示（重複的人很多時畫面會很亂）。也不顯示找到幾筆、找不到幾筆的總結。'],
-          ['按鈕', <>Cancel（tertiary）、<Copy en="Proceed" zh="繼續" />（primary；沒有灰色標籤、或正在修改標籤時停用）。按下後只加入灰色標籤並關閉，toast <Copy en="Added n audiences" zh="已加入 n 位收件人" />，有紅色標籤時後面加 <Copy en="· n not added" zh="・n 筆未加入" />。</>],
-          ['外部聯絡人', '沒勾 Email 通道時，外部 Email 是紅色標籤，原因 Email isn’t a selected channel；沒選 SMS 備援時，外部號碼是紅色標籤，原因 SMS fallback isn’t a selected channel。'],
-          ['和 DS 的出入', 'DS Tag 還沒有可編輯的樣子（DS 負責人尚未設計）：原型先用「點標籤換成 DS Input」代替。紅色標籤用 Tag 的 red 色（分類色，不是語意上的 error）。DS 沒有「標籤輸入欄位」元件，外框沿用 DS 欄位的 token。DS 的 PersonAvatarTag 只顯示大頭照，所以人員用 Tag 加 avatar。'],
+          ['尺寸', '寬 1120，DS Dialog height="fill"（高度填滿視窗，加入標籤時外框不會跳動）。'],
+          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁也用步驟 1 的收件人表格：組織是一列（藍色 n audiences 開成員名單），不展開成個人。搜尋列沒有 Group 類型：群組裡不能再放群組（2026-11-19）。'],
+          ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org IDs。沒選之前名單欄位停用。名單裡有東西時換類型，先確認（Change the data type? / Clear and change）：換類型一定要清空。不提供 Names：同名同姓很多。'],
+          ['Region', '只有 Phone numbers：+886 (TW)、+1 (US)、+81 (JP)、+86 (CN)，預設 TW；以 + 開頭的號碼照它自己的國碼。'],
+          ['List', 'DS 欄位外框，佔滿對話框剩下的高度（至少 200），超過時框內捲動；有紅色標籤時紅框。裡面是標籤和輸入處；逗號、換行、Enter 或貼上就切成一筆一筆的標籤。'],
+          ['貼上（兩筆以上）', '格式在瀏覽器裡馬上查，錯的馬上變紅；其他的保持輸入的值、變淡、不能點，說明文字 Checking x of y…（DS CircularProgress）；全部查完才一起換成結果，紅的（含之前的）集中到最後。'],
+          ['逐筆輸入', '不移動。從選單選的人：馬上是結果。沒選：灰色（輸入的值），按 Save 才驗證。格式錯，或 NT 帳號、工號、Org ID 在選單裡沒有完全相同的：馬上紅色（選單沒有回應時保持灰色）。'],
+          ['選單', '打字或修改標籤時，比對到的人（或組織、號碼）列在下方，最多 8 筆；↑↓ 選、Enter 或點一下加入。已經在名單或收件人裡的不再出現。'],
+          ['標籤顯示', 'NT accounts、Employee IDs：人（16px 大頭照加姓名），滑過看輸入的值和組織。Phone numbers、MVPN、Emails：輸入的值（員工的號碼加入那個人），不滑過。Org IDs：代號，滑過看名稱和人數。紅色標籤顯示輸入的值，滑過看原因。'],
+          ['說明文字', <>還沒有標籤時：<Copy en="Separate with commas or new lines." zh="用逗號或換行分隔。" />；之後：<Copy en="{n} valid, {k} not checked yet" zh="{n} 筆有效，{k} 筆尚未檢查" />；有紅色時：<Copy en="{n} valid, {m} invalid. Fix or remove invalid to save." zh="{n} 筆有效，{m} 筆無效。請修改或移除無效的才能儲存。" />（m invalid 和後一句紅字）後面接藍色連結 <Copy en="Remove invalid" zh="移除無效的" />。</>],
+          ['修改', '點標籤（或選取後 Enter、F2），標籤變回原本輸入的文字，游標在字裡，位置不變；Enter 或點別處儲存，Esc 取消，清空就是刪除。'],
+          ['游標與鍵盤', '整個欄位只佔一個 Tab 位置。游標可以停在標籤之間（點空隙或一行的頭尾、← / →、Home / End），打的、選的、貼上的都加在那裡；在標籤之間時游標不佔寬度。Shift + ← / → 選取標籤；游標在標籤之間按 Backspace / Delete 直接刪旁邊的標籤，在最後按 Backspace 先選取最後一個、再按一次才刪。'],
+          ['不顯示的', '名單裡重複的、已經在收件人表格裡的，直接不顯示；刪掉一個標籤時，它重複的也一起刪掉。'],
+          ['按鈕', <>Cancel（tertiary）、<Copy en="Save" zh="儲存" />（primary）。有紅色標籤時停用（滑過 Fix or remove the invalid entries first）；按下後灰色的先驗證（Save 轉圈），全部有效就加入並關閉，toast <Copy en="Added n audiences" zh="已加入 n 位收件人" />。2026-11-23 從 Proceed 改名。</>],
+          ['外部聯絡人', '沒勾 Email 通道時，外部 Email 是紅色標籤，原因 Email isn’t a selected channel；沒選 SMS 備援時，外部號碼與多人共用的號碼是紅色標籤，原因 SMS fallback isn’t a selected channel。'],
+          ['和 DS 的出入', 'DS Tag 還沒有可編輯的樣子：修改時標籤換成同大小的純文字輸入處。紅色標籤用 Tag 的 red 色。DS 沒有「標籤輸入欄位」元件，外框沿用 DS 欄位的 token；標籤之間的游標是自己畫的（輸入處在那裡不佔寬度）。'],
         ]} />
       </Section>
     </>
@@ -515,7 +518,7 @@ function Dialogs() {
     <>
       <Section eyebrow="Overview" title="對話框一覽" lead="都使用設計系統 Dialog：標題、內容、右下角按鈕（Cancel 在左、主要動作在右），按鈕不放圖示，不放副標。">
         <SpecTable head={['對話框', '開啟方式', '寬度', '主要動作']} nowrap={[0]} rows={[
-          ['Batch import', '步驟 1 Batch import', '1120，高度填滿視窗', 'Proceed'],
+          ['Batch import', '步驟 1 Batch import', '1120，高度填滿視窗', 'Save'],
           ['{Channel}: N messages can’t be sent', '步驟 1 Message Coverage by Channel 各通道列右側的連結', '720', '無（Close）'],
           ['Save as group', '步驟 1 頁尾', '560', 'Save'],
           ['Save as template', '步驟 2 頁尾', '560', 'Save'],
@@ -524,7 +527,7 @@ function Dialogs() {
         ]} />
       </Section>
       <Section eyebrow="Import" title="Batch import" lead="流程與完整規格在「Batch import」分頁（2026-11-19 從這裡移過去）。" >
-        <Gallery items={[['dlg-import-list', 'Batch import', '寬 1120、高度填滿視窗；Cancel、Proceed']]} />
+        <Gallery items={[['dlg-import-list', 'Batch import', '寬 1120、高度填滿視窗；Cancel、Save']]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
         <Gallery items={[['dlg-unreach', '{Channel}: N messages can’t be sent', '唯讀名單：Audience、Source（從組織或群組加入的是名稱加 Org / Group 標籤；直接加入的只有 Person、Phone 或 Email 標籤；同一人有多個來源時每個一行）、Reason（Mobile notifications 為 App unregistered、Desktop notifications 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
@@ -540,7 +543,7 @@ function Dialogs() {
         <SpecTable head={['對話框', '情況', '紅字內容', '什麼時候出現', '擋什麼']} nowrap={[0]} rows={[
           ['Save as group、Save as template', '名稱沒填', <Copy en="Enter a name." zh="請輸入名稱。" />, '按 Save 後', '擋 Save'],
           ['Save as group、Save as template', '名稱超過 50 字、與這個空間已有的重名', <><Copy en="Up to 50 characters." zh="最多 50 字。" />　<Copy en="This name is taken." zh="這個名稱已經有人用了。" /></>, '即時', '擋 Save'],
-          ['Batch import', '有找不到或不符合的項目', '紅色標籤；滑過顯示原因', '輸入後立即', '不擋；按 Proceed 只加入灰色標籤'],
+          ['Batch import', '有找不到或不符合的項目', '紅色標籤，欄位紅框；滑過顯示原因', '格式：輸入後立即；查詢：貼上查完、或按 Save 時', '擋：Save 停用，改好或 Remove invalid 才能存'],
         ]} />
       </Section>
     </>
@@ -563,7 +566,7 @@ function After() {
       ]} />
       <Section eyebrow="Toast" title="整個流程的 Toast">
         <SpecTable head={['時機', 'Toast']} nowrap={[0]} rows={[
-          ['Batch import 加入收件人', <><Copy en="Added n audiences" zh="已加入 n 位收件人" />；按 Proceed 略過無效的時，後面加 <Copy en="· n not added" zh="・n 筆未加入" /></>],
+          ['Batch import 加入收件人', <Copy en="Added n audiences" zh="已加入 n 位收件人" />],
           ['套用模板', <Copy en="Template applied" zh="已套用模板" />],
           ['選回 New 取消模板', <Copy en="Template removed. Your text stays." zh="已取消模板，內容保留。" />],
           ['存成模板', <Copy en="Template saved" zh="已存成模板" />],

@@ -61,177 +61,45 @@ await step('dlg-import', async () => {
   await p.getByRole('button', { name: 'Batch import' }).click(); await wait(600);
   await shot('dlg-import', dlg(), [], 12);
   await dlg().getByRole('combobox').first().click(); await wait(300);
-  await p.getByRole('option').first().click(); await wait(300);
-  // proposal A (2026-11-18): each entry is a tag, looked up at once; red ones are edited in place; Proceed adds the found
-  // a one-line field: a paste keeps its line breaks, a fill doesn't, so the sample uses commas
-  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, celee, sywangd, psyang, a19999, gywuu, cmchen'); await wait(500);
+  await p.getByRole('option', { name: 'NT accounts' }).click(); await wait(300);
+  // option E (2026-11-23): a pasted list is looked up at once (faded, Checking x of y…), then all results show together
+  // and the invalid ones gather at the end; Save is off while any is red
+  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, celee, sywangd, psyang, a19999, chhsu, shcheng, gywuu, ythsieh, hykuo, prhung, cm.chen, cmchen,'); await wait(250);
+  await p.mouse.move(0, 0); await shot('dlg-import-checking', dlg(), [[1, dlg().getByText(/^Checking /), 'tl']], 12);
+  await wait(1600);
   const red = () => dlg().getByRole('button', { name: /^Edit a19999/ });
   await red().hover(); await wait(700);
   await shot('dlg-import-list', dlg(), [
-    [1, dlg().getByRole('button', { name: /^(Remove|移除) / }).first(), 'tl'],
+    [1, dlg().getByRole('button', { name: /^(Remove|移除) Grace/ }).first(), 'tl'],
     [2, red(), 'tl'],
-    [3, dlg().getByText(/Click a tag to edit it\.$/), 'tl'],
-    [4, dlg().getByRole('button', { name: /^Proceed/ }), 'tl'],
+    [3, dlg().getByText(/invalid to save\./), 'tl'],
+    [4, dlg().getByRole('button', { name: 'Remove invalid' }), 'tl'],
+    [5, dlg().getByRole('button', { name: /^Save/ }), 'tl'],
   ], 12);
-  await red().click(); await wait(400);
-  await shot('dlg-import-result', dlg(), [
-    [1, dlg().getByRole('textbox', { name: /^Edit a19999/ }), 'tl'],
+  await red().click(); await wait(300);
+  await dlg().locator('[data-editing]').fill('thl'); await wait(400);
+  // the dropdown is a popover (role dialog too): name the Batch import dialog
+  const bi = p.getByRole('dialog', { name: 'Batch import' });
+  await shot('dlg-import-result', bi, [
+    [1, bi.locator('[data-editing]'), 'tl'],
+    [2, p.getByRole('listbox', { name: 'Matches' }), 'tl'],
   ], 12);
   await p.keyboard.press('Escape'); await wait(200);
-  await dlg().getByRole('button', { name: /^Proceed/ }).click(); await wait(700);
-  await p.keyboard.press('Escape'); await wait(300);
+  await dlg().getByRole('button', { name: 'Remove invalid' }).click(); await wait(200);
+  await dlg().getByRole('button', { name: /^Save/ }).click(); await wait(900);
 });
-// a long list (2026-11-19): the ones not found come first, even when typed last
+// a long list: the invalid ones gather at the end once it's checked
 await step('dlg-import-many', async () => {
   await p.getByRole('button', { name: 'Batch import' }).click(); await wait(600);
   await dlg().getByRole('combobox').first().click(); await wait(300);
-  await p.getByRole('option').first().click(); await wait(300);
-  const nts = 'gywu,cmchen,kylin,chlinb,ycchenz,ycchenq,ycchenm,bhhuang,ytchang,celee,sywangd,thtsai,psyang,chhsu,shcheng,ythsieh,hykuo,prhung,yttseng,chchiu,ycliao,shlai,cnchou,thliu';
-  await dlg().locator('#imp-text').fill(nts + ',' + nts + ',a19999,gywuu,cm.chen,'); await wait(700);
+  await p.getByRole('option', { name: 'NT accounts' }).click(); await wait(300);
+  const nts = 'gywu,cmchen,kylin,chlinb,ycchenz,a19999,ycchenq,ycchenm,bhhuang,ytchang,celee,sywangd,thtsai,gywuu,psyang,chhsu,shcheng,ythsieh,hykuo,prhung,cm.chen,yttseng,chchiu,ycliao,shlai,cnchou,thliu';
+  await dlg().locator('#imp-text').fill(nts + ',' + nts + ','); await wait(3200); await p.mouse.move(0, 0);
   await shot('dlg-import-many', dlg(), [
     [1, dlg().getByRole('button', { name: /^Edit a19999/ }), 'tl'],
-    [2, dlg().getByText(/valid audiences\. Click a tag/), 'tl'],
+    [2, dlg().getByText(/invalid to save\./), 'tl'],
   ], 12);
   await p.keyboard.press('Escape'); await wait(400);
-});
-// only Desktop notifications: someone without the desktop agent can't get it
-await step('dlg-unreach', async () => {
-  await p.getByRole('checkbox', { name: 'Desktop notifications', exact: true }).click(); await wait(400);
-  await covSec().evaluate(el => el.scrollIntoView({ block: 'center' }));
-  await shot('s1-cov', covSec(), [[1, p.getByRole('button', { name: 'Check coverage' }), 'tl']], 12);
-  await checkCov();
-  await page('s1-unreach');
-  await p.getByRole('button', { name: /can’t be sent/ }).first().click(); await wait(600);
-  await shot('dlg-unreach', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
-  await p.getByRole('checkbox', { name: 'Desktop notifications', exact: true }).click(); await wait(300);
-});
-await step('s1-filled', async () => {
-  await p.getByRole('checkbox', { name: 'Mobile notifications', exact: true }).click(); await wait(200);
-  await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(300);
-  // the channels changed since the last check: the numbers are gone until it's checked again
-  await covSec().evaluate(el => el.scrollIntoView({ block: 'center' }));
-  await shot('s1-cov-stale', covSec(), [[1, p.getByRole('button', { name: 'Check again' }), 'tl']], 12);
-  await checkCov(); await big(1500); await page('s1-filled');
-});
-await step('s1-sms', async () => {
-  await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(400);
-  await page('s1-sms');
-});
-await step('s1-urgent', async () => {
-  await p.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(400);
-  await page('s1-urgent');
-  // untick it again: the rest of the flow needs SMS approval, so step 3 shows Send now's note (2026-11-19)
-  await p.getByRole('checkbox', { name: /It’s urgent/ }).click(); await wait(300);
-});
-await step('dlg-save-group', async () => {
-  await foot('Save as group').click(); await wait(500);
-  await shot('dlg-save-group', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
-});
-
-// ---- step 2
-await step('s2-empty', async () => { await foot('Next').click(); await wait(800); await big(1500); await page('s2-empty') });
-await step('s2-error', async () => { await foot('Next').click(); await wait(500); await page('s2-error') });
-await step('s2-filled', async () => {
-  await p.locator('#f-sender').fill('IT Service Desk');
-  await p.locator('#f-title').fill('Network maintenance tonight');
-  await p.locator('#f-content').fill('The office network is down tonight 22:00–23:00. Save your work before 22:00. Wi-Fi and VPN will be down.');
-  await p.locator('#f-sms').fill('Network maintenance tonight 22:00–23:00. Save your work before 22:00.');
-  await p.locator('#f-subject').fill('Network maintenance tonight 22:00–23:00');
-  await p.locator('#f-body [contenteditable="true"], #f-body').first().click(); await p.keyboard.type('Hi all, the office network will be down tonight from 22:00 to 23:00. Please save your work before 22:00.');
-  await wait(400); await page('s2-filled');
-});
-// picking a template when something is written already: it asks before replacing
-await step('dlg-replace', async () => {
-  await p.getByRole('radio', { name: 'Use template' }).click(); await wait(300);
-  await p.locator('#f-tpl').click(); await wait(400);
-  await p.getByRole('option').first().click(); await wait(500);
-  await shot('dlg-replace', dlg(), [], 12);
-  await dlg().getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(300);
-  await p.getByRole('radio', { name: 'New' }).click(); await wait(300);
-});
-await step('dlg-save-tpl', async () => {
-  await foot('Save as template').click(); await wait(500);
-  await shot('dlg-save-tpl', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
-});
-
-// ---- step 3
-await step('s3-now', async () => { await foot('Next').click(); await wait(800); await big(1400); await page('s3-now') });
-await step('s3-schedule', async () => {
-  await p.getByText('Scheduled send', { exact: true }).click(); await wait(400); await page('s3-schedule');
-  const f = p.locator('#f-sched'); await f.fill('2026/11/01 09:00'); await p.keyboard.press('Tab'); await wait(400); await page('s3-error');
-  await p.getByText('Send now', { exact: true }).click(); await wait(300);
-});
-await step('s3-preview', async () => {
-  const seg = p.getByRole('radio', { name: 'Email', exact: true }).or(p.getByRole('button', { name: 'Email', exact: true })); await seg.last().click().catch(() => {}); await wait(400);
-  await page('s3-preview-email');
-});
-await step('dlg-leave', async () => {
-  await foot('Cancel').click(); await wait(500); await shot('dlg-leave', dlg(), [], 12);
-  await dlg().getByRole('button', { name: 'Cancel', exact: true }).click(); await wait(300);
-});
-await step('submit', async () => {
-  await foot('Create message').click(); await wait(700);
-  // urgent sends are created straight away (2026-11-18: no Send without SMS approval? confirm)
-  await big(940); await p.screenshot({ path: `${OUT}/after-submit.jpg`, type: 'jpeg', quality: 80 }); marks['after-submit'] = { w: 1680, h: 940, marks: [] };
-});
-
-// one of each audience type on a fresh page, so the table shows every presentation
-await step('s1-types', async () => {
-  await p.goto('http://localhost:4190/index.html'); await wait(1500);
-  await p.getByRole('button', { name: 'New message' }).first().click(); await wait(900);
-  await big(1100);
-  const add = async (label, q) => {
-    if (label) {
-      await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
-      await p.getByRole('option', { name: label, exact: true }).click(); await wait(300);
-    }
-    const box = p.locator('[data-compose]').getByRole('textbox').first();
-    await box.fill(q); await wait(500); await box.press('Enter'); await wait(400);
-    await p.keyboard.press('Escape'); await wait(200);
-  };
-  // Email not ticked yet: an outside address can't be added (company addresses still add the employee)
-  await step('s1-email-off', async () => {
-    await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
-    await p.getByRole('option', { name: 'Email', exact: true }).click(); await wait(300);
-    const box = p.locator('[data-compose]').getByRole('textbox').first();
-    await box.fill('amy@vendor-example.com'); await wait(500);
-    const sec = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
-    await shot('s1-email-off', [p.getByRole('combobox', { name: 'Audience type' }), box, p.locator('[data-radix-popper-content-wrapper]').last()], [], 16);
-    await box.fill(''); await p.keyboard.press('Escape'); await wait(200);
-    await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
-    await p.getByRole('option', { name: 'Person', exact: true }).click(); await wait(300); await p.keyboard.press('Escape');
-  });
-  // channels come first, as a sender would do it
-  await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
-  await p.getByRole('checkbox', { name: 'Mobile notifications', exact: true }).click(); await wait(200);
-  // an outside number can only be added with SMS fallback on (2026-11-16): turn it on for that one, then back off
-  await add(null, 'Chen'); await add('Org', 'PENG'); await add('Group', '');
-  await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(300);
-  // the phone field: region first, then the number (2026-11-19)
-  await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
-  await p.getByRole('option', { name: 'Phone', exact: true }).click(); await wait(300); await p.keyboard.press('Escape'); await wait(200);
-  await p.getByRole('combobox', { name: 'Region' }).click(); await wait(400);
-  await shot('s1-phone-region', [p.getByRole('combobox', { name: 'Audience type' }), p.locator('[data-compose]').getByRole('textbox').first(), p.getByRole('listbox').last()], [], 16);
-  await p.keyboard.press('Escape'); await wait(300);
-  await add('Phone', '0987654321');
-  await p.getByRole('radio', { name: /PNS only/ }).click(); await wait(300);
-  await add('Email', 'amy@vendor-example.com');
-  // back to the default type (Person), as a sender sees it: Email/Phone show an Add button, disabled while empty
-  await p.getByRole('combobox', { name: 'Audience type' }).click(); await wait(300);
-  await p.getByRole('option', { name: 'Person', exact: true }).click(); await wait(300); await p.keyboard.press('Escape'); await wait(200);
-  await p.evaluate(() => document.activeElement && document.activeElement.blur()); await wait(200);
-  await p.getByRole('heading', { name: 'Audience', exact: true }).scrollIntoViewIfNeeded();
-  const sec = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
-  await shot('s1-types', (await sec.count()) ? sec : null, [], 12);
-  // SMS fallback on: the audience list gets the phone columns
-  await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(400);
-  await p.getByRole('checkbox', { name: 'Personal phone' }).nth(1).click(); await wait(300);
-  await big(2200);
-  const aud = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
-  await shot('s1-phones', (await aud.count()) ? aud : null, [], 12);
-  await checkCov();
-  const reachSec = p.getByRole('heading', { name: 'Message Coverage by Channel' }).locator('xpath=ancestor::section[1]');
-  await shot('s1-ext', (await reachSec.count()) ? reachSec : null, [], 12);
 });
 
 // the Audience group editor opens the same dialog; it adds members
@@ -243,8 +111,10 @@ await step('dlg-import-group', async () => {
   await p.getByRole('button', { name: 'Batch import' }).click(); await wait(600);
   await dlg().getByRole('combobox').first().click(); await wait(300);
   await p.getByRole('option').first().click(); await wait(300);
-  await dlg().locator('#imp-text').fill('gywu, cmchen, ytchang, a19999,'); await wait(600);
-  await shot('dlg-import-group', dlg(), [[1, dlg().getByText(/valid members\. Click a tag/), 'tl']], 12);
+  await dlg().getByRole('combobox').first().click(); await wait(300);
+  await p.getByRole('option', { name: 'Emails' }).click(); await wait(300);
+  await dlg().locator('#imp-text').fill('ytchang@tsmc.com, celee@tsmc.com, partner@example.com, a19999@tsmc.com,'); await wait(900); await p.mouse.move(0, 0);
+  await shot('dlg-import-group', dlg(), [[1, dlg().getByText('partner@example.com'), 'tl']], 12);
   await p.keyboard.press('Escape'); await wait(300);
 });
 writeFileSync(`${OUT}/marks.json`, JSON.stringify(marks, null, 1));

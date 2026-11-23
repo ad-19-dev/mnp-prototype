@@ -113,8 +113,3 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .spec-toc { display: flex; flex-wrap: wrap; gap: 8px; }
 .spec-q { color: var(--spec-ink); font-weight: 500; }
 
-/* the tag study's caret between two tags (2026-11-23): the empty input there takes no room, so a drawn caret stands in for
-   the native one, centred in the gap, blinking like a text caret, and only while the input has focus */
-.tag-caret { display: none; position: absolute; left: -2.5px; top: 3px; bottom: 3px; width: 1px; background: var(--color-foreground, currentColor); pointer-events: none; }
-.tag-caret-input:focus ~ .tag-caret { display: block; animation: tag-caret-blink 1.06s steps(1) infinite; }
-@keyframes tag-caret-blink { 50% { opacity: 0; } }
