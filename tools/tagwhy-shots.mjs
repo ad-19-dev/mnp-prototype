@@ -63,8 +63,15 @@ await step('e-proceed', async () => { await proceed(); await wait(150); await p.
 await step('e-more', async () => { await demo('E').getByRole('button', { name: 'Paste more' }).click(); await settle(); await p.mouse.move(0, 0); await shot('e-more', card('E')) });
 // keyboard: ← from the input moves onto the tags; a focused red tag also shows its reason
 await step('key-focus', async () => {
-  await clear('E'); await paste('E'); await settle(); await p.mouse.move(0, 0); const inp = demo('E').locator('#t-E'); await inp.focus(); await p.keyboard.press('ArrowLeft'); await wait(100)
+  await clear('E'); await paste('E'); await settle(); await p.mouse.move(0, 0); const inp = demo('E').locator('#t-E'); await inp.focus(); await p.keyboard.press('Shift+ArrowLeft'); await wait(100)
   await tag('E', 'cm.chen').focus(); await wait(700); await shot('key-focus', box('E'), 8, [p.getByRole('tooltip').last()]); await p.keyboard.press('Escape'); await wait(200)
+});
+// the caret between two tags (2026-11-23): click the gap between the 2nd and 3rd tag, type; the dropdown opens there
+await step('e-caret', async () => {
+  const t = box('E').locator('[data-tagid]'); const a = await t.nth(1).boundingBox(), b = await t.nth(2).boundingBox()
+  await p.mouse.click((a.x + a.width + b.x) / 2, a.y + a.height / 2); await wait(200); await p.keyboard.type('thl'); await wait(400)
+  const strip = demo('E').locator('.border-dashed'); await strip.evaluate(e => { e.style.visibility = 'hidden' })
+  await shot('e-caret', card('E'), 8, [pop()]); await strip.evaluate(e => { e.style.visibility = '' }); await p.keyboard.press('Escape'); await demo('E').locator('#t-E').fill(''); await p.locator('h1').click(); await wait(200)
 });
 // typing at the end: suggestions
 await step('nt-type-sug', async () => {

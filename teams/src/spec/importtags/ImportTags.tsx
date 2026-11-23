@@ -175,6 +175,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), runIds = React.useRef(new Set<number>()), ran = React.useRef(false), gatherAfter = React.useRef(false), itemsRef = React.useRef<Item[]>([])
   // E: asked = Proceed was pressed and its result is shown (the invalid ones gathered at the end), until new entries come in;
   // waiting = Proceed was pressed while entries are still being identified; tick reruns the end of a check
+  // E: where the caret (the input) sits among the tags, as an index in the shown order; null = at the end (2026-11-23)
+  const [at, setAt] = React.useState<number | null>(null), [caretTick, setCaretTick] = React.useState(0), moving = React.useRef(false)
   const [asked, setAsked] = React.useState(false), [waiting, setWaiting] = React.useState(false), [tick, setTick] = React.useState(0)
   const step = mode === 'E' ? 6 : SLOW_STEP, ms = mode === 'E' ? 450 : SLOW_MS
   React.useEffect(() => {
@@ -233,6 +235,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setItems(all); itemsRef.current = all
     if (E) {
       setAsked(false)
+      // typed or pasted with the caret between tags: the new ones go in there, and the caret stays right after them
+      if (at != null) { const o = shown.map(h => h.id); o.splice(Math.min(at, o.length), 0, ...add.map(x => x.id)); setEOrder(o); setAt(at + add.length) }
       // E (third version, 2026-11-23): a batch (pasted, 2 or more at once) is identified at once and, when that's done, the red
       // ones gather at the end; one typed entry isn't moved or sent: it stays gray (what was typed), unless it's an NT account,
       // employee ID or Org ID the dropdown didn't find (the dropdown's answer came back and has no exact match), which is red at once
@@ -244,7 +248,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     }
     setOnly(null); setProceeded('')
     if (slow) setPendingIds(l => l.concat(add.map(x => x.id)))
-    if (mode === 'D' || E) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
+    if (mode === 'D' || (E && at == null)) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
     if (mode === 'A' || mode === 'C') {
       const ids = new Set(add.map(x => x.id)), fresh = hitsOf(all).filter(h => ids.has(h.id))
       setSeq(fresh.filter(h => h.why).map(h => h.id).concat(seq, fresh.filter(h => h.ok).map(h => h.id)))
@@ -253,7 +257,30 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     }
     return add.map(x => x.id)
   }
-  const drop = (id: number) => { setItems(l => l.filter(x => x.id !== id)); setSeq(s => s.filter(x => x !== id)) }
+  const drop = (id: number) => {
+    const i = shown.findIndex(h => h.id === id)
+    setItems(l => l.filter(x => x.id !== id)); setSeq(s => s.filter(x => x !== id))
+    if (E && i >= 0) setAt(a => (a != null && i < a ? a - 1 : a))
+  }
+  // E: put the caret at a position among the tags (0 = before the first; the end = after the last), and focus it there
+  const moveCaret = (i: number) => {
+    const n = shown.length, to = Math.max(0, Math.min(i, n))
+    moving.current = true; setAt(to >= n ? null : to); setCaretTick(t => t + 1)
+  }
+  React.useEffect(() => {
+    if (!moving.current) return
+    inputRef.current?.focus({ preventScroll: true }); inputRef.current?.parentElement?.scrollIntoView({ block: 'nearest' })
+    moving.current = false
+  }, [caretTick])
+  // E: a click between tags (or at the start or end of a row) puts the caret there
+  const caretFromPoint = (x: number, y: number) => {
+    const els = Array.from(boxRef.current?.children || []).filter(el => !el.contains(inputRef.current)) as HTMLElement[]
+    const rects = els.map(el => el.getBoundingClientRect())
+    const row = rects.map((rc, i) => ({ rc, i })).filter(o => y >= o.rc.top - 2 && y <= o.rc.bottom + 2)
+    if (!row.length) return rects.length && y < rects[0].top ? 0 : rects.length
+    const hit = row.find(o => o.rc.left + o.rc.width / 2 > x)
+    return hit ? hit.i : row[row.length - 1].i + 1
+  }
   const openEdit = (h: Hit) => setEdit({ id: h.id, v: h.v })
   const nextRed = (after: number | null, list: Hit[]) => {
     const reds = list.filter(h => h.why && h.id !== after), i = after == null ? -1 : list.findIndex(h => h.id === after)
@@ -300,7 +327,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setEdit({ id: n.id, v: n.v })
     setTimeout(() => { const el = boxRef.current?.querySelector('[data-editing]'); el && el.scrollIntoView({ block: 'nearest' }) }, 0)
   }
-  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); ran.current = false }, [kind])
+  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); setAt(null); ran.current = false }, [kind])
   // E: the dropdown's answer for one typed NT account, employee ID or Org ID: no exact match = not found (red at once). With the
   // real API this is only when the answer came back; if it failed or hasn't come back, the entry stays gray for Proceed.
   function notInDropdown(v: string) { return (kind === 'nt' || kind === 'emp' || kind === 'org') && !fmtErr(kind, v) && typeof look(kind, region, v) === 'string' }
@@ -314,7 +341,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const gather = () => {
     const isBad = (h: Hit) => bad.indexOf(h) >= 0
     if (!bad.length) return
-    setEOrder(shown.filter(h => !isBad(h)).concat(shown.filter(isBad)).map(h => h.id))
+    setEOrder(shown.filter(h => !isBad(h)).concat(shown.filter(isBad)).map(h => h.id)); setAt(null)
     setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
   }
   React.useEffect(() => {
@@ -347,6 +374,20 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const tagKeys = (h: Hit) => (e: React.KeyboardEvent) => {
     if (e.target !== e.currentTarget) return
     const i = shown.findIndex(x => x.id === h.id), prev = shown[i - 1], next = shown[i + 1]
+    // E (2026-11-23): a selected tag sits between two caret positions: ←/→ put the caret on its left/right, Shift+←/→
+    // select the tag beside it, Backspace/Delete remove it and leave the caret where it was, typing goes on after it
+    if (E) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') { e.preventDefault(); openEdit(h) }
+      else if (e.key === 'ArrowLeft' && e.shiftKey) { e.preventDefault(); if (prev) focusTag(prev.id) }
+      else if (e.key === 'ArrowRight' && e.shiftKey) { e.preventDefault(); if (next) focusTag(next.id); else moveCaret(i + 1) }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); moveCaret(i) }
+      else if (e.key === 'ArrowRight' || e.key === 'Escape') { e.preventDefault(); moveCaret(i + 1) }
+      else if (e.key === 'Home') { e.preventDefault(); moveCaret(0) }
+      else if (e.key === 'End') { e.preventDefault(); moveCaret(shown.length) }
+      else if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); drop(h.id); moveCaret(i) }
+      else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); moveCaret(i + 1); setDraft(d => d + e.key); setSugOpen(true) }
+      return
+    }
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') { e.preventDefault(); openEdit(h) }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); if (prev) focusTag(prev.id) }
     else if (e.key === 'ArrowRight') { e.preventDefault(); focusTag(next?.id) }
@@ -453,7 +494,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
   // E, "fix first" only (2026-11-23): one click removes the invalid ones; with "may skip", Proceed leaves them out anyway
-  const removeInvalid = () => { const gone = bad.map(h => h.id); setItems(l => l.filter(x => gone.indexOf(x.id) < 0)); setEOrder(o => o.filter(id => gone.indexOf(id) < 0)) }
+  const removeInvalid = () => { const gone = bad.map(h => h.id); setItems(l => l.filter(x => gone.indexOf(x.id) < 0)); setEOrder(o => o.filter(id => gone.indexOf(id) < 0)); setAt(null) }
   // E's help text (2026-11-23): n valid, m invalid with what to do, in the help text itself (no banner); m invalid is plain red
   // text (no "show only"); no "click a tag to edit it"
   const errNow = E && bad.length > 0 && (mustFix || (asked && !checking && !draft.trim()))
@@ -469,6 +510,20 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     {errNow ? <>. <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove invalid to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span></> : null}
     {errNow && mustFix ? <> {rmLink}</> : null}
   </span>
+  const caretMid = E && at != null && at < shown.length
+  const caretKey = (e: React.KeyboardEvent) => {
+    if (showSug) return false
+    const cur = at ?? shown.length
+    if (e.key === 'ArrowLeft' && e.shiftKey) { if (cur > 0) focusTag(shown[cur - 1].id); return true }
+    if (e.key === 'ArrowRight' && e.shiftKey) { if (cur < shown.length) focusTag(shown[cur].id); return true }
+    if (e.key === 'ArrowLeft') { if (cur > 0) moveCaret(cur - 1); return true }
+    if (e.key === 'ArrowRight') { if (cur < shown.length) moveCaret(cur + 1); return true }
+    if (e.key === 'Home') { moveCaret(0); return true }
+    if (e.key === 'End') { moveCaret(shown.length); return true }
+    if (e.key === 'Backspace') { if (cur > 0) focusTag(shown[cur - 1].id); return true }
+    if (e.key === 'Delete') { if (cur < shown.length) focusTag(shown[cur].id); return true }
+    return false
+  }
   const hintNode = (!hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
@@ -498,38 +553,49 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         <FormField id={'t-' + mid} label="List" hint={hintNode}>
           <div ref={boxRef} className={cn(errNow && mustFix && '!border-error', 'flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
             kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
-            onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
-            {shown.map(h => (edit && edit.id === h.id ? editor(h) : tag(h)))}
-            <Popover open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
-              <PopoverAnchor asChild>
-                <span className="flex min-w-[160px] flex-1">
-                  <input ref={inputRef} id={'t-' + mid} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" autoComplete="off"
-                    role="combobox" aria-expanded={showSug} aria-autocomplete="list"
-                    placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
-                    value={draft} onChange={e => { setHi(0); setSugOpen(true); if (/[\n,，;；]/.test(e.target.value)) take(e.target.value); else setDraft(e.target.value) }}
-                    onKeyDown={e => {
-                      if (showSug && e.key === 'ArrowDown') { e.preventDefault(); setHi(i => Math.min(i + 1, sugs.length - 1)) }
-                      else if (showSug && e.key === 'ArrowUp') { e.preventDefault(); setHi(i => Math.max(i - 1, 0)) }
-                      else if (e.key === 'Escape' && showSug) { e.stopPropagation(); setSugOpen(false) }
-                      else if (e.key === 'Enter') { e.preventDefault(); if (showSug) pick(sugs[Math.min(hi, sugs.length - 1)]); else take(draft) }
-                      else if (e.key === 'Backspace' && !draft && shown.length) { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
-                      else if (e.key === 'ArrowLeft' && !showSug && shown.length && e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
-                    }}
-                    onBlur={() => { take(draft); setSugOpen(false) }} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
-                </span>
-              </PopoverAnchor>
-              {/* the people (or orgs) it could be: avatar, name, the matched value; Enter or a click adds it */}
-              <PopoverContent align="start" sideOffset={6} className="w-96 p-1" onOpenAutoFocus={e => e.preventDefault()}>
-                <SugList sugs={sugs} hi={Math.min(hi, sugs.length - 1)} setHi={setHi} onPick={pick} />
-              </PopoverContent>
-            </Popover>
+            onMouseDown={e => { if (E && kind && e.target === e.currentTarget) { e.preventDefault(); if (draft.trim()) take(draft); moveCaret(caretFromPoint(e.clientX, e.clientY)) } }}
+            onClick={e => { if (!E && e.target === e.currentTarget) inputRef.current?.focus() }}>
+            {(() => {
+              // E: the input sits where the caret is (2026-11-23); elsewhere (and at the end) it fills the rest of the row
+              const list = shown.map(h => (edit && edit.id === h.id ? editor(h) : tag(h)))
+              const inputBox = (
+              <Popover key="__input" open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
+                <PopoverAnchor asChild>
+                  <span className={caretMid ? 'flex' : 'flex min-w-[160px] flex-1'}>
+                    <input ref={inputRef} id={'t-' + mid} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" style={caretMid ? { width: (draft.length + 1) + 'ch' } : undefined} autoComplete="off"
+                      role="combobox" aria-expanded={showSug} aria-autocomplete="list"
+                      placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
+                      value={draft} onChange={e => { setHi(0); setSugOpen(true); if (/[\n,，;；]/.test(e.target.value)) take(e.target.value); else setDraft(e.target.value.replace(/^\s+/, '')) }}
+                      onKeyDown={e => {
+                        if (showSug && e.key === 'ArrowDown') { e.preventDefault(); setHi(i => Math.min(i + 1, sugs.length - 1)) }
+                        else if (showSug && e.key === 'ArrowUp') { e.preventDefault(); setHi(i => Math.max(i - 1, 0)) }
+                        else if (e.key === 'Escape' && showSug) { e.stopPropagation(); setSugOpen(false) }
+                        else if (e.key === 'Enter') { e.preventDefault(); if (showSug) pick(sugs[Math.min(hi, sugs.length - 1)]); else take(draft) }
+                        // E (2026-11-23): with nothing typed, ←/→ move the caret between tags, Home/End to the start/end;
+                        // Shift+←/→ or Backspace/Delete select the tag beside it (a second Backspace/Delete removes it)
+                        else if (E && !draft && caretKey(e)) e.preventDefault()
+                        else if (e.key === 'Backspace' && !draft && shown.length) { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
+                        else if (!E && e.key === 'ArrowLeft' && !showSug && shown.length && e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
+                      }}
+                      onBlur={e => { if (moving.current) return; take(draft); setSugOpen(false); if (E && !(e.relatedTarget && boxRef.current?.contains(e.relatedTarget as Node))) setAt(null) }} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
+                  </span>
+                </PopoverAnchor>
+                {/* the people (or orgs) it could be: avatar, name, the matched value; Enter or a click adds it */}
+                <PopoverContent align="start" sideOffset={6} className="w-96 p-1" onOpenAutoFocus={e => e.preventDefault()}>
+                  <SugList sugs={sugs} hi={Math.min(hi, sugs.length - 1)} setHi={setHi} onPick={pick} />
+                </PopoverContent>
+              </Popover>
+              )
+              list.splice(caretMid ? at! : list.length, 0, inputBox)
+              return list
+            })()}
           </div>
         </FormField>
         {E ? (
           // E's footer: Proceed checks what isn't checked yet; with invalid ones left after a check, it adds the valid ones
           <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
             {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span> : null}
-            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); ran.current = false; setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
+            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); setAt(null); ran.current = false; setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
             {checking && waiting ? (
               <Button variant="primary" loading>Proceed</Button>
             ) : bad.length && mustFix ? (
@@ -560,7 +626,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         <span className="text-caption font-medium text-fg-secondary">示範用</span>
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
-        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); ran.current = false; setProceeded('') }}>Clear</Button>
+        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); setAt(null); ran.current = false; setProceeded('') }}>Clear</Button>
         {E ? (
           <SegmentedControl size="sm" value={mustFix ? 'fix' : 'skip'} onValueChange={v => v && setMustFix(v === 'fix')} aria-label="With invalid entries">
             <SegmentedControlItem value="fix">一定要先改完（建議）</SegmentedControlItem>
@@ -673,17 +739,20 @@ export default function ImportTags() {
           ]} cols />
         </Section>
 
-        <Section eyebrow="Keyboard" title="鍵盤操作" lead="2026-11-20 加，五個示範都有。整個欄位只佔一個 Tab 位置，在欄位裡用左右鍵在標籤之間移動，和 Gmail、Outlook 的收件人欄一樣。">
-          <SpecTable head={['在哪裡', '按鍵', '結果']} nowrap={[0, 1]} rows={[
-            ['名單最後的輸入框', '←（游標在最前面或輸入框是空的）', '移到最後一個標籤'],
-            ['名單最後的輸入框', 'Backspace（輸入框是空的）', '只移到最後一個標籤，不刪；再按一次才刪，避免誤刪'],
-            ['標籤上', '← / →', '移到前一個或後一個標籤；最後一個再按 → 回到輸入框'],
-            ['標籤上', 'Home / End', '第一個標籤 / 回到輸入框'],
-            ['標籤上', 'Enter（或空白鍵、F2）', '開始修改，和點一下一樣'],
-            ['標籤上', 'Backspace / Delete', '刪掉這個標籤，焦點移到旁邊那一個（Backspace 往前、Delete 往後）'],
-            ['標籤上', '直接打字、Esc', '回到輸入框，打的字接在最後'],
-            ['欄位裡任何地方', 'Tab', '直接離開這個欄位，不會一個一個經過標籤和 ×'],
+        <Section eyebrow="Keyboard" title="鍵盤與游標" lead="2026-11-20 加，五個示範都有。整個欄位只佔一個 Tab 位置。E（2026-11-23）：游標可以停在標籤和標籤之間，打的字、貼的值就加在那裡；滑鼠點標籤之間的空隙或一行的頭尾也一樣（點標籤本身是修改）。">
+          <SpecTable head={['在哪裡', '按鍵', 'E', 'A–D']} nowrap={[0, 1]} rows={[
+            ['輸入框（空的）', '← / →', '游標往前或往後跨一個標籤', '← 移到最後一個標籤'],
+            ['輸入框（空的）', 'Home / End', '游標到最前面／最後面', '—'],
+            ['輸入框（空的）', 'Shift + ← / →', '選取前一個／後一個標籤', '—'],
+            ['輸入框（空的）', 'Backspace / Delete', '選取前一個／後一個標籤，不刪；再按一次才刪，避免誤刪', 'Backspace 移到最後一個標籤'],
+            ['選取的標籤', '← / →', '游標放到它的左邊／右邊', '移到前一個或後一個標籤'],
+            ['選取的標籤', 'Shift + ← / →', '改選旁邊的標籤', '—'],
+            ['選取的標籤', 'Enter（或空白鍵、F2）', '開始修改，和點一下一樣', '同左'],
+            ['選取的標籤', 'Backspace / Delete', '刪掉，游標留在原位', '刪掉，焦點移到旁邊那一個'],
+            ['選取的標籤', '直接打字、Esc', '游標放到它的右邊，打的字從那裡開始', '回到輸入框'],
+            ['欄位裡任何地方', 'Tab', '直接離開這個欄位，不會一個一個經過標籤和 ×', '同左'],
           ]} />
+          <Notes items={[{ title: '加在中間的值', body: '打的、選推薦的、貼上的，都放在游標的位置，游標接在後面。貼上一批查完時，紅的照樣集中到最後，游標回到最後。離開欄位時，游標回到最後。' }]} />
         </Section>
 
         <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="每個示範都有：在名單欄位打字時，以及修改標籤時（2026-11-19 加），比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
