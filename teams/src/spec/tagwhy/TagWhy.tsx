@@ -62,7 +62,7 @@ export default function TagWhy() {
 
         <Section eyebrow="Summary" title="兩步驗證" lead="有些錯誤前端驗不到（格式對但查無此人、離職、號碼沒人用），所以輸入時只查格式，按 Proceed 才送後端；結果都留在同一個欄位。">
           <SpecTable head={['時機', '做什麼', '說明文字']} nowrap={[0]} rows={[
-            ['輸入、貼上', '只查格式，錯的馬上變紅', '25 entries'],
+            ['輸入、貼上', '只查格式，錯的馬上變紅並算進 invalid；Proceed 仍可按（要靠它驗其餘的）', '25 entries, 1 invalid. Remove invalid'],
             ['按 Proceed', '後端驗證；輸入框裡沒打逗號的文字也算一筆', 'Checking 6 of 24…'],
             ['驗證完，全部有效', '直接加入、關閉', '—'],
             ['驗證完，有無效的', '無效的移到最後；Proceed 停用', '22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
@@ -210,7 +210,7 @@ export default function TagWhy() {
 
         <Section eyebrow="Copy" title="文字">
           <SpecTable head={['項目', '內容', '依據']} nowrap={[0]} rows={[
-            ['驗證前', '{n} entries', '還沒查，只說有幾筆'],
+            ['驗證前', '{n} entries（有格式錯的：{n} entries, {m} invalid. Remove invalid）', '還沒查後端，只說有幾筆；格式錯的已經知道，馬上算出來'],
             ['驗證中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）'],
             ['有無效的', '{n} valid, {m} invalid. Fix or remove invalid to proceed. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框'],
             ['驗證後又改過', '{n} valid, {m} invalid, {k} not checked yet', '還要再按 Proceed'],
