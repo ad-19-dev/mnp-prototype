@@ -457,7 +457,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
           {/* changing the data type clears the list (the entries can't be looked up as another type): asked first when the
               list isn't empty (2026-11-19) */}
           <div className="w-56"><ListKindField id={'k-' + mid} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
-          {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
+          {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.code + ' (' + x.v + ')' }))} /></FormField></div> : null}
         </div>
         <FormField id={'t-' + mid} label="List" hint={hintNode}>
           <div ref={boxRef} className={cn(errNow && mustFix && '!border-error', 'flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
@@ -744,7 +744,7 @@ export default function ImportTags() {
 
         <Section eyebrow="Phone" title="Phone numbers 加地區">
           <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
-            ['地區', 'Data type 選 Phone numbers 時，旁邊多一個 Region 選單：TW +886（預設）、US +1、JP +81、CN +86，和收件人搜尋的地區一樣。'],
+            ['地區', 'Data type 選 Phone numbers 時，旁邊多一個 Region 選單：+886 (TW)（預設）、+1 (US)、+81 (JP)、+86 (CN)，和收件人搜尋的地區一樣。'],
             ['沒有 + 的號碼', '照選的地區檢查與存放（TW 0912-345-678；其他寫成 +國碼）。'],
             ['有 + 的號碼', '用號碼自己的國碼，不管選了哪個地區（同一份名單可以混不同地區）；不是這四個國碼的，紅色標籤，原因 Only TW, US, JP and CN numbers。'],
             ['員工號碼', '台灣號碼是員工的公務或私人手機時，加入那位員工（灰色標籤是姓名）。'],

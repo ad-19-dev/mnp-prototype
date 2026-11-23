@@ -95,7 +95,7 @@ function PhoneRegion({ on, region, setRegion, children }: { on: boolean; region:
   return (
     <FieldControlGroup block>
       <Select className="!w-[132px]" aria-label={L('Region', '地區')} value={region.v} onChange={v => setRegion(v as Region)}
-        options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} />
+        options={REGIONS.map(x => ({ value: x.v, label: x.code + ' (' + x.v + ')' }))} />
       {children}
     </FieldControlGroup>
   )

@@ -198,7 +198,7 @@ export default function TagWhy() {
 
         <Section eyebrow="Region" title="電話：先選國碼">
           <Why shot="region" title="選 Phone numbers 時多一個 Region" max={760}
-            how="預設 TW +886；以 + 開頭的號碼用自己的國碼。"
+            how="預設 +886 (TW)；以 + 開頭的號碼用自己的國碼。"
             why="Excel 裡的號碼通常沒有國碼，要先知道地區才能判斷號碼。" />
         </Section>
 
