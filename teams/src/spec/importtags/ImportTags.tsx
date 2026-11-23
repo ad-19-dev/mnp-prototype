@@ -169,8 +169,10 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const mid = slow ? 'S' : mode   // ids on the page: the slow demo is a second D
   const [pendingIds, setPendingIds] = React.useState<number[]>([]), [proceeded, setProceeded] = React.useState('')
   // E: what the server has checked, by entry: the value it checked (an edit makes it unchecked again)
-  const [cleared, setCleared] = React.useState<{ items: Item[]; checked: Record<number, string>; n: number } | null>(null)
-  const [mustFix, setMustFix] = React.useState(false)   // E: may invalid entries be left out, or must they be fixed first
+  const [cleared, setCleared] = React.useState<{ items: Item[]; checked: Record<number, string>; n: number; order: number[] } | null>(null)
+  const [mustFix, setMustFix] = React.useState(false)
+  // E: the order after the last check: the invalid ones moved to the end (2026-11-23); entries added since go after it
+  const [eOrder, setEOrder] = React.useState<number[]>([])   // E: may invalid entries be left out, or must they be fixed first
   const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), ran = React.useRef(false), itemsRef = React.useRef<Item[]>([])
   const step = mode === 'E' ? 6 : SLOW_STEP, ms = mode === 'E' ? 450 : SLOW_MS
   React.useEffect(() => {
@@ -208,7 +210,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   // what is shown, in which order
   const shown: Hit[] = mode === 'now' ? redFirst(hits)
     : mode === 'B' ? hits
-    : mode === 'D' || mode === 'E' ? (only ? hits.filter(h => only.indexOf(h.id) >= 0) : hits)
+    : mode === 'E' ? eOrder.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => eOrder.indexOf(h.id) < 0))
+    : mode === 'D' ? (only ? hits.filter(h => only.indexOf(h.id) >= 0) : hits)
     : seq.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => seq.indexOf(h.id) < 0))
   const isPending = (h: Hit) => pendingIds.indexOf(h.id) >= 0, checking = hits.some(isPending)
   itemsRef.current = items
@@ -278,7 +281,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setEdit({ id: n.id, v: n.v })
     setTimeout(() => { const el = boxRef.current?.querySelector('[data-editing]'); el && el.scrollIntoView({ block: 'nearest' }) }, 0)
   }
-  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}) }, [kind])
+  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]) }, [kind])
   // E: Proceed takes in what's left in the input, then sends what isn't checked yet (with a right format) to the server
   const proceedE = () => {
     if (draft.trim()) take(draft)
@@ -288,11 +291,15 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     if (!todo.length) return
     runN.current = todo.length; ran.current = true; setPendingIds(todo)
   }
-  // E: when a check ends with nothing invalid and nothing left to check, the list is added and the dialog closes
+  // E: when a check ends: with nothing invalid and nothing left to check, the list is added and the dialog closes;
+  // otherwise the invalid ones (wrong format included) move to the end, next to the input, and the list scrolls there
   React.useEffect(() => {
     if (!E || checking || !ran.current) return
     ran.current = false
-    if (!bad.length && !unchecked.length) setProceeded('示範：全部有效，加入 ' + n + ' 筆，關閉對話框')
+    if (!bad.length && !unchecked.length) { setProceeded('示範：全部有效，加入 ' + n + ' 筆，關閉對話框'); return }
+    const isBad = (h: Hit) => bad.indexOf(h) >= 0
+    setEOrder(shown.filter(h => !isBad(h)).concat(shown.filter(isBad)).map(h => h.id))
+    setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
   }, [checking])
   // D: show only the red tags
   const showOnly = () => { setEdit(null); setOnly(bad.map(h => h.id)); setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0) }
@@ -412,12 +419,24 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
   // E: one click clears the list (2026-11-23), with Undo in the same line until something else is entered
-  const clearAll = () => { setCleared({ items, checked, n: hits.length }); setItems([]); setPendingIds([]); setChecked({}); setOnly(null); setEdit(null); setProceeded('') }
+  const clearAll = () => { setEOrder([]); setCleared({ items, checked, n: hits.length, order: shown.map(h => h.id) }); setItems([]); setPendingIds([]); setChecked({}); setOnly(null); setEdit(null); setProceeded('') }
+  // E's help text (2026-11-23): before a check only how many entries; after one, n valid · m invalid with what to do,
+  // in the help text itself (no banner); m invalid is plain red text (no "show only"); no "click a tag to edit it"
+  const errNow = E && hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length > 0
+  const EHint = () => !hasChecked
+    ? <span>{hits.length} {hits.length === 1 ? 'entry' : 'entries'}</span>
+    : <span className="flex flex-wrap items-center gap-x-1">
+        <span>{n} valid</span>
+        {bad.length ? <><span aria-hidden>·</span><span className="text-error-text">{bad.length} invalid{errNow ? '.' : ''}</span></> : null}
+        {unchecked.length ? <><span aria-hidden>·</span><span>{unchecked.length} not checked yet</span></> : null}
+        {errNow ? <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove them to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span> : null}
+      </span>
   const hintNode = E && !hits.length && cleared && cleared.items.length
-    ? <span className="inline-flex items-center gap-1">{cleared.n} {cleared.n === 1 ? 'entry' : 'entries'} cleared ·<Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => { setItems(cleared.items); itemsRef.current = cleared.items; setChecked(cleared.checked); setCleared(null) }}>Undo</Button></span>
+    ? <span className="inline-flex items-center gap-1">{cleared.n} {cleared.n === 1 ? 'entry' : 'entries'} cleared ·<Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => { setItems(cleared.items); itemsRef.current = cleared.items; setChecked(cleared.checked); setEOrder(cleared.order); setCleared(null) }}>Undo</Button></span>
     : (!hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
+            : E && !checking ? <EHint />
             : (mode === 'D' || E) && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {(E ? runN.current : hits.length) - hits.filter(isPending).length} of {E ? runN.current : hits.length}…</span>
             : mode === 'D' || E ? <DHint parts={[
                 only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
@@ -441,7 +460,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
           {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
         </div>
         <FormField id={'t-' + mid} label="List" hint={E ? <span className="flex w-full items-start gap-2"><span className="min-w-0 flex-1">{hintNode}</span>{items.length ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0" onClick={clearAll}>Clear all</Button> : null}</span> : hintNode}>
-          <div ref={boxRef} className={cn('flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
+          <div ref={boxRef} className={cn(errNow && mustFix && '!border-error', 'flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
             kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
             onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
             {shown.map(h => (edit && edit.id === h.id ? editor(h) : tag(h)))}
@@ -470,18 +489,11 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
             </Popover>
           </div>
         </FormField>
-        {/* E: after a check that leaves invalid entries, a warning banner in place, not a dialog: the red tags stay in
-            reach (2026-11-23). The button stays Proceed; with "fix first" it waits until none are left. */}
-        {E && hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length && !proceeded ? (
-          <Banner tone="warning">{mustFix
-            ? 'Fix or remove ' + bad.length + ' invalid ' + (bad.length === 1 ? 'entry' : 'entries') + ' to proceed.'
-            : bad.length + (bad.length === 1 ? ' entry isn’t' : ' entries aren’t') + ' valid. Fix or remove ' + (bad.length === 1 ? 'it' : 'them') + ', or proceed with the ' + n + ' valid ' + (n === 1 ? 'one' : 'ones') + '.'}</Banner>
-        ) : null}
         {E ? (
           // E's footer: Proceed checks what isn't checked yet; with invalid ones left after a check, it adds the valid ones
           <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
             {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span> : null}
-            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
+            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setEOrder([]); setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
             {checking ? (
               <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Checking the list…</TooltipContent></Tooltip>
             ) : unchecked.length || draft.trim() || !hasChecked ? (
@@ -514,14 +526,14 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         <span className="text-caption font-medium text-fg-secondary">示範用</span>
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
-        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setProceeded('') }}>Clear</Button>
+        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setProceeded('') }}>Clear</Button>
         {E ? (
           <SegmentedControl size="sm" value={mustFix ? 'fix' : 'skip'} onValueChange={v => v && setMustFix(v === 'fix')} aria-label="With invalid entries">
             <SegmentedControlItem value="skip">可略過無效的</SegmentedControlItem>
             <SegmentedControlItem value="fix">一定要先改完</SegmentedControlItem>
           </SegmentedControl>
         ) : null}
-        <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（cm.chen 格式錯，馬上變紅）→ Proceed → a19999、gywuu 驗證後才變紅 → 改好或再加人 → Proceed 只驗改過的。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
+        <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（cm.chen 格式錯，馬上變紅）→ Proceed → 無效的移到最後 → 改好或再加人 → Proceed 只驗改過的。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
     </div>
   )
@@ -590,17 +602,19 @@ export default function ImportTags() {
         <Section eyebrow="E" title="E：輸入時查格式，按 Proceed 才完整驗證（11/23）" lead="從 D 改良。有些錯誤前端驗不到（格式正確但查無此人、離職、號碼沒人用），所以分兩步：輸入或貼上時只查格式，按 Proceed 才送後端驗證；驗證結果留在同一個欄位，之後照樣自由編輯。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但後端查不到。">
           <div className="max-w-[880px]"><Demo mode="E" show={show} /></div>
           <SpecTable head={['時機', '做什麼', '畫面']} nowrap={[0]} rows={[
-            ['輸入、貼上', '只查格式（瀏覽器裡，馬上）', '格式錯的立刻變紅；格式對的是灰色、顯示輸入的值。說明文字：25 entries · 1 invalid'],
+            ['輸入、貼上', '只查格式（瀏覽器裡，馬上）', '格式錯的立刻變紅（留在原位）；格式對的是灰色、顯示輸入的值。說明文字只寫筆數：25 entries'],
             ['按 Proceed', '輸入框裡還沒打逗號的文字也算一筆；格式對、還沒驗證的送後端', '同一個欄位：標籤變淡、Checking x of y…，Proceed 等驗證完'],
             ['驗證完，全部有效', '直接加入、關閉對話框', '只要按一次 Proceed'],
-            ['驗證完，有無效的', '留在原地', '無效的就地變紅（滑過看原因），有效的換成姓名；說明文字 22 valid · 3 invalid；欄位下方一個黃色警告橫幅（DS Alert）：3 entries aren’t valid. Fix or remove them, or proceed with the 22 valid ones.；按鈕仍是 Proceed，再按就加入有效的。改完或刪掉無效的，橫幅消失'],
-            ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以', '改過或新加的回到灰色（還沒驗證），說明文字多一段 2 not checked yet；按鈕變回 Proceed，只驗這幾筆'],
+            ['驗證完，有無效的', '留在原地', '無效的（含格式錯的）變紅並移到名單最後、緊接輸入框，名單捲到那裡；有效的換成姓名、照原順序在前面。說明文字：22 valid · 3 invalid. Fix or remove them, or proceed with the valid ones.（3 invalid 紅字，不能點）。按鈕仍是 Proceed，再按就加入有效的'],
+            ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以；標籤不移動', '改過或新加的回到灰色（還沒驗證），新加的接在最後；說明文字多一段 2 not checked yet；再按 Proceed 只驗這幾筆，驗完無效的再一起移到最後'],
+            ['Clear all', '說明文字那一行最右邊', '一次清空；說明文字變 25 entries cleared · Undo，再輸入就消失'],
           ]} />
           <Notes items={[
             { title: '為什麼不跳新的視窗', body: '驗證結果只讓標籤變色、多一句提醒，使用者還在同一個欄位；不像先前的 verify-on-Add 只能改錯的，加人、減人都受限。和 Gmail 按送出時，有問題的地址在原欄位標紅讓你改，是同一種經驗。' },
             { title: '最後一個值沒打逗號', body: '按 Proceed、或離開輸入框時，輸入框裡剩下的文字也一起加入。' },
-            { title: '為什麼不跳確認視窗', body: '批次匯入本身就是對話框，再跳一層要先關掉才能改；它說的事畫面上已經看得到（紅色標籤、3 invalid）；略過無效的值也不是無法復原的動作。所以用原地的警告橫幅，不擋住要改的標籤。按鈕名字不換，避免使用者以為是另一個動作。' },
-            { title: '還要決定', body: '有無效值時，可以略過（Proceed 加入有效的）還是一定要先改完（Proceed 停用，橫幅寫 Fix or remove 3 invalid entries to proceed.）：示範區可以切換比較。另外，驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
+            { title: '為什麼不跳確認視窗、也不用橫幅', body: '批次匯入本身就是對話框，再跳一層要先關掉才能改；橫幅和說明文字會講同一件事。所以只用欄位的說明文字：驗證前只寫筆數，驗證後才寫幾筆無效、怎麼處理。按鈕名字不換，避免使用者以為是另一個動作。' },
+            { title: '為什麼無效的移到最後、而且只在驗證完移', body: '拿掉「點 n invalid 只看無效的」之後（改好要不要消失、在那裡加人怎麼辦，都很難定），把無效的集中在最後、緊接輸入框，一樣好找。只在驗證結束那一刻移動，編輯時都不動，畫面不會邊改邊跳。' },
+            { title: '還要決定', body: '有無效值時，可以略過（Proceed 加入有效的）還是一定要先改完（Proceed 停用，說明文字改成紅字 Fix or remove them to proceed.，欄位紅框）：示範區可以切換比較。另外，驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
           ]} cols />
         </Section>
 
