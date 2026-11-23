@@ -16,7 +16,7 @@ import * as React from 'react'
 import { Button, CircularProgress, Popover, PopoverAnchor, PopoverContent, SegmentedControl, SegmentedControlItem, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn } from '@qijenchen/design-system'
 import { Building2, Mail, Phone } from 'lucide-react'
 import { Notes, Section, SpecTable } from '../parts'
-import { ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, listKindName, pname } from '../../components/ui'
+import { Banner, ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, listKindName, pname } from '../../components/ui'
 import { REGIONS, type Region } from '../../components/RecvInput'
 import { DOMAIN, ORGS, PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type ListKind, type Person } from '../../lib/data'
 
@@ -169,6 +169,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const mid = slow ? 'S' : mode   // ids on the page: the slow demo is a second D
   const [pendingIds, setPendingIds] = React.useState<number[]>([]), [proceeded, setProceeded] = React.useState('')
   // E: what the server has checked, by entry: the value it checked (an edit makes it unchecked again)
+  const [mustFix, setMustFix] = React.useState(false)   // E: may invalid entries be left out, or must they be fixed first
   const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), ran = React.useRef(false), itemsRef = React.useRef<Item[]>([])
   const step = mode === 'E' ? 6 : SLOW_STEP, ms = mode === 'E' ? 450 : SLOW_MS
   React.useEffect(() => {
@@ -464,18 +465,26 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
             </Popover>
           </div>
         </FormField>
+        {/* E: after a check that leaves invalid entries, a warning banner in place, not a dialog: the red tags stay in
+            reach (2026-11-23). The button stays Proceed; with "fix first" it waits until none are left. */}
+        {E && hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length && !proceeded ? (
+          <Banner tone="warning">{mustFix
+            ? 'Fix or remove ' + bad.length + ' invalid ' + (bad.length === 1 ? 'entry' : 'entries') + ' to proceed.'
+            : bad.length + (bad.length === 1 ? ' entry isn’t' : ' entries aren’t') + ' valid. Fix or remove ' + (bad.length === 1 ? 'it' : 'them') + ', or proceed with the ' + n + ' valid ' + (n === 1 ? 'one' : 'ones') + '.'}</Banner>
+        ) : null}
         {E ? (
           // E's footer: Proceed checks what isn't checked yet; with invalid ones left after a check, it adds the valid ones
           <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
-            {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span>
-              : hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length ? <span className="mr-auto text-body text-fg-secondary">{bad.length} {bad.length === 1 ? 'entry isn’t' : 'entries aren’t'} valid. Fix or remove {bad.length === 1 ? 'it' : 'them'}, or add the {n} valid {n === 1 ? 'one' : 'ones'}.</span> : null}
+            {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span> : null}
             <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
             {checking ? (
               <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Checking the list…</TooltipContent></Tooltip>
             ) : unchecked.length || draft.trim() || !hasChecked ? (
               <Button variant="primary" disabled={!hits.length && !draft.trim()} onClick={proceedE}>Proceed</Button>
+            ) : bad.length && mustFix ? (
+              <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Fix or remove the invalid entries first</TooltipContent></Tooltip>
             ) : bad.length ? (
-              <Button variant="primary" disabled={!n} onClick={() => setProceeded('示範：加入 ' + n + ' 筆有效的，略過 ' + bad.length + ' 筆，關閉對話框')}>Add {n} valid</Button>
+              <Button variant="primary" disabled={!n} onClick={() => setProceeded('示範：加入 ' + n + ' 筆有效的，略過 ' + bad.length + ' 筆，關閉對話框')}>Proceed</Button>
             ) : <Button variant="primary" disabled={!n} onClick={() => setProceeded('示範：加入 ' + n + ' 筆，關閉對話框')}>Proceed</Button>}
           </div>
         ) : null}
@@ -501,6 +510,12 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setProceeded('') }}>Clear</Button>
+        {E ? (
+          <SegmentedControl size="sm" value={mustFix ? 'fix' : 'skip'} onValueChange={v => v && setMustFix(v === 'fix')} aria-label="With invalid entries">
+            <SegmentedControlItem value="skip">可略過無效的</SegmentedControlItem>
+            <SegmentedControlItem value="fix">一定要先改完</SegmentedControlItem>
+          </SegmentedControl>
+        ) : null}
         <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（cm.chen 格式錯，馬上變紅）→ Proceed → a19999、gywuu 驗證後才變紅 → 改好或再加人 → Proceed 只驗改過的。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
     </div>
@@ -573,13 +588,14 @@ export default function ImportTags() {
             ['輸入、貼上', '只查格式（瀏覽器裡，馬上）', '格式錯的立刻變紅；格式對的是灰色、顯示輸入的值。說明文字：25 entries · 1 invalid'],
             ['按 Proceed', '輸入框裡還沒打逗號的文字也算一筆；格式對、還沒驗證的送後端', '同一個欄位：標籤變淡、Checking x of y…，Proceed 等驗證完'],
             ['驗證完，全部有效', '直接加入、關閉對話框', '只要按一次 Proceed'],
-            ['驗證完，有無效的', '留在原地', '無效的就地變紅（滑過看原因），有效的換成姓名；說明文字 22 valid · 3 invalid；按鈕左邊一句 3 entries aren’t valid. Fix or remove them, or add the 22 valid ones.；按鈕變 Add 22 valid'],
+            ['驗證完，有無效的', '留在原地', '無效的就地變紅（滑過看原因），有效的換成姓名；說明文字 22 valid · 3 invalid；欄位下方一個黃色警告橫幅（DS Alert）：3 entries aren’t valid. Fix or remove them, or proceed with the 22 valid ones.；按鈕仍是 Proceed，再按就加入有效的。改完或刪掉無效的，橫幅消失'],
             ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以', '改過或新加的回到灰色（還沒驗證），說明文字多一段 2 not checked yet；按鈕變回 Proceed，只驗這幾筆'],
           ]} />
           <Notes items={[
             { title: '為什麼不跳新的視窗', body: '驗證結果只讓標籤變色、多一句提醒，使用者還在同一個欄位；不像先前的 verify-on-Add 只能改錯的，加人、減人都受限。和 Gmail 按送出時，有問題的地址在原欄位標紅讓你改，是同一種經驗。' },
             { title: '最後一個值沒打逗號', body: '按 Proceed、或離開輸入框時，輸入框裡剩下的文字也一起加入。' },
-            { title: '還要決定', body: '有無效值時是否允許 Add n valid 略過它們（現在允許）；驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
+            { title: '為什麼不跳確認視窗', body: '批次匯入本身就是對話框，再跳一層要先關掉才能改；它說的事畫面上已經看得到（紅色標籤、3 invalid）；略過無效的值也不是無法復原的動作。所以用原地的警告橫幅，不擋住要改的標籤。按鈕名字不換，避免使用者以為是另一個動作。' },
+            { title: '還要決定', body: '有無效值時，可以略過（Proceed 加入有效的）還是一定要先改完（Proceed 停用，橫幅寫 Fix or remove 3 invalid entries to proceed.）：示範區可以切換比較。另外，驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
           ]} cols />
         </Section>
 
