@@ -95,6 +95,12 @@ export default function TagWhy() {
             why="這是發通知的系統，沒加到誰要讓使用者自己確認過。Remove invalid 一下就清掉，等於明確表示「我知道這幾筆不會加入」，不用另跳確認視窗；加入的名單就是畫面上看到的。"
             not="可略過（Proceed 直接加入有效的）：說明文字容易漏看，使用者可能不知道有人沒加到。跳確認視窗：疊在對話框上，要先關掉才能改，團隊先前也否決過。"
             notShots={[['alt-skip', '可略過：Proceed 可以按，會略過無效的'], ['alt-modal', '跳確認視窗（11/17 的 verify-on-Add）']]} />
+          <SpecTable head={['', '一定要先改完（建議）', '可略過無效的']} nowrap={[0]} rows={[
+            ['有無效值時', 'Proceed 停用，要先改或按 Remove invalid', 'Proceed 可以按，直接加入有效的'],
+            ['好處', '使用者一定知道哪些沒加到；加入的就是看到的', '少一次點擊，想快點加完的人比較方便'],
+            ['壞處', '多按一次 Remove invalid', '說明文字容易漏看，可能不知道有人沒加到'],
+          ]} />
+          <div className="spec-callout">建議一定要先改完：這是發通知的系統，少通知到人的代價比多按一下高。</div>
         </Section>
 
         <Section eyebrow="Edit" title="修改：點標籤變回文字">
