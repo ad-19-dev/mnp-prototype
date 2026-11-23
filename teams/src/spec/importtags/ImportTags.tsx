@@ -561,8 +561,10 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
               const inputBox = (
               <Popover key="__input" open={showSug} onOpenChange={o => { if (!o) setSugOpen(false) }}>
                 <PopoverAnchor asChild>
-                  <span className={caretMid ? 'flex' : 'flex min-w-[160px] flex-1'}>
-                    <input ref={inputRef} id={'t-' + mid} disabled={!kind} className="w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" style={caretMid ? { width: (draft.length + 1) + 'ch' } : undefined} autoComplete="off"
+                  {/* between tags with nothing typed (2026-11-23): the input takes no room (it cancels one gap), so the tags keep
+                      their spacing and the caret sits in the middle of the gap; it widens only once something is typed */}
+                  <span className={caretMid ? 'relative flex self-stretch' : 'flex min-w-[160px] flex-1'} style={caretMid && !draft ? { width: 0, marginRight: '-0.25rem' } : undefined}>
+                    <input ref={inputRef} id={'t-' + mid} disabled={!kind} className="tag-caret-input w-full bg-transparent py-0.5 text-body outline-none placeholder:text-fg-muted" style={caretMid ? (draft ? { width: (draft.length + 0.5) + 'ch' } : { position: 'absolute', left: -3, top: 0, bottom: 0, width: 2, padding: 0, caretColor: 'transparent' }) : undefined} autoComplete="off"
                       role="combobox" aria-expanded={showSug} aria-autocomplete="list"
                       placeholder={!kind ? 'Choose a data type first' : items.length ? '' : 'e.g. ' + (kind === 'phone' ? REGIONS.find(r => r.v === region)!.ph : listKindExample(kind))}
                       value={draft} onChange={e => { setHi(0); setSugOpen(true); if (/[\n,，;；]/.test(e.target.value)) take(e.target.value); else setDraft(e.target.value.replace(/^\s+/, '')) }}
@@ -578,6 +580,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
                         else if (!E && e.key === 'ArrowLeft' && !showSug && shown.length && e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0) { e.preventDefault(); focusTag(shown[shown.length - 1].id) }
                       }}
                       onBlur={e => { if (moving.current) return; take(draft); setSugOpen(false); if (E && !(e.relatedTarget && boxRef.current?.contains(e.relatedTarget as Node))) setAt(null) }} onPaste={e => { e.preventDefault(); take(draft + e.clipboardData.getData('text')) }} />
+                    {caretMid && !draft ? <span aria-hidden className="tag-caret" /> : null}
                   </span>
                 </PopoverAnchor>
                 {/* the people (or orgs) it could be: avatar, name, the matched value; Enter or a click adds it */}
