@@ -1,5 +1,6 @@
 // Batch import tags: the design (option E of the tag study since 2026-11-23, fix first by default; each entry identified
-// as it comes in and a pick known at once, the invalid ones gathered on Proceed, 2026-11-23; labels by data type; a live demo at the top) and why each part is the way it is, with screenshots of the study (tools/tagwhy-shots.mjs). Answers "why not
+// as it comes in and a pick known at once, 2026-11-23; third version the same day: a pasted batch is identified and its
+// red ones gathered at once, typed ones stay put (gray, or red), anything red turns Proceed off, Proceed checks the gray ones; labels by data type; a live demo at the top) and why each part is the way it is, with screenshots of the study (tools/tagwhy-shots.mjs). Answers "why not
 // show the person for a phone number" (2026-11-19). 2026-11-20: the text cut to what's needed, a little larger
 // (tagwhy.css). Nothing here changes the prototype.
 import * as React from 'react'
@@ -60,37 +61,47 @@ export default function TagWhy() {
           <Demo mode="E" show="type" />
         </Section>
 
-        <Section eyebrow="Summary" title="一進來就辨識，按 Proceed 集中" lead="格式在瀏覽器裡馬上查；格式對的一進來就送後端辨識，在原位變成結果。按 Proceed 時，無效的一起移到最後。">
+        <Section eyebrow="Summary" title="貼上就辨識，打字不動順序" lead="貼上的一批一進來就送後端辨識，查完紅的集中到最後；手動打的留在原位，按 Proceed 才嚴格驗證。只要有紅色，Proceed 就停用。">
           <SpecTable head={['時機', '做什麼', '說明文字']} nowrap={[0]} rows={[
-            ['選了推薦的人', '已經確定，直接變成結果，不用再查', '23 valid'],
-            ['貼上、打逗號或換行', '格式錯的馬上變紅；格式對的送後端，查詢中變淡，查完在原位變成結果', 'Checking 6 of 24…（筆數少時不顯示）'],
-            ['查完', '有效的換成結果，無效的紅色、留在原位；Proceed 可以按', '22 valid, 3 invalid. Remove invalid'],
-            ['按 Proceed，全部有效', '直接加入、關閉', '—'],
-            ['按 Proceed，有無效的', '無效的移到最後；Proceed 停用', '22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
+            ['貼上一批', '格式錯的馬上變紅；其他的變淡、一批批換成結果；查完，紅的（含之前的）集中到最後', 'Checking 6 of 24… → 22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
+            ['打字時選了推薦', '已經確定，原位變成人名', '23 valid'],
+            ['打字沒選推薦', '原位保持輸入的值（灰色）；格式錯，或 NT 帳號、工號、Org ID 不在推薦清單裡，原位變紅', '23 valid, 1 not checked yet'],
+            ['有紅色時', 'Proceed 停用（一定要先改完）', 'Fix or remove invalid to proceed. Remove invalid'],
+            ['按 Proceed', '灰色的送後端嚴格驗證；全部有效就加入、關閉；驗出紅的就集中到最後', 'Checking 0 of 1…'],
           ]} />
         </Section>
 
-        <Section eyebrow="Paste" title="貼上：一進來就辨識，照輸入順序">
+        <Section eyebrow="Paste" title="貼上：一進來就辨識，紅的集中到最後">
           <Shots items={[
-            ['e-paste', '辨識中', '格式錯的 cm.chen 馬上變紅；其他的先變淡、不能點，一批一批換成結果'],
-            ['e-found', '辨識完', '有效的換成姓名，無效的紅色留在原位；說明文字 22 valid, 3 invalid；Proceed 可以按'],
+            ['e-paste', '辨識中', 'cm.chen 格式錯，馬上變紅；其他的先變淡、不能點，一批一批換成結果；有紅色，Proceed 停用'],
+            ['e-checked', '辨識完', '有效的換成姓名，紅的集中到最後、緊接輸入框；欄位紅框'],
           ]} />
           <Notes cols items={[
-            { title: '依據', body: '辨識在貼上時就開始，使用者看名單的同時結果陸續出來；按 Proceed 時通常已經查完。照原順序，方便對回 Excel、Email 裡的原始清單。' },
-            { title: '最後一個值沒打逗號', body: '按 Proceed 或離開輸入框時，剩下的文字也一起加入、一起辨識。' },
+            { title: '依據', body: '貼上的通常是一大串，錯的散在各處很難找；查完一次集中，名單再長也一眼找到。移動只發生在貼上那一刻，使用者還沒開始看個別的標籤。' },
+            { title: '為什麼一進來就辨識', body: '幾千筆的等待從貼上就開始，和使用者看名單的時間重疊。' },
           ]} />
-          <Alt text="紅色排最前面：名單長時還是要捲動，順序也對不回原始清單。" shots={[['alt-redfirst', '紅色排最前面（原型目前的做法）']]} />
+          <Alt text="紅色排最前面：要捲回最上面才看得到，順序也對不回原始清單。" shots={[['alt-redfirst', '紅色排最前面（原型目前的做法）']]} />
         </Section>
 
-        <Section eyebrow="Proceed" title="按 Proceed：無效的集中到最後">
-          <Why shot="e-checked" title="按 Proceed" sub="無效的移到最後、緊接輸入框；欄位紅框，Proceed 停用" max={1184}
-            how="還在辨識的，Proceed 轉圈等它查完；查完全部有效就加入、關閉，有無效的就一起移到最後。"
-            why="無效的集中在最後，名單再長也一眼找到。只在按 Proceed 時移動；打字、修改時都不動，標籤不會在使用者眼前跑掉。" />
+        <Section eyebrow="Type" title="手動輸入：不動順序">
+          <Why shot="e-typed" title="打 thliu、kyliin，都沒選推薦" sub="thliu 是灰色（還沒驗證）；kyliin 不在推薦清單裡，馬上變紅；都留在原位" max={1184}
+            how="選了推薦就是人名；沒選就保持輸入的值。格式錯，或 NT 帳號、工號、Org ID 在推薦清單裡沒有完全相同的，馬上變紅。其他的（例如外部電話、外部 Email）是灰色，按 Proceed 才嚴格驗證。"
+            why="打字時標籤就在游標旁邊，原位變紅最好改；位置一動，剛打的就找不到了。推薦清單已經是後端查的結果，NT 帳號、工號、Org ID 沒有完全相同的，就是不存在。推薦清單沒有回應（例如 API 出錯）時不判紅，保持灰色，按 Proceed 再驗。" />
+        </Section>
+
+        <Section eyebrow="Proceed" title="按 Proceed：嚴格驗證灰色的">
+          <Shots items={[
+            ['e-proceed', '紅的都處理完，按 Proceed', '灰色的 thliu 送後端，原位驗證；Proceed 轉圈等。全部有效就加入、關閉；驗出紅的就集中到最後'],
+          ]} />
+          <Notes cols items={[
+            { title: '依據', body: '只要有紅色就不能往下，使用者一定先處理；驗證灰色的時候，紅的已經都處理掉了，所以驗出新的紅色通常只有幾筆。' },
+            { title: '最後一個值沒打逗號', body: '按 Proceed 或離開輸入框時，剩下的文字也一起加入，照手動輸入的規則處理。' },
+          ]} />
         </Section>
 
         <Section eyebrow="Fix first" title="有無效的：一定要先處理">
-          <Why shot="e-removed" title="按 Remove invalid" sub="無效的一次移除，說明文字只剩 24 valid，Proceed 可以按"
-            how="說明文字寫 Fix or remove invalid to proceed.，後面緊接 Remove invalid；改好、刪掉，或按 Remove invalid 之後，Proceed 才能按。"
+          <Why shot="e-removed" title="按 Remove invalid" sub="無效的一次移除，Proceed 可以按"
+            how="只要有紅色，說明文字就寫 Fix or remove invalid to proceed.，後面緊接 Remove invalid；改好、刪掉，或按 Remove invalid 之後，Proceed 才能按。"
             why="這是發通知的系統，沒加到誰要讓使用者自己確認過。Remove invalid 一下就清掉，等於明確表示「我知道這幾筆不會加入」，不用另跳確認視窗；加入的名單就是畫面上看到的。"
             not="可略過（Proceed 直接加入有效的）：說明文字容易漏看，使用者可能不知道有人沒加到。跳確認視窗：疊在對話框上，要先關掉才能改，團隊先前也否決過。"
             notShots={[['alt-skip', '可略過：Proceed 可以按，會略過無效的'], ['alt-modal', '跳確認視窗（11/17 的 verify-on-Add）']]} />
@@ -116,23 +127,19 @@ export default function TagWhy() {
         <Section eyebrow="Suggest" title="打字時：選單列出比對到的人">
           <Shots items={[
             ['nt-type-sug', '在名單最後打字時', '打 chen，列出符合的人'],
-            ['nt-type-pick', '選了之後', '馬上變成 Jimmy Chen 的標籤，不用等 Proceed'],
+            ['nt-type-pick', '選了之後', '馬上變成 Jimmy Chen 的標籤'],
             ['nt-edit-sug', '修改標籤時', '打 ytch，出現 Tina Chang'],
+            ['e-fixed', '選了 Tina Chang', '在原位變成她；其他紅的不動'],
           ]} />
           <Notes cols items={[
             { title: '依據', body: '選單是後端查出來的，選了就是確定的人，直接顯示結果。' },
-            { title: '不選也可以', body: '直接按逗號，照打的字加入，再送後端辨識。外部 Email、外部號碼不會對到人，不出現選單。' },
+            { title: '不選也可以', body: '直接按逗號，保持輸入的值（灰色），按 Proceed 再驗證。外部 Email、外部號碼不會對到人，不出現選單。' },
           ]} />
         </Section>
 
-        <Section eyebrow="After" title="之後：照樣自由編輯">
+        <Section eyebrow="After" title="再貼一批">
           <Shots items={[
-            ['e-fixed', '把 a19999 改成 Tina Chang', '從選單選的，在原位馬上變成 Tina Chang；其他無效的不動'],
-            ['e-more', '再貼一批', '接在最後，一進來就辨識；新的無效值紅色留在原位，Proceed 又可以按'],
-            ['e-rechecked', '再按 Proceed', '新舊無效的一起移到最後'],
-          ]} />
-          <Notes cols items={[
-            { title: '依據', body: '欄位不鎖，加人、減人、改值都可以；改過的只重查那一筆，所以很快。' },
+            ['e-more', '再按一次貼上', '一進來就辨識；新的紅色（kylln、a20001）集中到最後，Proceed 停用'],
           ]} />
           <Alt text="修好就重新排序（原型目前的做法）：修好的那一筆馬上跳走，找不到它。" shots={[['alt-jump', 'a19999 原本排第一個；改好後跳到第 9 個']]} />
         </Section>
@@ -210,17 +217,17 @@ export default function TagWhy() {
 
         <Section eyebrow="Copy" title="文字">
           <SpecTable head={['項目', '內容', '依據']} nowrap={[0]} rows={[
-            ['辨識中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）；一次只有幾筆時不顯示，標籤變淡一下就好'],
-            ['辨識完', '{n} valid, {m} invalid. Remove invalid', '{m} invalid 紅字；Proceed 可以按'],
-            ['按 Proceed 後有無效的', '{n} valid, {m} invalid. Fix or remove invalid to proceed. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框'],
-            ['按鈕', 'Proceed', '從頭到尾同一個名字；按了是集中無效的、或回到收件人欄位，不是寄出；還在辨識時轉圈等待'],
+            ['辨識中、驗證中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）；打字時查幾筆不顯示'],
+            ['有灰色的', '{n} valid, {k} not checked yet', '只有灰色時：{k} entries'],
+            ['有紅色的', '{n} valid, {m} invalid. Fix or remove invalid to proceed. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框，Proceed 停用'],
+            ['按鈕', 'Proceed', '從頭到尾同一個名字；按了是驗證灰色的、或回到收件人欄位，不是寄出；驗證時轉圈等待'],
           ]} />
         </Section>
 
         <Section eyebrow="Open" title="待工程確認">
           <SpecTable head={['問題', '原因']} nowrap={[0]} rows={[
             ['辨識能不能在貼上時就開始、一次查一批（和選單同一支 API）', '一進來就辨識的前提；幾千筆要多久、能不能分批回傳'],
-            ['按 Proceed 時要不要再嚴格驗證一次', '例如這段時間離職、權限；有變化才把那幾筆變紅'],
+            ['推薦清單能不能回傳「有沒有完全相同的」', 'NT 帳號、工號、Org ID 打完沒選推薦時，馬上判斷要不要變紅；沒有回應時保持灰色'],
             ['每種資料類型的格式規則', '前端格式檢查要和後端一致'],
             ['SMS 能否指定寄到哪一支', '舊系統隨機挑一支公司手機'],
             ['選單查詢速度', '公司超過 10 萬人'],

@@ -38,27 +38,29 @@ const clear = async m => { const c = demo(m).getByRole('button', { name: 'Clear'
 const reset = async () => { await p.keyboard.press('Escape'); await p.locator('h1').click(); await wait(150) };
 const scrollTo = async m => { await reset(); await demo(m).scrollIntoViewIfNeeded(); await wait(150) };
 
-// 2026-11-23: the design is option E (the format at once, each entry identified as it comes in, Proceed gathers the
-// invalid ones at the end, fix first by default)
+// 2026-11-23 (third version of E): a pasted batch is identified at once and its red ones gather at the end; a typed entry stays
+// where it is (gray, or red when it's a wrong format or not in the dropdown); anything red turns Proceed off ("fix first");
+// Proceed gives the gray ones the strict check
 const proceed = () => demo('E').locator('.border-t').getByRole('button', { name: 'Proceed' }).click()
 const settle = () => wait(3600)   // the 24 right formats are identified 6 at a time
-// 1. pasted: identified at once, in batches (faded until known); a wrong format is red at once
+const typeIn = async t => { const inp = demo('E').locator('#t-E'); await inp.click(); await inp.pressSequentially(t, { delay: 20 }); await wait(200) }
+// 1. pasted: identified at once, in batches (faded until known); a wrong format is red at once; Proceed off
 await step('e-paste', async () => { await scrollTo('E'); await paste('E'); await wait(600); await p.mouse.move(0, 0); await shot('e-paste', card('E')) });
-// 2. identified: names in place, the invalid ones red in place; Proceed can be pressed
-await step('e-found', async () => { await settle(); await p.mouse.move(0, 0); await shot('e-found', card('E')) });
-// 3. Proceed: the invalid ones move to the end, what to do in the help text, Proceed waits
-await step('e-checked', async () => { await proceed(); await wait(400); await p.mouse.move(0, 0); await shot('e-checked', card('E')) });
-// 4. click a red tag: plain text with a caret, in the same spot; typing shows the people it could be
+// 2. identified: names in place, the red ones gathered at the end; red border, Proceed off
+await step('e-checked', async () => { await settle(); await p.mouse.move(0, 0); await shot('e-checked', card('E')) });
+// 3. click a red tag: plain text with a caret, in the same spot; typing shows the people it could be
 await step('nt-edit', async () => { await tag('E', 'a19999').click(); await wait(200); await shot('nt-edit', box('E')) });
 await step('nt-edit-sug', async () => { const inp = box('E').locator('[data-editing]'); await inp.fill('ytch'); await wait(300); await shot('nt-edit-sug', card('E'), 8, [pop()]) });
-// 5. picked Tina Chang from the dropdown: known at once, in the same spot
+// 4. picked Tina Chang from the dropdown: known at once, in the same spot
 await step('e-fixed', async () => { const inp = box('E').locator('[data-editing]'); await inp.fill('ytchang'); await wait(300); await inp.press('Enter'); await wait(300); await p.mouse.move(0, 0); await shot('e-fixed', card('E')) });
-// 6. more pasted: at the end, identified as they come in; Proceed can be pressed again
-await step('e-more', async () => { await demo('E').getByRole('button', { name: 'Paste more' }).click(); await settle(); await p.mouse.move(0, 0); await shot('e-more', card('E')) });
-// 7. Proceed again: the invalid ones (old and new) gather at the end again
-await step('e-rechecked', async () => { await proceed(); await wait(400); await p.mouse.move(0, 0); await shot('e-rechecked', card('E')) });
-// 8. Remove invalid: Proceed can go on
+// 5. typed without picking: thliu stays gray (what was typed); kyliin, not in the dropdown, is red at once; nothing moves
+await step('e-typed', async () => { await typeIn('thliu, kyliin, '); await p.mouse.move(0, 0); await shot('e-typed', card('E')) });
+// 6. Remove invalid: Proceed can be pressed; the gray one is still not checked
 await step('e-removed', async () => { await demo('E').getByRole('button', { name: 'Remove invalid' }).click(); await wait(250); await p.mouse.move(0, 0); await shot('e-removed', card('E')) });
+// 7. Proceed: the strict check of the gray one, in the same field; the button waits
+await step('e-proceed', async () => { await proceed(); await wait(150); await p.mouse.move(0, 0); await shot('e-proceed', card('E')); await wait(1200) });
+// 8. another batch: identified, and its red ones gather at the end
+await step('e-more', async () => { await demo('E').getByRole('button', { name: 'Paste more' }).click(); await settle(); await p.mouse.move(0, 0); await shot('e-more', card('E')) });
 // keyboard: ← from the input moves onto the tags; a focused red tag also shows its reason
 await step('key-focus', async () => {
   await clear('E'); await paste('E'); await settle(); await p.mouse.move(0, 0); const inp = demo('E').locator('#t-E'); await inp.focus(); await p.keyboard.press('ArrowLeft'); await wait(100)
