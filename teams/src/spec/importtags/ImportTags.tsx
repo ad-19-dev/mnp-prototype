@@ -259,8 +259,17 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   }
   const drop = (id: number) => {
     const i = shown.findIndex(h => h.id === id)
-    setItems(l => l.filter(x => x.id !== id)); setSeq(s => s.filter(x => x !== id))
+    // a repeat of the same entry is hidden behind the tag (it isn't shown twice): removing the tag removes it too, so it
+    // doesn't turn up as a new tag (2026-11-23)
+    const gone = sameAs([id])
+    setItems(l => l.filter(x => !gone.has(x.id))); setSeq(s => s.filter(x => !gone.has(x)))
     if (E && i >= 0) setAt(a => (a != null && i < a ? a - 1 : a))
+  }
+  // the ids of these entries and of every repeat of them (the same person or number, or the same text when not found)
+  function sameAs(ids: number[]) {
+    const keyOf = (it: Item) => { if (!kind) return 'x:' + it.v; const r = look(kind, region, it.v, it.pin); return typeof r === 'string' ? 'x:' + it.v.toLowerCase() : r.key }
+    const ks = new Set(items.filter(x => ids.indexOf(x.id) >= 0).map(keyOf))
+    return new Set(items.filter(x => ids.indexOf(x.id) >= 0 || ks.has(keyOf(x))).map(x => x.id))
   }
   // E: put the caret at a position among the tags (0 = before the first; the end = after the last), and focus it there
   const moveCaret = (i: number) => {
@@ -494,7 +503,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
   // E, "fix first" only (2026-11-23): one click removes the invalid ones; with "may skip", Proceed leaves them out anyway
-  const removeInvalid = () => { const gone = bad.map(h => h.id); setItems(l => l.filter(x => gone.indexOf(x.id) < 0)); setEOrder(o => o.filter(id => gone.indexOf(id) < 0)); setAt(null) }
+  const removeInvalid = () => { const gone = sameAs(bad.map(h => h.id)); setItems(l => l.filter(x => !gone.has(x.id))); setEOrder(o => o.filter(id => !gone.has(id))); setAt(null) }
   // E's help text (2026-11-23): n valid, m invalid with what to do, in the help text itself (no banner); m invalid is plain red
   // text (no "show only"); no "click a tag to edit it"
   const errNow = E && bad.length > 0 && (mustFix || (asked && !checking && !draft.trim()))
@@ -520,8 +529,10 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     if (e.key === 'ArrowRight') { if (cur < shown.length) moveCaret(cur + 1); return true }
     if (e.key === 'Home') { moveCaret(0); return true }
     if (e.key === 'End') { moveCaret(shown.length); return true }
-    if (e.key === 'Backspace') { if (cur > 0) focusTag(shown[cur - 1].id); return true }
-    if (e.key === 'Delete') { if (cur < shown.length) focusTag(shown[cur].id); return true }
+    // between tags (2026-11-23): Backspace/Delete remove the tag before/after the caret at once; at the end of the list
+    // Backspace only selects the last tag first (a second press removes it), so a stray press doesn't delete it
+    if (e.key === 'Backspace') { if (cur > 0) { if (caretMid) { drop(shown[cur - 1].id); moveCaret(cur - 1) } else focusTag(shown[cur - 1].id) } return true }
+    if (e.key === 'Delete') { if (cur < shown.length) { if (caretMid) { drop(shown[cur].id); moveCaret(cur) } else focusTag(shown[cur].id) } return true }
     return false
   }
   const hintNode = (!hits.length ? 'Separate with commas or new lines.'
@@ -747,7 +758,8 @@ export default function ImportTags() {
             ['輸入框（空的）', '← / →', '游標往前或往後跨一個標籤', '← 移到最後一個標籤'],
             ['輸入框（空的）', 'Home / End', '游標到最前面／最後面', '—'],
             ['輸入框（空的）', 'Shift + ← / →', '選取前一個／後一個標籤', '—'],
-            ['輸入框（空的）', 'Backspace / Delete', '選取前一個／後一個標籤，不刪；再按一次才刪，避免誤刪', 'Backspace 移到最後一個標籤'],
+            ['游標在標籤之間', 'Backspace / Delete', '直接刪掉前一個／後一個標籤（11/23）', '—'],
+            ['游標在最後（空的）', 'Backspace', '先選取最後一個標籤，不刪；再按一次才刪，避免誤刪', '同左'],
             ['選取的標籤', '← / →', '游標放到它的左邊／右邊', '移到前一個或後一個標籤'],
             ['選取的標籤', 'Shift + ← / →', '改選旁邊的標籤', '—'],
             ['選取的標籤', 'Enter（或空白鍵、F2）', '開始修改，和點一下一樣', '同左'],
@@ -755,7 +767,8 @@ export default function ImportTags() {
             ['選取的標籤', '直接打字、Esc', '游標放到它的右邊，打的字從那裡開始', '回到輸入框'],
             ['欄位裡任何地方', 'Tab', '直接離開這個欄位，不會一個一個經過標籤和 ×', '同左'],
           ]} />
-          <Notes items={[{ title: '加在中間的值', body: '打的、選推薦的、貼上的，都放在游標的位置，游標接在後面。貼上一批查完時，紅的照樣集中到最後，游標回到最後。離開欄位時，游標回到最後。' }]} />
+          <Notes items={[{ title: '刪掉一個標籤', body: '名單裡重複的值只顯示一個標籤；刪掉那個標籤時，重複的也一起刪掉，不會冒出一個新的灰色標籤（11/23 修正）。' },
+            { title: '加在中間的值', body: '打的、選推薦的、貼上的，都放在游標的位置，游標接在後面。貼上一批查完時，紅的照樣集中到最後，游標回到最後。離開欄位時，游標回到最後。' }]} />
         </Section>
 
         <Section eyebrow="Suggest" title="輸入時比對到人：跳出選單" lead="每個示範都有：在名單欄位打字時，以及修改標籤時（2026-11-19 加），比對得到的人（或組織）出現在游標下方的選單，最多 6 筆；↑↓ 選、Enter 或點一下加入，Esc 關閉。加入的是這個資料類型的值（例如 NT 帳號），標籤上顯示姓名。已經在名單裡的人不再出現。">
