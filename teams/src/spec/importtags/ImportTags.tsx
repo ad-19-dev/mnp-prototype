@@ -169,7 +169,6 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const mid = slow ? 'S' : mode   // ids on the page: the slow demo is a second D
   const [pendingIds, setPendingIds] = React.useState<number[]>([]), [proceeded, setProceeded] = React.useState('')
   // E: what the server has checked, by entry: the value it checked (an edit makes it unchecked again)
-  const [cleared, setCleared] = React.useState<{ items: Item[]; checked: Record<number, string>; n: number; order: number[] } | null>(null)
   const [mustFix, setMustFix] = React.useState(false)
   // E: the order after the last check: the invalid ones moved to the end (2026-11-23); entries added since go after it
   const [eOrder, setEOrder] = React.useState<number[]>([])   // E: may invalid entries be left out, or must they be fixed first
@@ -225,7 +224,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setDraft('')
     if (!l.length) return
     const add = l.map(v => ({ id: nextId.current++, v, pin })), all = itemsRef.current.concat(add)
-    setItems(all); itemsRef.current = all; setCleared(null)
+    setItems(all); itemsRef.current = all
     setOnly(null); setProceeded('')
     if (slow) setPendingIds(l => l.concat(add.map(x => x.id)))
     if (mode === 'D' || E) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
@@ -418,8 +417,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const [ehi, setEhi] = React.useState(0)
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
-  // E: one click clears the list (2026-11-23), with Undo in the same line until something else is entered
-  const clearAll = () => { setEOrder([]); setCleared({ items, checked, n: hits.length, order: shown.map(h => h.id) }); setItems([]); setPendingIds([]); setChecked({}); setOnly(null); setEdit(null); setProceeded('') }
+  // E, "fix first" only (2026-11-23): one click removes the invalid ones; with "may skip", Proceed leaves them out anyway
+  const removeInvalid = () => { const gone = bad.map(h => h.id); setItems(l => l.filter(x => gone.indexOf(x.id) < 0)); setEOrder(o => o.filter(id => gone.indexOf(id) < 0)) }
   // E's help text (2026-11-23): before a check only how many entries; after one, n valid · m invalid with what to do,
   // in the help text itself (no banner); m invalid is plain red text (no "show only"); no "click a tag to edit it"
   const errNow = E && hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length > 0
@@ -431,9 +430,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         {unchecked.length ? <><span aria-hidden>·</span><span>{unchecked.length} not checked yet</span></> : null}
         {errNow ? <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove them to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span> : null}
       </span>
-  const hintNode = E && !hits.length && cleared && cleared.items.length
-    ? <span className="inline-flex items-center gap-1">{cleared.n} {cleared.n === 1 ? 'entry' : 'entries'} cleared ·<Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => { setItems(cleared.items); itemsRef.current = cleared.items; setChecked(cleared.checked); setEOrder(cleared.order); setCleared(null) }}>Undo</Button></span>
-    : (!hits.length ? 'Separate with commas or new lines.'
+  const hintNode = (!hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
             : E && !checking ? <EHint />
@@ -459,7 +456,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
           <div className="w-56"><ListKindField id={'k-' + mid} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
           {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
         </div>
-        <FormField id={'t-' + mid} label="List" hint={E ? <span className="flex w-full items-start gap-2"><span className="min-w-0 flex-1">{hintNode}</span>{items.length ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0" onClick={clearAll}>Clear all</Button> : null}</span> : hintNode}>
+        <FormField id={'t-' + mid} label="List" hint={E ? <span className="flex w-full items-start gap-2"><span className="min-w-0 flex-1">{hintNode}</span>{errNow && mustFix ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0" onClick={removeInvalid}>Remove invalid</Button> : null}</span> : hintNode}>
           <div ref={boxRef} className={cn(errNow && mustFix && '!border-error', 'flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
             kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
             onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
@@ -607,7 +604,7 @@ export default function ImportTags() {
             ['驗證完，全部有效', '直接加入、關閉對話框', '只要按一次 Proceed'],
             ['驗證完，有無效的', '留在原地', '無效的（含格式錯的）變紅並移到名單最後、緊接輸入框，名單捲到那裡；有效的換成姓名、照原順序在前面。說明文字：22 valid · 3 invalid. Fix or remove them, or proceed with the valid ones.（3 invalid 紅字，不能點）。按鈕仍是 Proceed，再按就加入有效的'],
             ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以；標籤不移動', '改過或新加的回到灰色（還沒驗證），新加的接在最後；說明文字多一段 2 not checked yet；再按 Proceed 只驗這幾筆，驗完無效的再一起移到最後'],
-            ['Clear all', '說明文字那一行最右邊', '一次清空；說明文字變 25 entries cleared · Undo，再輸入就消失'],
+            ['Remove invalid', '只有「一定要先改完」時，說明文字那一行最右邊', '一次移除所有無效的，Proceed 就能按；「可略過」時不需要，因為 Proceed 本來就會略過它們'],
           ]} />
           <Notes items={[
             { title: '為什麼不跳新的視窗', body: '驗證結果只讓標籤變色、多一句提醒，使用者還在同一個欄位；不像先前的 verify-on-Add 只能改錯的，加人、減人都受限。和 Gmail 按送出時，有問題的地址在原欄位標紅讓你改，是同一種經驗。' },
