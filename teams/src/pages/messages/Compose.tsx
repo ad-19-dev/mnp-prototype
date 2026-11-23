@@ -23,7 +23,7 @@ import {
 } from '../../lib/compose'
 import { useApp } from '../../lib/store'
 import { L, P, joinL, niceDT } from '../../lib/i18n'
-import { Banner, CHN, ChIcons, ErrText, FmtChips, FormField, IconBox, KV, Meter, PAvatar, Section, Two, personVal } from '../../components/ui'
+import { Banner, CHN, ChIcons, ErrText, FmtChips, FormatBlock, FormField, IconBox, KV, Meter, PAvatar, Section, Two, personVal } from '../../components/ui'
 import { RecvInput, riKey } from '../../components/RecvInput'
 import { RichText } from '../../components/RichText'
 import { ChannelPreview, type PreviewChannel } from '../../components/ChannelPreview'
@@ -341,28 +341,13 @@ function NotCoveredDialog({ k, name, list, onClose }: { k: CoverCh | null; name:
 }
 
 // ---------- step 2 ----------
-function FormatBlock({ title, desc, icon: I, uses, children }: { title: string; desc?: string; icon?: typeof Mail; uses?: React.ReactNode; children: React.ReactNode }) {
-  // each channel's content in its own framed block with a header (icon and name), so the channels read apart
-  return (
-    <section className="flex flex-col rounded-lg border border-divider" aria-label={title}>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-divider bg-neutral-1 px-[var(--layout-space-tight)] py-3">
-        <span className="flex items-center gap-3">
-          {I ? <IconBox icon={I} tone="neutral" /> : null}
-          <span className="flex flex-col gap-0.5"><span className="text-body font-semibold">{title}</span>{desc ? <span className="text-caption text-fg-secondary">{desc}</span> : null}</span>
-        </span>
-        {uses ? <span className="flex flex-wrap items-center gap-1.5">{uses}</span> : null}
-      </div>
-      <div className="flex flex-col gap-[var(--layout-space-tight)] p-[var(--layout-space-loose)]">{children}</div>
-    </section>
-  )
-}
 
 // New or from a template: the template is picked from a list of this space's templates
 function TplChoice({ m }: { m: SendCtl }) {
   const app = useApp(), c = m.s.c
   const [useTpl, setUseTpl] = React.useState(!!c.tplId)
   const list = app.templates.filter(t => tplInSpace(t))
-  const chsOf = (t: Template): Channel[] => { const f = tplFormats(t), l: Channel[] = []; if (f.indexOf('notif') >= 0) l.push('push', 'desktop'); if (f.indexOf('email') >= 0) l.push('email'); if (f.indexOf('sms') >= 0) l.push('sms'); return l }
+  const chsOf = (t: Template): Channel[] => { const f = tplFormats(t), l: Channel[] = []; if (f.indexOf('push') >= 0) l.push('push'); if (f.indexOf('desktop') >= 0) l.push('desktop'); if (f.indexOf('email') >= 0) l.push('email'); if (f.indexOf('sms') >= 0) l.push('sms'); return l }
   const pick = (v: string) => { if (v === 'new') { setUseTpl(false); if (c.tplId) m.clearTemplate() } else setUseTpl(true) }
   return (
     // the template field sits right after its radio and stays disabled until "Use template" is picked

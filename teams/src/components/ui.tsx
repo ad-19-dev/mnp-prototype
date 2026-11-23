@@ -84,10 +84,11 @@ export function ChIcons({ list }: { list: Channel[] }) {
   )
 }
 // A template's formats, shown with the same icons as the Send channel column:
-// notification text fills Mobile notifications and Desktop notifications, then Email and SMS
+// Mobile notifications, Desktop notifications (each its own text since 2026-11-23), then Email and SMS
 export function FmtChips({ list }: { list: Fmt[] }) {
   const chs: Channel[] = []
-  if (list.indexOf('notif') >= 0) chs.push('push', 'desktop')
+  if (list.indexOf('push') >= 0) chs.push('push')
+  if (list.indexOf('desktop') >= 0) chs.push('desktop')
   if (list.indexOf('email') >= 0) chs.push('email')
   if (list.indexOf('sms') >= 0) chs.push('sms')
   return <ChIcons list={chs} />
@@ -320,4 +321,21 @@ export function ListBox({ children, max, className }: { children: React.ReactNod
 }
 export function ListRow({ children, className }: { children: React.ReactNode; className?: string }) {
   return <div className={cn('flex min-h-11 items-center gap-3 px-3 py-2', className)}>{children}</div>
+}
+
+// one channel's content in a framed block with a header (icon and name): New message step 2 and the template editor
+export function FormatBlock({ title, desc, icon: I, uses, children }: { title: string; desc?: string; icon?: typeof Mail; uses?: React.ReactNode; children: React.ReactNode }) {
+  // each channel's content in its own framed block with a header (icon and name), so the channels read apart
+  return (
+    <section className="flex flex-col rounded-lg border border-divider" aria-label={title}>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-t-lg border-b border-divider bg-neutral-1 px-[var(--layout-space-tight)] py-3">
+        <span className="flex items-center gap-3">
+          {I ? <IconBox icon={I} tone="neutral" /> : null}
+          <span className="flex flex-col gap-0.5"><span className="text-body font-semibold">{title}</span>{desc ? <span className="text-caption text-fg-secondary">{desc}</span> : null}</span>
+        </span>
+        {uses ? <span className="flex flex-wrap items-center gap-1.5">{uses}</span> : null}
+      </div>
+      <div className="flex flex-col gap-[var(--layout-space-tight)] p-[var(--layout-space-loose)]">{children}</div>
+    </section>
+  )
 }

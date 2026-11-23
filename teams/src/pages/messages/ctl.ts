@@ -1,6 +1,6 @@
 // Messages page controller: list, row actions, the 3-step send flow and its dialogs.
 import {
-  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, addMin, audToTags, cleanHtml, failList, flatten, membersFor, fmtDT, fromIso, htmlToText,
+  BLOCKED, CAP, CH_ORDER, DOMAIN, LIM, ME, PMAP, SUPERVISOR, addMin, audToTags, cleanHtml, failList, flatten, tplDesk, membersFor, fmtDT, fromIso, htmlToText,
   joinList, matchAs, smsMax, pad, parseDT, parseListAs, plural, rowChs, splitTokens, tagsToAud, textToHtml, toIso, tplHasEmail,
   type Channel, type Group, type ListKind, type Match, type Row, type Status, type Tag, type Template,
 } from '../../lib/data'
@@ -361,7 +361,8 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     applyTemplate(t: Template, quiet?: boolean) {
       const c = get().c, own = tplHasEmail(t)
       const sub = own ? t.email.subject || '' : (t.title || ''), body = own ? t.email.html || '' : textToHtml(t.content)
-      m.setC({ tplId: t.id, sender: t.sender || c.sender, title: t.title || '', content: t.content || '', dSender: t.sender || c.dSender, dTitle: t.title || '', dContent: t.content || '', smsText: t.sms || '', emailMode: own ? 'own' : 'same', ...seedEmail(c, sub, body) })
+      const d = tplDesk(t)
+      m.setC({ tplId: t.id, sender: t.sender || c.sender, title: t.title || '', content: t.content || '', dSender: d.sender || c.dSender, dTitle: d.title, dContent: d.content, smsText: t.sms || '', emailMode: own ? 'own' : 'same', ...seedEmail(c, sub, body) })
       set({ tp: null, cf: null })
       if (!quiet) flash(L('Template applied', '已套用模板'), 'ok')
     },
@@ -433,8 +434,9 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     saveTpl() {
       const s = get(), st = s.stpl!, name = st.name.trim(), c = s.c, templates = app().templates
       if (!name || name.length > LIM.name || templates.some(t => tplInSpace(t) && t.name.toLowerCase() === name.toLowerCase())) { set({ stpl: { ...st, tried: true } }); return }
-      const hasN = hasNotif(c), em = m.emailOut()
-      const t: Template = { id: 'tn' + (++seq), team: c.team, name, sender: (c.ch.push ? c.sender : c.dSender).trim(), title: hasN ? (c.ch.push ? c.title : c.dTitle).trim() : '', content: hasN ? (c.ch.push ? c.content : c.dContent).trim() : '', sms: smsOn(c) ? c.smsText.trim() : '', email: em && em.mode === 'own' ? { mode: 'own', subject: em.subject, html: em.html } : { mode: 'same' }, shared: [], updated: fmtDT(new Date()).slice(0, 10), owner: ME, fresh: Date.now() }
+      const em = m.emailOut()
+      // each channel keeps its own text (2026-11-23): Mobile notifications and Desktop notifications separately
+      const t: Template = { id: 'tn' + (++seq), team: c.team, name, sender: c.ch.push ? c.sender.trim() : '', title: c.ch.push ? c.title.trim() : '', content: c.ch.push ? c.content.trim() : '', dSender: c.ch.desktop ? c.dSender.trim() : '', dTitle: c.ch.desktop ? c.dTitle.trim() : '', dContent: c.ch.desktop ? c.dContent.trim() : '', sms: smsOn(c) ? c.smsText.trim() : '', email: em && em.mode === 'own' ? { mode: 'own', subject: em.subject, html: em.html } : { mode: 'same' }, shared: [], updated: fmtDT(new Date()).slice(0, 10), owner: ME, fresh: Date.now() }
       setApp({ templates: [t].concat(templates) })
       set({ stpl: null })
       m.setC({ tplId: t.id }, true)

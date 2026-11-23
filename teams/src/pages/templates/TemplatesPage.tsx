@@ -2,38 +2,40 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty,
-  Input, PersonDisplay, SegmentedControl, SegmentedControlItem, Tag, Textarea,
+  Input, Textarea,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Trunc } from '../../components/ui'
 import { ME_SPACE, spaceName, spaceTeam, tplInSpace } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
-  Check, CircleAlert, Copy, LayoutTemplate, Mail, MessageSquareText, Monitor, MoreVertical, Pencil, Plus,
-  Search, Send, Smartphone, Trash2, User,
+  Check, CircleAlert, Copy, LayoutTemplate, MoreVertical, Pencil, Plus,
+  Search, Send, Trash2,
 } from 'lucide-react'
 import {
-  LIM, ME, PEOPLE, smsMax, PMAP, cleanHtml, fmtDT, fmtN, htmlToText, textToHtml, tplFormats, tplHasEmail,
+  LIM, ME, PEOPLE, smsMax, PMAP, cleanHtml, fmtDT, fmtN, htmlToText, tplDesk, tplFormats, tplHasEmail,
   type Template,
 } from '../../lib/data'
 import { flash, getApp, go, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, CHN, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
+import { Banner, CHN, ConfirmDialog, FmtChips, FormatBlock, FormField, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RichText } from '../../components/RichText'
 import { L, P } from '../../lib/i18n'
 
 interface TEd {
   id: string | null; isNew: boolean; role: 'Owner' | 'Viewer'; name: string; sender: string; title: string; content: string; sms: string
-  emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
+  dSender: string; dTitle: string; dContent: string
+  subject: string; html: string; bodyText: string; htmlKey: number
   shared: [string, string][]; owner: string; team: string | null; updated: string; updater: string; sq: string; sOpen: boolean; tried: boolean; dirty: boolean
 }
 interface TS { view: 'list' | 'edit'; q: string; cf: Confirm | null; ed: TEd | null }
 
 function makeTplEd(t: Template | null, dup?: boolean): TEd {
   const base = { sq: '', sOpen: false, tried: false, dirty: false, htmlKey: Date.now() % 100000 }
-  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', emailMode: 'same', subject: '', html: '', bodyText: '', shared: [], owner: ME, team: spaceTeam(), updated: '', updater: ME }
-  const own = tplHasEmail(t), h = own ? t.email.html || '' : ''
-  const body = { sender: t.sender || '', title: t.title || '', content: t.content || '', sms: t.sms || '', emailMode: (own ? 'own' : 'same') as 'own' | 'same', subject: own ? t.email.subject || '' : '', html: h, bodyText: htmlToText(h) }
+  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', dSender: '', dTitle: '', dContent: '', subject: '', html: '', bodyText: '', shared: [], owner: ME, team: spaceTeam(), updated: '', updater: ME }
+  // each channel's own text, as New message step 2 has it (2026-11-23); Desktop shows the Mobile text until it has its own
+  const own = tplHasEmail(t), h = own ? t.email.html || '' : '', d = tplDesk(t)
+  const body = { sender: t.sender || '', title: t.title || '', content: t.content || '', sms: t.sms || '', dSender: d.sender, dTitle: d.title, dContent: d.content, subject: own ? t.email.subject || '' : '', html: h, bodyText: htmlToText(h) }
   if (dup) return { ...base, ...body, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + t.name).slice(0, LIM.name), shared: [], owner: ME, team: spaceTeam(), updated: '', updater: ME, dirty: true }
   return { ...base, ...body, id: t.id, isNew: false, role: 'Owner', name: t.name, shared: (t.shared || []).map(x => x.slice() as [string, string]), owner: t.owner, updater: t.updater || t.owner, team: t.team || null, updated: t.updated }
 }
@@ -76,38 +78,38 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
       if (!nm) e.name = L('Enter a name.', '請輸入名稱。')
       else if (ed.name.length > LIM.name) e.name = tooLong(LIM.name)
       else if (getApp().templates.some(t => t.id !== ed.id && t.name.toLowerCase() === nm.toLowerCase())) e.name = L('This name is taken.', '這個名稱已經有人用了。')
+      // a channel is filled in or left empty; filled in, it needs its title and content (as in New message step 2)
+      const pair = (t: string, c: string, kt: string, kc: string, nt: number, nc: number) => {
+        if (t.trim() && !c.trim()) e[kc] = L('Add content, or clear the title.', '請輸入內容，或清空標題。')
+        if (c.trim() && !t.trim()) e[kt] = L('Add a title, or clear the content.', '請輸入標題，或清空內容。')
+        if (t.length > nt) e[kt] = tooLong(nt)
+        if (c.length > nc) e[kc] = tooLong(nc)
+      }
       if (ed.sender.length > LIM.sender) e.sender = tooLong(LIM.sender)
-      const hasT = !!ed.title.trim(), hasC = !!ed.content.trim()
-      if (hasT && !hasC) e.content = L('Add text, or clear the title.', '請輸入內文，或清空標題。')
-      if (hasC && !hasT) e.title = L('Add a title, or clear the text.', '請輸入標題，或清空內文。')
-      if (ed.title.length > LIM.title) e.title = tooLong(LIM.title)
-      if (ed.content.length > LIM.push) e.content = tooLong(LIM.push)
+      if (ed.dSender.length > LIM.sender) e.dsender = tooLong(LIM.sender)
+      pair(ed.title, ed.content, 'title', 'content', LIM.title, LIM.push)
+      pair(ed.dTitle, ed.dContent, 'dtitle', 'dcontent', LIM.dTitle, LIM.desktop)
       if (ed.sms.length > smsMax(ed.sms)) e.sms = tooLong(smsMax(ed.sms))
-      if (ed.emailMode === 'own') {
+      const hasMail = !!(ed.subject.trim() || ed.bodyText.trim())
+      if (hasMail) {
         if (!ed.subject.trim()) e.subject = L('Enter a subject.', '請輸入主旨。')
         else if (ed.subject.length > LIM.subject) e.subject = tooLong(LIM.subject)
-        if (!ed.bodyText.trim()) e.body = L('Write the email.', '請輸入 Email 內文。')
+        if (!ed.bodyText.trim()) e.body = L('Write the email.', '請輸入 Email 內容。')
         else if (ed.bodyText.trim().length > LIM.body) e.body = tooLong(LIM.body)
       }
-      if (!hasT && !hasC && ed.emailMode !== 'own') e.formats = L('Add notification text, an email, or both.', '請至少填寫通知或 Email 其中一種。')
+      if (!ed.title.trim() && !ed.content.trim() && !ed.dTitle.trim() && !ed.dContent.trim() && !ed.sms.trim() && !hasMail) e.formats = L('Fill in at least one channel.', '請至少填寫一個通道。')
       return e
     },
     saveTpl() {
       const ed = get().ed!, e = m.errs()
       if (Object.keys(e).length) { m.setEd({ tried: true }, true); flash(L('Fix the highlighted fields', '請修正標示的欄位'), 'err'); return }
-      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updater: ME, updated: fmtDT(new Date()), fresh: Date.now() }
+      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), dSender: ed.dSender.trim(), dTitle: ed.dTitle.trim(), dContent: ed.dContent.trim(), email: ed.subject.trim() || ed.bodyText.trim() ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updater: ME, updated: fmtDT(new Date()), fresh: Date.now() }
       if (ed.id) setApp(a => ({ templates: a.templates.map(t => t.id === ed.id ? { ...t, ...patch } : t) }))
       else setApp(a => ({ templates: [{ id: 'tt' + (++seq), owner: ME, ...patch } as Template].concat(a.templates) }))
       set({ view: 'list', ed: null, q: '' })
       flash(ed.id ? L('Changes saved', '已儲存變更') : L('Template created', '已建立模板'), 'ok')
       scrollTop()
     },
-    setEmailMode(mode: 'same' | 'own') {
-      const ed = get().ed!, p: Partial<TEd> = { emailMode: mode }
-      if (mode === 'own' && !ed.bodyText.trim() && !ed.subject.trim()) { const h = textToHtml(ed.content); Object.assign(p, { subject: ed.title, html: h, bodyText: htmlToText(h), htmlKey: ed.htmlKey + 1 }) }
-      m.setEd(p)
-    },
-    insertPh(tok: string) { const c = get().ed!.content; m.setEd({ content: c + (c && !/\s$/.test(c) ? ' ' : '') + tok }) },
   }
   return m
 }
@@ -162,19 +164,11 @@ function TplList({ m }: { m: TCtl }) {
   )
 }
 
-function Block({ icon, title, right, children, tone }: { icon: typeof Mail; title: string; right?: React.ReactNode; children: React.ReactNode; tone?: 'warn' }) {
-  return (
-    <div className="flex flex-col gap-[var(--layout-space-tight)]">
-      <div className="flex flex-wrap items-center justify-between gap-2"><span className="flex items-center gap-2 text-body font-semibold"><IconBox icon={icon} tone={tone || 'info'} />{title}</span>{right}</div>
-      {children}
-    </div>
-  )
-}
 
 function TplEditor({ m }: { m: TCtl }) {
   const app = useApp(), ed = m.s.ed!, ro = ed.role === 'Viewer', ow = PMAP[ed.owner] || PEOPLE[0], e = m.errs()
   const show = (k: string) => (e[k] && (ed.tried || /up to|Another/.test(e[k]))) ? e[k] : ''
-  const saved = ed.id ? app.templates.find(t => t.id === ed.id) || null : null, mode = ed.emailMode, bodyN = ed.bodyText.trim().length
+  const saved = ed.id ? app.templates.find(t => t.id === ed.id) || null : null
   const title = ed.name.trim() || (ed.isNew ? L('New template', '新模板') : L('Untitled template', '未命名模板'))
   return (
     <div className="flex min-h-full flex-col">
@@ -184,42 +178,46 @@ function TplEditor({ m }: { m: TCtl }) {
         <FormField id="t-name" label={L('Template name', '模板名稱')} required count={ed.name.length + ' / ' + LIM.name} over={ed.name.length > LIM.name} error={show('name')}>
           <Input id="t-name" disabled={ro} value={ed.name} error={!!show('name')} onChange={ev => m.setEd({ name: ev.target.value })} placeholder={L('e.g. Chiller maintenance notice', '例如：冰水機維修通知')} />
         </FormField>
+        {/* the content as in New message step 2 (2026-11-23): one card per channel, same order, fields and hints;
+            in a template every channel is optional (fill in the ones it's for) */}
         <Section title={L('Content', '內容')} sub={L('Fill in the channels you need. Only the text is saved.', '填寫需要的通道就好，模板只存文字。')}>
-          <div className="flex flex-col gap-[var(--layout-space-loose)]">
+          <div className="flex flex-col gap-[calc(var(--layout-space-loose)*2)]">
             {ed.tried && e.formats ? <Banner tone="error">{e.formats}</Banner> : null}
-            <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Mobile notifications', 'Mobile notifications')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop notifications', '桌面通知')}</Tag></span>}>
-              <FormField id="t-sender" label={L('Sender', '寄件人')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Needed when sending to Mobile notifications; optional for Desktop notifications.', '發 Mobile notifications 時必填；桌面通知可不填。')} error={show('sender')}>
-                <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
+            <FormatBlock title={CHN.push.name} icon={CHN.push.icon}>
+              <FormField id="t-sender" label={L('Sender', '寄件人')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={<><span className="font-medium text-foreground">{L('English only.', '只能輸入英文。')}</span>{L(' Recipients see this name as the notification source in the Mobile notifications app (PNS).', '收件人會在 Mobile notifications App（PNS）看到這個名稱作為通知來源。')}</>} error={show('sender')}>
+                <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('e.g. ESH Emergency', '例如：ESH Emergency')} />
               </FormField>
               <FormField id="t-title" label={L('Title', '標題')} count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>
-                <Input id="t-title" disabled={ro} value={ed.title} error={!!show('title')} onChange={ev => m.setEd({ title: ev.target.value })} placeholder={L('e.g. Fire drill at [time] today', '例如：今天 [time] 消防演習')} />
+                <Input id="t-title" disabled={ro} value={ed.title} error={!!show('title')} onChange={ev => m.setEd({ title: ev.target.value })} />
               </FormField>
-              <FormField id="t-content" label={L('Text', '內文')} count={fmtN(ed.content.length) + ' / ' + LIM.push} over={ed.content.length > LIM.push} hint={L('Desktop shows about 120 characters. Put the action first.', '桌面通知只顯示約 60 個中文字，重點放前面。')} error={show('content')}>
-                <Textarea id="t-content" rows={4} disabled={ro} value={ed.content} error={!!show('content')} onChange={ev => m.setEd({ content: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
+              <FormField id="t-content" label={L('Content', '內容')} count={fmtN(ed.content.length) + ' / ' + LIM.push} over={ed.content.length > LIM.push} error={show('content')}>
+                <Textarea id="t-content" rows={4} disabled={ro} value={ed.content} error={!!show('content')} onChange={ev => m.setEd({ content: ev.target.value })} />
               </FormField>
-            </Block>
-            <Block icon={CHN.sms.icon} tone="warn" title={L('Mobile notifications (SMS)', 'Mobile notifications（SMS）')} right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
+            </FormatBlock>
+            <FormatBlock title="SMS" icon={CHN.sms.icon} desc={L('Sent as a backup via SMS only if the push notification can’t be sent.', '只有推播未送出時，才會用 SMS 補送。')}>
               <FormField id="t-sms" label={L('SMS content', 'SMS 內容')} count={ed.sms.length + ' / ' + smsMax(ed.sms)} over={ed.sms.length > smsMax(ed.sms)} hint={L('Up to 534 half-width characters, or 267 if any character is full-width.', '半形最多 534 字；只要有任一個全形字元，最多 267 字。')} error={show('sms')}>
-                <Textarea id="t-sms" rows={2} disabled={ro} value={ed.sms} error={!!show('sms')} onChange={ev => m.setEd({ sms: ev.target.value })} placeholder={L('Short version for SMS fallback', 'SMS 備援用的簡短版本')} />
+                <Textarea id="t-sms" rows={2} disabled={ro} value={ed.sms} error={!!show('sms')} onChange={ev => m.setEd({ sms: ev.target.value })} />
               </FormField>
-            </Block>
-            <Block icon={Mail} title="Email" right={ro ? <Tag size="sm">{mode === 'own' ? L('Separate email', '另寫 Email') : L('Same as notification', '同通知內容')}</Tag> : (
-              <SegmentedControl size="sm" value={mode} onValueChange={v => v && m.setEmailMode(v as 'same' | 'own')} aria-label="Email">
-                <SegmentedControlItem value="same">{L('Same as notification', '同通知內容')}</SegmentedControlItem>
-                <SegmentedControlItem value="own">{L('Separate email', '另寫 Email')}</SegmentedControlItem>
-              </SegmentedControl>
-            )}>
-              {mode === 'same' ? <div className="border-l-2 border-divider pl-3 text-body text-fg-secondary">{L('Sends the notification as plain text.', '用通知內容寄出純文字 Email。')}</div> : (
-                <>
-                  <FormField id="t-subject" label={L('Subject', '主旨')} required count={ed.subject.length + ' / ' + LIM.subject} over={ed.subject.length > LIM.subject} error={show('subject')}>
-                    <Input id="t-subject" disabled={ro} value={ed.subject} error={!!show('subject')} onChange={ev => m.setEd({ subject: ev.target.value })} placeholder={L('Email subject', 'Email 主旨')} />
-                  </FormField>
-                  <FormField id="t-body" label={L('Email text', 'Email 內文')} required count={fmtN(bodyN) + ' / ' + fmtN(LIM.body)} over={bodyN > LIM.body} hint={L('Attachments are added when sending.', '附件在發送時再加入。')} error={show('body')}>
-                    <RichText id="t-body" seedKey={'trte-' + ed.htmlKey} html={ed.html} label={L('Email text', 'Email 內文')} readOnly={ro} error={!!show('body')} placeholder={L('Write the email…', '輸入 Email 內文…')} onInput={(h, t) => m.setEd({ html: h, bodyText: t.trim() ? t : '' })} />
-                  </FormField>
-                </>
-              )}
-            </Block>
+            </FormatBlock>
+            <FormatBlock title={CHN.desktop.name} icon={CHN.desktop.icon}>
+              <FormField id="t-dsender" label={L('Sender (Optional)', '寄件人（選填）')} count={ed.dSender.length + ' / ' + LIM.sender} over={ed.dSender.length > LIM.sender} error={show('dsender')}>
+                <Input id="t-dsender" disabled={ro} value={ed.dSender} error={!!show('dsender')} onChange={ev => m.setEd({ dSender: ev.target.value })} />
+              </FormField>
+              <FormField id="t-dtitle" label={L('Title', '標題')} count={ed.dTitle.length + ' / ' + LIM.dTitle} over={ed.dTitle.length > LIM.dTitle} error={show('dtitle')}>
+                <Input id="t-dtitle" disabled={ro} value={ed.dTitle} error={!!show('dtitle')} onChange={ev => m.setEd({ dTitle: ev.target.value })} />
+              </FormField>
+              <FormField id="t-dcontent" label={L('Content', '內容')} count={fmtN(ed.dContent.length) + ' / ' + LIM.desktop} over={ed.dContent.length > LIM.desktop} hint={L('Supports Chinese, English, and numbers only.', '僅支援中文、英文、數字。')} error={show('dcontent')}>
+                <Textarea id="t-dcontent" rows={3} disabled={ro} value={ed.dContent} error={!!show('dcontent')} onChange={ev => m.setEd({ dContent: ev.target.value })} />
+              </FormField>
+            </FormatBlock>
+            <FormatBlock title="Email" icon={CHN.email.icon}>
+              <FormField id="t-subject" label={L('Subject', '主旨')} count={ed.subject.length + ' / ' + LIM.subject} over={ed.subject.length > LIM.subject} error={show('subject')}>
+                <Input id="t-subject" disabled={ro} value={ed.subject} error={!!show('subject')} onChange={ev => m.setEd({ subject: ev.target.value })} />
+              </FormField>
+              <FormField id="t-body" label={L('Content', '內容')} hint={L('Supports text, tables, and images.', '支援文字、表格、圖片。')} error={show('body')}>
+                <RichText id="t-body" seedKey={'trte-' + ed.htmlKey} html={ed.html} label={L('Content', '內容')} readOnly={ro} error={!!show('body')} onInput={(h, t) => m.setEd({ html: h, bodyText: t.trim() ? t : '' })} />
+              </FormField>
+            </FormatBlock>
           </div>
         </Section>
       </div>
