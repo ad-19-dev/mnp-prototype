@@ -63,7 +63,7 @@ export default function TagWhy() {
 
         <Section eyebrow="Summary" title="貼上就辨識，打字不動順序" lead="貼上的一批一進來就送後端辨識，查完紅的集中到最後；手動打的留在原位，按 Proceed 才嚴格驗證。只要有紅色，Proceed 就停用。">
           <SpecTable head={['時機', '做什麼', '說明文字']} nowrap={[0]} rows={[
-            ['貼上一批', '格式錯的馬上變紅；其他的變淡、一批批換成結果；查完，紅的（含之前的）集中到最後', 'Checking 6 of 24… → 22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
+            ['貼上一批', '格式錯的馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑進度；全部查完才一起換成結果，紅的（含之前的）集中到最後', 'Checking 6 of 24… → 22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
             ['打字時選了推薦', '已經確定，原位變成人名', '23 valid'],
             ['打字沒選推薦', '原位保持輸入的值（灰色）；格式錯，或 NT 帳號、工號、Org ID 不在推薦清單裡，原位變紅', '23 valid, 1 not checked yet'],
             ['有紅色時', 'Proceed 停用（一定要先改完）', 'Fix or remove invalid to proceed. Remove invalid'],
@@ -73,12 +73,13 @@ export default function TagWhy() {
 
         <Section eyebrow="Paste" title="貼上：一進來就辨識，紅的集中到最後">
           <Shots items={[
-            ['e-paste', '辨識中', 'cm.chen 格式錯，馬上變紅；其他的先變淡、不能點，一批一批換成結果；有紅色，Proceed 停用'],
-            ['e-checked', '辨識完', '有效的換成姓名，紅的集中到最後、緊接輸入框；欄位紅框'],
+            ['e-paste', '辨識中', 'cm.chen 格式錯，馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑 Checking 進度；有紅色，Proceed 停用'],
+            ['e-checked', '辨識完', '全部查完才一起換：有效的換成姓名，紅的集中到最後、緊接輸入框；欄位紅框'],
           ]} />
           <Notes cols items={[
             { title: '依據', body: '貼上的通常是一大串，錯的散在各處很難找；查完一次集中，名單再長也一眼找到。移動只發生在貼上那一刻，使用者還沒開始看個別的標籤。' },
             { title: '為什麼一進來就辨識', body: '幾千筆的等待從貼上就開始，和使用者看名單的時間重疊。' },
+            { title: '為什麼查完才一起換', body: '一批一批換，標籤長度一直變，整片名單會跳動；查的時候只有進度在動，查完一次換好、一次集中。' },
           ]} />
           <Alt text="紅色排最前面：要捲回最上面才看得到，順序也對不回原始清單。" shots={[['alt-redfirst', '紅色排最前面（原型目前的做法）']]} />
         </Section>
@@ -217,7 +218,7 @@ export default function TagWhy() {
 
         <Section eyebrow="Copy" title="文字">
           <SpecTable head={['項目', '內容', '依據']} nowrap={[0]} rows={[
-            ['辨識中、驗證中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）；打字時查幾筆不顯示'],
+            ['辨識中、驗證中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）；查的時候只有它在動，標籤查完才一起換'],
             ['有灰色的', '{n} valid, {k} not checked yet', '只有灰色時：{k} entries'],
             ['有紅色的', '{n} valid, {m} invalid. Fix or remove invalid to proceed. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框，Proceed 停用'],
             ['按鈕', 'Proceed', '從頭到尾同一個名字；按了是驗證灰色的、或回到收件人欄位，不是寄出；驗證時轉圈等待'],

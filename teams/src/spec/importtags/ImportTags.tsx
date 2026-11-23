@@ -172,7 +172,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const [mustFix, setMustFix] = React.useState(true)   // 2026-11-23: fix first is the default
   // E: the order after the last check: the invalid ones moved to the end (2026-11-23); entries added since go after it
   const [eOrder, setEOrder] = React.useState<number[]>([])   // E: may invalid entries be left out, or must they be fixed first
-  const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), ran = React.useRef(false), gatherAfter = React.useRef(false), itemsRef = React.useRef<Item[]>([])
+  const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), runIds = React.useRef(new Set<number>()), ran = React.useRef(false), gatherAfter = React.useRef(false), itemsRef = React.useRef<Item[]>([])
   // E: asked = Proceed was pressed and its result is shown (the invalid ones gathered at the end), until new entries come in;
   // waiting = Proceed was pressed while entries are still being identified; tick reruns the end of a check
   const [asked, setAsked] = React.useState(false), [waiting, setWaiting] = React.useState(false), [tick, setTick] = React.useState(0)
@@ -215,7 +215,10 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     : mode === 'E' ? eOrder.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => eOrder.indexOf(h.id) < 0))
     : mode === 'D' ? (only ? hits.filter(h => only.indexOf(h.id) >= 0) : hits)
     : seq.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => seq.indexOf(h.id) < 0))
-  const isPending = (h: Hit) => pendingIds.indexOf(h.id) >= 0, checking = hits.some(isPending)
+  // E (2026-11-23): what one run sends (a pasted batch, or the gray ones on Proceed) keeps what was entered, faded, until the
+  // whole run is done, then all of it turns into its results at once (no batch-by-batch jumping); only the progress moves
+  const pendingNow = (h: Hit) => pendingIds.indexOf(h.id) >= 0, checking = hits.some(pendingNow)
+  const isPending = (h: Hit) => pendingNow(h) || (E && checking && runIds.current.has(h.id))
   itemsRef.current = items
   const E = mode === 'E', fmtBad = (h: Hit) => E && !!fmtErr(kind, h.v), isChecked = (h: Hit) => !E || checked[h.id] === h.v
   const bad = hits.filter(h => fmtBad(h) || (h.why && !isPending(h) && isChecked(h))), good = hits.filter(h => h.ok && !isPending(h) && !fmtBad(h) && isChecked(h))
@@ -235,7 +238,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
       // employee ID or Org ID the dropdown didn't find (the dropdown's answer came back and has no exact match), which is red at once
       if (add.length > 1) {
         const q = hitsOf(all).filter(h => add.some(x => x.id === h.id) && !fmtErr(kind, h.v)).map(h => h.id)
-        if (q.length) { runN.current = (pendingIds.length ? runN.current : 0) + q.length; setPendingIds(x => x.concat(q)) }
+        if (q.length) { if (!pendingIds.length) runIds.current = new Set(); q.forEach(id => runIds.current.add(id)); runN.current = (pendingIds.length ? runN.current : 0) + q.length; setPendingIds(x => x.concat(q)) }
         gatherAfter.current = true; setTick(t => t + 1)
       } else if (!pin && notInDropdown(add[0].v)) setChecked(c => ({ ...c, [add[0].id]: add[0].v }))
     }
@@ -321,7 +324,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     if (!ran.current) return
     // Proceed: the gray ones get the strict check first (not while something is red in "fix first")
     if (unchecked.length && (!bad.length || !mustFix)) {
-      const q = unchecked.map(h => h.id); runN.current = q.length; setPendingIds(q); return
+      const q = unchecked.map(h => h.id); runIds.current = new Set(q); runN.current = q.length; setPendingIds(q); return
     }
     ran.current = false; gatherAfter.current = false; setWaiting(false)
     if (!bad.length && !unchecked.length) { setProceeded('示範：全部有效，加入 ' + n + ' 筆，關閉對話框'); return }
@@ -469,8 +472,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const hintNode = (!hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
-            : E && !(checking && (runN.current > step || waiting)) ? EHint()
-            : (mode === 'D' || E) && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {(E ? runN.current : hits.length) - hits.filter(isPending).length} of {E ? runN.current : hits.length}…</span>
+            : E && !checking ? EHint()
+            : (mode === 'D' || E) && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {(E ? runN.current : hits.length) - hits.filter(pendingNow).length} of {E ? runN.current : hits.length}…</span>
             : mode === 'D' || E ? <DHint parts={[
                 only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
                   : E && !hasChecked ? <>{hits.length} {hits.length === 1 ? 'entry' : 'entries'}</> : <>{n} valid</>,
@@ -633,7 +636,7 @@ export default function ImportTags() {
         <Section eyebrow="E" title="E：貼上就辨識，打字不動順序，有紅色就不能往下（建議，11/23）" lead="從 D 改良（11/23 第三版）。貼上的一批一進來就送後端辨識，查完紅的集中到最後；手動打的留在原位：選了推薦是人名，沒選就保持輸入的值（灰色），按 Proceed 才嚴格驗證。只要有紅色，Proceed 就停用。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但查無此人。">
           <div className="max-w-[880px]"><Demo mode="E" show={show} /></div>
           <SpecTable head={['時機', '做什麼', '畫面']} nowrap={[0]} rows={[
-            ['貼上一批（兩筆以上）', '格式在瀏覽器裡馬上查；格式對的送後端辨識，一批批回來', '格式錯的馬上變紅；其他的變淡、不能點，查完在原位換成結果，查不到的變紅。筆數多時說明文字寫 Checking x of y…。查完，所有紅的（含之前的）集中到最後、緊接輸入框'],
+            ['貼上一批（兩筆以上）', '格式在瀏覽器裡馬上查；格式對的送後端辨識，全部查完才一起顯示結果（11/23，避免一批批換造成跳動）', '格式錯的馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑 Checking 進度；全部查完才一起在原位換成結果，查不到的變紅。查完，所有紅的（含之前的）集中到最後、緊接輸入框'],
             ['打字時選了推薦', '已經確定（選單是後端查的）', '原位變成驗證後的樣子（NT 帳號、工號是人名）'],
             ['打字沒選推薦（逗號、Enter、離開輸入框）', '不送後端、不移動', '保持輸入的值（灰色）；格式錯，或 NT 帳號、工號、Org ID 在推薦清單裡沒有完全相同的，原位變紅。推薦清單沒有回應時不判紅'],
             ['有紅色', 'Proceed 停用（一定要先改完）', '22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid（紅字，Remove invalid 是藍色連結），欄位紅框'],
