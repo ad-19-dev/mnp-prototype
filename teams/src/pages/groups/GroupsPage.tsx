@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, CHN, ConfirmDialog, ErrText, FormField, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
+import { Banner, CHN, ConfirmDialog, ErrText, FormField, PAvatar, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RecvInput, riKey, type RiItem, type RiState } from '../../components/RecvInput'
 import { AudTable } from '../messages/DetailModal'
@@ -141,7 +141,7 @@ function GroupList({ m }: { m: GCtl }) {
     ) }),
     gcol.accessor('count', { header: L('Audience', '人數'), meta: { width: 96 }, cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
     // who changed it last and when (2026-11-23)
-    gcol.accessor('updated', { header: L('Last update', '最後更新'), meta: { width: 300 }, cell: i => { const x = i.row.original, p = PMAP[x.updater || x.creator] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PersonDisplay value={personVal(p)} /><span className="shrink-0 text-caption tabular-nums text-fg-secondary">{x.updated}</span></span> } }),
+    gcol.accessor('updated', { header: L('Last update', '最後更新'), meta: { width: 200 }, cell: i => { const x = i.row.original, p = PMAP[x.updater || x.creator] || PEOPLE[0]; return <Two a={pname(p)} b={<span className="tabular-nums">{x.updated}</span>} /> } }),  // the name, then the date and time, no avatar (2026-11-23)
     // the personal space holds only your own groups, so Created by appears in team spaces only
     ...(app.space === ME_SPACE ? [] : [gcol.accessor(g => personVal(PMAP[g.creator] || PEOPLE[0]), { id: 'creator', header: L('Creator', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.space])

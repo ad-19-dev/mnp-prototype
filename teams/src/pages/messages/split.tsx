@@ -17,7 +17,7 @@ import {
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
-import { Banner, CHN, ChIcons, FilterMenu, personVal, NO_HIDE, PAvatar, PageSize, StatusTag, statusLabel, Tip, Trunc, Two } from '../../components/ui'
+import { Banner, CHN, ChIcons, FilterMenu, personVal, pname, NO_HIDE, PAvatar, PageSize, StatusTag, statusLabel, Tip, Trunc, Two } from '../../components/ui'
 import { ShellAside } from '../../components/shell'
 import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
@@ -186,7 +186,7 @@ function sortRecs(list: Rec[], sorting: SortingState, m: SendCtl) {
   const s = sorting[0]
   if (!s) return list
   const key = (x: Rec): string | number => s.id === 'sender' ? recSender(x.r, x.k).toLowerCase() : s.id === 'tpl' ? m.tplName(x.r.tpl).toLowerCase() : s.id === 'aud' ? x.of
-    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'updater' ? (PMAP[x.r.updater || x.r.creator]?.en || '') : s.id === 'created' ? x.r.created : s.id === 'sched' ? (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created : ''
+    : s.id === 'creator' ? (PMAP[x.r.creator]?.en || '') : s.id === 'updater' ? (x.r.updatedAt || x.r.created) : s.id === 'created' ? x.r.created : s.id === 'sched' ? (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created : ''
   const out = list.slice().sort((a, b) => { const p = key(a), q = key(b); return p < q ? -1 : p > q ? 1 : 0 })
   return s.desc ? out.reverse() : out
 }
@@ -296,10 +296,12 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
     col.accessor(x => x.r.created, { id: 'created', header: L('Created', '建立時間'), meta: { width: 116, maxWidth: 124 }, cell: i => { if (!shared(i.row.original)) return null; const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
     // send now goes out at its created time, so it never shows a dash here
     col.accessor(x => (x.r.chSched && x.r.chSched[x.k === 'sms' ? 'push' : x.k]) || x.r.sched || x.r.created, { id: 'sched', header: L('Send time', '傳送時間'), meta: { width: 116, maxWidth: 124 }, cell: i => { if (!shared(i.row.original)) return null; const v = i.getValue(); const p = v.split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    // who changed this channel's record last and when (2026-11-19 Last updater; 2026-11-23 Last update: the name, then the date
+    // and time, no avatar, after Send time); on every row, since each channel is edited on its own
+    ...(app.space === 'me' ? [] : [col.accessor(x => x.r.updatedAt || x.r.created, { id: 'updater', header: L('Last update', '最後更新'), meta: { width: 180, maxWidth: 200 }, cell: i => { const r = i.row.original.r; return <Two a={pname(PMAP[r.updater || r.creator] || PEOPLE[0])} b={<span className="tabular-nums">{i.getValue()}</span>} /> } })]),
     ...(app.space === 'me' ? [] : [// the DS person display, but blank (not the DS's own dash) on the message's other rows
       col.accessor(x => (shared(x) ? personVal(PMAP[x.r.creator] || PEOPLE[0]) : null), { id: 'creator', header: L('Creator', '建立者'), meta: { width: 200, maxWidth: 220 }, cell: i => i.getValue() ? <PersonDisplay value={i.getValue()} /> : null }),
-      // who changed this channel's record last (2026-11-19); on every row, since each channel is edited on its own
-      col.accessor(x => personVal(PMAP[x.r.updater || x.r.creator] || PEOPLE[0]), { id: 'updater', header: L('Last updater', '最後更新者'), meta: { width: 200, maxWidth: 220 }, cell: i => <PersonDisplay value={i.getValue()} /> })]),
+]),
   ], [m, app.lang, app.teams, app.space, group, hdrs, s.det])
 
   // first use (nothing in this space yet): a page-level empty state, no search, filters or table frame

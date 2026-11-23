@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, go, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, CHN, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, personVal, type Confirm } from '../../components/ui'
+import { Banner, CHN, ConfirmDialog, FmtChips, FormField, IconBox, PAvatar, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RichText } from '../../components/RichText'
 import { L, P } from '../../lib/i18n'
@@ -95,7 +95,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
     saveTpl() {
       const ed = get().ed!, e = m.errs()
       if (Object.keys(e).length) { m.setEd({ tried: true }, true); flash(L('Fix the highlighted fields', '請修正標示的欄位'), 'err'); return }
-      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updater: ME, updated: fmtDT(new Date()).slice(0, 10), fresh: Date.now() }
+      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updater: ME, updated: fmtDT(new Date()), fresh: Date.now() }
       if (ed.id) setApp(a => ({ templates: a.templates.map(t => t.id === ed.id ? { ...t, ...patch } : t) }))
       else setApp(a => ({ templates: [{ id: 'tt' + (++seq), owner: ME, ...patch } as Template].concat(a.templates) }))
       set({ view: 'list', ed: null, q: '' })
@@ -141,7 +141,7 @@ function TplList({ m }: { m: TCtl }) {
     tcol.display({ id: 'fmt', header: L('Channels', '通道'), meta: { width: 140 }, cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
     // who changed it last and when (2026-11-23)
-    tcol.accessor('updated', { header: L('Last update', '最後更新'), meta: { width: 280 }, cell: i => { const x = i.row.original, p = PMAP[x.updater || x.owner] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PersonDisplay value={personVal(p)} /><span className="shrink-0 text-caption tabular-nums text-fg-secondary">{x.updated}</span></span> } }),
+    tcol.accessor('updated', { header: L('Last update', '最後更新'), meta: { width: 200 }, cell: i => { const x = i.row.original, p = PMAP[x.updater || x.owner] || PEOPLE[0]; return <Two a={pname(p)} b={<span className="tabular-nums">{x.updated}</span>} /> } }),  // the name, then the date and time, no avatar (2026-11-23)
     // the personal space holds only your own templates, so Created by appears in team spaces only
     ...(app.space === ME_SPACE ? [] : [tcol.accessor(t => personVal(PMAP[t.owner] || PEOPLE[0], t.owner === ME), { id: 'owner', header: L('Creator', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.space])

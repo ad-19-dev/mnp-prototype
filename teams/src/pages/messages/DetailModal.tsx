@@ -24,7 +24,7 @@ import {
 import { SENDER_ERR, SENDER_RE, SMS_ERR } from '../../lib/compose'
 import { flash, patchRow, useApp } from '../../lib/store'
 import { L, niceDT } from '../../lib/i18n'
-import { CHN, ErrText, FormField, NO_HIDE, StatusTag, personVal } from '../../components/ui'
+import { CHN, ErrText, FormField, NO_HIDE, StatusTag, Two, personVal, pname } from '../../components/ui'
 import { MailHtml, RichText } from '../../components/RichText'
 import { RecvInput, riKey, type RiState } from '../../components/RecvInput'
 import { H3 } from './Detail'
@@ -141,7 +141,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   const discard = () => { setV(init.v); setTags(init.tags); setPh(initPh); setTried(false); setSeed(n => n + 1) }
   // what was edited, as a patch to the record
   const patchOf = (): Partial<Row> => {
-      const p: Partial<Row> = { fresh: Date.now(), updater: ME }
+      const p: Partial<Row> = { fresh: Date.now(), updater: ME, updatedAt: fmtDT(new Date()) }
       if (k === 'push' || k === 'sms') { p.sender = v.sender.trim(); p.content = v.content.trim(); p.title = v.pTitle.trim(); if (k === 'sms') p.smsText = v.sms.trim() }
       if (k === 'desktop') { const nd = { sender: v.sender.trim(), title: v.dTitle.trim(), content: v.content.trim() }; if (r.channels.indexOf('push') >= 0) p.desk = nd; else { p.sender = nd.sender; p.title = nd.title; p.content = nd.content } }
       if (k === 'email') p.email = { mode: 'own', subject: v.subject.trim(), html: cleanHtml(v.html), atts: (r.email && r.email.atts) || [] }
@@ -355,7 +355,8 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
       <DescriptionItem label={L('Created', '建立時間')}><span className="tabular-nums">{r.created}</span></DescriptionItem>
       <DescriptionItem label={L('Send time', '傳送時間')}>{time || <span className="tabular-nums">{curTime(r, k)}</span>}</DescriptionItem>
       <DescriptionItem label={L('Creator', '建立者')}><PersonDisplay value={personVal(creator)} /></DescriptionItem>
-      <DescriptionItem label={L('Last updater', '最後更新者')}><PersonDisplay value={personVal(PMAP[r.updater || r.creator] || creator)} /></DescriptionItem>
+      {/* who changed it last and when (2026-11-23, was Last updater): the name, then the date and time, no avatar */}
+      <DescriptionItem label={L('Last update', '最後更新')}><Two a={pname(PMAP[r.updater || r.creator] || creator)} b={<span className="tabular-nums">{r.updatedAt || r.created}</span>} /></DescriptionItem>
     </DescriptionList>
   )
 }
