@@ -169,6 +169,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const mid = slow ? 'S' : mode   // ids on the page: the slow demo is a second D
   const [pendingIds, setPendingIds] = React.useState<number[]>([]), [proceeded, setProceeded] = React.useState('')
   // E: what the server has checked, by entry: the value it checked (an edit makes it unchecked again)
+  const [cleared, setCleared] = React.useState<{ items: Item[]; checked: Record<number, string>; n: number } | null>(null)
   const [mustFix, setMustFix] = React.useState(false)   // E: may invalid entries be left out, or must they be fixed first
   const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), ran = React.useRef(false), itemsRef = React.useRef<Item[]>([])
   const step = mode === 'E' ? 6 : SLOW_STEP, ms = mode === 'E' ? 450 : SLOW_MS
@@ -221,7 +222,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setDraft('')
     if (!l.length) return
     const add = l.map(v => ({ id: nextId.current++, v, pin })), all = itemsRef.current.concat(add)
-    setItems(all); itemsRef.current = all
+    setItems(all); itemsRef.current = all; setCleared(null)
     setOnly(null); setProceeded('')
     if (slow) setPendingIds(l => l.concat(add.map(x => x.id)))
     if (mode === 'D' || E) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
@@ -410,17 +411,11 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const [ehi, setEhi] = React.useState(0)
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
-  return (
-    <div className="flex flex-col gap-2" data-demo={mid}>
-      <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
-        <div className="flex flex-wrap items-end gap-2">
-          {/* changing the data type clears the list (the entries can't be looked up as another type): asked first when the
-              list isn't empty (2026-11-19) */}
-          <div className="w-56"><ListKindField id={'k-' + mid} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
-          {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
-        </div>
-        <FormField id={'t-' + mid} label="List" hint={
-          !hits.length ? 'Separate with commas or new lines.'
+  // E: one click clears the list (2026-11-23), with Undo in the same line until something else is entered
+  const clearAll = () => { setCleared({ items, checked, n: hits.length }); setItems([]); setPendingIds([]); setChecked({}); setOnly(null); setEdit(null); setProceeded('') }
+  const hintNode = E && !hits.length && cleared && cleared.items.length
+    ? <span className="inline-flex items-center gap-1">{cleared.n} {cleared.n === 1 ? 'entry' : 'entries'} cleared ·<Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => { setItems(cleared.items); itemsRef.current = cleared.items; setChecked(cleared.checked); setCleared(null) }}>Undo</Button></span>
+    : (!hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
             : (mode === 'D' || E) && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {(E ? runN.current : hits.length) - hits.filter(isPending).length} of {E ? runN.current : hits.length}…</span>
@@ -435,7 +430,17 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
                 !only && hasChecked && unchecked.length ? <>{unchecked.length} not checked yet</> : null,
                 only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
               ]} />
-            : n + ' valid audiences. Click a tag to edit it.'}>
+            : n + ' valid audiences. Click a tag to edit it.')
+  return (
+    <div className="flex flex-col gap-2" data-demo={mid}>
+      <div className="flex flex-col gap-[var(--layout-space-tight)] rounded-lg border border-divider bg-surface p-[var(--layout-space-loose)]">
+        <div className="flex flex-wrap items-end gap-2">
+          {/* changing the data type clears the list (the entries can't be looked up as another type): asked first when the
+              list isn't empty (2026-11-19) */}
+          <div className="w-56"><ListKindField id={'k-' + mid} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
+          {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
+        </div>
+        <FormField id={'t-' + mid} label="List" hint={E ? <span className="flex w-full items-start gap-2"><span className="min-w-0 flex-1">{hintNode}</span>{items.length ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0" onClick={clearAll}>Clear all</Button> : null}</span> : hintNode}>
           <div ref={boxRef} className={cn('flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
             kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
             onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
