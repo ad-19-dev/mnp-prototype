@@ -151,10 +151,10 @@ const MORE: Record<string, string> = {
 // a few at a time turn into their results (top first), the hint says "Checking x of y…", and Proceed waits for it.
 const SLOW_STEP = 3, SLOW_MS = 700
 
-// E (2026-11-23): two steps. While typing or pasting only the format is checked (in the browser, at once: red right
-// away); Proceed sends the rest to the server, in the same field, and what it can't find turns red in place. The field
-// stays fully editable after that: anything changed or added is only format-checked again, and the next Proceed checks
-// just those. Text left in the input without a comma is taken in on Proceed (and on leaving the input).
+// E (2026-11-23): the format is checked in the browser at once (red right away); an entry with a right format goes to the
+// server as soon as it comes in (paste, a separator, leaving the input, an edit) and turns into its result in place: the
+// person (or the value, by data type) or red. A pick from the dropdown is known already. Proceed takes in the text left in
+// the input, waits for what is still being identified, then adds the list or moves the invalid ones to the end.
 function fmtErr(kind: ListKind | null, v: string): string {
   const t = v.trim(), d = t.replace(/\D/g, '')
   if (kind === 'nt') return /^[a-z][a-z0-9]{1,19}$/i.test(t) ? '' : 'Not an NT account format'
@@ -173,8 +173,9 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   // E: the order after the last check: the invalid ones moved to the end (2026-11-23); entries added since go after it
   const [eOrder, setEOrder] = React.useState<number[]>([])   // E: may invalid entries be left out, or must they be fixed first
   const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), ran = React.useRef(false), itemsRef = React.useRef<Item[]>([])
-  // E: Proceed was pressed at least once (it may have had nothing to send, e.g. only wrong formats); tick reruns the end of a check
-  const [ranOnce, setRanOnce] = React.useState(false), [tick, setTick] = React.useState(0)
+  // E: asked = Proceed was pressed and its result is shown (the invalid ones gathered at the end), until new entries come in;
+  // waiting = Proceed was pressed while entries are still being identified; tick reruns the end of a check
+  const [asked, setAsked] = React.useState(false), [waiting, setWaiting] = React.useState(false), [tick, setTick] = React.useState(0)
   const step = mode === 'E' ? 6 : SLOW_STEP, ms = mode === 'E' ? 450 : SLOW_MS
   React.useEffect(() => {
     if (!pendingIds.length) return
@@ -218,15 +219,16 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   itemsRef.current = items
   const E = mode === 'E', fmtBad = (h: Hit) => E && !!fmtErr(kind, h.v), isChecked = (h: Hit) => !E || checked[h.id] === h.v
   const bad = hits.filter(h => fmtBad(h) || (h.why && !isPending(h) && isChecked(h))), good = hits.filter(h => h.ok && !isPending(h) && !fmtBad(h) && isChecked(h))
-  const unchecked = E ? hits.filter(h => !fmtBad(h) && !isPending(h) && !isChecked(h)) : [], hasChecked = E && (ranOnce || Object.keys(checked).length > 0)
+  const unchecked = E ? hits.filter(h => !fmtBad(h) && !isPending(h) && !isChecked(h)) : [], hasChecked = E && (asked || Object.keys(checked).length > 0)
 
   // entries come in: A and C place only the new ones (red first, gray last); the tags already there keep their order
   const take = (t: string, pin?: string) => {
     const l = splitTokens(t).map(x => x.trim()).filter(Boolean)
     setDraft('')
-    if (!l.length) return
+    if (!l.length) return [] as number[]
     const add = l.map(v => ({ id: nextId.current++, v, pin })), all = itemsRef.current.concat(add)
     setItems(all); itemsRef.current = all
+    if (E) setAsked(false)
     setOnly(null); setProceeded('')
     if (slow) setPendingIds(l => l.concat(add.map(x => x.id)))
     if (mode === 'D' || E) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
@@ -236,6 +238,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
       // new red tags at the top: bring them into view
       if (fresh.some(h => h.why)) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0)
     }
+    return add.map(x => x.id)
   }
   const drop = (id: number) => { setItems(l => l.filter(x => x.id !== id)); setSeq(s => s.filter(x => x !== id)) }
   const openEdit = (h: Hit) => setEdit({ id: h.id, v: h.v })
@@ -250,6 +253,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     // typing again clears an earlier pick; picking from the dropdown sets it
     const nextItems = items.map(x => (x.id === edit.id ? { ...x, v, pin: over ? over.pin : (v === x.v ? x.pin : undefined) } : x))
     setItems(nextItems)
+    // E: picked from the dropdown: the suggestion came from the server, so it is already known (2026-11-23)
+    if (E && over) setChecked(c => ({ ...c, [edit.id]: v }))
     const nowHits = hitsOf(nextItems), now = nowHits.find(h => h.id === edit.id)
     const blink = (id: number) => { setFlash(id); setTimeout(() => setFlash(f => (f === id ? null : f)), 900) }
     if (!E && was && was.why && now && now.ok) blink(edit.id)
@@ -282,27 +287,34 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setEdit({ id: n.id, v: n.v })
     setTimeout(() => { const el = boxRef.current?.querySelector('[data-editing]'); el && el.scrollIntoView({ block: 'nearest' }) }, 0)
   }
-  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setRanOnce(false) }, [kind])
+  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); ran.current = false }, [kind])
   // E: Proceed takes in what's left in the input, then sends what isn't checked yet (with a right format) to the server
+  // E (2026-11-23, second version): entries are identified as they come in (paste, a separator, leaving the input, an edit):
+  // the right formats go to the server at once, in batches; a pick from the dropdown is known already. Proceed only takes in
+  // the text left in the input, waits for what is still being identified, then adds the list or gathers the invalid ones.
+  React.useEffect(() => {
+    if (!E) return
+    const q = hitsOf(items).filter(h => !fmtErr(kind, h.v) && pendingIds.indexOf(h.id) < 0 && checked[h.id] !== h.v).map(h => h.id)
+    if (!q.length) return
+    runN.current = (pendingIds.length ? runN.current : 0) + q.length
+    setPendingIds(l => l.concat(q))
+  }, [items, checked])
   const proceedE = () => {
     if (draft.trim()) take(draft)
-    const all = itemsRef.current
-    const todo = hitsOf(all).filter(h => !fmtErr(kind, h.v) && checked[h.id] !== h.v).map(h => h.id)
-    setProceeded(''); setOnly(null); setRanOnce(true)
-    // nothing to send (only wrong formats, or all checked already): end the check at once, so the invalid ones still gather at the end (2026-11-23)
-    if (!todo.length) { ran.current = true; setTick(t => t + 1); return }
-    runN.current = todo.length; ran.current = true; setPendingIds(todo)
+    setProceeded(''); setOnly(null)
+    ran.current = true; setWaiting(true); setTick(t => t + 1)
   }
   // E: when a check ends: with nothing invalid and nothing left to check, the list is added and the dialog closes;
   // otherwise the invalid ones (wrong format included) move to the end, next to the input, and the list scrolls there
   React.useEffect(() => {
-    if (!E || checking || !ran.current) return
-    ran.current = false
-    if (!bad.length && !unchecked.length) { setProceeded('示範：全部有效，加入 ' + n + ' 筆，關閉對話框'); return }
+    if (!E || checking || !ran.current || unchecked.length) return
+    ran.current = false; setWaiting(false)
+    if (!bad.length) { setProceeded('示範：全部有效，加入 ' + n + ' 筆，關閉對話框'); return }
+    setAsked(true)
     const isBad = (h: Hit) => bad.indexOf(h) >= 0
     setEOrder(shown.filter(h => !isBad(h)).concat(shown.filter(isBad)).map(h => h.id))
     setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
-  }, [checking, tick])
+  }, [checking, tick, unchecked.length])
   // D: show only the red tags
   const showOnly = () => { setEdit(null); setOnly(bad.map(h => h.id)); setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0) }
 
@@ -415,34 +427,35 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     const p = STAFF.find(x => x.nt === v || x.emp === v || x.nt + '@' + DOMAIN === v); return !!p && ks.indexOf('p:' + p.id) >= 0 } }
   const sugs = kind && draft.trim() ? suggest(kind, region, draft, takenBy()) : []
   const showSug = sugOpen && !edit && sugs.length > 0
-  const pick = (x: Sug) => { take(x.value, x.pin); setHi(0); setTimeout(() => inputRef.current?.focus(), 0) }
+  // E: a pick is already known (the suggestion came from the server), so it shows its result at once (2026-11-23)
+  const pick = (x: Sug) => {
+    const ids = take(x.value, x.pin)
+    if (E && ids.length) setChecked(c => { const o = { ...c }; ids.forEach(id => { o[id] = x.value }); return o })
+    setHi(0); setTimeout(() => inputRef.current?.focus(), 0)
+  }
   // editing a tag: the same dropdown under it
   const [ehi, setEhi] = React.useState(0)
   const esugs = kind && edit && edit.v.trim() ? suggest(kind, region, edit.v, takenBy(edit.id)) : []
   const n = good.length
   // E, "fix first" only (2026-11-23): one click removes the invalid ones; with "may skip", Proceed leaves them out anyway
   const removeInvalid = () => { const gone = bad.map(h => h.id); setItems(l => l.filter(x => gone.indexOf(x.id) < 0)); setEOrder(o => o.filter(id => gone.indexOf(id) < 0)) }
-  // E's help text (2026-11-23): before a check only how many entries; after one, n valid · m invalid with what to do,
-  // in the help text itself (no banner); m invalid is plain red text (no "show only"); no "click a tag to edit it"
-  const errNow = E && hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length > 0
-  // 2026-11-23: "22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid" (commas; Remove invalid right after
-  // the sentence, "fix first" only)
-  // before a check (2026-11-23): wrong formats are known at once, so they are counted at once ("25 entries, 1 invalid"),
-  // with Remove invalid in "fix first"; Proceed stays usable: it checks the rest, then gathers all the invalid ones at the end
+  // E's help text (2026-11-23): n valid, m invalid with what to do, in the help text itself (no banner); m invalid is plain red
+  // text (no "show only"); no "click a tag to edit it"
+  const errNow = E && asked && !checking && !draft.trim() && bad.length > 0
+  // 2026-11-23 (second version): "22 valid, 3 invalid. Remove invalid" while entering (wrong formats and not found alike, in
+  // place); after Proceed gathers them: "22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid" and a red border.
+  // Remove invalid in "fix first" only; Proceed stays usable until it has gathered them
   const rmLink = <Button variant="link" size="sm" className="!inline !h-auto !min-w-0 !p-0 align-baseline [&>span]:!px-0" onClick={removeInvalid}>Remove invalid</Button>
-  const EHint = () => !hasChecked
-    ? <span>{hits.length} {hits.length === 1 ? 'entry' : 'entries'}{bad.length ? <>, <span className="text-error-text">{bad.length} invalid</span>{mustFix ? <>. {rmLink}</> : null}</> : null}</span>
-    : <span>
-        {n} valid
-        {bad.length ? <>, <span className="text-error-text">{bad.length} invalid</span></> : null}
-        {unchecked.length ? ', ' + unchecked.length + ' not checked yet' : null}
-        {errNow ? <>. <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove invalid to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span></> : null}
-        {errNow && mustFix ? <> {rmLink}</> : null}
-      </span>
+  const EHint = () => <span>
+    {n} valid
+    {bad.length ? <>, <span className="text-error-text">{bad.length} invalid</span></> : null}
+    {errNow ? <>. <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove invalid to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span></> : null}
+    {bad.length && mustFix ? <>{errNow ? ' ' : '. '}{rmLink}</> : null}
+  </span>
   const hintNode = (!hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
-            : E && !checking ? <EHint />
+            : E && !(checking && runN.current > step) ? <EHint />
             : (mode === 'D' || E) && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {(E ? runN.current : hits.length) - hits.filter(isPending).length} of {E ? runN.current : hits.length}…</span>
             : mode === 'D' || E ? <DHint parts={[
                 only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
@@ -499,10 +512,10 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
           // E's footer: Proceed checks what isn't checked yet; with invalid ones left after a check, it adds the valid ones
           <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
             {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span> : null}
-            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setEOrder([]); setRanOnce(false); setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
-            {checking ? (
-              <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Checking the list…</TooltipContent></Tooltip>
-            ) : unchecked.length || draft.trim() || !hasChecked ? (
+            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); ran.current = false; setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
+            {checking && waiting ? (
+              <Button variant="primary" loading>Proceed</Button>
+            ) : checking || unchecked.length || draft.trim() || !asked ? (
               <Button variant="primary" disabled={!hits.length && !draft.trim()} onClick={proceedE}>Proceed</Button>
             ) : bad.length && mustFix ? (
               <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Fix or remove the invalid entries first</TooltipContent></Tooltip>
@@ -532,14 +545,14 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         <span className="text-caption font-medium text-fg-secondary">示範用</span>
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
-        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setRanOnce(false); setProceeded('') }}>Clear</Button>
+        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); ran.current = false; setProceeded('') }}>Clear</Button>
         {E ? (
           <SegmentedControl size="sm" value={mustFix ? 'fix' : 'skip'} onValueChange={v => v && setMustFix(v === 'fix')} aria-label="With invalid entries">
             <SegmentedControlItem value="fix">一定要先改完（建議）</SegmentedControlItem>
             <SegmentedControlItem value="skip">可略過無效的</SegmentedControlItem>
           </SegmentedControl>
         ) : null}
-        <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（cm.chen 格式錯，馬上變紅）→ Proceed → 無效的移到最後 → 改好或再加人 → Proceed 只驗改過的。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
+        <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（cm.chen 馬上變紅，其他的一批批辨識）→ Proceed → 無效的移到最後 → 點 a19999 打 ytch 選 Tina Chang（馬上變人名）→ Paste more → Proceed 再集中一次。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
     </div>
   )
@@ -605,23 +618,24 @@ export default function ImportTags() {
           ]} cols />
         </Section>
 
-        <Section eyebrow="E" title="E：輸入時查格式，按 Proceed 才完整驗證（建議，11/23）" lead="從 D 改良。有些錯誤前端驗不到（格式正確但查無此人、離職、號碼沒人用），所以分兩步：輸入或貼上時只查格式，按 Proceed 才送後端驗證；驗證結果留在同一個欄位，之後照樣自由編輯。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但後端查不到。">
+        <Section eyebrow="E" title="E：一進來就辨識，按 Proceed 集中無效的（建議，11/23）" lead="從 D 改良。格式在瀏覽器裡馬上查；格式對的一進來（貼上、逗號、換行、離開輸入框、改完）就送後端辨識，在原位變成結果；從選單選的人已經確定，直接顯示結果（11/23 第二版）。按 Proceed 時，無效的一起移到最後。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但後端查不到。">
           <div className="max-w-[880px]"><Demo mode="E" show={show} /></div>
           <SpecTable head={['時機', '做什麼', '畫面']} nowrap={[0]} rows={[
-            ['輸入、貼上', '只查格式（瀏覽器裡，馬上）', '格式錯的立刻變紅（留在原位）；格式對的是灰色、顯示輸入的值。說明文字寫筆數，有格式錯的也馬上算出來：25 entries, 1 invalid. Remove invalid（Remove invalid 只在「一定要先改完」）；Proceed 仍可按，按了驗其餘的，驗完所有無效的（含格式錯的）一起移到最後（2026-11-23）'],
-            ['按 Proceed', '輸入框裡還沒打逗號的文字也算一筆；格式對、還沒驗證的送後端', '同一個欄位：標籤變淡、Checking x of y…，Proceed 等驗證完'],
-            ['驗證完，全部有效', '直接加入、關閉對話框', '只要按一次 Proceed'],
-            ['驗證完，有無效的', '留在原地', '無效的（含格式錯的）變紅並移到名單最後、緊接輸入框，名單捲到那裡；有效的換成姓名、照原順序在前面。說明文字（預設「一定要先改完」）：22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid（紅字，Remove invalid 是藍色連結），欄位紅框，Proceed 停用；「可略過」時是 22 valid, 3 invalid. Fix or remove them, or proceed with the valid ones.，Proceed 加入有效的'],
-            ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以；標籤不移動', '改過或新加的回到灰色（還沒驗證），新加的接在最後；說明文字多一段 , 2 not checked yet；再按 Proceed 只驗這幾筆，驗完無效的再一起移到最後'],
-            ['Remove invalid', '只有「一定要先改完」時，緊接在說明文字後面', '一次移除所有無效的，Proceed 就能按；「可略過」時不需要，因為 Proceed 本來就會略過它們'],
+            ['選了選單裡的人', '已經確定（選單是後端查的），不用再查', '馬上變成驗證後的樣子（NT 帳號、工號是人名標籤）'],
+            ['貼上、逗號、換行', '格式錯的馬上變紅；格式對的送後端辨識，一批一批回來', '格式錯的紅色、留在原位；查詢中的變淡、不能點，查完在原位換成結果，查不到的變紅。筆數多時說明文字寫 Checking x of y…（幾筆時不顯示，標籤淡一下就好）'],
+            ['辨識完', '欄位不鎖', '22 valid, 3 invalid. Remove invalid（3 invalid 紅字；Remove invalid 只在「一定要先改完」）；Proceed 可以按'],
+            ['按 Proceed', '輸入框裡還沒打逗號的文字也加入、辨識；還在辨識的，Proceed 轉圈等', '全部有效：直接加入、關閉。有無效的：無效的（含格式錯的）移到名單最後、緊接輸入框，名單捲到那裡；說明文字 22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid，欄位紅框，Proceed 停用；「可略過」時是 Fix or remove them, or proceed with the valid ones.，Proceed 加入有效的'],
+            ['之後再改', '改、刪、加人、再貼都可以；改過的只重查那一筆', '改的留在原位；新貼的接在最後，一進來就辨識，Proceed 又可以按，再按一次，新舊無效的一起移到最後'],
+            ['Remove invalid', '只有「一定要先改完」時，緊接在說明文字後面', '一次移除所有無效的；「可略過」時不需要，因為 Proceed 本來就會略過它們'],
           ]} />
           <Notes items={[
             { title: '為什麼不跳新的視窗', body: '驗證結果只讓標籤變色、多一句提醒，使用者還在同一個欄位；不像先前的 verify-on-Add 只能改錯的，加人、減人都受限。和 Gmail 按送出時，有問題的地址在原欄位標紅讓你改，是同一種經驗。' },
             { title: '最後一個值沒打逗號', body: '按 Proceed、或離開輸入框時，輸入框裡剩下的文字也一起加入。' },
-            { title: '為什麼不跳確認視窗、也不用橫幅', body: '批次匯入本身就是對話框，再跳一層要先關掉才能改；橫幅和說明文字會講同一件事。所以只用欄位的說明文字：驗證前只寫筆數，驗證後才寫幾筆無效、怎麼處理。按鈕名字不換，避免使用者以為是另一個動作。' },
-            { title: '為什麼無效的移到最後、而且只在驗證完移', body: '拿掉「點 n invalid 只看無效的」之後（改好要不要消失、在那裡加人怎麼辦，都很難定），把無效的集中在最後、緊接輸入框，一樣好找。只在驗證結束那一刻移動，編輯時都不動，畫面不會邊改邊跳。' },
+            { title: '為什麼不跳確認視窗、也不用橫幅', body: '批次匯入本身就是對話框，再跳一層要先關掉才能改；橫幅和說明文字會講同一件事。所以只用欄位的說明文字寫幾筆無效、怎麼處理。按鈕名字不換，避免使用者以為是另一個動作。' },
+            { title: '為什麼一進來就辨識（11/23 第二版）', body: '選了選單裡的人卻還顯示原本打的字，看起來像沒選到；一進來就辨識，選、打、貼三種方式結果一致。幾千筆的等待從貼上就開始，和使用者看名單的時間重疊，按 Proceed 時通常已經查完。前提：辨識能和選單用同一支 API、一次查一批（待工程確認）。' },
+            { title: '為什麼無效的移到最後、而且只在按 Proceed 時移', body: '拿掉「點 n invalid 只看無效的」之後（改好要不要消失、在那裡加人怎麼辦，都很難定），把無效的集中在最後、緊接輸入框，一樣好找。只在按 Proceed 時移動，打字、修改時都不動，畫面不會邊改邊跳；手動輸入時散在各處的錯誤，也在這時一起集中。' },
             { title: '預設一定要先改完（11/23）', body: '這是發通知的系統，「沒加到誰」要讓使用者自己確認過；Remove invalid 一下就清掉，等於明確表示「我知道這幾筆不會加入」，不用另跳確認視窗。加入 Audience 的名單就是畫面上看到的。示範區可以切換「可略過」比較。' },
-            { title: '還要決定', body: '驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
+            { title: '還要決定', body: '電話、Email 這類顯示輸入值的類型，查詢中（淡）和查完（一般）只差在深淺，要不要再區分。' },
           ]} cols />
         </Section>
 
@@ -727,7 +741,7 @@ export default function ImportTags() {
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
             ['D（11/20 的建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', '點「m invalid」只看紅色'],
-            ['E（建議，11/23）', '變回純文字', '照輸入順序；格式錯的馬上紅，後端查不到的按 Proceed 後才紅', '同 D', '同 D；驗證後改過的只重驗那幾筆'],
+            ['E（建議，11/23）', '變回純文字', '照輸入順序；格式錯的馬上紅，後端查不到的辨識完就紅；按 Proceed 集中到最後', '原地；選單選的馬上變結果', '集中在最後；改過的只重查那一筆'],
           ]} />
           <Notes items={[
             { title: '建議 D（2026-11-20）', body: '不排序，標籤和使用者的原始清單同一個順序；說明文字直接寫幾筆 invalid，名單長時點「m invalid」只看有問題的。修好的留在原地、再貼一批接在最後，都不需要另外的規則。見上面「要不要把紅色排到最前面」。' },

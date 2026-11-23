@@ -1,5 +1,5 @@
-// Batch import tags: the design (option E of the tag study since 2026-11-23, fix first by default; labels by data
-// type; a live demo at the top) and why each part is the way it is, with screenshots of the study (tools/tagwhy-shots.mjs). Answers "why not
+// Batch import tags: the design (option E of the tag study since 2026-11-23, fix first by default; each entry identified
+// as it comes in and a pick known at once, the invalid ones gathered on Proceed, 2026-11-23; labels by data type; a live demo at the top) and why each part is the way it is, with screenshots of the study (tools/tagwhy-shots.mjs). Answers "why not
 // show the person for a phone number" (2026-11-19). 2026-11-20: the text cut to what's needed, a little larger
 // (tagwhy.css). Nothing here changes the prototype.
 import * as React from 'react'
@@ -60,33 +60,32 @@ export default function TagWhy() {
           <Demo mode="E" show="type" />
         </Section>
 
-        <Section eyebrow="Summary" title="兩步驗證" lead="有些錯誤前端驗不到（格式對但查無此人、離職、號碼沒人用），所以輸入時只查格式，按 Proceed 才送後端；結果都留在同一個欄位。">
+        <Section eyebrow="Summary" title="一進來就辨識，按 Proceed 集中" lead="格式在瀏覽器裡馬上查；格式對的一進來就送後端辨識，在原位變成結果。按 Proceed 時，無效的一起移到最後。">
           <SpecTable head={['時機', '做什麼', '說明文字']} nowrap={[0]} rows={[
-            ['輸入、貼上', '只查格式，錯的馬上變紅並算進 invalid；Proceed 仍可按（要靠它驗其餘的）', '25 entries, 1 invalid. Remove invalid'],
-            ['按 Proceed', '後端驗證；輸入框裡沒打逗號的文字也算一筆', 'Checking 6 of 24…'],
-            ['驗證完，全部有效', '直接加入、關閉', '—'],
-            ['驗證完，有無效的', '無效的移到最後；Proceed 停用', '22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
-            ['驗證後再改或加人', '只標成還沒驗證，下次 Proceed 只驗這些', '22 valid, 2 invalid, 4 not checked yet'],
+            ['選了推薦的人', '已經確定，直接變成結果，不用再查', '23 valid'],
+            ['貼上、打逗號或換行', '格式錯的馬上變紅；格式對的送後端，查詢中變淡，查完在原位變成結果', 'Checking 6 of 24…（筆數少時不顯示）'],
+            ['查完', '有效的換成結果，無效的紅色、留在原位；Proceed 可以按', '22 valid, 3 invalid. Remove invalid'],
+            ['按 Proceed，全部有效', '直接加入、關閉', '—'],
+            ['按 Proceed，有無效的', '無效的移到最後；Proceed 停用', '22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
           ]} />
         </Section>
 
-        <Section eyebrow="Paste" title="貼上：只查格式，照輸入順序">
-          <Why shot="e-paste" title="貼上 26 筆 NT 帳號" sub="cm.chen 格式錯，當下變紅；其他是灰色、顯示輸入的值" max={1184}
-            how="每一筆變成一個標籤，照貼上的順序；重複的只留一個。說明文字只寫筆數。"
-            why="格式在瀏覽器裡就能判斷，馬上回饋；還沒查的不顯示對錯，避免看起來像已經驗過。照原順序，方便對回 Excel、Email 裡的原始清單。"
-            not="紅色排最前面：名單長時還是要捲動，順序也對不回原始清單。"
-            notShots={[['alt-redfirst', '紅色排最前面（原型目前的做法）']]} />
-        </Section>
-
-        <Section eyebrow="Proceed" title="按 Proceed：在原地驗證">
+        <Section eyebrow="Paste" title="貼上：一進來就辨識，照輸入順序">
           <Shots items={[
-            ['e-checking', '驗證中', '標籤變淡、不能點；Checking 6 of 24…；Proceed 停用'],
-            ['e-checked', '驗證完', '無效的移到最後、緊接輸入框；有效的換成姓名；欄位紅框，Proceed 停用'],
+            ['e-paste', '辨識中', '格式錯的 cm.chen 馬上變紅；其他的先變淡、不能點，一批一批換成結果'],
+            ['e-found', '辨識完', '有效的換成姓名，無效的紅色留在原位；說明文字 22 valid, 3 invalid；Proceed 可以按'],
           ]} />
           <Notes cols items={[
-            { title: '依據', body: '使用者知道系統在做事，也知道還不能往下。無效的集中在最後，名單再長也一眼找到。只在驗證結束時移動，編輯時都不動。' },
-            { title: '最後一個值沒打逗號', body: '按 Proceed 或離開輸入框時，剩下的文字也一起加入。' },
+            { title: '依據', body: '辨識在貼上時就開始，使用者看名單的同時結果陸續出來；按 Proceed 時通常已經查完。照原順序，方便對回 Excel、Email 裡的原始清單。' },
+            { title: '最後一個值沒打逗號', body: '按 Proceed 或離開輸入框時，剩下的文字也一起加入、一起辨識。' },
           ]} />
+          <Alt text="紅色排最前面：名單長時還是要捲動，順序也對不回原始清單。" shots={[['alt-redfirst', '紅色排最前面（原型目前的做法）']]} />
+        </Section>
+
+        <Section eyebrow="Proceed" title="按 Proceed：無效的集中到最後">
+          <Why shot="e-checked" title="按 Proceed" sub="無效的移到最後、緊接輸入框；欄位紅框，Proceed 停用" max={1184}
+            how="還在辨識的，Proceed 轉圈等它查完；查完全部有效就加入、關閉，有無效的就一起移到最後。"
+            why="無效的集中在最後，名單再長也一眼找到。只在按 Proceed 時移動；打字、修改時都不動，標籤不會在使用者眼前跑掉。" />
         </Section>
 
         <Section eyebrow="Fix first" title="有無效的：一定要先處理">
@@ -116,23 +115,24 @@ export default function TagWhy() {
 
         <Section eyebrow="Suggest" title="打字時：選單列出比對到的人">
           <Shots items={[
-            ['nt-edit-sug', '修改標籤時', '打 ytch，出現 Tina Chang'],
             ['nt-type-sug', '在名單最後打字時', '打 chen，列出符合的人'],
+            ['nt-type-pick', '選了之後', '馬上變成 Jimmy Chen 的標籤，不用等 Proceed'],
+            ['nt-edit-sug', '修改標籤時', '打 ytch，出現 Tina Chang'],
           ]} />
           <Notes cols items={[
-            { title: '依據', body: '打字當下就確認是不是要的人。' },
-            { title: '不選也可以', body: '直接按 Enter 或逗號，照打的字加入。外部 Email、外部號碼不會對到人，不出現選單。' },
+            { title: '依據', body: '選單是後端查出來的，選了就是確定的人，直接顯示結果。' },
+            { title: '不選也可以', body: '直接按逗號，照打的字加入，再送後端辨識。外部 Email、外部號碼不會對到人，不出現選單。' },
           ]} />
         </Section>
 
-        <Section eyebrow="After" title="驗證後：照樣自由編輯">
+        <Section eyebrow="After" title="之後：照樣自由編輯">
           <Shots items={[
-            ['e-fixed', '把 a19999 改成 ytchang', '留在原位，變回灰色（還沒驗證）；說明文字多 1 not checked yet；Proceed 可以按'],
-            ['e-more', '再貼一批', '接在最後，也是還沒驗證：22 valid, 2 invalid, 4 not checked yet'],
-            ['e-rechecked', '再按 Proceed', '只驗那 4 筆；改好的變成 Tina Chang，新的無效值和其他無效的一起移到最後'],
+            ['e-fixed', '把 a19999 改成 Tina Chang', '從選單選的，在原位馬上變成 Tina Chang；其他無效的不動'],
+            ['e-more', '再貼一批', '接在最後，一進來就辨識；新的無效值紅色留在原位，Proceed 又可以按'],
+            ['e-rechecked', '再按 Proceed', '新舊無效的一起移到最後'],
           ]} />
           <Notes cols items={[
-            { title: '依據', body: '驗證後欄位不鎖，加人、減人、改值都可以；只重驗改過的，所以很快。' },
+            { title: '依據', body: '欄位不鎖，加人、減人、改值都可以；改過的只重查那一筆，所以很快。' },
           ]} />
           <Alt text="修好就重新排序（原型目前的做法）：修好的那一筆馬上跳走，找不到它。" shots={[['alt-jump', 'a19999 原本排第一個；改好後跳到第 9 個']]} />
         </Section>
@@ -210,17 +210,17 @@ export default function TagWhy() {
 
         <Section eyebrow="Copy" title="文字">
           <SpecTable head={['項目', '內容', '依據']} nowrap={[0]} rows={[
-            ['驗證前', '{n} entries（有格式錯的：{n} entries, {m} invalid. Remove invalid）', '還沒查後端，只說有幾筆；格式錯的已經知道，馬上算出來'],
-            ['驗證中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）'],
-            ['有無效的', '{n} valid, {m} invalid. Fix or remove invalid to proceed. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框'],
-            ['驗證後又改過', '{n} valid, {m} invalid, {k} not checked yet', '還要再按 Proceed'],
-            ['按鈕', 'Proceed', '從頭到尾同一個名字；按了是驗證、或回到收件人欄位，不是寄出'],
+            ['辨識中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）；一次只有幾筆時不顯示，標籤變淡一下就好'],
+            ['辨識完', '{n} valid, {m} invalid. Remove invalid', '{m} invalid 紅字；Proceed 可以按'],
+            ['按 Proceed 後有無效的', '{n} valid, {m} invalid. Fix or remove invalid to proceed. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框'],
+            ['按鈕', 'Proceed', '從頭到尾同一個名字；按了是集中無效的、或回到收件人欄位，不是寄出；還在辨識時轉圈等待'],
           ]} />
         </Section>
 
         <Section eyebrow="Open" title="待工程確認">
           <SpecTable head={['問題', '原因']} nowrap={[0]} rows={[
-            ['幾千筆的驗證要多久、能不能分批回傳', '決定要不要改成進度條、能不能先顯示看得到的'],
+            ['辨識能不能在貼上時就開始、一次查一批（和選單同一支 API）', '一進來就辨識的前提；幾千筆要多久、能不能分批回傳'],
+            ['按 Proceed 時要不要再嚴格驗證一次', '例如這段時間離職、權限；有變化才把那幾筆變紅'],
             ['每種資料類型的格式規則', '前端格式檢查要和後端一致'],
             ['SMS 能否指定寄到哪一支', '舊系統隨機挑一支公司手機'],
             ['選單查詢速度', '公司超過 10 萬人'],

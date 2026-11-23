@@ -1,12 +1,12 @@
 {
  "e-paste": {
   "w": 896,
-  "h": 450,
+  "h": 453,
   "marks": []
  },
- "e-checking": {
+ "e-found": {
   "w": 896,
-  "h": 453,
+  "h": 450,
   "marks": []
  },
  "e-checked": {
@@ -46,12 +46,17 @@
  },
  "key-focus": {
   "w": 862,
-  "h": 146,
+  "h": 201,
   "marks": []
  },
  "nt-type-sug": {
   "w": 862,
   "h": 304,
+  "marks": []
+ },
+ "nt-type-pick": {
+  "w": 862,
+  "h": 64,
   "marks": []
  },
  "alt-skip": {
@@ -76,12 +81,12 @@
  },
  "alt-bs-before": {
   "w": 862,
-  "h": 109,
+  "h": 193,
   "marks": []
  },
  "alt-bs-after": {
   "w": 862,
-  "h": 109,
+  "h": 193,
   "marks": []
  },
  "phone-paste": {

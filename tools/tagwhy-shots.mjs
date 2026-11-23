@@ -38,28 +38,30 @@ const clear = async m => { const c = demo(m).getByRole('button', { name: 'Clear'
 const reset = async () => { await p.keyboard.press('Escape'); await p.locator('h1').click(); await wait(150) };
 const scrollTo = async m => { await reset(); await demo(m).scrollIntoViewIfNeeded(); await wait(150) };
 
-// 2026-11-23: the design is option E (format while typing, the server check on Proceed, fix first by default)
+// 2026-11-23: the design is option E (the format at once, each entry identified as it comes in, Proceed gathers the
+// invalid ones at the end, fix first by default)
 const proceed = () => demo('E').locator('.border-t').getByRole('button', { name: 'Proceed' }).click()
-// 1. pasted: only the count; a wrong format is red at once
-await step('e-paste', async () => { await scrollTo('E'); await paste('E'); await p.mouse.move(0, 0); await shot('e-paste', card('E')) });
-// 2. Proceed: checked in the same field
-await step('e-checking', async () => { await proceed(); await wait(900); await p.mouse.move(0, 0); await shot('e-checking', card('E')) });
-// 3. checked: the invalid ones at the end, what to do in the help text, Proceed waits
-await step('e-checked', async () => { await wait(3000); await p.mouse.move(0, 0); await shot('e-checked', card('E')) });
+const settle = () => wait(3600)   // the 24 right formats are identified 6 at a time
+// 1. pasted: identified at once, in batches (faded until known); a wrong format is red at once
+await step('e-paste', async () => { await scrollTo('E'); await paste('E'); await wait(600); await p.mouse.move(0, 0); await shot('e-paste', card('E')) });
+// 2. identified: names in place, the invalid ones red in place; Proceed can be pressed
+await step('e-found', async () => { await settle(); await p.mouse.move(0, 0); await shot('e-found', card('E')) });
+// 3. Proceed: the invalid ones move to the end, what to do in the help text, Proceed waits
+await step('e-checked', async () => { await proceed(); await wait(400); await p.mouse.move(0, 0); await shot('e-checked', card('E')) });
 // 4. click a red tag: plain text with a caret, in the same spot; typing shows the people it could be
 await step('nt-edit', async () => { await tag('E', 'a19999').click(); await wait(200); await shot('nt-edit', box('E')) });
 await step('nt-edit-sug', async () => { const inp = box('E').locator('[data-editing]'); await inp.fill('ytch'); await wait(300); await shot('nt-edit-sug', card('E'), 8, [pop()]) });
-// 5. edited: not checked yet (gray, what was typed)
-await step('e-fixed', async () => { const inp = box('E').locator('[data-editing]'); await inp.fill('ytchang'); await inp.press('Enter'); await wait(300); await p.mouse.move(0, 0); await shot('e-fixed', card('E')) });
-// 6. more pasted after the check: at the end, not checked yet
-await step('e-more', async () => { await demo('E').getByRole('button', { name: 'Paste more' }).click(); await wait(300); await p.mouse.move(0, 0); await shot('e-more', card('E')) });
-// 7. Proceed again: only those are checked; the invalid ones move to the end again
-await step('e-rechecked', async () => { await proceed(); await wait(2500); await p.mouse.move(0, 0); await shot('e-rechecked', card('E')) });
+// 5. picked Tina Chang from the dropdown: known at once, in the same spot
+await step('e-fixed', async () => { const inp = box('E').locator('[data-editing]'); await inp.fill('ytchang'); await wait(300); await inp.press('Enter'); await wait(300); await p.mouse.move(0, 0); await shot('e-fixed', card('E')) });
+// 6. more pasted: at the end, identified as they come in; Proceed can be pressed again
+await step('e-more', async () => { await demo('E').getByRole('button', { name: 'Paste more' }).click(); await settle(); await p.mouse.move(0, 0); await shot('e-more', card('E')) });
+// 7. Proceed again: the invalid ones (old and new) gather at the end again
+await step('e-rechecked', async () => { await proceed(); await wait(400); await p.mouse.move(0, 0); await shot('e-rechecked', card('E')) });
 // 8. Remove invalid: Proceed can go on
 await step('e-removed', async () => { await demo('E').getByRole('button', { name: 'Remove invalid' }).click(); await wait(250); await p.mouse.move(0, 0); await shot('e-removed', card('E')) });
 // keyboard: ← from the input moves onto the tags; a focused red tag also shows its reason
 await step('key-focus', async () => {
-  await clear('E'); await paste('E'); await p.mouse.move(0, 0); const inp = demo('E').locator('#t-E'); await inp.focus(); await p.keyboard.press('ArrowLeft'); await wait(100)
+  await clear('E'); await paste('E'); await settle(); await p.mouse.move(0, 0); const inp = demo('E').locator('#t-E'); await inp.focus(); await p.keyboard.press('ArrowLeft'); await wait(100)
   await tag('E', 'cm.chen').focus(); await wait(700); await shot('key-focus', box('E'), 8, [p.getByRole('tooltip').last()]); await p.keyboard.press('Escape'); await wait(200)
 });
 // typing at the end: suggestions
@@ -67,11 +69,13 @@ await step('nt-type-sug', async () => {
   await wait(1000); await clear('E'); const inp = demo('E').locator('#t-E'); await inp.click(); await inp.pressSequentially('chen', { delay: 30 }); await wait(300)
   // the dropdown hangs below the card: hide the demo-only buttons there for this shot
   const strip = demo('E').locator('.border-dashed'); await strip.evaluate(e => { e.style.visibility = 'hidden' })
-  await shot('nt-type-sug', box('E'), 8, [pop()]); await strip.evaluate(e => { e.style.visibility = '' }); await inp.press('Escape'); await inp.fill('')
+  await shot('nt-type-sug', box('E'), 8, [pop()]); await strip.evaluate(e => { e.style.visibility = '' })
+  // picked: the person's tag at once (2026-11-23)
+  await inp.press('Enter'); await wait(250); await p.mouse.move(0, 0); await shot('nt-type-pick', box('E'))
 });
 // set aside: may skip the invalid ones (the switch in the demo)
 await step('alt-skip', async () => {
-  await clear('E'); await paste('E'); await demo('E').getByRole('radio', { name: '可略過無效的' }).click(); await proceed(); await wait(3500); await p.mouse.move(0, 0)
+  await clear('E'); await paste('E'); await demo('E').getByRole('radio', { name: '可略過無效的' }).click(); await settle(); await proceed(); await wait(400); await p.mouse.move(0, 0)
   await shot('alt-skip', card('E')); await demo('E').getByRole('radio', { name: '一定要先改完（建議）' }).click()
 });
 // 6. the old way (Now): a bordered input inside the field
@@ -86,7 +90,7 @@ await step('alt-jump', async () => {
 });
 // d. the old Backspace: one press in an empty input removed the last tag
 await step('alt-backspace', async () => {
-  await scrollTo('E'); await clear('E'); await paste('E'); await p.mouse.move(0, 0); await demo('E').locator('#t-E').focus(); await wait(150)
+  await scrollTo('E'); await clear('E'); await paste('E'); await settle(); await p.mouse.move(0, 0); await demo('E').locator('#t-E').focus(); await wait(150)
   await shot('alt-bs-before', box('E'))
   await box('E').getByRole('button', { name: /^Edit Yvonne/ }).locator('button').click(); await demo('E').locator('#t-E').focus(); await wait(200)
   await shot('alt-bs-after', box('E'))
