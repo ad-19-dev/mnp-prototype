@@ -1,52 +1,62 @@
 {
- "nt-paste": {
-  "w": 1184,
-  "h": 393,
+ "e-paste": {
+  "w": 896,
+  "h": 450,
+  "marks": []
+ },
+ "e-checking": {
+  "w": 896,
+  "h": 453,
+  "marks": []
+ },
+ "e-checked": {
+  "w": 896,
+  "h": 450,
   "marks": []
  },
  "nt-edit": {
-  "w": 1150,
-  "h": 137,
+  "w": 862,
+  "h": 193,
   "marks": []
  },
  "nt-edit-sug": {
-  "w": 1175,
-  "h": 137,
+  "w": 896,
+  "h": 450,
   "marks": []
  },
- "nt-fixed": {
-  "w": 1150,
-  "h": 265,
+ "e-fixed": {
+  "w": 896,
+  "h": 450,
   "marks": []
  },
- "more-after": {
-  "w": 1150,
-  "h": 265,
+ "e-more": {
+  "w": 896,
+  "h": 450,
   "marks": []
  },
- "invalid-hover": {
-  "w": 1150,
-  "h": 82,
+ "e-rechecked": {
+  "w": 896,
+  "h": 450,
   "marks": []
  },
- "only-fixed": {
-  "w": 1150,
-  "h": 265,
-  "marks": []
- },
- "only-back": {
-  "w": 1150,
-  "h": 265,
+ "e-removed": {
+  "w": 896,
+  "h": 450,
   "marks": []
  },
  "key-focus": {
-  "w": 1150,
-  "h": 173,
+  "w": 862,
+  "h": 146,
   "marks": []
  },
  "nt-type-sug": {
-  "w": 1150,
+  "w": 862,
   "h": 304,
+  "marks": []
+ },
+ "alt-skip": {
+  "w": 896,
+  "h": 450,
   "marks": []
  },
  "now-edit": {
@@ -65,13 +75,13 @@
   "marks": []
  },
  "alt-bs-before": {
-  "w": 1150,
-  "h": 165,
+  "w": 862,
+  "h": 109,
   "marks": []
  },
  "alt-bs-after": {
-  "w": 1150,
-  "h": 137,
+  "w": 862,
+  "h": 109,
   "marks": []
  },
  "phone-paste": {
@@ -97,6 +107,11 @@
  "org": {
   "w": 1150,
   "h": 89,
+  "marks": []
+ },
+ "alt-modal": {
+  "w": 736,
+  "h": 515,
   "marks": []
  }
 }

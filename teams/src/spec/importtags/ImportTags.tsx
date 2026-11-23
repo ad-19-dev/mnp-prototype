@@ -169,7 +169,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   const mid = slow ? 'S' : mode   // ids on the page: the slow demo is a second D
   const [pendingIds, setPendingIds] = React.useState<number[]>([]), [proceeded, setProceeded] = React.useState('')
   // E: what the server has checked, by entry: the value it checked (an edit makes it unchecked again)
-  const [mustFix, setMustFix] = React.useState(false)
+  const [mustFix, setMustFix] = React.useState(true)   // 2026-11-23: fix first is the default
   // E: the order after the last check: the invalid ones moved to the end (2026-11-23); entries added since go after it
   const [eOrder, setEOrder] = React.useState<number[]>([])   // E: may invalid entries be left out, or must they be fixed first
   const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), ran = React.useRef(false), itemsRef = React.useRef<Item[]>([])
@@ -422,13 +422,16 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   // E's help text (2026-11-23): before a check only how many entries; after one, n valid · m invalid with what to do,
   // in the help text itself (no banner); m invalid is plain red text (no "show only"); no "click a tag to edit it"
   const errNow = E && hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length > 0
+  // 2026-11-23: "22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid" (commas; Remove invalid right after
+  // the sentence, "fix first" only)
   const EHint = () => !hasChecked
     ? <span>{hits.length} {hits.length === 1 ? 'entry' : 'entries'}</span>
-    : <span className="flex flex-wrap items-center gap-x-1">
-        <span>{n} valid</span>
-        {bad.length ? <><span aria-hidden>·</span><span className="text-error-text">{bad.length} invalid{errNow ? '.' : ''}</span></> : null}
-        {unchecked.length ? <><span aria-hidden>·</span><span>{unchecked.length} not checked yet</span></> : null}
-        {errNow ? <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove them to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span> : null}
+    : <span>
+        {n} valid
+        {bad.length ? <>, <span className="text-error-text">{bad.length} invalid</span></> : null}
+        {unchecked.length ? ', ' + unchecked.length + ' not checked yet' : null}
+        {errNow ? <>. <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove invalid to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span></> : null}
+        {errNow && mustFix ? <> <Button variant="link" size="sm" className="!inline !h-auto !min-w-0 !p-0 align-baseline [&>span]:!px-0" onClick={removeInvalid}>Remove invalid</Button></> : null}
       </span>
   const hintNode = (!hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
@@ -456,7 +459,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
           <div className="w-56"><ListKindField id={'k-' + mid} value={kind} onChange={k => { if (k === kind) return; if (items.length) setPend(k); else setKind(k) }} /></div>
           {kind === 'phone' ? <div className="w-36"><FormField id={'r-' + mid} label="Region"><Select aria-label="Region" value={region} onChange={v => setRegion(v as Region)} options={REGIONS.map(x => ({ value: x.v, label: x.v + ' ' + x.code }))} /></FormField></div> : null}
         </div>
-        <FormField id={'t-' + mid} label="List" hint={E ? <span className="flex w-full items-start gap-2"><span className="min-w-0 flex-1">{hintNode}</span>{errNow && mustFix ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0" onClick={removeInvalid}>Remove invalid</Button> : null}</span> : hintNode}>
+        <FormField id={'t-' + mid} label="List" hint={hintNode}>
           <div ref={boxRef} className={cn(errNow && mustFix && '!border-error', 'flex h-56 w-full flex-wrap content-start items-center gap-1 overflow-y-auto rounded-md border px-[var(--field-px)] py-[var(--field-control-py-md)]',
             kind ? 'cursor-text border-border bg-surface hover:border-border-hover focus-within:!border-primary' : 'cursor-not-allowed border-transparent bg-disabled')}
             onClick={e => { if (e.target === e.currentTarget) inputRef.current?.focus() }}>
@@ -526,8 +529,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setEOrder([]); setProceeded('') }}>Clear</Button>
         {E ? (
           <SegmentedControl size="sm" value={mustFix ? 'fix' : 'skip'} onValueChange={v => v && setMustFix(v === 'fix')} aria-label="With invalid entries">
+            <SegmentedControlItem value="fix">一定要先改完（建議）</SegmentedControlItem>
             <SegmentedControlItem value="skip">可略過無效的</SegmentedControlItem>
-            <SegmentedControlItem value="fix">一定要先改完</SegmentedControlItem>
           </SegmentedControl>
         ) : null}
         <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（cm.chen 格式錯，馬上變紅）→ Proceed → 無效的移到最後 → 改好或再加人 → Proceed 只驗改過的。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
@@ -582,7 +585,7 @@ export default function ImportTags() {
             {col('A', 'A：變回文字、原地變色', <Tag size="sm" color="neutral">11/19 的建議</Tag>, '點標籤變回純文字（游標在字裡）；只有加入名單時把紅色排到前面，修好的標籤留在原地變灰色，閃一下綠框。')}
             {col('B', 'B：照輸入順序，用 Next 找下一筆', <Tag size="sm" color="neutral">替代</Tag>, '不排序；說明文字寫「n to fix」與 Next to fix，按了直接打開下一個紅色標籤。')}
             {col('C', 'C：A 加上 Enter 接著改下一筆', <Tag size="sm" color="neutral">A 的加強</Tag>, '和 A 相同；改好按 Enter 會直接打開下一個紅色標籤，不用再找。')}
-            {col('D', 'D：照輸入順序，只看有問題的', <Tag size="sm" color="green">建議（11/20）</Tag>, '不排序；說明文字寫「n valid · m invalid (click a tag to edit it)」，只有「m invalid」是紅色；點它，名單只顯示紅色標籤，在這裡改。')}
+            {col('D', 'D：照輸入順序，只看有問題的', <Tag size="sm" color="neutral">11/20 的建議</Tag>, '不排序；說明文字寫「n valid · m invalid (click a tag to edit it)」，只有「m invalid」是紅色；點它，名單只顯示紅色標籤，在這裡改。')}
           </div>
         </Section>
 
@@ -596,22 +599,23 @@ export default function ImportTags() {
           ]} cols />
         </Section>
 
-        <Section eyebrow="E" title="E：輸入時查格式，按 Proceed 才完整驗證（11/23）" lead="從 D 改良。有些錯誤前端驗不到（格式正確但查無此人、離職、號碼沒人用），所以分兩步：輸入或貼上時只查格式，按 Proceed 才送後端驗證；驗證結果留在同一個欄位，之後照樣自由編輯。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但後端查不到。">
+        <Section eyebrow="E" title="E：輸入時查格式，按 Proceed 才完整驗證（建議，11/23）" lead="從 D 改良。有些錯誤前端驗不到（格式正確但查無此人、離職、號碼沒人用），所以分兩步：輸入或貼上時只查格式，按 Proceed 才送後端驗證；驗證結果留在同一個欄位，之後照樣自由編輯。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但後端查不到。">
           <div className="max-w-[880px]"><Demo mode="E" show={show} /></div>
           <SpecTable head={['時機', '做什麼', '畫面']} nowrap={[0]} rows={[
             ['輸入、貼上', '只查格式（瀏覽器裡，馬上）', '格式錯的立刻變紅（留在原位）；格式對的是灰色、顯示輸入的值。說明文字只寫筆數：25 entries'],
             ['按 Proceed', '輸入框裡還沒打逗號的文字也算一筆；格式對、還沒驗證的送後端', '同一個欄位：標籤變淡、Checking x of y…，Proceed 等驗證完'],
             ['驗證完，全部有效', '直接加入、關閉對話框', '只要按一次 Proceed'],
-            ['驗證完，有無效的', '留在原地', '無效的（含格式錯的）變紅並移到名單最後、緊接輸入框，名單捲到那裡；有效的換成姓名、照原順序在前面。說明文字：22 valid · 3 invalid. Fix or remove them, or proceed with the valid ones.（3 invalid 紅字，不能點）。按鈕仍是 Proceed，再按就加入有效的'],
-            ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以；標籤不移動', '改過或新加的回到灰色（還沒驗證），新加的接在最後；說明文字多一段 2 not checked yet；再按 Proceed 只驗這幾筆，驗完無效的再一起移到最後'],
-            ['Remove invalid', '只有「一定要先改完」時，說明文字那一行最右邊', '一次移除所有無效的，Proceed 就能按；「可略過」時不需要，因為 Proceed 本來就會略過它們'],
+            ['驗證完，有無效的', '留在原地', '無效的（含格式錯的）變紅並移到名單最後、緊接輸入框，名單捲到那裡；有效的換成姓名、照原順序在前面。說明文字（預設「一定要先改完」）：22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid（紅字，Remove invalid 是藍色連結），欄位紅框，Proceed 停用；「可略過」時是 22 valid, 3 invalid. Fix or remove them, or proceed with the valid ones.，Proceed 加入有效的'],
+            ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以；標籤不移動', '改過或新加的回到灰色（還沒驗證），新加的接在最後；說明文字多一段 , 2 not checked yet；再按 Proceed 只驗這幾筆，驗完無效的再一起移到最後'],
+            ['Remove invalid', '只有「一定要先改完」時，緊接在說明文字後面', '一次移除所有無效的，Proceed 就能按；「可略過」時不需要，因為 Proceed 本來就會略過它們'],
           ]} />
           <Notes items={[
             { title: '為什麼不跳新的視窗', body: '驗證結果只讓標籤變色、多一句提醒，使用者還在同一個欄位；不像先前的 verify-on-Add 只能改錯的，加人、減人都受限。和 Gmail 按送出時，有問題的地址在原欄位標紅讓你改，是同一種經驗。' },
             { title: '最後一個值沒打逗號', body: '按 Proceed、或離開輸入框時，輸入框裡剩下的文字也一起加入。' },
             { title: '為什麼不跳確認視窗、也不用橫幅', body: '批次匯入本身就是對話框，再跳一層要先關掉才能改；橫幅和說明文字會講同一件事。所以只用欄位的說明文字：驗證前只寫筆數，驗證後才寫幾筆無效、怎麼處理。按鈕名字不換，避免使用者以為是另一個動作。' },
             { title: '為什麼無效的移到最後、而且只在驗證完移', body: '拿掉「點 n invalid 只看無效的」之後（改好要不要消失、在那裡加人怎麼辦，都很難定），把無效的集中在最後、緊接輸入框，一樣好找。只在驗證結束那一刻移動，編輯時都不動，畫面不會邊改邊跳。' },
-            { title: '還要決定', body: '有無效值時，可以略過（Proceed 加入有效的）還是一定要先改完（Proceed 停用，說明文字改成紅字 Fix or remove them to proceed.，欄位紅框）：示範區可以切換比較。另外，驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
+            { title: '預設一定要先改完（11/23）', body: '這是發通知的系統，「沒加到誰」要讓使用者自己確認過；Remove invalid 一下就清掉，等於明確表示「我知道這幾筆不會加入」，不用另跳確認視窗。加入 Audience 的名單就是畫面上看到的。示範區可以切換「可略過」比較。' },
+            { title: '還要決定', body: '驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
           ]} cols />
         </Section>
 
@@ -716,8 +720,8 @@ export default function ImportTags() {
             ['A（11/19 的建議）', '變回純文字', '新加入的紅色排到最前面', '原地變灰色、閃一下綠框', '要處理的在最前面；已經在畫面上的不動'],
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
-            ['D（建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', '點「m invalid」只看紅色'],
-            ['E（11/23）', '變回純文字', '照輸入順序；格式錯的馬上紅，後端查不到的按 Proceed 後才紅', '同 D', '同 D；驗證後改過的只重驗那幾筆'],
+            ['D（11/20 的建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', '點「m invalid」只看紅色'],
+            ['E（建議，11/23）', '變回純文字', '照輸入順序；格式錯的馬上紅，後端查不到的按 Proceed 後才紅', '同 D', '同 D；驗證後改過的只重驗那幾筆'],
           ]} />
           <Notes items={[
             { title: '建議 D（2026-11-20）', body: '不排序，標籤和使用者的原始清單同一個順序；說明文字直接寫幾筆 invalid，名單長時點「m invalid」只看有問題的。修好的留在原地、再貼一批接在最後，都不需要另外的規則。見上面「要不要把紅色排到最前面」。' },
