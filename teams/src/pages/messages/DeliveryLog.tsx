@@ -170,8 +170,10 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
               <DialogDescription className="sr-only">{L(fmtN(all.length) + ' messages', fmtN(all.length) + ' 則')}</DialogDescription>
             </div>
           </DialogHeader>
+          {/* no h-full here: inside the DS scroll area it made the body 10px taller than the dialog, so a second scrollbar
+              showed next to the table's own (2026-11-23) */}
           <DialogBody>
-            <div className="flex h-full min-h-0 flex-col gap-[var(--layout-space-tight)]">
+            <div className="flex min-h-0 flex-col gap-[var(--layout-space-tight)]">
               <div className="flex flex-wrap items-center gap-2">
                 {/* one search box: names, phones and emails by part; employee IDs, NT accounts and job IDs whole */}
                 <div className="w-[480px] max-w-full"><Input type="search" startIcon={Search} value={q} onChange={e => { setQ(e.target.value); setPage(1) }} placeholder={L('Search name, employee ID, NT account, phone or job ID', '搜尋姓名、工號、NT 帳號、電話或 Job ID')} aria-label={L('Search delivery details', '搜尋發送明細')} /></div>
@@ -181,8 +183,10 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
                   {k === 'sms' ? <FilterMenu<string> label={L('Channel', '通道')} sel={fv} toggle={flip(setFv)} clear={() => { setFv([]); setPage(1) }} opts={opts(byCh)} /> : null}
                 </div>
               </div>
-              <div className="flex min-h-0 flex-col">
-                <DataTable tableOptions={NO_HIDE} columns={cols as any} data={shown} bordered height="calc(100svh - 380px)" autoRowHeight getRowId={l => l.sn}
+              {/* the table fills the room between the filters and the pagination and scrolls inside it (100svh minus the
+                  dialog's margins, header, footer, filters and pagination: 390px, measured 2026-11-23) */}
+              <div className="flex min-h-0 flex-1 flex-col">
+                <DataTable tableOptions={NO_HIDE} columns={cols as any} data={shown} bordered height="calc(100svh - 390px)" autoRowHeight getRowId={l => l.sn}
                   emptyState={<Empty icon={Search} title={L('No matching messages', '找不到符合的訊息')} description={L('Check the search field and the filters.', '確認搜尋欄位與篩選條件。')} />} />
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
