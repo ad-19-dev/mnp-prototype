@@ -20,7 +20,7 @@ import { ConfirmDialog, FormField, ListKindField, PAvatar, listKindExample, list
 import { REGIONS, type Region } from '../../components/RecvInput'
 import { DOMAIN, ORGS, PEOPLE, PMAP, fmtExtPhone, matchAs, splitTokens, type ListKind, type Person } from '../../lib/data'
 
-type Mode = 'now' | 'A' | 'B' | 'C' | 'D'
+type Mode = 'now' | 'A' | 'B' | 'C' | 'D' | 'E'
 // pin: picked from the dropdown for a number several people share: a person's id, or '#' for the number itself
 type Item = { id: number; v: string; pin?: string }
 // label: the person's name (or the org, the number); val: the value as entered, formatted; who: shown on hover
@@ -150,10 +150,36 @@ const MORE: Record<string, string> = {
 // slow (2026-11-20): a simulated slow check for D. Pasted entries show at once as faded tags that can't be used yet,
 // a few at a time turn into their results (top first), the hint says "Checking x of y…", and Proceed waits for it.
 const SLOW_STEP = 3, SLOW_MS = 700
+
+// E (2026-11-23): two steps. While typing or pasting only the format is checked (in the browser, at once: red right
+// away); Proceed sends the rest to the server, in the same field, and what it can't find turns red in place. The field
+// stays fully editable after that: anything changed or added is only format-checked again, and the next Proceed checks
+// just those. Text left in the input without a comma is taken in on Proceed (and on leaving the input).
+function fmtErr(kind: ListKind | null, v: string): string {
+  const t = v.trim(), d = t.replace(/\D/g, '')
+  if (kind === 'nt') return /^[a-z][a-z0-9]{1,19}$/i.test(t) ? '' : 'Not an NT account format'
+  if (kind === 'emp') return /^\d{6}$/.test(t) ? '' : 'An employee ID is 6 digits'
+  if (kind === 'email') return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(t) ? '' : 'Not an email address'
+  if (kind === 'mvpn') return /^\d{7}$/.test(t) ? '' : 'An MVPN is 7 digits'
+  if (kind === 'org') return /^[a-z0-9]{2,8}$/i.test(t) ? '' : 'Not an Org ID format'
+  if (kind === 'phone') return (t.startsWith('+') ? d.length >= 8 && d.length <= 15 : /^(09\d{8}|8869\d{8}|9\d{8})$/.test(d)) ? '' : 'Not a mobile number format'
+  return ''
+}
 export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: boolean }) {
   const mid = slow ? 'S' : mode   // ids on the page: the slow demo is a second D
   const [pendingIds, setPendingIds] = React.useState<number[]>([]), [proceeded, setProceeded] = React.useState('')
-  React.useEffect(() => { if (!pendingIds.length) return; const t = setTimeout(() => setPendingIds(l => l.slice(SLOW_STEP)), SLOW_MS); return () => clearTimeout(t) }, [pendingIds])
+  // E: what the server has checked, by entry: the value it checked (an edit makes it unchecked again)
+  const [checked, setChecked] = React.useState<Record<number, string>>({}), runN = React.useRef(0), ran = React.useRef(false), itemsRef = React.useRef<Item[]>([])
+  const step = mode === 'E' ? 6 : SLOW_STEP, ms = mode === 'E' ? 450 : SLOW_MS
+  React.useEffect(() => {
+    if (!pendingIds.length) return
+    const t = setTimeout(() => {
+      const done = pendingIds.slice(0, step)
+      setChecked(c => { const n = { ...c }; done.forEach(id => { const it = itemsRef.current.find(x => x.id === id); if (it) n[id] = it.v }); return n })
+      setPendingIds(l => l.slice(step))
+    }, ms)
+    return () => clearTimeout(t)
+  }, [pendingIds])
   const [kind, setKind] = React.useState<ListKind | null>('nt'), [region, setRegion] = React.useState<Region>('TW')
   const [items, setItems] = React.useState<Item[]>([]), [draft, setDraft] = React.useState('')
   const [seq, setSeq] = React.useState<number[]>([])        // A, C: the order, set when entries come in
@@ -180,21 +206,24 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
   // what is shown, in which order
   const shown: Hit[] = mode === 'now' ? redFirst(hits)
     : mode === 'B' ? hits
-    : mode === 'D' ? (only ? hits.filter(h => only.indexOf(h.id) >= 0) : hits)
+    : mode === 'D' || mode === 'E' ? (only ? hits.filter(h => only.indexOf(h.id) >= 0) : hits)
     : seq.map(id => byId[id]).filter(Boolean).concat(hits.filter(h => seq.indexOf(h.id) < 0))
   const isPending = (h: Hit) => pendingIds.indexOf(h.id) >= 0, checking = hits.some(isPending)
-  const bad = hits.filter(h => h.why && !isPending(h)), good = hits.filter(h => h.ok && !isPending(h))
+  itemsRef.current = items
+  const E = mode === 'E', fmtBad = (h: Hit) => E && !!fmtErr(kind, h.v), isChecked = (h: Hit) => !E || checked[h.id] === h.v
+  const bad = hits.filter(h => fmtBad(h) || (h.why && !isPending(h) && isChecked(h))), good = hits.filter(h => h.ok && !isPending(h) && !fmtBad(h) && isChecked(h))
+  const unchecked = E ? hits.filter(h => !fmtBad(h) && !isPending(h) && !isChecked(h)) : [], hasChecked = E && Object.keys(checked).length > 0
 
   // entries come in: A and C place only the new ones (red first, gray last); the tags already there keep their order
   const take = (t: string, pin?: string) => {
     const l = splitTokens(t).map(x => x.trim()).filter(Boolean)
     setDraft('')
     if (!l.length) return
-    const add = l.map(v => ({ id: nextId.current++, v, pin })), all = items.concat(add)
-    setItems(all)
+    const add = l.map(v => ({ id: nextId.current++, v, pin })), all = itemsRef.current.concat(add)
+    setItems(all); itemsRef.current = all
     setOnly(null); setProceeded('')
     if (slow) setPendingIds(l => l.concat(add.map(x => x.id)))
-    if (mode === 'D') setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
+    if (mode === 'D' || E) setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight }, 0)
     if (mode === 'A' || mode === 'C') {
       const ids = new Set(add.map(x => x.id)), fresh = hitsOf(all).filter(h => ids.has(h.id))
       setSeq(fresh.filter(h => h.why).map(h => h.id).concat(seq, fresh.filter(h => h.ok).map(h => h.id)))
@@ -217,7 +246,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setItems(nextItems)
     const nowHits = hitsOf(nextItems), now = nowHits.find(h => h.id === edit.id)
     const blink = (id: number) => { setFlash(id); setTimeout(() => setFlash(f => (f === id ? null : f)), 900) }
-    if (was && was.why && now && now.ok) blink(edit.id)
+    if (!E && was && was.why && now && now.ok) blink(edit.id)
     // the edit made it a repeat of a tag already in the list (e.g. another number of the same person): drop it and
     // flash the one that's there, so it doesn't just vanish
     if (!now && kind) {
@@ -247,7 +276,22 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     setEdit({ id: n.id, v: n.v })
     setTimeout(() => { const el = boxRef.current?.querySelector('[data-editing]'); el && el.scrollIntoView({ block: 'nearest' }) }, 0)
   }
-  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]) }, [kind])
+  React.useEffect(() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}) }, [kind])
+  // E: Proceed takes in what's left in the input, then sends what isn't checked yet (with a right format) to the server
+  const proceedE = () => {
+    if (draft.trim()) take(draft)
+    const all = itemsRef.current
+    const todo = hitsOf(all).filter(h => !fmtErr(kind, h.v) && checked[h.id] !== h.v).map(h => h.id)
+    setProceeded(''); setOnly(null)
+    if (!todo.length) return
+    runN.current = todo.length; ran.current = true; setPendingIds(todo)
+  }
+  // E: when a check ends with nothing invalid and nothing left to check, the list is added and the dialog closes
+  React.useEffect(() => {
+    if (!E || checking || !ran.current) return
+    ran.current = false
+    if (!bad.length && !unchecked.length) setProceeded('示範：全部有效，加入 ' + n + ' 筆，關閉對話框')
+  }, [checking])
   // D: show only the red tags
   const showOnly = () => { setEdit(null); setOnly(bad.map(h => h.id)); setTimeout(() => { if (boxRef.current) boxRef.current.scrollTop = 0 }, 0) }
 
@@ -282,9 +326,18 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     onClick: (e: React.MouseEvent) => { if (!(e.target as HTMLElement).closest('button')) openEdit(h) },
     onKeyDown: tagKeys(h),
   })
+  const redTag = (h: Hit, why: string) => (
+    <Tooltip key={h.id}>
+      <TooltipTrigger asChild><Tag color="red" {...editable(h)} onRemove={() => drop(h.id)} removeAriaLabel={h.v}>{h.v}</Tag></TooltipTrigger>
+      <TooltipContent side="bottom" align="start">{why}</TooltipContent>
+    </Tooltip>
+  )
   const tag = (h: Hit) => {
+    // E: a wrong format is red at once; one not checked by the server yet shows what was entered, plain gray
+    if (E && fmtErr(kind, h.v)) return redTag(h, fmtErr(kind, h.v))
     // still being checked: what was entered, faded, not usable yet (no edit, no ×)
     if (isPending(h)) return <Tag key={h.id} data-tagid={h.id} aria-disabled className="opacity-50">{h.v}</Tag>
+    if (!isChecked(h)) return <Tag key={h.id} {...editable(h)} onRemove={() => drop(h.id)} removeAriaLabel={h.v}>{h.v}</Tag>
     const fl = flash === h.id
     if (h.ok) {
       // value: what was entered (formatted), no avatar or icon; name: the person's name with their avatar
@@ -369,15 +422,16 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
           !hits.length ? 'Separate with commas or new lines.'
             : mode === 'B' ? <span className="flex flex-wrap items-center gap-x-2">{n} valid audiences{bad.length ? <> · <span className="text-error-text">{bad.length} to fix</span> <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={goNextToFix}>Next to fix</Button></> : null}. Click a tag to edit it.</span>
             : mode === 'C' ? n + ' valid audiences. Click a tag to edit it; Enter goes on to the next red one.'
-            : mode === 'D' && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {hits.length - hits.filter(isPending).length} of {hits.length}…</span>
-            : mode === 'D' ? <DHint parts={[
+            : (mode === 'D' || E) && checking ? <span className="inline-flex items-center gap-1.5"><CircularProgress size={14} aria-hidden />Checking {(E ? runN.current : hits.length) - hits.filter(isPending).length} of {E ? runN.current : hits.length}…</span>
+            : mode === 'D' || E ? <DHint parts={[
                 only ? <>{bad.length ? <span className="text-error-text">{bad.length} invalid</span> : 'All fixed'}&nbsp;(showing {shown.length} of {hits.length})</>
-                  : <>{n} valid</>,
+                  : E && !hasChecked ? <>{hits.length} {hits.length === 1 ? 'entry' : 'entries'}</> : <>{n} valid</>,
                 // "m invalid" is itself the way to show only the invalid ones (2026-11-20): styled like "n not sent" in the
                 // list, red with an underline on hover only, so it's found by those who need it without competing with the count
                 !only && bad.length ? <span className="inline-flex items-center">
                   <Tooltip><TooltipTrigger asChild><Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0 !text-error-text hover:!text-error-text hover:underline [&>span]:!px-0" onClick={showOnly}>{bad.length} invalid</Button></TooltipTrigger><TooltipContent>Show only invalid</TooltipContent></Tooltip>
                   &nbsp;(click a tag to edit it)</span> : null,
+                !only && hasChecked && unchecked.length ? <>{unchecked.length} not checked yet</> : null,
                 only ? <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOnly(null)}>Show all</Button> : null,
               ]} />
             : n + ' valid audiences. Click a tag to edit it.'}>
@@ -410,6 +464,21 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
             </Popover>
           </div>
         </FormField>
+        {E ? (
+          // E's footer: Proceed checks what isn't checked yet; with invalid ones left after a check, it adds the valid ones
+          <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
+            {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span>
+              : hasChecked && !checking && !unchecked.length && !draft.trim() && bad.length ? <span className="mr-auto text-body text-fg-secondary">{bad.length} {bad.length === 1 ? 'entry isn’t' : 'entries aren’t'} valid. Fix or remove {bad.length === 1 ? 'it' : 'them'}, or add the {n} valid {n === 1 ? 'one' : 'ones'}.</span> : null}
+            <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
+            {checking ? (
+              <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Checking the list…</TooltipContent></Tooltip>
+            ) : unchecked.length || draft.trim() || !hasChecked ? (
+              <Button variant="primary" disabled={!hits.length && !draft.trim()} onClick={proceedE}>Proceed</Button>
+            ) : bad.length ? (
+              <Button variant="primary" disabled={!n} onClick={() => setProceeded('示範：加入 ' + n + ' 筆有效的，略過 ' + bad.length + ' 筆，關閉對話框')}>Add {n} valid</Button>
+            ) : <Button variant="primary" disabled={!n} onClick={() => setProceeded('示範：加入 ' + n + ' 筆，關閉對話框')}>Proceed</Button>}
+          </div>
+        ) : null}
         {slow ? (
           // the dialog's footer: Proceed waits for the check
           <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
@@ -431,8 +500,8 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
         <span className="text-caption font-medium text-fg-secondary">示範用</span>
         <Button variant="secondary" size="sm" disabled={!kind || !SAMPLE[kind]} onClick={() => take(SAMPLE[kind!])}>Paste a sample list</Button>
         <Button variant="secondary" size="sm" disabled={!kind || !MORE[kind] || !items.length} onClick={() => take(MORE[kind!])}>Paste more</Button>
-        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setProceeded('') }}>Clear</Button>
-        <span className="text-caption text-fg-secondary">{slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
+        <Button variant="tertiary" size="sm" disabled={!items.length} onClick={() => { setItems([]); setSeq([]); setEdit(null); setOnly(null); setPendingIds([]); setChecked({}); setProceeded('') }}>Clear</Button>
+        <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（cm.chen 格式錯，馬上變紅）→ Proceed → a19999、gywuu 驗證後才變紅 → 改好或再加人 → Proceed 只驗改過的。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
     </div>
   )
@@ -495,6 +564,22 @@ export default function ImportTags() {
             { title: '一批一批出結果', body: '由上而下，確認完的那幾個換成結果：找到的變成姓名（灰色），有問題的變紅色。全部確認完，說明文字回到 n valid · m invalid，Proceed 可以按。' },
             { title: '確認中還能做的事', body: '已經確認完的標籤可以改、可以刪；可以再貼一批，新的接在最後一起排隊確認。' },
             { title: '還要決定', body: '格式明顯不對的值（例如 Email 沒有 @）可以不等伺服器、貼上當下就變紅；確認中要不要先顯示目前的 valid／invalid 數字；幾千筆實際要幾秒（決定要不要換成進度條）。' },
+          ]} cols />
+        </Section>
+
+        <Section eyebrow="E" title="E：輸入時查格式，按 Proceed 才完整驗證（11/23）" lead="從 D 改良。有些錯誤前端驗不到（格式正確但查無此人、離職、號碼沒人用），所以分兩步：輸入或貼上時只查格式，按 Proceed 才送後端驗證；驗證結果留在同一個欄位，之後照樣自由編輯。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但後端查不到。">
+          <div className="max-w-[880px]"><Demo mode="E" show={show} /></div>
+          <SpecTable head={['時機', '做什麼', '畫面']} nowrap={[0]} rows={[
+            ['輸入、貼上', '只查格式（瀏覽器裡，馬上）', '格式錯的立刻變紅；格式對的是灰色、顯示輸入的值。說明文字：25 entries · 1 invalid'],
+            ['按 Proceed', '輸入框裡還沒打逗號的文字也算一筆；格式對、還沒驗證的送後端', '同一個欄位：標籤變淡、Checking x of y…，Proceed 等驗證完'],
+            ['驗證完，全部有效', '直接加入、關閉對話框', '只要按一次 Proceed'],
+            ['驗證完，有無效的', '留在原地', '無效的就地變紅（滑過看原因），有效的換成姓名；說明文字 22 valid · 3 invalid；按鈕左邊一句 3 entries aren’t valid. Fix or remove them, or add the 22 valid ones.；按鈕變 Add 22 valid'],
+            ['驗證後再改', '欄位不鎖：改、刪、加人、再貼都可以', '改過或新加的回到灰色（還沒驗證），說明文字多一段 2 not checked yet；按鈕變回 Proceed，只驗這幾筆'],
+          ]} />
+          <Notes items={[
+            { title: '為什麼不跳新的視窗', body: '驗證結果只讓標籤變色、多一句提醒，使用者還在同一個欄位；不像先前的 verify-on-Add 只能改錯的，加人、減人都受限。和 Gmail 按送出時，有問題的地址在原欄位標紅讓你改，是同一種經驗。' },
+            { title: '最後一個值沒打逗號', body: '按 Proceed、或離開輸入框時，輸入框裡剩下的文字也一起加入。' },
+            { title: '還要決定', body: '有無效值時是否允許 Add n valid 略過它們（現在允許）；驗證前後的灰色標籤，電話、Email 這類顯示輸入值的類型長得一樣，要不要區分。' },
           ]} cols />
         </Section>
 
@@ -600,6 +685,7 @@ export default function ImportTags() {
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
             ['D（建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', '點「m invalid」只看紅色'],
+            ['E（11/23）', '變回純文字', '照輸入順序；格式錯的馬上紅，後端查不到的按 Proceed 後才紅', '同 D', '同 D；驗證後改過的只重驗那幾筆'],
           ]} />
           <Notes items={[
             { title: '建議 D（2026-11-20）', body: '不排序，標籤和使用者的原始清單同一個順序；說明文字直接寫幾筆 invalid，名單長時點「m invalid」只看有問題的。修好的留在原地、再貼一批接在最後，都不需要另外的規則。見上面「要不要把紅色排到最前面」。' },
