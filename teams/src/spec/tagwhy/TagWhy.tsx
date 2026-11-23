@@ -1,6 +1,6 @@
 // Batch import tags: the design (option E of the tag study since 2026-11-23, fix first by default; each entry identified
 // as it comes in and a pick known at once, 2026-11-23; third version the same day: a pasted batch is identified and its
-// red ones gathered at once, typed ones stay put (gray, or red), anything red turns Proceed off, Proceed checks the gray ones; labels by data type; a live demo at the top) and why each part is the way it is, with screenshots of the study (tools/tagwhy-shots.mjs). Answers "why not
+// red ones gathered at once, typed ones stay put (gray, or red), anything red turns Save off, Save checks the gray ones; labels by data type; a live demo at the top) and why each part is the way it is, with screenshots of the study (tools/tagwhy-shots.mjs). Answers "why not
 // show the person for a phone number" (2026-11-19). 2026-11-20: the text cut to what's needed, a little larger
 // (tagwhy.css). Nothing here changes the prototype.
 import * as React from 'react'
@@ -61,19 +61,19 @@ export default function TagWhy() {
           <Demo mode="E" show="type" />
         </Section>
 
-        <Section eyebrow="Summary" title="貼上就辨識，打字不動順序" lead="貼上的一批一進來就送後端辨識，查完紅的集中到最後；手動打的留在原位，按 Proceed 才嚴格驗證。只要有紅色，Proceed 就停用。">
+        <Section eyebrow="Summary" title="貼上就辨識，打字不動順序" lead="貼上的一批一進來就送後端辨識，查完紅的集中到最後；手動打的留在原位，按 Save 才嚴格驗證。只要有紅色，Save 就停用。">
           <SpecTable head={['時機', '做什麼', '說明文字']} nowrap={[0]} rows={[
-            ['貼上一批', '格式錯的馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑進度；全部查完才一起換成結果，紅的（含之前的）集中到最後', 'Checking 6 of 24… → 22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid'],
+            ['貼上一批', '格式錯的馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑進度；全部查完才一起換成結果，紅的（含之前的）集中到最後', 'Checking 6 of 24… → 22 valid, 3 invalid. Fix or remove invalid to save. Remove invalid'],
             ['打字時選了推薦', '已經確定，原位變成人名', '23 valid'],
             ['打字沒選推薦', '原位保持輸入的值（灰色）；格式錯，或 NT 帳號、工號、Org ID 不在推薦清單裡，原位變紅', '23 valid, 1 not checked yet'],
-            ['有紅色時', 'Proceed 停用（一定要先改完）', 'Fix or remove invalid to proceed. Remove invalid'],
-            ['按 Proceed', '灰色的送後端嚴格驗證；全部有效就加入、關閉；驗出紅的就集中到最後', 'Checking 0 of 1…'],
+            ['有紅色時', 'Save 停用（一定要先改完）', 'Fix or remove invalid to save. Remove invalid'],
+            ['按 Save', '灰色的送後端嚴格驗證；全部有效就加入、關閉；驗出紅的就集中到最後', 'Checking 0 of 1…'],
           ]} />
         </Section>
 
         <Section eyebrow="Paste" title="貼上：一進來就辨識，紅的集中到最後">
           <Shots items={[
-            ['e-paste', '辨識中', 'cm.chen 格式錯，馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑 Checking 進度；有紅色，Proceed 停用'],
+            ['e-paste', '辨識中', 'cm.chen 格式錯，馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑 Checking 進度；有紅色，Save 停用'],
             ['e-checked', '辨識完', '全部查完才一起換：有效的換成姓名，紅的集中到最後、緊接輸入框；欄位紅框'],
           ]} />
           <Notes cols items={[
@@ -86,28 +86,28 @@ export default function TagWhy() {
 
         <Section eyebrow="Type" title="手動輸入：不動順序">
           <Why shot="e-typed" title="打 thliu、kyliin，都沒選推薦" sub="thliu 是灰色（還沒驗證）；kyliin 不在推薦清單裡，馬上變紅；都留在原位" max={1184}
-            how="選了推薦就是人名；沒選就保持輸入的值。格式錯，或 NT 帳號、工號、Org ID 在推薦清單裡沒有完全相同的，馬上變紅。其他的（例如外部電話、外部 Email）是灰色，按 Proceed 才嚴格驗證。"
-            why="打字時標籤就在游標旁邊，原位變紅最好改；位置一動，剛打的就找不到了。推薦清單已經是後端查的結果，NT 帳號、工號、Org ID 沒有完全相同的，就是不存在。推薦清單沒有回應（例如 API 出錯）時不判紅，保持灰色，按 Proceed 再驗。" />
+            how="選了推薦就是人名；沒選就保持輸入的值。格式錯，或 NT 帳號、工號、Org ID 在推薦清單裡沒有完全相同的，馬上變紅。其他的（例如外部電話、外部 Email）是灰色，按 Save 才嚴格驗證。"
+            why="打字時標籤就在游標旁邊，原位變紅最好改；位置一動，剛打的就找不到了。推薦清單已經是後端查的結果，NT 帳號、工號、Org ID 沒有完全相同的，就是不存在。推薦清單沒有回應（例如 API 出錯）時不判紅，保持灰色，按 Save 再驗。" />
         </Section>
 
-        <Section eyebrow="Proceed" title="按 Proceed：嚴格驗證灰色的">
+        <Section eyebrow="Save" title="按 Save：嚴格驗證灰色的">
           <Shots items={[
-            ['e-proceed', '紅的都處理完，按 Proceed', '灰色的 thliu 送後端，原位驗證；Proceed 轉圈等。全部有效就加入、關閉；驗出紅的就集中到最後'],
+            ['e-proceed', '紅的都處理完，按 Save', '灰色的 thliu 送後端，原位驗證；Save 轉圈等。全部有效就加入、關閉；驗出紅的就集中到最後'],
           ]} />
           <Notes cols items={[
             { title: '依據', body: '只要有紅色就不能往下，使用者一定先處理；驗證灰色的時候，紅的已經都處理掉了，所以驗出新的紅色通常只有幾筆。' },
-            { title: '最後一個值沒打逗號', body: '按 Proceed 或離開輸入框時，剩下的文字也一起加入，照手動輸入的規則處理。' },
+            { title: '最後一個值沒打逗號', body: '按 Save 或離開輸入框時，剩下的文字也一起加入，照手動輸入的規則處理。' },
           ]} />
         </Section>
 
         <Section eyebrow="Fix first" title="有無效的：一定要先處理">
-          <Why shot="e-removed" title="按 Remove invalid" sub="無效的一次移除，Proceed 可以按"
-            how="只要有紅色，說明文字就寫 Fix or remove invalid to proceed.，後面緊接 Remove invalid；改好、刪掉，或按 Remove invalid 之後，Proceed 才能按。"
+          <Why shot="e-removed" title="按 Remove invalid" sub="無效的一次移除，Save 可以按"
+            how="只要有紅色，說明文字就寫 Fix or remove invalid to save.，後面緊接 Remove invalid；改好、刪掉，或按 Remove invalid 之後，Save 才能按。"
             why="這是發通知的系統，沒加到誰要讓使用者自己確認過。Remove invalid 一下就清掉，等於明確表示「我知道這幾筆不會加入」，不用另跳確認視窗；加入的名單就是畫面上看到的。"
-            not="可略過（Proceed 直接加入有效的）：說明文字容易漏看，使用者可能不知道有人沒加到。跳確認視窗：疊在對話框上，要先關掉才能改，團隊先前也否決過。"
-            notShots={[['alt-skip', '可略過：Proceed 可以按，會略過無效的'], ['alt-modal', '跳確認視窗（11/17 的 verify-on-Add）']]} />
+            not="可略過（Save 直接加入有效的）：說明文字容易漏看，使用者可能不知道有人沒加到。跳確認視窗：疊在對話框上，要先關掉才能改，團隊先前也否決過。"
+            notShots={[['alt-skip', '可略過：Save 可以按，會略過無效的'], ['alt-modal', '跳確認視窗（11/17 的 verify-on-Add）']]} />
           <SpecTable head={['', '一定要先改完（建議）', '可略過無效的']} nowrap={[0]} rows={[
-            ['有無效值時', 'Proceed 停用，要先改或按 Remove invalid', 'Proceed 可以按，直接加入有效的'],
+            ['有無效值時', 'Save 停用，要先改或按 Remove invalid', 'Save 可以按，直接加入有效的'],
             ['好處', '使用者一定知道哪些沒加到；加入的就是看到的', '少一次點擊，想快點加完的人比較方便'],
             ['壞處', '多按一次 Remove invalid', '說明文字容易漏看，可能不知道有人沒加到'],
           ]} />
@@ -134,13 +134,13 @@ export default function TagWhy() {
           ]} />
           <Notes cols items={[
             { title: '依據', body: '選單是後端查出來的，選了就是確定的人，直接顯示結果。' },
-            { title: '不選也可以', body: '直接按逗號，保持輸入的值（灰色），按 Proceed 再驗證。外部 Email、外部號碼不會對到人，不出現選單。' },
+            { title: '不選也可以', body: '直接按逗號，保持輸入的值（灰色），按 Save 再驗證。外部 Email、外部號碼不會對到人，不出現選單。' },
           ]} />
         </Section>
 
         <Section eyebrow="After" title="再貼一批">
           <Shots items={[
-            ['e-more', '再按一次貼上', '一進來就辨識；新的紅色（kylln、a20001）集中到最後，Proceed 停用'],
+            ['e-more', '再按一次貼上', '一進來就辨識；新的紅色（kylln、a20001）集中到最後，Save 停用'],
           ]} />
           <Alt text="修好就重新排序（原型目前的做法）：修好的那一筆馬上跳走，找不到它。" shots={[['alt-jump', 'a19999 原本排第一個；改好後跳到第 9 個']]} />
         </Section>
@@ -196,7 +196,7 @@ export default function TagWhy() {
             ['打錯一個字', '可能變成另一個人', '通常對不到人，變紅色'],
             ['一定對到一個人嗎', '是', '不一定'],
           ]} />
-          <div className="spec-callout">是誰，打字時的選單和按 Proceed 之後的收件人表格都看得到。</div>
+          <div className="spec-callout">是誰，打字時的選單和按 Save 之後的收件人表格都看得到。</div>
         </Section>
 
         <Section eyebrow="Numbers" title="電話與 MVPN：以號碼為單位">
@@ -225,8 +225,8 @@ export default function TagWhy() {
           <SpecTable head={['項目', '內容', '依據']} nowrap={[0]} rows={[
             ['辨識中、驗證中', 'Checking {x} of {y}…', '前面一個 DS 轉圈（CircularProgress）；查的時候只有它在動，標籤查完才一起換'],
             ['有灰色的', '{n} valid, {k} not checked yet', '只有灰色時：{k} entries'],
-            ['有紅色的', '{n} valid, {m} invalid. Fix or remove invalid to proceed. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框，Proceed 停用'],
-            ['按鈕', 'Proceed', '從頭到尾同一個名字；按了是驗證灰色的、或回到收件人欄位，不是寄出；驗證時轉圈等待'],
+            ['有紅色的', '{n} valid, {m} invalid. Fix or remove invalid to save. Remove invalid', '紅字（Remove invalid 是藍色連結），欄位紅框，Save 停用'],
+            ['按鈕', 'Save', '按了是驗證灰色的、全部有效就加入收件人並關閉，不是寄出；驗證時轉圈等待（2026-11-23 從 Save 改名）'],
           ]} />
         </Section>
 

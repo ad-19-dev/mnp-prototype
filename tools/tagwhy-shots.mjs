@@ -41,7 +41,7 @@ const scrollTo = async m => { await reset(); await demo(m).scrollIntoViewIfNeede
 // 2026-11-23 (third version of E): a pasted batch is identified at once and its red ones gather at the end; a typed entry stays
 // where it is (gray, or red when it's a wrong format or not in the dropdown); anything red turns Proceed off ("fix first");
 // Proceed gives the gray ones the strict check
-const proceed = () => demo('E').locator('.border-t').getByRole('button', { name: 'Proceed' }).click()
+const proceed = () => demo('E').locator('.border-t').getByRole('button', { name: 'Save' }).click()
 const settle = () => wait(3600)   // the 24 right formats are identified 6 at a time
 const typeIn = async t => { const inp = demo('E').locator('#t-E'); await inp.click(); await inp.pressSequentially(t, { delay: 20 }); await wait(200) }
 // 1. pasted: identified at once, in batches (faded until known); a wrong format is red at once; Proceed off

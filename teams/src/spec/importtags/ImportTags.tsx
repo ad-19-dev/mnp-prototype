@@ -413,7 +413,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
     {n || (!bad.length && !k) ? <>{n} valid</> : null}
     {bad.length ? <>{n ? ', ' : ''}<span className="text-error-text">{bad.length} invalid</span></> : null}
     {k ? <>{n || bad.length ? ', ' + k + ' not checked yet' : k + (k === 1 ? ' entry' : ' entries')}</> : null}
-    {errNow ? <>. <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove invalid to proceed.' : 'Fix or remove them, or proceed with the valid ones.'}</span></> : null}
+    {errNow ? <>. <span className={mustFix ? 'text-error-text' : undefined}>{mustFix ? 'Fix or remove invalid to save.' : 'Fix or remove them, or save the valid ones.'}</span></> : null}
     {errNow && mustFix ? <> {rmLink}</> : null}
   </span>
   const caretMid = E && at != null && at < shown.length
@@ -508,12 +508,12 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
             {proceeded ? <span className="mr-auto text-caption text-fg-secondary">{proceeded}</span> : null}
             <Button variant="tertiary" onClick={() => { setItems([]); setPendingIds([]); setChecked({}); setEOrder([]); setAsked(false); setWaiting(false); setAt(null); ran.current = false; setOnly(null); setEdit(null); setProceeded('') }}>Cancel</Button>
             {checking && waiting ? (
-              <Button variant="primary" loading>Proceed</Button>
+              <Button variant="primary" loading>Save</Button>
             ) : bad.length && mustFix ? (
-              <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Proceed</Button></span></TooltipTrigger><TooltipContent>Fix or remove the invalid entries first</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><span tabIndex={0}><Button variant="primary" disabled>Save</Button></span></TooltipTrigger><TooltipContent>Fix or remove the invalid entries first</TooltipContent></Tooltip>
             ) : bad.length && asked && !checking && !unchecked.length && !draft.trim() ? (
-              <Button variant="primary" disabled={!n} onClick={() => setProceeded('示範：加入 ' + n + ' 筆有效的，略過 ' + bad.length + ' 筆，關閉對話框')}>Proceed</Button>
-            ) : <Button variant="primary" disabled={!hits.length && !draft.trim()} onClick={proceedE}>Proceed</Button>}
+              <Button variant="primary" disabled={!n} onClick={() => setProceeded('示範：加入 ' + n + ' 筆有效的，略過 ' + bad.length + ' 筆，關閉對話框')}>Save</Button>
+            ) : <Button variant="primary" disabled={!hits.length && !draft.trim()} onClick={proceedE}>Save</Button>}
           </div>
         ) : null}
         {slow ? (
@@ -544,7 +544,7 @@ export function Demo({ mode, show, slow }: { mode: Mode; show: Show; slow?: bool
             <SegmentedControlItem value="skip">可略過無效的</SegmentedControlItem>
           </SegmentedControl>
         ) : null}
-        <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（查完紅的集中到最後）→ 點 a19999 打 ytch 選 Tina Chang → 在最後打 thliu, kyliin,（灰色、紅色，都不動）→ Remove invalid → Proceed。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
+        <span className="text-caption text-fg-secondary">{E ? '試試：Paste a sample list（查完紅的集中到最後）→ 點 a19999 打 ytch 選 Tina Chang → 在最後打 thliu, kyliin,（灰色、紅色，都不動）→ Remove invalid → Save。' : slow ? '試試：按 Paste a sample list，看標籤一批一批確認完，Proceed 才能按；確認中可以再貼一批。' : mode === 'D' ? '試試：點「3 invalid」，把 a19999 改成 ytchang，再按 Show all。' : '試試：把紅色的 a19999 改成 ytchang，看它去哪；再按 Paste more。'}</span>
       </div>
     </div>
   )
@@ -610,23 +610,23 @@ export default function ImportTags() {
           ]} cols />
         </Section>
 
-        <Section eyebrow="E" title="E：貼上就辨識，打字不動順序，有紅色就不能往下（建議，11/23）" lead="從 D 改良（11/23 第三版）。貼上的一批一進來就送後端辨識，查完紅的集中到最後；手動打的留在原位：選了推薦是人名，沒選就保持輸入的值（灰色），按 Proceed 才嚴格驗證。只要有紅色，Proceed 就停用。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但查無此人。">
+        <Section eyebrow="E" title="E：貼上就辨識，打字不動順序，有紅色就不能往下（建議，11/23）" lead="從 D 改良（11/23 第三版；按鈕 11/23 從 Proceed 改名 Save）。貼上的一批一進來就送後端辨識，查完紅的集中到最後；手動打的留在原位：選了推薦是人名，沒選就保持輸入的值（灰色），按 Save 才嚴格驗證。只要有紅色，Save 就停用。範例裡 cm.chen 格式錯，a19999、gywuu 格式對但查無此人。">
           <div className="max-w-[880px]"><Demo mode="E" show={show} /></div>
           <SpecTable head={['時機', '做什麼', '畫面']} nowrap={[0]} rows={[
             ['貼上一批（兩筆以上）', '格式在瀏覽器裡馬上查；格式對的送後端辨識，全部查完才一起顯示結果（11/23，避免一批批換造成跳動）', '格式錯的馬上變紅；其他的保持輸入的值、變淡、不能點，下面跑 Checking 進度；全部查完才一起在原位換成結果，查不到的變紅。查完，所有紅的（含之前的）集中到最後、緊接輸入框'],
             ['打字時選了推薦', '已經確定（選單是後端查的）', '原位變成驗證後的樣子（NT 帳號、工號是人名）'],
             ['打字沒選推薦（逗號、Enter、離開輸入框）', '不送後端、不移動', '保持輸入的值（灰色）；格式錯，或 NT 帳號、工號、Org ID 在推薦清單裡沒有完全相同的，原位變紅。推薦清單沒有回應時不判紅'],
-            ['有紅色', 'Proceed 停用（一定要先改完）', '22 valid, 3 invalid. Fix or remove invalid to proceed. Remove invalid（紅字，Remove invalid 是藍色連結），欄位紅框'],
-            ['按 Proceed', '輸入框裡剩下的文字也加入；灰色的送後端嚴格驗證，Proceed 轉圈等', '全部有效：加入、關閉。驗出紅的：集中到最後，Proceed 停用'],
+            ['有紅色', 'Save 停用（一定要先改完）', '22 valid, 3 invalid. Fix or remove invalid to save. Remove invalid（紅字，Remove invalid 是藍色連結），欄位紅框'],
+            ['按 Save', '輸入框裡剩下的文字也加入；灰色的送後端嚴格驗證，Save 轉圈等', '全部有效：加入、關閉。驗出紅的：集中到最後，Save 停用'],
             ['修改標籤', '同打字', '選推薦是結果；沒選是灰色或紅色；都留在原位'],
-            ['可略過（比較用）', '紅色不擋 Proceed', '第一次按 Proceed 驗灰色的、紅的集中到最後，說明文字 Fix or remove them, or proceed with the valid ones.；再按一次加入有效的'],
+            ['可略過（比較用）', '紅色不擋 Save', '第一次按 Save 驗灰色的、紅的集中到最後，說明文字 Fix or remove them, or save the valid ones.；再按一次加入有效的'],
           ]} />
           <Notes items={[
             { title: '為什麼不跳新的視窗', body: '驗證結果只讓標籤變色、多一句提醒，使用者還在同一個欄位；不像先前的 verify-on-Add 只能改錯的，加人、減人都受限。和 Gmail 按送出時，有問題的地址在原欄位標紅讓你改，是同一種經驗。' },
-            { title: '最後一個值沒打逗號', body: '按 Proceed、或離開輸入框時，輸入框裡剩下的文字也一起加入。' },
+            { title: '最後一個值沒打逗號', body: '按 Save、或離開輸入框時，輸入框裡剩下的文字也一起加入。' },
             { title: '為什麼不跳確認視窗、也不用橫幅', body: '批次匯入本身就是對話框，再跳一層要先關掉才能改；橫幅和說明文字會講同一件事。所以只用欄位的說明文字寫幾筆無效、怎麼處理。按鈕名字不換，避免使用者以為是另一個動作。' },
             { title: '為什麼貼上就辨識、打字不送（11/23 第三版）', body: '貼上的是一大串，錯的散在各處，一進來就查、查完集中，比較好處理；幾千筆的等待也從貼上就開始。打字時一次一筆，標籤就在游標旁邊，原位變紅最好改，不該移動；選了推薦就是確定的人。前提：辨識能和選單用同一支 API、一次查一批（待工程確認）。' },
-            { title: '為什麼無效的移到最後、而且只在貼上和 Proceed 時移', body: '拿掉「點 n invalid 只看無效的」之後（改好要不要消失、在那裡加人怎麼辦，都很難定），把無效的集中在最後、緊接輸入框，一樣好找。只在一批貼上查完、或按 Proceed 驗出新的紅色時移動；打字、修改時都不動，畫面不會邊改邊跳。' },
+            { title: '為什麼無效的移到最後、而且只在貼上和 Save 時移', body: '拿掉「點 n invalid 只看無效的」之後（改好要不要消失、在那裡加人怎麼辦，都很難定），把無效的集中在最後、緊接輸入框，一樣好找。只在一批貼上查完、或按 Save 驗出新的紅色時移動；打字、修改時都不動，畫面不會邊改邊跳。' },
             { title: '預設一定要先改完（11/23）', body: '這是發通知的系統，「沒加到誰」要讓使用者自己確認過；Remove invalid 一下就清掉，等於明確表示「我知道這幾筆不會加入」，不用另跳確認視窗。加入 Audience 的名單就是畫面上看到的。示範區可以切換「可略過」比較。' },
             { title: '還要決定', body: '電話、Email 這類顯示輸入值的類型，灰色（還沒驗證）和驗證過的長得一樣，要不要區分。' },
           ]} cols />
@@ -739,7 +739,7 @@ export default function ImportTags() {
             ['B', '變回純文字', '照輸入順序（散在各處）', '原地變灰色、閃一下綠框', '靠 Next to fix 跳到下一筆'],
             ['C', '變回純文字', '同 A', '同 A；Enter 直接改下一筆', '同 A，鍵盤可以一路改完'],
             ['D（11/20 的建議）', '變回純文字', '照輸入順序；說明文字寫幾筆 invalid', '原地變灰色、閃一下綠框', '點「m invalid」只看紅色'],
-            ['E（建議，11/23）', '變回純文字', '照輸入順序；貼上的一批查完，紅的集中到最後', '原地；選單選的馬上變結果，沒選的灰色', '集中在最後；有紅色時 Proceed 停用'],
+            ['E（建議，11/23）', '變回純文字', '照輸入順序；貼上的一批查完，紅的集中到最後', '原地；選單選的馬上變結果，沒選的灰色', '集中在最後；有紅色時 Save 停用'],
           ]} />
           <Notes items={[
             { title: '建議 D（2026-11-20）', body: '不排序，標籤和使用者的原始清單同一個順序；說明文字直接寫幾筆 invalid，名單長時點「m invalid」只看有問題的。修好的留在原地、再貼一批接在最後，都不需要另外的規則。見上面「要不要把紅色排到最前面」。' },
