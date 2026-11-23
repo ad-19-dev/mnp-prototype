@@ -151,9 +151,12 @@ function GroupList({ m }: { m: GCtl }) {
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-60 max-w-sm flex-1"><Input startIcon={Search} type="search" placeholder={L('Search groups', '搜尋群組')} aria-label={L('Search groups', '搜尋群組')} value={s.q} onChange={e => m.set({ q: e.target.value })} /></div>
       </div>
-      <DataTable tableOptions={NO_HIDE} pinnedLeftColumns={['name']} columns={cols as any} data={rows} bordered height="100%" autoRowHeight getRowId={g => g.id}
-        rowActions={(g: Group) => <GroupMenu m={m} g={g} />}
-        emptyState={<Empty icon={BookUser} title={L('No matching groups', '找不到符合的群組')} description={L('Try another search.', '換個關鍵字試試。')} action={<Button onClick={() => m.set({ q: '' })}>{L('Show all', '顯示全部')}</Button>} />} />
+      {/* every cell centred vertically (2026-11-23): rows keep their height for two lines; no frozen column */}
+      <div className="tbl-vcenter contents">
+        <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height="100%" autoRowHeight getRowId={g => g.id}
+          rowActions={(g: Group) => <GroupMenu m={m} g={g} />}
+          emptyState={<Empty icon={BookUser} title={L('No matching groups', '找不到符合的群組')} description={L('Try another search.', '換個關鍵字試試。')} action={<Button onClick={() => m.set({ q: '' })}>{L('Show all', '顯示全部')}</Button>} />} />
+      </div>
       <span className="text-body text-fg-secondary">{rows.length === nAll ? P(nAll, 'group', '個群組') : L(rows.length + ' of ' + nAll, rows.length + ' / ' + nAll + ' 個群組')}</span>
     </div>
   )

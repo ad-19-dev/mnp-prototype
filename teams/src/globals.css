@@ -41,3 +41,7 @@
 .tag-caret { display: none; position: absolute; left: -2.5px; top: 3px; bottom: 3px; width: 1px; background: var(--color-foreground, currentColor); pointer-events: none; }
 .tag-caret-input:focus ~ .tag-caret { display: block; animation: tag-caret-blink 1.06s steps(1) infinite; }
 @keyframes tag-caret-blink { 50% { opacity: 0; } }
+
+/* Audience groups and Templates (2026-11-23): the DS table aligns cells to the top when rows grow with their content;
+   these two lists centre every cell vertically instead (two-line cells keep the row's padding) */
+.tbl-vcenter [role="row"], .tbl-vcenter [role="cell"], .tbl-vcenter [role="cell"] > span.self-stretch { align-items: center; }

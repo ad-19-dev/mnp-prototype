@@ -354,9 +354,9 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
       <DescriptionItem label={L('Template', '模板')}>{tpl || <span className="text-fg-muted">—</span>}</DescriptionItem>
       <DescriptionItem label={L('Created', '建立時間')}><span className="tabular-nums">{r.created}</span></DescriptionItem>
       <DescriptionItem label={L('Send time', '傳送時間')}>{time || <span className="tabular-nums">{curTime(r, k)}</span>}</DescriptionItem>
-      <DescriptionItem label={L('Creator', '建立者')}><PersonDisplay value={personVal(creator)} /></DescriptionItem>
       {/* who changed it last and when (2026-11-23, was Last updater): the name, then the date and time, no avatar */}
       <DescriptionItem label={L('Last update', '最後更新')}><Two a={pname(PMAP[r.updater || r.creator] || creator)} b={<span className="tabular-nums">{r.updatedAt || r.created}</span>} /></DescriptionItem>
+      <DescriptionItem label={L('Creator', '建立者')}><PersonDisplay value={personVal(creator)} /></DescriptionItem>
     </DescriptionList>
   )
 }

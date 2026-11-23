@@ -66,7 +66,7 @@ function Card({ kind, title, when, shots, then }: { kind: Kind; title: string; w
 const Stop = ({ children, sub }: { children: React.ReactNode; sub: string }) => <span className="flow-stop"><b>{children}</b><span>{sub}</span></span>
 
 // the panel's basic fields, said once and used in every place that lists them
-const FIELDS = 'Task ID（2026-11-19 從 Message ID 改名）、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Creator、Last update（誰、什麼時候，2026-11-23 從 Last updater 改）：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
+const FIELDS = 'Task ID（2026-11-19 從 Message ID 改名）、Channel、Status（下方是 n not sent 連結）、Approval record（需要核准時）、Sender、Audience（人數）、Template、Created、Send time、Last update（誰、什麼時候，2026-11-23 從 Last updater 改，放在 Creator 前）、Creator：列表上有的資訊都在這裡；緊急送出的原因不顯示（那是給 ICSD 審核看的）'
 
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
