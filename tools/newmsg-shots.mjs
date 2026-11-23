@@ -94,19 +94,19 @@ await step('dlg-import-many', async () => {
   ], 12);
   await p.keyboard.press('Escape'); await wait(400);
 });
-// only Desktop OS: someone without the desktop agent can't get it
+// only Desktop notifications: someone without the desktop agent can't get it
 await step('dlg-unreach', async () => {
-  await p.getByRole('checkbox', { name: 'Desktop OS', exact: true }).click(); await wait(400);
+  await p.getByRole('checkbox', { name: 'Desktop notifications', exact: true }).click(); await wait(400);
   await covSec().evaluate(el => el.scrollIntoView({ block: 'center' }));
   await shot('s1-cov', covSec(), [[1, p.getByRole('button', { name: 'Check coverage' }), 'tl']], 12);
   await checkCov();
   await page('s1-unreach');
   await p.getByRole('button', { name: /can’t be sent/ }).first().click(); await wait(600);
   await shot('dlg-unreach', dlg(), [], 12); await p.keyboard.press('Escape'); await wait(300);
-  await p.getByRole('checkbox', { name: 'Desktop OS', exact: true }).click(); await wait(300);
+  await p.getByRole('checkbox', { name: 'Desktop notifications', exact: true }).click(); await wait(300);
 });
 await step('s1-filled', async () => {
-  await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
+  await p.getByRole('checkbox', { name: 'Mobile notifications', exact: true }).click(); await wait(200);
   await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(300);
   // the channels changed since the last check: the numbers are gone until it's checked again
   await covSec().evaluate(el => el.scrollIntoView({ block: 'center' }));
@@ -203,7 +203,7 @@ await step('s1-types', async () => {
   });
   // channels come first, as a sender would do it
   await p.getByRole('checkbox', { name: 'Email', exact: true }).click(); await wait(200);
-  await p.getByRole('checkbox', { name: 'Device Notifications', exact: true }).click(); await wait(200);
+  await p.getByRole('checkbox', { name: 'Mobile notifications', exact: true }).click(); await wait(200);
   // an outside number can only be added with SMS fallback on (2026-11-16): turn it on for that one, then back off
   await add(null, 'Chen'); await add('Org', 'PENG'); await add('Group', '');
   await p.getByRole('radio', { name: /PNS \+ SMS fallback/ }).click(); await wait(300);

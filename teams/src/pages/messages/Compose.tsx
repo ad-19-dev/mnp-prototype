@@ -11,9 +11,9 @@ import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
   AlertTriangle, Building2, CalendarClock, ChevronLeft, ChevronRight, FlaskConical, Globe, LayoutTemplate, Mail,
-  CircleCheck, Clock, Calculator, ArrowLeft, ArrowRight, FileText, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
+  CircleCheck, Clock, Calculator, ArrowLeft, ArrowRight, FileText, Hash, MessageSquareText, Monitor, Phone, Plus, Save, Search, Send, ShieldAlert, ShieldCheck, Smartphone, Upload, UserPlus, Users, X, Zap, BookUser, UserRound, UsersRound } from 'lucide-react'
 import {
-  CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, noPhoneCell, smsMax, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtPhone,
+  CAP, CH_CARDS, DESK, ICSD, LIM, ORGS, PMAP, SUPERVISOR, noPhoneCell, smsMax, cleanHtml, cutAt, flatten, fmtN, fmtSize, fromIso, isExtMvpn, isExtPhone,
   pad, placeholders, toIso, tplFormats, tplHasNotif, vwidth, type Channel, type Person, type Template, type Tag as RTag,
   ME,
 } from '../../lib/data'
@@ -85,7 +85,7 @@ type RRow = { t: RTag; label: string; sub: string; kind: string; cnt: number; ca
 const rcol = createColumnHelper<RRow>()
 
 function recvKind(t: RTag) {
-  return t.type === 'person' ? L('Person', '人員') : t.type === 'org' ? L('Org', '組織') : t.type === 'group' ? L('Group', '群組') : isExtPhone(t) ? L('Phone', '電話') : L('Email', 'Email')
+  return t.type === 'person' ? L('Person', '人員') : t.type === 'org' ? L('Org', '組織') : t.type === 'group' ? L('Group', '群組') : isExtMvpn(t) ? 'MVPN' : isExtPhone(t) ? L('Phone', '電話') : L('Email', 'Email')
 }
 
 // the phone ticks of one audience row; external contacts don't have them (a phone number gets the SMS itself)
@@ -147,7 +147,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   const cols = React.useMemo(() => [
     rcol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: 320 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
-      const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
+      const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtMvpn(t) ? Hash : isExtPhone(t) ? Phone : Mail
       const many = t.type === 'group' || t.type === 'org'
       // one line per cell (DS table rule): people use the DS person display (org · NT · ID in its hover card)
       return (
@@ -159,7 +159,7 @@ function RecvTable({ m }: { m: SendCtl }) {
               <Tag size="sm" color="neutral">{x.kind}</Tag>
             </>}
           {/* an org or group's head count opens its member list */}
-          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl, group: t.type === 'group' ? t.id : undefined })}>{P(x.cnt, 'person', '人', 'people')}</Button> : null}
+          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + fmtN(x.cnt) + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl, group: t.type === 'group' ? t.id : undefined })}>{P(x.cnt, 'audience', '人', 'audiences')}</Button> : null}
           {x.badgeBtn ? <Button size="xs" variant="secondary" onClick={() => m.openNumbers()}>{x.badge}</Button> : x.badge ? <Tag size="sm">{x.badge}</Tag> : null}
         </span>
       )
@@ -188,7 +188,7 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
     <label htmlFor={id} className={cn('flex cursor-pointer flex-col gap-3 rounded-lg border p-[var(--layout-space-tight)] transition-colors', on ? 'border-primary bg-primary-subtle/40' : 'border-border hover:border-border-hover')}>
       <span className="flex items-start gap-3">
         <IconBox icon={meta.icon} tone={on ? 'info' : 'neutral'} />
-        <Two a={meta.name} b={k === 'push' ? <>{L('Push to the app on company phones, with ', '推播到公務手機的 App，可加 ')}<span className="font-medium">{L('optional SMS fallback', 'SMS 備援')}</span>{L('.', '。')}</> : meta.desc} strong className="flex-1 [&>span:first-child]:font-semibold [&>span:last-child]:whitespace-normal" />
+        <Two a={meta.name} b={k === 'push' ? <>{L('Push to the ', '推播到公務 iPhone 上的')}<span className="font-medium">{L('"Device Notifications" App', '「Device Notifications」App')}</span>{L(' on company iPhones, with optional SMS fallback.', '，可加 SMS 備援。')}</> : meta.desc} strong className="flex-1 [&>span:first-child]:font-semibold [&>span:last-child]:whitespace-normal" />
         <Checkbox id={id} checked={on} onCheckedChange={() => m.pickChannel(k)} aria-label={meta.name} />
       </span>
     </label>
@@ -206,11 +206,11 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
           <div className="grid gap-[var(--layout-space-tight)] md:grid-cols-3">{CH_CARDS.map(k => <ChCard key={k} m={m} k={k} />)}</div>
           {c.ch.push ? (
-            // Device Notifications' delivery method: one of two, SMS fallback being the second (2026-11-11)
+            // Mobile notifications' delivery method: one of two, SMS fallback being the second (2026-11-11)
             // option B (2026-11-11): a light grey frame under the cards; its title and the option names semibold
             <div className="flex flex-col gap-3 rounded-lg border border-divider bg-[var(--color-neutral-1)] p-[var(--layout-space-tight)]">
               <span className="text-body font-semibold">{L('Delivery method', '傳送方式')}</span>
-              <RadioGroup value={c.ch.sms ? 'sms' : 'pns'} onValueChange={v => { if ((v === 'sms') !== !!c.ch.sms) m.pickChannel('sms') }} aria-label={L('Device Notifications delivery method', 'Device Notifications 傳送方式')} className="flex flex-col gap-3">
+              <RadioGroup value={c.ch.sms ? 'sms' : 'pns'} onValueChange={v => { if ((v === 'sms') !== !!c.ch.sms) m.pickChannel('sms') }} aria-label={L('Mobile notifications delivery method', 'Mobile notifications 傳送方式')} className="flex flex-col gap-3">
                 <RadioGroupItem value="pns" label={<span className="font-semibold">{L('PNS only', '只用 PNS')}</span>}
                   description={L('Send a push notification via PNS only. No SMS if the device is unreachable.', '只透過 PNS 傳送推播通知；裝置收不到時不改發 SMS。')} />
                 <RadioGroupItem value="sms"
@@ -252,7 +252,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 }
 
 // Message Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
-// SMS fallback on, Device Notifications and its SMS are one row, counted together. A row that misses people has
+// SMS fallback on, Mobile notifications and its SMS are one row, counted together. A row that misses people has
 // "n messages can't be sent" on its right, opening that channel's list.
 // what coverage depends on: the audience, the channels and the SMS phones
 export const coverageKey = (c: Compose) => JSON.stringify([c.receivers.map(t => t.key), c.ch, smsOn(c), c.smsCO, c.smsPP])
@@ -271,8 +271,8 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
       // the right the link to who can't get it
       <div key={k} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
         <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
-        <span className="text-body">{merged ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : CHN[k].name}</span>
-        <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)} / {fmtN(rc.total)}</span>
+        <span className="text-body">{merged ? L('Mobile notifications (SMS)', 'Mobile notifications（SMS）') : CHN[k].name}</span>
+        <span className={cn('text-body tabular-nums', all ? 'text-success-text' : 'text-fg-secondary')}>{fmtN(got)}</span>
         <span className="flex-1" />
         {miss ? (
           <Button variant="link" size="sm" className="!h-auto !min-w-0 !p-0" onClick={() => setOpen(k)}>{L(P(miss, 'message', '', 'messages') + ' can’t be sent', miss + ' 則訊息無法送出')}</Button>
@@ -297,7 +297,7 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
           <Button variant="secondary" size="sm" startIcon={Calculator} loading={busy} disabled={busy} onClick={check}>{stale ? L('Check again', '重新檢查') : L('Check coverage', '檢查涵蓋')}</Button>
         </div>
       )}
-      <NotCoveredDialog k={open} name={open === 'push' && sms ? L('Device Notifications (SMS)', 'Device Notifications（SMS）') : open ? CHN[open].name : ''} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
+      <NotCoveredDialog k={open} name={open === 'push' && sms ? L('Mobile notifications (SMS)', 'Mobile notifications（SMS）') : open ? CHN[open].name : ''} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
     </Section>
   )
 }
@@ -393,7 +393,7 @@ function Step2({ m, e }: { m: SendCtl; e: Errs }) {
         {c.ch.push ? (
           <FormatBlock title={CHN.push.name} icon={CHN.push.icon}>
             {noNotif}
-            <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={<><span className="font-medium text-foreground">{L('English only.', '只能輸入英文。')}</span>{L(' Recipients see this name as the notification source in the Device Notifications app (PNS).', '收件人會在 Device Notifications App（PNS）看到這個名稱作為通知來源。')}</>} error={eSender}>
+            <FormField id="f-sender" label={L('Sender', '寄件人')} required count={c.sender.length + ' / ' + LIM.sender} over={c.sender.length > LIM.sender} hint={<><span className="font-medium text-foreground">{L('English only.', '只能輸入英文。')}</span>{L(' Recipients see this name as the notification source in the Mobile notifications app (PNS).', '收件人會在 Mobile notifications App（PNS）看到這個名稱作為通知來源。')}</>} error={eSender}>
               <Input id="f-sender" value={c.sender} error={!!eSender} onChange={ev => m.setC({ sender: ev.target.value })} placeholder={L('e.g. ESH Emergency', '例如：ESH Emergency')} />
             </FormField>
             {/* its own title (PM, 2026-11-18): 30 characters, full- or half-width alike */}

@@ -51,7 +51,7 @@ export const initSend = (): SendState => ({
 })
 
 // the name of the open space, for headers and breadcrumbs
-// the sender shown in the list: Device Notifications (required) and Desktop OS (optional) carry a sender name; Email doesn't
+// the sender shown in the list: Mobile notifications (required) and Desktop notifications (optional) carry a sender name; Email doesn't
 // three calendar months ahead
 const addMonths = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth() + n, d.getDate(), d.getHours(), d.getMinutes())
 export const listSender = (r: Row) => (r.channels.indexOf('push') >= 0 || r.channels.indexOf('desktop') >= 0 ? r.sender : '')
@@ -109,7 +109,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
       flash(L('Message deleted', '已刪除訊息'), 'ok')
     },
     // ---------- one channel of a message (the per-channel list acts on one channel at a time) ----------
-    // a record's own status (and schedule); "sms" is Device Notifications with its SMS fallback, so both parts
+    // a record's own status (and schedule); "sms" is Mobile notifications with its SMS fallback, so both parts
     setCh(id: string, k: Channel, st: Status, sched?: string | null) {
       const r = app().rows.find(x => x.id === id)!, ks: Channel[] = k === 'sms' ? ['push', 'sms'] : [k]
       const chSt = { ...(r.chSt || {}) }, chSched = { ...(r.chSched || {}) }
@@ -285,7 +285,7 @@ export function makeSendCtl(get: () => SendState, set: (p: Partial<SendState> | 
     pickChannel(id: Channel) {
       const c = get().c, ch = { ...c.ch }
       ch[id] = !ch[id]
-      // SMS is only a fallback for Device Notifications
+      // SMS is only a fallback for Mobile notifications
       if (id === 'push' && !ch.push) ch.sms = false
       if (id === 'sms' && ch.sms) ch.push = true
       const p: Partial<Compose> = { ch }

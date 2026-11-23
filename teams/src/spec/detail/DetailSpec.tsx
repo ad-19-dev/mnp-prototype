@@ -95,7 +95,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         <div className="flow-branches">
           <Card kind="page" title="不能編輯" when="Pending approval、In progress、Sent、Rejected、Canceled" shots={['detail-pending']} then="內容與收件人是 Read only（標題旁有 Read only 標籤），傳送時間不能改。" />
           <Card kind="page" title="編輯後儲存" when="Scheduled" then="內容、收件人、傳送時間直接改；一改動，底部換成 Discard changes / Save changes。儲存後仍是 Scheduled。" />
-          <Card kind="page" title="重新送審" when="Scheduled 的 Device Notifications (SMS)，ICSD 已核准，動到收件人或手機" shots={['edit-reapprove']} then="和核准的內容不符，所以 Save changes 換成 Resend approval；按下後這一筆變成 Pending approval，toast Sent for approval。只改內容或傳送時間不用重審（2026-11-19 與 PM 決定）。" />
+          <Card kind="page" title="重新送審" when="Scheduled 的 Mobile notifications (SMS)，ICSD 已核准，動到收件人或手機" shots={['edit-reapprove']} then="和核准的內容不符，所以 Save changes 換成 Resend approval；按下後這一筆變成 Pending approval，toast Sent for approval。只改內容或傳送時間不用重審（2026-11-19 與 PM 決定）。" />
           <Card kind="page" title="編輯後重新傳送" when="Scheduled expired、Error" shots={['edit-content']} then="內容、收件人直接改；Send time 選 Now 或 Schedule；底部按鈕 Resend（Now）或 Schedule resend（Schedule）按下就送出，不另存。" />
           <Card kind="dialog" title="Discard changes?" when="改過內容沒儲存或送出就關閉" then="Keep editing 回到訊息詳情；Discard 捨棄並關閉。" />
         </div>
@@ -121,7 +121,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
         <div className="flow-branches">
           <Card kind="dialog" title="Cancel sending?" when="底部左側的 Cancel sending（Scheduled、Scheduled expired、Error、Pending approval；有改動時停用）" shots={['dlg-cancel']} then="這個通道不再送出，狀態變成 Canceled；紀錄留在列表。" />
           <Card kind="action" title="Duplicate" when="底部的 Duplicate（沒有改動時）" then="進入發送流程，只帶入這個通道（通道、內容與它的收件人）。" />
-          <Card kind="dialog" title="成員" when="Audience 表格中組織或群組的 n people" shots={['dlg-members']} then="列出目前的成員，可以搜尋。" />
+          <Card kind="dialog" title="成員" when="Audience 表格中組織或群組的 n audiences" shots={['dlg-members']} then="列出目前的成員，可以搜尋。" />
           <Card kind="action" title="Approval Center" when="基本資訊的 View in Approval Center" then="開啟內部的 Approval Center（prototype 只顯示提示）。" />
         </div>
       </Section>
@@ -133,9 +133,9 @@ function Detail() {
   return (
     <>
       <Section eyebrow="Modal" title="訊息詳情" lead="設計系統 Dialog（寬 1120，填滿可用高度）。點列表上的標題開啟。標題 Message details，前面是訊息 ID 標籤；左邊是內容與收件人，右邊淺灰底是基本資訊；底部是操作。">
-        <Figure label="Device Notifications (SMS)" sub="Error" shot="detail-fb" max={760} notes={[
+        <Figure label="Mobile notifications (SMS)" sub="Error" shot="detail-fb" max={760} notes={[
           { n: 1, title: '標題', body: <>訊息 ID 標籤加 <C>Message details</C>（通用標題，不用訊息標題）；右上角關閉。</> },
-          { n: 2, title: 'Content', body: '區塊標題 Content、Audience 是 14px medium（比對話框標題 16px medium 輕一級）。這個通道的欄位：Device Notifications 是 Sender（只能輸入英文）、Title（30）、Content（750）；Desktop OS 是 Sender、Title、Content；Email 是 Subject 與內文。不能編輯時標題旁有 Read only 標籤。' },
+          { n: 2, title: 'Content', body: '區塊標題 Content、Audience 是 14px medium（比對話框標題 16px medium 輕一級）。這個通道的欄位：Mobile notifications 是 Sender（只能輸入英文）、Title（30）、Content（750）；Desktop notifications 是 Sender、Title、Content；Email 是 Subject 與內文。不能編輯時標題旁有 Read only 標籤。' },
           { n: 3, title: 'SMS fallback', body: '有 SMS 備援時的第二組欄位（SMS content，半形最多 534 字、有任一全形字元最多 267 字）。小標題旁不顯示送達人數。' },
           { n: 4, title: 'Audience', body: '和發送流程相同的表格；SMS 多兩欄 Company phone、Personal phone。個人不加 Person 標籤（大頭照已經看得出是人；組織、群組、外部聯絡人是圖示，才需要標籤）。' },
           { n: 5, title: '基本資訊', body: FIELDS + '。' },
@@ -147,7 +147,7 @@ function Detail() {
         <div className="spec-gallery">
           <figure><figcaption><b>緊急送出</b><span>和一般訊息相同，不顯示緊急原因（原因只給 ICSD 審核看）。</span></figcaption><div className="spec-canvas"><Shot name="detail-urgent" alt="緊急送出" max={560} /></div></figure>
           <figure><figcaption><b>Email</b><span>Subject 與有格式的內文。</span></figcaption><div className="spec-canvas"><Shot name="detail-email" alt="Email" max={560} /></div></figure>
-          <figure><figcaption><b>Device Notifications</b><span>Sender 與 Content。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="Device Notifications" max={560} /></div></figure>
+          <figure><figcaption><b>Mobile notifications</b><span>Sender 與 Content。</span></figcaption><div className="spec-canvas"><Shot name="detail-push" alt="Mobile notifications" max={560} /></div></figure>
           <figure><figcaption><b>不需要 SMS</b><span>推播全部送到，SMS fallback 寫 Not needed。</span></figcaption><div className="spec-canvas"><Shot name="detail-sms-notneeded" alt="不需要 SMS" max={560} /></div></figure>
           <figure><figcaption><b>等待核准</b><span>Status 是 Pending approval；下方欄位 Approval record。</span></figcaption><div className="spec-canvas"><Shot name="detail-pending" alt="等待核准" max={560} /></div></figure>
           <figure><figcaption><b>多種收件人</b><span>組織、群組、個人與外部聯絡人。</span></figcaption><div className="spec-canvas"><Shot name="detail-mixed" alt="多種收件人" max={560} /></div></figure>
@@ -159,7 +159,7 @@ function Detail() {
           ['標題列', '訊息 ID 標籤（Tag sm neutral）加 Message details；右上角關閉，Esc 也可關閉'],
           ['左欄', 'Content、Audience 兩個區塊；內距 loose，區塊之間 1.5 × loose；自己捲動'],
           ['右欄', '寬 340，左側細分隔線，淺灰底（neutral-1，黑色 2%）；內距 loose；自己捲動'],
-          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate（secondary，2026-11-18 從 Duplicate to new message 縮短，列選單 2026-11-19 也改）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary），Device Notifications (SMS) 動到收件人或手機時是 Resend approval（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
+          ['底部', '上方細分隔線；左 Cancel sending（secondary danger），右 Duplicate（secondary，2026-11-18 從 Duplicate to new message 縮短，列選單 2026-11-19 也改）、Resend（primary，Scheduled expired、Error）；Scheduled expired、Error 有改動時 Duplicate 換成 Discard changes（tertiary），Resend 不變；Scheduled 有改動時右側換成 Discard changes（tertiary）、Save changes（primary），Mobile notifications (SMS) 動到收件人或手機時是 Resend approval（primary）；Sent details 的 Resend 模式是 Cancel 與 Resend／Schedule resend'],
         ]} />
       </Section>
       <Section eyebrow="Right" title="基本資訊" lead="設計系統 DescriptionList（vertical）：名稱在上（次要文字色）、值在下。列表上有的資訊都在這裡。">
@@ -167,7 +167,7 @@ function Detail() {
           ['Task ID', '任務 ID（例：10154），同一次發送的各通道相同（2026-11-19 從 Message ID 改名）', '每一筆'],
           ['Channel', '通道圖示與名稱', '每一筆'],
           ['Status', '狀態標籤；下方紅字 n not sent 連結（有未送出時）', '每一筆'],
-          ['Approval record', '連結按鈕 View in Approval Center（sm，外連圖示）', 'Device Notifications (SMS)，或需要核准的訊息'],
+          ['Approval record', '連結按鈕 View in Approval Center（sm，外連圖示）', 'Mobile notifications (SMS)，或需要核准的訊息'],
           ['Sender', '寄件人；Email 沒有寄件人時顯示 —', '每一筆'],
           ['Audience', '這個通道的人數；編輯收件人時即時更新', '每一筆'],
           ['Template', '模板名稱，沒有時 —', '每一筆'],
@@ -179,14 +179,14 @@ function Detail() {
       </Section>
       <Section eyebrow="Left" title="Content 與 Audience">
         <SpecTable head={['通道', 'Content 的欄位']} nowrap={[0]} rows={[
-          ['Device Notifications', 'Sender（只能輸入英文）、Title（30）、Content（750）'],
-          ['Device Notifications (SMS)', '小標題 Device Notifications：Sender、Title、Content；小標題 SMS fallback：SMS content（534／267）。小標題旁不顯示送達人數'],
-          ['Desktop OS', 'Sender（選填）、Title、Content'],
+          ['Mobile notifications', 'Sender（只能輸入英文）、Title（30）、Content（750）'],
+          ['Mobile notifications (SMS)', '小標題 Mobile notifications：Sender、Title、Content；小標題 SMS fallback：SMS content（534／267）。小標題旁不顯示送達人數'],
+          ['Desktop notifications', 'Sender（選填）、Title、Content'],
           ['Email', 'Subject、內文（可以編輯時是格式編輯器；Read only 時是 readonly 底色的內文框，寬度撐滿）'],
         ]} />
         <SpecTable head={['Audience 表格', '規格']} nowrap={[0]} rows={[
-          ['欄位', 'Audience 一欄；Device Notifications (SMS) 多 Company phone、Personal phone 兩欄（表頭可全選；外部聯絡人兩欄都是 —，沒有登記私人手機的人 Personal phone 是 —）'],
-          ['列', '個人：PersonDisplay；組織、群組：圖示、名稱、類型標籤、藍色 n people（開成員）；外部：圖示、號碼或 Email、Phone / Email 標籤'],
+          ['欄位', 'Audience 一欄；Mobile notifications (SMS) 多 Company phone、Personal phone 兩欄（表頭可全選；外部聯絡人兩欄都是 —，沒有登記私人手機的人 Personal phone 是 —）'],
+          ['列', '個人：PersonDisplay；組織、群組：圖示、名稱、類型標籤、藍色 n audiences（開成員）；外部：圖示、號碼或 Email、Phone / Email / MVPN 標籤'],
           ['可以編輯時', '上方搜尋列與 Batch import；每列右側 ✕ 移除；表格超過 6 列時固定高 320、內部捲動'],
           ['Read only 時', '只有表格；手機欄的勾選框是 disabled'],
         ]} />
@@ -201,12 +201,12 @@ function Edit() {
       <Section eyebrow="Edit" title="編輯" lead="沒有另外的編輯模式：欄位一直都在，依狀態可編輯或 Read only。">
         <Figure label="可以編輯" sub="Scheduled expired，改了 SMS content" shot="edit-content" max={760} notes={[
           { n: 1, title: '可編輯的欄位', body: '必填星號、字數計數，限制和發送流程相同。' },
-          { n: 2, title: '加入收件人', body: '搜尋列（Person、Org、Group、Phone、Email）與 Batch import；每列右側 ✕ 移除。外部電話只能加在 Device Notifications (SMS)，外部 Email 只能加在 Email（其他通道輸入外部 Email 時搜尋框直接提示不能加入，公司信箱仍會加入員工）。' },
+          { n: 2, title: '加入收件人', body: '搜尋列（Person、Org、Group、Phone、Email）與 Batch import；每列右側 ✕ 移除。外部電話只能加在 Mobile notifications (SMS)，外部 Email 只能加在 Email（其他通道輸入外部 Email 時搜尋框直接提示不能加入，公司信箱仍會加入員工）。' },
           { n: 3, title: '手機欄', body: '預設勾 Company phone；每列至少要勾一支，否則不能儲存。' },
           { n: 4, title: 'Send time', body: 'Scheduled：日期時間欄位，改了之後仍是 Scheduled。Scheduled expired、Error：Now / Schedule 兩個選項，預設 Schedule 帶原本的傳送時間。' },
           { n: 5, title: '底部', body: 'Scheduled expired、Error：主要按鈕一直存在，選 Now 時是 Resend、選 Schedule 時是 Schedule resend，按下就用畫面上的內容、收件人和時間送出，不另開對話框；有改動時 Duplicate 換成 Discard changes，Cancel sending 停用。Scheduled：有改動時底部換成 Discard changes / Save changes。' },
         ]} />
-        <Figure label="重新送審" sub="Scheduled 的 Device Notifications (SMS)，加了一位收件人" shot="edit-reapprove" max={760} notes={[
+        <Figure label="重新送審" sub="Scheduled 的 Mobile notifications (SMS)，加了一位收件人" shot="edit-reapprove" max={760} notes={[
           { n: 1, title: '說明', body: 'Audience 表格下方的次要文字：更改收件人或手機要重新送 SMS 審核（捲到下方才看得到）。' },
           { n: 2, title: 'Resend approval', body: '動到收件人或手機後取代 Save changes；按下後變成 Pending approval。' },
         ]} />
@@ -224,7 +224,7 @@ function Edit() {
           { title: 'Read only 欄位', body: '設計系統欄位的 readonly 狀態：淺灰底、無外框，文字維持正常顏色，可以選取複製。focus 時不顯示藍框，避免看起來像可編輯（2026-11-11 與設計師討論，待 DS 負責人確認）。' },
           { title: '只改這個通道', body: '內容、收件人、手機與傳送時間都只改這一筆；同一個訊息 ID 的其他通道不變。' },
           { title: '沒儲存就關閉', body: <>先問 <Copy en="Discard changes?" zh="要捨棄變更嗎？" />：Keep editing / Discard。</> },
-          { title: '重新送審（Scheduled 的 Device Notifications (SMS)）', body: <>ICSD 核准的是當時的收件人。動到 Audience（加入、移除）或手機欄時，Audience 下方先有說明 <Copy en="Changing the audience or phones sends this message for SMS approval again." zh="更改收件人或手機，這則訊息需要重新送 SMS 審核。" />；改動後主要按鈕從 Save changes 換成 <C>Resend approval</C>，按下後這一筆變成 Pending approval（傳送時間保留），toast <Copy en="Sent for approval" zh="已送出審核" />。只改內容或傳送時間仍是 Save changes。緊急送出（略過 ICSD）的紀錄不適用。</> },
+          { title: '重新送審（Scheduled 的 Mobile notifications (SMS)）', body: <>ICSD 核准的是當時的收件人。動到 Audience（加入、移除）或手機欄時，Audience 下方先有說明 <Copy en="Changing the audience or phones sends this message for SMS approval again." zh="更改收件人或手機，這則訊息需要重新送 SMS 審核。" />；改動後主要按鈕從 Save changes 換成 <C>Resend approval</C>，按下後這一筆變成 Pending approval（傳送時間保留），toast <Copy en="Sent for approval" zh="已送出審核" />。只改內容或傳送時間仍是 Save changes。緊急送出（略過 ICSD）的紀錄不適用。</> },
           { title: '儲存後（Scheduled）', body: <>toast <Copy en="Changes saved" zh="已儲存變更" />；有改傳送時間時是 <Copy en="Saved. Sends <時間>" zh="已儲存，將於 <時間> 傳送" />。</> },
           { title: 'Resend 後（Scheduled expired、Error）', body: <>沒有另外的儲存：改過的內容與 Resend 一起送出。toast：Now 是 <Copy en="Sending on <通道>" zh="正在以 <通道> 傳送" />，Schedule 是 <Copy en="Resend scheduled for <時間>" zh="已排程重新傳送：<時間>" />。</> },
         ]} />
@@ -263,21 +263,21 @@ function Delivery() {
   return (
     <>
       <Section eyebrow="Delivery" title="發送明細" lead="訊息詳情 Audience 標題右側的 Sent details（已開始送出的紀錄才有：In progress、Sent、Error）開一個專門查案用的大對話框：每一則實際送出的訊息一列，以人為單位（組織、群組都展開）。">
-        <Figure label="Sent details" sub="Device Notifications (SMS)，UX Team「Fire drill: Building A, 11/14」" shot="dlg-delivery" max={980} notes={[
+        <Figure label="Sent details" sub="Mobile notifications (SMS)，UX Team「Fire drill: Building A, 11/14」" shot="dlg-delivery" max={980} notes={[
           { n: 1, title: '搜尋', body: <>一個搜尋框，不用先選欄位，提示 <Copy en="Search name, employee ID, NT account, phone or job ID" zh="搜尋姓名、工號、NT 帳號、電話或 Job ID" />。姓名、電話、Email 部分比對（電話不顯示但可以搜）；工號、NT 帳號、Job ID 完全比對（由伺服器依格式判斷，名單有數萬人時才查得快）。可以一次貼多個，用逗號或空格分隔。</> },
-          { n: 2, title: '篩選', body: 'Status（附數量），Device Notifications (SMS) 多一個 Channel（PNS / SMS）。都是多選，沿用列表的 FilterMenu：沒選時按鈕寫篩選名稱（Status）；只選一項時按鈕直接寫那一項（例：Not sent）；選兩項以上時是篩選名稱加數量（Status 2）。沒有 Reason 篩選：原因只在未送出時才有，已經寫在 Not sent 標籤下方。' },
+          { n: 2, title: '篩選', body: 'Status（附數量），Mobile notifications (SMS) 多一個 Channel（PNS / SMS）。都是多選，沿用列表的 FilterMenu：沒選時按鈕寫篩選名稱（Status）；只選一項時按鈕直接寫那一項（例：Not sent）；選兩項以上時是篩選名稱加數量（Status 2）。沒有 Reason 篩選：原因只在未送出時才有，已經寫在 Not sent 標籤下方。' },
           { n: 3, title: 'Status', body: '狀態與原因合併成一欄：Sent／Not sent 標籤。Not sent 下方小字寫原因（App unregistered、No desktop agent、Number not in service、Service unavailable…）。Sent 代表我們送出成功；如果接收端回報沒送達，Sent 下方也寫出原因（例：Recipient has blocked SMS messages、Message is barred by customer），這些仍算送出、不列入 Resend。兩種小字（Not sent 的原因、Sent 的接收端原因）都是紅字，因為都是異常狀況。還在傳送中的紀錄只列已經送出的，沒有 Queued（2026-11-16）。全站統一用 Not sent，不用 Failed。' },
           { n: 4, title: 'Send time', body: '實際送出時間到秒；大量發送時分批送（每分鐘一批），後面的人會晚一兩分鐘。還在排隊時 —。' },
           { n: 5, title: '分頁', body: '「第一筆–最後一筆 of 總數」、頁碼、每頁 50 / 100 / 200 筆。搜尋或篩選後回到第 1 頁。' },
-          { n: 6, title: 'Channel', body: <>怎麼送：<C>PNS</C>、<C>SMS (fallback)</C>（推播沒送到後改寄的 SMS）、<C>SMS</C>（外部號碼）、<C>Desktop OS</C>、<C>Email</C>。不寫是哪支手機，也不顯示號碼（隱私考量）。</> },
+          { n: 6, title: 'Channel', body: <>怎麼送：<C>PNS</C>、<C>SMS (fallback)</C>（推播沒送到後改寄的 SMS）、<C>SMS</C>（外部號碼）、<C>Desktop notifications</C>、<C>Email</C>。不寫是哪支手機，也不顯示號碼（隱私考量）。</> },
           { n: 7, title: 'Resend to not sent (n)', body: '有人沒收到時，底部 Close 右邊是 Resend to not sent (n)（primary），n 是完全沒收到的人數（推播沒送到但 SMS 送到的算收到；一個人可能有兩列，所以不是列數）。按下後開一則新訊息，同一個通道與內容，收件人只有這些人。都收到了只有 Close（primary）。不再有 Alert 與 Show them（2026-11-16）。' },
-          { n: 8, title: '手機標籤', body: '收件人姓名旁的標籤寫這一則送到哪支手機：Company phone（藍色）或 Personal phone（紫色）。PNS 一律是公務手機；SMS 兩種都可能。Desktop OS、Email 的列沒有標籤。' },
+          { n: 8, title: '手機標籤', body: '收件人姓名旁的標籤寫這一則送到哪支手機：Company phone（藍色）或 Personal phone（紫色）。PNS 一律是公務手機；SMS 兩種都可能。Desktop notifications、Email 的列沒有標籤。' },
         ]} />
         <SpecTable head={['欄位', '內容']} nowrap={[0]} rows={[
           ['Job ID', '每一則送出的訊息的編號（訊息 ID 加序號），依送出順序'],
           ['Audience', '人員顯示加手機標籤（Company phone 藍、Personal phone 紫）；外部聯絡人顯示電話或 Email'],
           ['Employee ID', '工號，查案最常用；外部聯絡人 —'],
-          ['Channel', 'PNS、SMS (fallback)、SMS（外部號碼）、Desktop OS、Email。推播沒送到後改寄的 SMS 是同一人的另一列'],
+          ['Channel', 'PNS、SMS (fallback)、SMS（外部號碼）、Desktop notifications、Email。推播沒送到後改寄的 SMS 是同一人的另一列'],
           ['Status', '標籤加原因（見上）'],
           ['Send time', '實際送出時間'],
         ]} />
@@ -289,7 +289,7 @@ function Delivery() {
         <div className="spec-gallery"><figure><figcaption><b>只看 SMS (fallback)</b><span>Channel 篩選只選一項時，按鈕直接寫那一項；同一頁看得到公務、私人手機的標籤、Sent 下方的接收端原因與 Not sent 的原因。</span></figcaption><div className="spec-canvas"><Shot name="dlg-delivery-failed" alt="只看 SMS (fallback)" max={980} /></div></figure></div>
       </Section>
       <Section eyebrow="Not sent" title="未送出名單" lead="2026-11-16 起不再有獨立的 Not sent to 對話框：列表與訊息詳情的 {n} not sent 都開 Sent details，Status 已篩選成 Not sent。查誰沒收到與 Resend 只在這一個地方。">
-        <Figure label="從列表的 {n} not sent 開啟" sub="Device Notifications (SMS)" shot="dlg-fail" max={980} notes={[
+        <Figure label="從列表的 {n} not sent 開啟" sub="Mobile notifications (SMS)" shot="dlg-fail" max={980} notes={[
           { n: 1, title: '標題', body: <>和從訊息詳情開的相同：訊息 ID 標籤加 <Copy en="Sent details · <通道>" zh="發送明細・<通道>" />。</> },
           { n: 2, title: '已篩選', body: '開啟時 Status 只選 Not sent，按鈕直接寫 Not sent；清掉篩選就看到全部送出的訊息。' },
           { n: 3, title: '重寄', body: <><C>Resend to not sent (n)</C>：打開訊息詳情的 Resend 模式，收件人只有完全沒收到的人，同一個通道與內容（可改）；送出後是一則新訊息。</> },

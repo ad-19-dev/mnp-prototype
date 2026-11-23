@@ -25,7 +25,7 @@ export interface Compose {
   tplId: string | null
   // who the message belongs to: a team (all its members see it) or null for personal
   team: string | null
-  // Device Notifications text, and Desktop OS's own (kept short so the pop-up shows it all)
+  // Mobile notifications text, and Desktop notifications's own (kept short so the pop-up shows it all)
   sender: string; title: string; content: string; smsText: string
   dSender: string; dTitle: string; dContent: string
   emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
@@ -116,7 +116,7 @@ export const SENDER_ERR = () => L('English only: use half-width English letters,
 export const SMS_ERR = (t: string) => smsWide(t) ? L('Up to 267 characters when the SMS has any full-width character.', 'SMS 有任何全形字元時，最多 267 字。') : L('Up to 534 characters.', '最多 534 字。')
 // the email's size (text, tables, embedded images) in bytes against its 100 KB limit
 export const emailTooBig = (c: Compose) => new Blob([c.html || '']).size > LIM.mail
-// Device Notifications has no title: where one is still needed (the list), it's the first line of the content
+// Mobile notifications has no title: where one is still needed (the list), it's the first line of the content
 export const pushTitle = (content: string) => content.split('\n').map(x => x.trim()).find(Boolean) || ''
 
 export type Errs = Partial<Record<'recv' | 'ch' | 'ext' | 'extp' | 'sender' | 'title' | 'content' | 'dsender' | 'dtitle' | 'dcontent' | 'sms' | 'subject' | 'body' | 'sched' | 'urgent' | 'phone', string>>
@@ -137,7 +137,7 @@ export function errs(c: Compose, groups: Group[]): Errs {
   if (extE && !c.ch.email) e.ext = L('Outside email addresses need the Email channel. Select Email or remove them.', '外部 Email 需要 Email 通道。請勾選 Email，或移除這些收件人。')
   if (extP && !smsOn(c)) e.extp = L('Outside phone numbers need SMS fallback. Select it or remove them.', '外部電話需要 SMS 備援。請選擇 SMS 備援，或移除這些收件人。')
   // 2. Message
-  // a sender name is required on Device Notifications, optional on Desktop OS, and Email has none
+  // a sender name is required on Mobile notifications, optional on Desktop notifications, and Email has none
   if (c.ch.push) {
     if (!c.sender.trim()) e.sender = req
     else if (!SENDER_RE.test(c.sender)) e.sender = SENDER_ERR()
@@ -247,7 +247,7 @@ export const noPhoneRows = (c: Compose) => c.receivers.filter(t => t.type !== 'e
 
 // Audience Coverage by Channel: everyone a channel doesn't cover, expanded from orgs and groups and de-duplicated.
 // Source is where they came from: the org or group's name with an Org / Group tag, or just a Person / Phone / Email
-// tag when added on their own (2026-11-11); with SMS fallback on, Device Notifications counts the people the SMS
+// tag when added on their own (2026-11-11); with SMS fallback on, Mobile notifications counts the people the SMS
 // reaches as covered.
 export type CoverSrc = { name?: string; tag: string }
 export type NotCovered = { id: string; p: Person | null; name: string; srcs: CoverSrc[]; reason: string }

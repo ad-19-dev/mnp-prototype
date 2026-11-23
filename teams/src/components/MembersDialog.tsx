@@ -31,7 +31,7 @@ export function MembersDialog({ set, onClose }: { set: MemberSet | null; onClose
           <DialogHeader>
             <div className="flex flex-col gap-0.5">
               <DialogTitle>{set.name}</DialogTitle>
-              <DialogDescription className="sr-only">{set.kind + ' · ' + P(set.people.length, 'person', '人', 'people')}</DialogDescription>
+              <DialogDescription className="sr-only">{set.kind + ' · ' + P(set.people.length, 'audience', '人', 'audiences')}</DialogDescription>
             </div>
           </DialogHeader>
           <DialogBody>

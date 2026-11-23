@@ -6,31 +6,39 @@ import {
   Button, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Popover,
   PopoverAnchor, PopoverContent, Textarea,
 } from '@qijenchen/design-system'
-import { LogOut, UserPlus, X } from 'lucide-react'
-import { ME, PEOPLE, PMAP, fmtN, type Team } from '../lib/data'
+import { Building2, LogOut, UserPlus, X } from 'lucide-react'
+import { ME, ORGS, PEOPLE, PMAP, fmtN, orgMembers, type Org, type Person, type Team } from '../lib/data'
 import { flash, getApp, go, setApp } from '../lib/store'
 import { L, P } from '../lib/i18n'
 import { ConfirmDialog, FormField, PAvatar, Two, type Confirm } from './ui'
 
-// search the directory and add people; Enter adds the top match
-function MemberPicker({ exclude, onAdd }: { exclude: string[]; onAdd: (pid: string) => void }) {
+// search the directory and add people, or a whole org by its name or Org ID (2026-11-23: adds the org's people who
+// aren't members yet); Enter adds the top match
+type Cand = { org?: Org; p?: Person; pids: string[] }
+function MemberPicker({ exclude, onAdd }: { exclude: string[]; onAdd: (pids: string[]) => void }) {
   const [q, setQ] = React.useState(''), [open, setOpen] = React.useState(false), anchor = React.useRef<HTMLDivElement>(null)
   const ql = q.trim().toLowerCase()
-  const cands = ql ? PEOPLE.filter(p => exclude.indexOf(p.id) < 0 && [p.zh, p.en, p.nt, p.emp, p.org].join(' ').toLowerCase().indexOf(ql) >= 0).slice(0, 6) : []
-  const add = (pid: string) => { onAdd(pid); setQ(''); setOpen(false) }
+  const orgs: Cand[] = ql ? ORGS.filter(o => o.code.toLowerCase().indexOf(ql) === 0 || o.name.toLowerCase().indexOf(ql) >= 0)
+    .map(o => ({ org: o, pids: orgMembers(o.code).map(p => p.id).filter(id => exclude.indexOf(id) < 0) })).filter(c => c.pids.length).slice(0, 3) : []
+  const ppl: Cand[] = ql ? PEOPLE.filter(p => exclude.indexOf(p.id) < 0 && [p.zh, p.en, p.nt, p.emp].join(' ').toLowerCase().indexOf(ql) >= 0).slice(0, 6).map(p => ({ p, pids: [p.id] })) : []
+  const cands = orgs.concat(ppl)
+  const add = (c: Cand) => { onAdd(c.pids); setQ(''); setOpen(false) }
   return (
     <Popover open={open && !!ql} onOpenChange={x => { if (!x) setOpen(false) }}>
       <PopoverAnchor asChild>
         <div ref={anchor}>
-          <Input startIcon={UserPlus} autoComplete="off" placeholder={L('Add people by name, NT account or employee ID', '用姓名、NT 帳號或工號加入成員')} aria-label={L('Add members', '加入成員')} value={q}
+          <Input startIcon={UserPlus} autoComplete="off" placeholder={L('Add by name, NT account, employee ID, Org name or Org ID', '用姓名、NT 帳號、工號、組織名稱或 Org ID 加入')} aria-label={L('Add members', '加入成員')} value={q}
             onChange={e => { setQ(e.target.value); setOpen(true) }}
-            onKeyDown={e => { if (e.key === 'Escape') setOpen(false); if (e.key === 'Enter' && cands[0]) { e.preventDefault(); add(cands[0].id) } }} />
+            onKeyDown={e => { if (e.key === 'Escape') setOpen(false); if (e.key === 'Enter' && cands[0]) { e.preventDefault(); add(cands[0]) } }} />
         </div>
       </PopoverAnchor>
       <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={e => e.preventDefault()} onInteractOutside={e => { if (anchor.current?.contains(e.target as Node)) e.preventDefault() }}>
-        {cands.length ? cands.map(p => (
-          <button key={p.id} type="button" onClick={() => add(p.id)} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-neutral-hover">
-            <PAvatar p={p} size={28} /><Two a={p.en + ' ' + p.zh} b={p.title + ' · ' + p.org} strong className="flex-1" />
+        {cands.length ? cands.map(c => (
+          <button key={c.org ? 'o:' + c.org.code : c.p!.id} type="button" onClick={() => add(c)} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-neutral-hover">
+            {c.org
+              ? <><span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-muted"><Building2 className="size-4 text-fg-secondary" aria-hidden /></span>
+                  <Two a={c.org.code + ' · ' + c.org.name} b={L('Adds ' + P(c.pids.length, 'person', '', 'people'), '加入 ' + c.pids.length + ' 人')} strong className="flex-1" /></>
+              : <><PAvatar p={c.p!} size={28} /><Two a={c.p!.en + ' ' + c.p!.zh} b={c.p!.title + ' · ' + c.p!.org} strong className="flex-1" /></>}
           </button>
         )) : <div className="px-3 py-3 text-body text-fg-secondary">{L('No match for “' + q.trim() + '”.', '找不到「' + q.trim() + '」。')}</div>}
       </PopoverContent>
@@ -119,7 +127,7 @@ export function TeamDialog({ team, open, onClose }: { team?: Team; open: boolean
                 </FormField>
                 <div className="flex flex-col gap-2">
                   <span className="text-body font-medium">{L('Members', '成員')} <span className="font-normal text-fg-secondary">· {fmtN(pids.length)}</span></span>
-                  <MemberPicker exclude={pids} onAdd={pid => setPids(pids.concat([pid]))} />
+                  <MemberPicker exclude={pids} onAdd={ids => setPids(pids.concat(ids))} />
                   <MemberList pids={pids} onRemove={pid => setPids(pids.filter(x => x !== pid))} />
                 </div>
               </div>

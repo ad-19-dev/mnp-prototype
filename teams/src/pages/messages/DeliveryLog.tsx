@@ -5,17 +5,17 @@
 //   Search: one box, no field to pick first (2026-11-12). Each term is matched against the name, phone or email
 //           (part of it), and the employee ID, NT account and job ID (whole); several can be pasted at once,
 //           separated by commas or spaces. The server tells the kinds apart (6 digits: employee ID, 12345-000001: job ID...).
-//   Filters: Status (with counts) and Channel (Device Notifications (SMS) only). No Reason filter: a reason only
+//   Filters: Status (with counts) and Channel (Mobile notifications (SMS) only). No Reason filter: a reason only
 //           exists on what wasn't sent and already shows under the Not sent tag.
 //   Channel: how and where it went, in one column (2026-11-16: Via and Sent to merged): "PNS",
-//           "SMS · Company phone", "SMS · Personal phone", "Desktop OS", "Email". No phone number or address
+//           "SMS · Company phone", "SMS · Personal phone", "Desktop notifications", "Email". No phone number or address
 //           is shown (privacy), only which phone; a number can still be searched for.
 //   Not sent: one word everywhere for what didn't go out (no "Failed"); reasons include App unregistered, Service
 //           unavailable, Number not in service. A Sent line can carry the carrier's note when it still didn't arrive
 //           (Recipient has blocked SMS messages, Message is barred by customer).
 //   Still sending: lines not sent yet aren't listed (no Queued status, 2026-11-16).
 //   Recipient: the person plus a tag for the phone it went to: Company phone (blue) or Personal phone (purple);
-//           PNS always goes to the company phone. Channel: PNS, SMS (fallback), SMS (outside number), Desktop OS, Email.
+//           PNS always goes to the company phone. Channel: PNS, SMS (fallback), SMS (outside number), Desktop notifications, Email.
 //   Resend to not sent (n): in the footer, right of Close, when anyone wasn't reached: everyone with nothing sent (a
 //           person whose push failed but whose SMS went out was reached). n counts people, not rows. No Alert.
 //   Named Sent details again (2026-11-16).
@@ -96,7 +96,7 @@ export function logLines(x: Rec, groups: Parameters<typeof flatten>[1]): LogLine
       }
     } else if (k === 'desktop') {
       const ok = p.desk && !down[p.id]
-      push({ ...base, via: 'Desktop', to: '', st: ok ? 'sent' : 'failed', reason: ok ? '' : down[p.id] ? svc : L('No desktop agent', '沒有桌面程式') }, 'Desktop OS')
+      push({ ...base, via: 'Desktop', to: '', st: ok ? 'sent' : 'failed', reason: ok ? '' : down[p.id] ? svc : L('No desktop agent', '沒有桌面程式') }, 'Desktop notifications')
     } else {
       const bad = !!down[p.id]
       push({ ...base, via: 'Email', to: p.nt + '@' + DOMAIN, st: bad ? 'failed' : 'sent', reason: bad ? L('Mailbox full (552)', '信箱已滿（552）') : '' }, 'Email')
@@ -151,7 +151,7 @@ export function DeliveryLogDialog({ x, open, onClose, onResend, initial }: { x: 
       </span>
     ) } }),
     col.accessor('emp', { header: L('Employee ID', '工號'), meta: { width: 124, maxWidth: 124 }, cell: i => i.getValue() ? <span className="tabular-nums">{i.getValue()}</span> : <span className="text-fg-muted">—</span> }),
-    // how it went: PNS, SMS (fallback: after the push didn't arrive), SMS (an outside number), Desktop OS, Email
+    // how it went: PNS, SMS (fallback: after the push didn't arrive), SMS (an outside number), Desktop notifications, Email
     col.accessor('ch', { header: L('Channel', '通道'), meta: { width: 150, maxWidth: 170 }, cell: i => <span className="truncate">{i.getValue()}</span> }),
     // status and reason in one column: the tag, and why under it when it failed
     col.display({ id: 'st', header: L('Status', '狀態'), meta: { width: 250, maxWidth: 260 }, cell: i => { const l = i.row.original; return <span className="flex min-w-0 flex-col items-start gap-0.5"><DsTag size="sm" color={ST[l.st].color}>{ST[l.st].label()}</DsTag>{/* the reason (Not sent) and the carrier's note (Sent) are both something gone wrong: red (2026-11-16) */}{l.reason || l.note ? <span className="truncate text-caption text-error-text">{l.reason || l.note}</span> : null}</span> } }),

@@ -16,12 +16,12 @@ import { listSender, type SendCtl } from './ctl'
 const col = createColumnHelper<Row>()
 const notStarted = (r: Row) => r.status === 'pending' || r.status === 'expired' || r.status === 'rejected' || r.status === 'scheduled'
 
-// the title and text the list shows: Device Notifications first, then Email, then Desktop OS
+// the title and text the list shows: Mobile notifications first, then Email, then Desktop notifications
 export function listText(r: Row) {
   if (r.channels.indexOf('push') < 0 && r.channels.indexOf('email') >= 0 && r.email && r.email.mode === 'own') return { title: r.email.subject || r.title, content: htmlToText(r.email.html) || r.content }
   return dedupe(r.title, r.content)
 }
-// Device Notifications has no title field: a message's title is the start of its content, so don't print it twice
+// Mobile notifications has no title field: a message's title is the start of its content, so don't print it twice
 export function dedupe(title: string, content: string) {
   return title && content.startsWith(title) ? { title, content: content.slice(title.length).trim() } : { title, content }
 }
@@ -94,14 +94,14 @@ export function SendList({ m, intro }: { m: SendCtl; intro?: React.ReactNode }) 
     // order: Sender, Channels, Title / Content, Status, Template, Reach / Audience, Created, Scheduled, Created by
     col.accessor('sender', { id: 'sender', header: L('Sender', '寄件人'), meta: { width: 140 }, cell: i => (
       <span className="flex min-w-0 flex-col">
-        {/* only Device Notifications and Desktop OS carry a sender name */}
+        {/* only Mobile notifications and Desktop notifications carry a sender name */}
         {listSender(i.row.original) ? <Trunc text={listSender(i.row.original)} className="font-medium" /> : <span className="text-fg-muted">—</span>}
       </span>
     ) }),
     col.display({ id: 'ch', header: L('Channels', '通道'), meta: { width: 128 }, enableSorting: false, cell: i => <ChIcons list={rowChs(i.row.original)} /> }),
     col.accessor('title', { header: L('Title / Content', '標題 / 內容'), enableSorting: false, meta: { width: 360 }, cell: i => {
       // title (opens the details) over the first line of the text: one wide column instead of two narrow ones;
-      // with several channels it shows one version, Device Notifications first, then Email, then Desktop OS
+      // with several channels it shows one version, Mobile notifications first, then Email, then Desktop notifications
       const r = i.row.original, lt = listText(r), text = lt.content.replace(/\s+/g, ' ')
       return (
         <span className="flex min-w-0 flex-col">

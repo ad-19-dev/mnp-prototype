@@ -16,9 +16,9 @@ import {
 import { createColumnHelper } from '@tanstack/react-table'
 import { MembersDialog, type MemberSet } from '../../components/MembersDialog'
 import './DetailModal.css'
-import { Ban, Building2, Copy, ExternalLink, Mail, Phone, Send, Trash2, Upload, Users, X } from 'lucide-react'
+import { Ban, Building2, Copy, ExternalLink, Hash, Mail, Phone, Send, Trash2, Upload, Users, X } from 'lucide-react'
 import {
-  ICSD, LIM, ME, ORGS, PEOPLE, PMAP, noPhoneCell, smsMax, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtPhone, textToHtml,
+  ICSD, LIM, ME, ORGS, PEOPLE, PMAP, noPhoneCell, smsMax, cleanHtml, flatten, fmtDT, fmtN, fromIso, isExtMvpn, isExtPhone, textToHtml,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { SENDER_ERR, SENDER_RE, SMS_ERR } from '../../lib/compose'
@@ -63,7 +63,7 @@ function initVals(r: Row, k: Channel): Vals {
   const d = r.desk || r, em = r.email && r.email.mode === 'own' ? r.email : null
   return {
     sender: k === 'desktop' ? d.sender : r.sender,
-    // Device Notifications has its own title field (2026-11-18); older records that put the title on the content's
+    // Mobile notifications has its own title field (2026-11-18); older records that put the title on the content's
     // first line lose that line
     pTitle: r.title,
     content: k === 'desktop' ? d.content : r.content.startsWith(r.title + '\n') ? r.content.slice(r.title.length + 1) : r.content,
@@ -91,7 +91,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   const [v, setV] = React.useState<Vals>(init.v), [tags, setTags] = React.useState<RTag[]>(init.tags)
   const [tried, setTried] = React.useState(false), [seed, setSeed] = React.useState(0)
   const [ri, setRi] = React.useState<RiState>({ type: 'person', q: '', open: false, exp: null })
-  // Device Notifications (SMS): which phones get the SMS, per audience row (the send flow's two columns)
+  // Mobile notifications (SMS): which phones get the SMS, per audience row (the send flow's two columns)
   const initPh = React.useMemo(() => r.chPhones || { co: {}, pp: {} }, [r.id, r.fresh])
   const [ph, setPh] = React.useState(initPh)
   const phOf = (o: typeof ph, l: RTag[]) => JSON.stringify(l.filter(x => x.type !== 'ext').map(x => [o.co[x.key] !== false, !!o.pp[x.key]]))
@@ -103,7 +103,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
   // only this channel's own fields count as changes
   const own = (o: Vals) => k === 'email' ? [o.subject, o.html] : k === 'desktop' ? [o.sender, o.dTitle, o.content] : k === 'sms' ? [o.sender, o.pTitle, o.content, o.sms] : [o.sender, o.pTitle, o.content]
   const phChanged = k === 'sms' && phOf(ph, tags) !== phOf(initPh, tags)
-  // Scheduled Device Notifications (SMS) approved by ICSD (2026-11-19, with PM): changing who gets it (the audience
+  // Scheduled Mobile notifications (SMS) approved by ICSD (2026-11-19, with PM): changing who gets it (the audience
   // or the phones) no longer matches what was approved, so saving sends it back for approval. Text and time don't.
   const audChanged = tagKeys(tags) !== tagKeys(init.tags) || phChanged
   const reapprove = ICSD && st === 'scheduled' && k === 'sms' && !r.bypass && audChanged
@@ -146,7 +146,7 @@ function DetailModalBody({ m, x, close, onDirty, resend }: { m: SendCtl; x: Rec;
       if (k === 'desktop') { const nd = { sender: v.sender.trim(), title: v.dTitle.trim(), content: v.content.trim() }; if (r.channels.indexOf('push') >= 0) p.desk = nd; else { p.sender = nd.sender; p.title = nd.title; p.content = nd.content } }
       if (k === 'email') p.email = { mode: 'own', subject: v.subject.trim(), html: cleanHtml(v.html), atts: (r.email && r.email.atts) || [] }
       if (tagKeys(tags) !== tagKeys(init.tags)) {
-        // this channel's audience only; its count follows (Device Notifications (SMS) keeps it on Device Notifications)
+        // this channel's audience only; its count follows (Mobile notifications (SMS) keeps it on Mobile notifications)
         const aud = tags.map(x => [x.type === 'person' ? 'p' : x.type === 'group' ? 'g' : x.type === 'org' ? 'o' : 'e', (x.type === 'ext' ? x.email : x.id) || ''] as [string, string])
         p.chAud = { ...(r.chAud || {}), [k]: aud }
         p.byCh = { ...(r.byCh || {}), [k === 'sms' ? 'push' : k]: [0, countOf(tags, app.groups)] }
@@ -365,7 +365,7 @@ function Facts({ m, x, audN, time }: { m: SendCtl; x: Rec; audN: number | null; 
 // an external contact with its icon and a Phone / Email tag. Editable: a remove button ends every row.
 type ARow = { t: RTag; label: string; kind: string; ppl: ReturnType<typeof flatten> }
 const acol = createColumnHelper<ARow>()
-// phones (Device Notifications (SMS)): Company phone / Personal phone columns, a select-all in each header;
+// phones (Mobile notifications (SMS)): Company phone / Personal phone columns, a select-all in each header;
 // set is missing when the list can't be edited (the boxes are then disabled)
 type Phones = { co: Record<string, boolean>; pp: Record<string, boolean>; set?: (which: 'co' | 'pp', keys: string[], val: boolean) => void }
 export function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: (key: string) => void; phones?: Phones }) {
@@ -374,13 +374,13 @@ export function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: 
   const rows: ARow[] = tags.map(t => {
     if (t.type === 'group') { const g = app.groups.find(x => x.id === t.id); return { t, label: g ? g.name : t.id!, kind: L('Group', '群組'), ppl: flatten([t], app.groups) } }
     if (t.type === 'org') { const o = ORGS.find(x => x.code === t.id); return { t, label: o ? o.code : t.id!, kind: L('Org', '組織'), ppl: flatten([t], app.groups) } }
-    if (t.type === 'ext') return { t, label: t.email!, kind: isExtPhone(t) ? L('Phone', '電話') : 'Email', ppl: [] }
+    if (t.type === 'ext') return { t, label: t.email!, kind: isExtMvpn(t) ? 'MVPN' : isExtPhone(t) ? L('Phone', '電話') : 'Email', ppl: [] }
     return { t, label: t.id!, kind: L('Person', '人員'), ppl: [] }
   })
   const cols = React.useMemo(() => [
     acol.display({ id: 'who', header: L('Audience', '收件人'), meta: { width: phones ? 320 : 480 }, cell: i => {
       const x = i.row.original, t = x.t, p = t.type === 'person' ? PMAP[t.id!] : null
-      const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtPhone(t) ? Phone : Mail
+      const Icon = t.type === 'group' ? Users : t.type === 'org' ? Building2 : isExtMvpn(t) ? Hash : isExtPhone(t) ? Phone : Mail
       const many = t.type === 'group' || t.type === 'org'
       return (
         <span className="flex min-w-0 items-center gap-2">
@@ -389,7 +389,7 @@ export function AudTable({ tags, onRemove, phones }: { tags: RTag[]; onRemove?: 
             <span className="truncate text-body">{x.label}</span>
             <Tag size="sm" color="neutral">{x.kind}</Tag>
           </>}
-          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + x.ppl.length + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl.map(y => PMAP[y.pid]).filter(Boolean), group: t.type === 'group' ? t.id : undefined })}>{L(fmtN(x.ppl.length) + (x.ppl.length === 1 ? ' person' : ' people'), x.ppl.length + ' 人')}</Button> : null}
+          {many ? <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + x.ppl.length + ' members of ', '查看成員：') + x.label} onClick={() => setMem({ name: x.label, kind: x.kind, people: x.ppl.map(y => PMAP[y.pid]).filter(Boolean), group: t.type === 'group' ? t.id : undefined })}>{L(fmtN(x.ppl.length) + (x.ppl.length === 1 ? ' audience' : ' audiences'), x.ppl.length + ' 人')}</Button> : null}
         </span>
       )
     } }),

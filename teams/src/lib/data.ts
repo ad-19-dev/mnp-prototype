@@ -19,7 +19,7 @@ export const SUPERVISOR = 'Jimmy Chen 陳志明'
 export type Channel = 'push' | 'desktop' | 'email' | 'sms'
 export const CH_ORDER: Channel[] = ['push', 'desktop', 'email', 'sms']
 export const CH_CARDS: Channel[] = ['push', 'desktop', 'email']
-// Device Notifications (PM, 2026-11-18): title 30 and content 750, full- or half-width alike. SMS: 534 half-width
+// Mobile notifications (PM, 2026-11-18): title 30 and content 750, full- or half-width alike. SMS: 534 half-width
 // characters, or 267 as soon as there is any full-width character (see smsMax).
 export const LIM = { sender: 26, title: 30, push: 750, desktop: 70, dTitle: 20, sms: 534, smsWide: 267, subject: 70, body: 5000, mail: 100 * 1024, files: 5, bytes: 10 * 1024 * 1024, name: 50 }
 // SMS length: any full-width character makes the whole SMS full-width: CJK (Chinese, Japanese, Korean), CJK and
@@ -27,7 +27,7 @@ export const LIM = { sender: 26, title: 30, push: 750, desktop: 70, dTitle: 20, 
 export const smsWide = (t: string) => /[\u1100-\u115F\u2E80-\u303F\u3040-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60\uFFE0-\uFFE6]/.test(t)
 export const smsMax = (t: string) => (smsWide(t) ? LIM.smsWide : LIM.sms)
 export const BLOCKED = ['exe', 'bat', 'cmd', 'com', 'js', 'vbs', 'msi', 'ps1', 'scr']
-// Desktop OS notifications show about 2 lines of title and 2–3 lines of text; CJK characters are about twice as wide
+// Desktop notifications notifications show about 2 lines of title and 2–3 lines of text; CJK characters are about twice as wide
 export const DESK = { title: 80, text: 120 }
 
 export interface Person {
@@ -39,6 +39,7 @@ export interface Person {
 export interface Org { code: string; no: string; name: string; count: number }
 export interface Group {
   id: string; name: string; desc: string; count: number; updated: string; creator: string
+  updater?: string   // who changed it last (2026-11-23); the creator when not set
   role: 'Owner' | 'Editor' | 'Viewer'; members?: { pid: string }[]
   // the audience as added (2026-11-18): an org or group stays one entry, so it follows that org's or group's people
   aud?: Tag[]; collabs?: { pid: string; role: string }[]; fresh?: number
@@ -49,6 +50,7 @@ export interface EmailBody { mode: 'same' | 'own'; subject?: string; html?: stri
 export interface Template {
   id: string; name: string; sender: string; title: string; content: string; sms: string
   email: EmailBody; shared: [string, string][]; updated: string; owner: string; fresh?: number
+  updater?: string   // who changed it last (2026-11-23); the owner when not set
   // the team it belongs to; null means the owner's personal space
   team?: string | null
 }
@@ -58,7 +60,7 @@ export type Status = 'pending' | 'expired' | 'rejected' | 'scheduled' | 'progres
 export const STATUS_ORDER: Status[] = ['pending', 'scheduled', 'progress', 'sent', 'error', 'rejected', 'expired', 'canceled']
 export interface Row {
   id: string; sender: string; tpl: string | null; title: string; content: string; smsText?: string
-  // Desktop OS has its own text; on a message that also uses Device Notifications, title/content above are the device text
+  // Desktop notifications has its own text; on a message that also uses Mobile notifications, title/content above are the device text
   desk?: { sender: string; title: string; content: string } | null
   channels: Channel[]; sms: boolean; status: Status; created: string; sched: string | null
   total: number; ok: number; creator: string; aud: [string, string][]; email?: EmailBody | null
@@ -66,13 +68,13 @@ export interface Row {
   updater?: string
   fr?: string[][]; fo?: string; fw?: string[]; fx?: string[][]; err?: { title: string; text: string } | null
   byCh?: Partial<Record<Channel, [number, number]>> | null; fresh?: number; _f?: Fail[] | null
-  // a channel whose own status differs from the message's (e.g. Device Notifications done while SMS still sends)
+  // a channel whose own status differs from the message's (e.g. Mobile notifications done while SMS still sends)
   chSt?: Partial<Record<Channel, Status>> | null
   // a channel rescheduled on its own (actions work on one channel at a time)
   chSched?: Partial<Record<Channel, string>> | null
   // a channel whose audience was edited on its own (Detail modal study); the other channels keep aud
   chAud?: Partial<Record<Channel, [string, string][]>> | null
-  // Device Notifications (SMS): which phones get the SMS, per audience row (company ticked unless false; personal when true)
+  // Mobile notifications (SMS): which phones get the SMS, per audience row (company ticked unless false; personal when true)
   chPhones?: { co: Record<string, boolean>; pp: Record<string, boolean> } | null
   team?: string | null
   // ICSD approval skipped because the message was urgent: who, when and why (kept for the record)
@@ -257,6 +259,9 @@ export function tagsToAud(tags: Tag[]): [string, string][] { return tags.map(t =
 export function phoneDigits(s: string) { const t = String(s || '').trim(); if (!/^\+?[\d\s().-]{8,20}$/.test(t)) return ''; const d = t.replace(/[^\d+]/g, ''); return d.replace(/\+/g, '').length >= 8 ? d : '' }
 export function fmtExtPhone(d: string) { return /^09\d{8}$/.test(d) ? d.slice(0, 4) + '-' + d.slice(4, 7) + '-' + d.slice(7) : d }
 export function isExtPhone(t: Tag) { return t.type === 'ext' && (t.email || '').indexOf('@') < 0 }
+// an MVPN no one uses (2026-11-23, engineering: some MVPNs aren't tied to a person): added as the MVPN itself, kept
+// as "MVPN 1234567"; it gets SMS like an outside number, with its own icon
+export function isExtMvpn(t: Tag) { return t.type === 'ext' && (t.email || '').indexOf('MVPN ') === 0 }
 // SMS phone columns: a row that can't use this phone, shown as "—": an external contact, or a person with no
 // personal phone on file (every employee has a company mobile, 2026-11-16; replaces the "No phone" tag)
 export const noPhoneCell = (t: Tag, k: 'co' | 'pp') => t.type === 'ext' || (k === 'pp' && t.type === 'person' && !(PMAP[t.id!] && PMAP[t.id!].pp))
@@ -365,7 +370,7 @@ export const SAMPLE_SEND = 'gywu, cmchen, 112306, ytchang, celee, sywangd, 11095
 export const SAMPLE_GROUP = 'ytchang, 115630, Kevin Lin\n0920-775-641; 66904\nPUX\npartner@example.com, a19999'
 
 // ---------- templates ----------
-// Templates store message text by format, not by channel: notification text (Device Notifications and Desktop OS),
+// Templates store message text by format, not by channel: notification text (Mobile notifications and Desktop notifications),
 // SMS text, and an optional separate email. They don't store receivers or attachments.
 export const TEMPLATES: Template[] = [
   { id: 't1', name: 'Emergency drill notice', sender: 'F18 Facility', title: 'Fire drill at [time] today', content: 'A fire evacuation drill starts at [time] in [building]. Follow your area’s evacuation route and gather at [assembly point]. Do not use elevators.', sms: 'Fire drill [time] today at [building]. Gather at [assembly point].', email: { mode: 'same' }, shared: [['o', 'FMFG'], ['o', 'FESH']], updated: '2026/09/12', owner: 'p12' },
@@ -529,7 +534,7 @@ MINE.push(
     email: { mode: 'own', subject: 'Design review with Northwind Studio: Thu, Nov 6, 14:00', html: textToHtml('Hi all,\n\nOur design review with Northwind Studio is on Thu, Nov 6 at 14:00 in 5F-Ocean. Guests get badges at the B lobby.\n\nGrace'), atts: [] },
     byCh: { push: [total - 6, total - 2], email: [total - 3, total], sms: [3, 4] }, fr: [['App unregistered', 'SMS fallback: number not in service']], fx: [['lisa.ho@vendor-example.com', 'Mailbox full (552)']] })
 }
-// still going out: Device Notifications has finished, Email and SMS fallback are still sending
+// still going out: Mobile notifications has finished, Email and SMS fallback are still sending
 MINE.push({ id: 'm155', sender: 'Grace Wu', tpl: null, title: 'Fire alarm test in Building B today at 15:00', content: 'The fire alarm in Building B will be tested today at 15:00 for about 10 minutes. No need to evacuate.', smsText: 'Fire alarm test in Bldg B today 15:00, about 10 min. No need to evacuate.',
   channels: ['push', 'email'], sms: true, status: 'progress', created: '2026/11/05 14:30', sched: null, total: 21, ok: 19, creator: 'p01', team: null, aud: [['o', 'PUX']], email: { mode: 'same' },
   byCh: { push: [19, 21], email: [15, 21], sms: [1, 2] }, chSt: { push: 'sent' } })
@@ -541,7 +546,7 @@ if (SPLIT) {
     // personal
     { id: 'm160', sender: 'Grace Wu', tpl: null, title: 'UX sync moves to Tue 11/4', content: 'Our weekly UX sync moves to Tue, Nov 4 at 10:00 in 5F-Ocean.', smsText: 'UX sync moves to Tue 11/4 10:00, 5F-Ocean.', channels: ['push'], sms: true, status: 'expired', created: '2026/11/03 17:10', sched: '2026/11/04 09:00', total: 9, ok: 0, creator: 'p01', team: null, aud: [['g', 'g8']], review: { by: 'icsd', at: '2026/11/04 11:25' } },
     { id: 'm161', sender: 'Grace Wu', tpl: null, title: 'Team lunch Fri 11/7: order now', content: 'Team lunch is on Fri, Nov 7 at 12:00. Pick your order in the shared sheet by Thu.', channels: ['push', 'email'], sms: false, status: 'sent', created: '2026/11/04 10:02', sched: null, total: 9, ok: 9, creator: 'p01', team: null, aud: [['g', 'g8']], email: { mode: 'same' },
-      byCh: { push: [9, 9], email: [0, 9] }, chSt: { email: 'error' }, err: { title: 'The mail server rejected the batch at 10:02.', text: 'No one got this by Email. Device Notifications went out as usual.' } },
+      byCh: { push: [9, 9], email: [0, 9] }, chSt: { email: 'error' }, err: { title: 'The mail server rejected the batch at 10:02.', text: 'No one got this by Email. Mobile notifications went out as usual.' } },
     // personal: urgent sends (SMS approval skipped, with the reason written at send time) in every status.
     // An outside contact still needs the supervisor, so pending / expired / rejected are the supervisor's.
     { id: 'm180', sender: 'Grace Wu', tpl: null, title: 'Parking lot A closed at 15:00', content: 'Parking lot A is closed from 15:00 today for an emergency water-pipe repair. Please use lot C.', smsText: 'Lot A closed from 15:00 today (pipe repair). Use lot C.', channels: ['push', 'email'], sms: true, status: 'pending', created: '2026/11/06 13:10', sched: null, total: 10, ok: 0, creator: 'p01', team: null, aud: [['g', 'g8'], ['e', 'joy.wu@vendor-example.com']], email: { mode: 'same' }, review: { by: 'mgr' }, bypass: { by: 'p01', at: '2026/11/06 13:10', reason: 'The repair crew starts at 15:00 and staff park from 14:30, so this can’t wait for SMS approval.' } },
@@ -565,21 +570,21 @@ if (SPLIT) {
     { id: 'm169', sender: ESH, tpl: null, title: 'Earthquake drill Tue 11/4', content: 'Reminder: the quarterly earthquake drill starts Tue, Nov 4 at 10:00. Drop, cover and hold on, then follow your area’s route.', smsText: 'Quake drill Tue 11/4 10:00. Drop, cover, hold on.', channels: ['push'], sms: true, status: 'expired', created: '2026/11/03 15:20', sched: '2026/11/04 08:00', total: 96, ok: 0, creator: 'p19', team: 'tm3', aud: [['o', 'FESH']], review: { by: 'icsd', at: '2026/11/04 09:40' } },
     { id: 'm170', sender: ESH, tpl: null, title: 'Air quality alert today', content: 'Air quality is poor today (AQI 160). Limit outdoor work, and wear an N95 mask if you must work outside.', smsText: 'Poor air today (AQI 160). Limit outdoor work, wear N95 outside.', channels: ['push'], sms: true, status: 'rejected', created: '2026/11/03 12:40', sched: null, total: 96, ok: 0, creator: 'p07', team: 'tm3', aud: [['o', 'FESH']], review: { by: 'icsd', at: '2026/11/03 13:05', reason: 'Alerts need the ESH duty officer’s contact in the text. Add it and submit again.' } },
     { id: 'm171', sender: ESH, tpl: null, title: 'ERT training Thu 12/25 14:00', content: 'ERT members: quarterly training is on Thu, Dec 25 at 14:00 in the Fab 15 training room. Bring your PPE.', channels: ['push', 'email'], sms: false, status: 'scheduled', created: '2026/11/05 09:05', sched: '2026/12/24 09:00', total: 45, ok: 0, creator: 'p19', team: 'tm3', aud: [['g', 'g4']], email: { mode: 'same' } },
-    // UX Team (2026-11-16): one Device Notifications (SMS) send with a real spread, so every case in Sent details is
+    // UX Team (2026-11-16): one Mobile notifications (SMS) send with a real spread, so every case in Sent details is
     // there to try in the default project: PNS not sent, SMS (fallback) to company and personal phones, a carrier note
     // on a Sent SMS, Service unavailable, an outside number, and Resend to not sent
     { id: 'm190', sender: 'UX Team', tpl: null, title: 'Fire drill: Building A, 11/14', content: 'There is a fire evacuation drill in Building A on Fri, Nov 14 at 15:00. When the alarm sounds, leave by the nearest stairs and gather at assembly point A2.', smsText: 'Fire drill Bldg A Fri 11/14 15:00. Leave by stairs to point A2.', channels: ['push'], sms: true, status: 'sent', created: '2026/11/14 14:30', sched: '2026/11/14 14:45', total: 32, ok: 26, byCh: { push: [26, 32], sms: [4, 6] }, creator: 'p01', team: 'tm4', aud: [['o', 'PUX'], ['g', 'g8'], ['p', 'p03'], ['e', '0912-555-018']], chPhones: { co: { 'p:p03': false }, pp: { 'p:p03': true } } },
     // UX Team: the same kind of send, still going out (only what has gone out so far is listed)
     { id: 'm191', sender: 'UX Team', tpl: null, title: 'Network switch reboot in 5 min', content: 'The network switch on 7F reboots in 5 minutes. Save your work; the network is back within 10 minutes.', smsText: '7F network reboot in 5 min. Save your work.', channels: ['push'], sms: true, status: 'progress', created: '2026/11/15 10:20', sched: null, total: 30, ok: 14, creator: 'p01', team: 'tm4', aud: [['o', 'PUX'], ['g', 'g8']] },
     { id: 'm172', sender: ESH, tpl: null, title: 'Chemical delivery at Dock 2', content: 'A chemical delivery arrives at Dock 2 today from 13:00 to 14:00. Keep the dock area clear and follow the ESH staff’s directions.', smsText: 'Chemical delivery Dock 2 today 13:00-14:00. Keep the area clear.', channels: ['push'], sms: true, status: 'sent', created: '2026/11/04 12:30', sched: null, total: 143, ok: 133, creator: 'p13', team: 'tm3', aud: [['o', 'FESH'], ['g', 'g4'], ['p', 'p11'], ['e', '0912-555-018']], review: { by: 'both', at: '2026/11/04 12:20' },
-      byCh: { push: [133, 142], sms: [0, 10] }, chSt: { sms: 'error' }, err: { title: 'The SMS gateway was unavailable at 12:31.', text: 'The SMS fallback didn’t go out. Device Notifications reached everyone else as usual.' } },
+      byCh: { push: [133, 142], sms: [0, 10] }, chSt: { sms: 'error' }, err: { title: 'The SMS gateway was unavailable at 12:31.', text: 'The SMS fallback didn’t go out. Mobile notifications reached everyone else as usual.' } },
     // UX Team
     { id: 'm173', sender: UX, tpl: 't12', title: 'Usability study invitation: tWorkspace search', content: 'We’re testing the new tWorkspace search. Join a 30-minute session next week; pick a slot in the sign-up sheet.', channels: ['email'], sms: false, status: 'pending', created: '2026/11/05 09:30', sched: null, total: 61, ok: 0, creator: 'p05', team: 'tm4', aud: [['o', 'PUX'], ['g', 'g6'], ['p', 'p02'], ['e', 'pat.lin@research-example.com'], ['e', 'joy.wu@research-example.com']], review: { by: 'mgr' },
       email: { mode: 'own', subject: 'Invitation: 30-minute usability study on tWorkspace search', html: textToHtml('Hi,\n\nWe’re testing the new tWorkspace search and would love your help. Sessions are 30 minutes, next week. Pick a slot in the sign-up sheet.\n\nThanks,\nUX Team'), atts: [] } },
-    // scheduled Device Notifications (SMS), already approved by ICSD: changing its audience sends it for approval again (2026-11-19)
+    // scheduled Mobile notifications (SMS), already approved by ICSD: changing its audience sends it for approval again (2026-11-19)
     { id: 'm192', sender: UX, tpl: null, title: 'Office move: 7F to 9F, 12/12', content: 'The UX team moves from 7F to 9F on Fri, Dec 12. Pack your desk by Thu 17:00; movers start at 18:00.', smsText: 'UX moves 7F to 9F Fri 12/12. Pack your desk by Thu 17:00.', channels: ['push'], sms: true, status: 'scheduled', created: '2026/11/18 10:20', sched: '2026/12/11 09:00', total: 37, ok: 0, creator: 'p01', updater: 'p09', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/18 15:40' } },
     { id: 'm174', sender: UX, tpl: null, title: 'Design critique moves to 11/4', content: 'This week’s design critique moves to Tue, Nov 4 at 15:00 in 7F-Forest.', smsText: 'Design critique moves to Tue 11/4 15:00, 7F-Forest.', channels: ['push'], sms: true, status: 'expired', created: '2026/11/03 18:00', sched: '2026/11/04 13:00', total: 37, ok: 0, creator: 'p09', updater: 'p01', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/04 15:30' } },
-    { id: 'm175', sender: UX, tpl: null, title: 'DS office hours Wed 15:00', content: 'Design System office hours are on Wed at 15:00 in 7F-Forest. Bring your questions about components and tokens.', smsText: 'DS office hours Wed 15:00, 7F-Forest.', channels: ['push'], sms: true, status: 'rejected', created: '2026/11/02 10:30', sched: null, total: 37, ok: 0, creator: 'p18', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/02 11:10', reason: 'SMS is for urgent or time-critical notices. Send this by Device Notifications or Email instead.' } },
+    { id: 'm175', sender: UX, tpl: null, title: 'DS office hours Wed 15:00', content: 'Design System office hours are on Wed at 15:00 in 7F-Forest. Bring your questions about components and tokens.', smsText: 'DS office hours Wed 15:00, 7F-Forest.', channels: ['push'], sms: true, status: 'rejected', created: '2026/11/02 10:30', sched: null, total: 37, ok: 0, creator: 'p18', team: 'tm4', aud: [['g', 'g6']], review: { by: 'icsd', at: '2026/11/02 11:10', reason: 'SMS is for urgent or time-critical notices. Send this by Mobile notifications or Email instead.' } },
     { id: 'm176', sender: UX, tpl: null, title: 'Figma library update', content: 'The Figma library has new table components and updated tokens. Update your files from the Assets panel.', channels: ['push', 'desktop'], sms: false, status: 'progress', created: '2026/11/05 14:40', sched: null, total: 37, ok: 30, creator: 'p09', team: 'tm4', aud: [['g', 'g6']],
       byCh: { push: [35, 37], desktop: [24, 37] }, chSt: { push: 'sent' } },
     { id: 'm177', sender: UX, tpl: null, title: 'Reminder: send design review topics by Thu', content: 'Please send your topics for next week’s design review by Thu, Nov 6.', channels: ['desktop'], sms: false, status: 'error', created: '2026/11/03 16:02', sched: null, total: 37, ok: 0, creator: 'p01', team: 'tm4', aud: [['g', 'g6']], fr: [['Not dispatched (MNP-5241)']], fo: 'PUX', err: { title: 'Sending was interrupted by a platform restart at 16:02.', text: 'No one received this message. You can resend now.' } },
@@ -590,7 +595,7 @@ ROWS0.push(...MINE)
 ROWS0.sort((a, b) => b.created.localeCompare(a.created))
 
 
-// channels of a sent message, with SMS fallback listed after Device Notifications
+// channels of a sent message, with SMS fallback listed after Mobile notifications
 export function rowChs(r: Row): Channel[] { return CH_ORDER.filter(k => k === 'sms' ? !!r.sms : r.channels.indexOf(k) >= 0) }
 
 export function failList(r: Row): Fail[] {
@@ -627,12 +632,12 @@ export function chFailList(r: Row, k: Channel, n: number): Fail[] {
     // the person's recorded reason when it belongs to this channel, otherwise a typical one for it
     const sms = (f.fallback || '').replace(/^SMS fallback: /, '').replace(/^./, x => x.toUpperCase())
     const own = k === 'sms' ? sms : f.reason, why = f.ext || CH_WHY[k].indexOf(own) >= 0 ? own : CH_WHY[k][out.length % CH_WHY[k].length]
-    // on Device Notifications with SMS fallback on, these people's SMS failed too: say why
+    // on Mobile notifications with SMS fallback on, these people's SMS failed too: say why
     out.push({ p: f.p, ext: f.ext, reason: why, fallback: k === 'push' && r.sms ? f.fallback || 'SMS fallback: no phone number on file' : '', via: null })
   })
-  // another channel that reached the rest; SMS only goes to people Device Notifications missed
+  // another channel that reached the rest; SMS only goes to people Mobile notifications missed
   const other = rowChs(r).find(x => x !== k && x !== 'sms' && !(k === 'sms' && x === 'push')) || null
-  // with SMS fallback on, the people Device Notifications missed first get it by SMS
+  // with SMS fallback on, the people Mobile notifications missed first get it by SMS
   let bySms = k === 'push' && r.sms ? ((r.byCh && r.byCh.sms) ? r.byCh.sms[0] : 0) : 0
   for (let i = 0; out.length < n; i++) out.push({ p: genPerson(r.id + '-' + k + '-' + i, r.fo), reason: CH_WHY[k][i % CH_WHY[k].length], fallback: '', via: bySms-- > 0 ? 'sms' : other })
   chFailCache[key] = out

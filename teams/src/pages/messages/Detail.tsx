@@ -7,9 +7,9 @@ import {
 } from '@qijenchen/design-system'
 import { NO_HIDE, Tip } from '../../components/ui'
 import { createColumnHelper } from '@tanstack/react-table'
-import { Building2, CornerDownRight, CalendarClock, CircleAlert, Globe, Mail, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser, X } from 'lucide-react'
+import { Building2, CornerDownRight, CalendarClock, CircleAlert, Globe, Hash, Mail, Pencil, Phone, RotateCw, Send, Trash2, Users, BookUser, X } from 'lucide-react'
 import {
-  ICSD, ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, membersFor, orgMembers, fmtDT, fmtN, fmtSize, fromIso, isExtPhone, parseDT, plural, reqIdFor, rowChs,
+  ICSD, ORGS, PEOPLE, PMAP, addMin, audToTags, chFailList, failList, membersFor, orgMembers, fmtDT, fmtN, fmtSize, fromIso, isExtMvpn, isExtPhone, parseDT, plural, reqIdFor, rowChs,
   type Channel, type Fail, type Group, type Row, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
@@ -27,11 +27,11 @@ export function RecvTag({ t, groups }: { t: RTag; groups: Group[] }) {
   }
   if (t.type === 'group') {
     const g = groups.find(x => x.id === t.id) || { name: t.id, count: 0 }
-    return <Tip text={L('Audience group · ', '收件群組 · ') + P(g.count, 'member', '人')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={BookUser}>{g.name} · {fmtN(g.count)}</Tag></span></Tip>
+    return <Tip text={L('Audience group · ', '收件群組 · ') + P(g.count, 'audience', '人', 'audiences')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={BookUser}>{g.name} · {fmtN(g.count)}</Tag></span></Tip>
   }
   if (t.type === 'org') {
     const o = ORGS.find(x => x.code === t.id) || { code: t.id, name: '', count: 0 }
-    return <Tip text={o.name + ' · ' + P(o.count, 'member', '人')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={Building2}>{o.code} · {fmtN(o.count)}</Tag></span></Tip>
+    return <Tip text={o.name + ' · ' + P(o.count, 'audience', '人', 'audiences')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" icon={Building2}>{o.code} · {fmtN(o.count)}</Tag></span></Tip>
   }
   const ph = isExtPhone(t)
   return <Tip text={ph ? L('External phone', '外部電話') : L('External email', '外部 Email')}><span tabIndex={0} className="inline-flex rounded-md focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-[var(--ring)]"><Tag size="md" color="amber" icon={ph ? Phone : Globe}>{t.email} · {L('External', '外部')}</Tag></span></Tip>
@@ -73,9 +73,9 @@ export function ChannelText({ r, k, noSender }: { r: Row; k: Channel; noSender?:
   return <div className={box}>{d.sender && !noSender ? <span className="text-caption text-fg-secondary">{d.sender}{'\n'}</span> : null}{d.content.startsWith(d.title) ? d.content : <><strong className="font-medium">{d.title}</strong>{'\n'}{d.content}</>}</div>
 }
 
-// SMS is the fallback for Device Notifications: its row sits right under it, indented, and says who it was for.
-// Device Notifications counts the people it missed as failed, and says how many of them got the SMS instead.
-// channels in the order people get them: SMS right after Device Notifications, since it's its fallback
+// SMS is the fallback for Mobile notifications: its row sits right under it, indented, and says who it was for.
+// Mobile notifications counts the people it missed as failed, and says how many of them got the SMS instead.
+// channels in the order people get them: SMS right after Mobile notifications, since it's its fallback
 function byChannel(m: SendCtl, r: Row) {
   const all = m.chStats(r), sms = all.find(x => x.k === 'sms'), rest = all.filter(x => x.k !== 'sms')
   const i = rest.findIndex(x => x.k === 'push')
@@ -86,8 +86,8 @@ function byChannel(m: SendCtl, r: Row) {
 function ChannelRow({ m, r, k, ok, of, sms, last }: { m: SendCtl; r: Row; k: Channel; ok: number; of: number; sms?: number; last: boolean }) {
   const started = !notStarted(r), fail = started && r.status !== 'progress' ? of - ok : 0, fb = k === 'sms'
   const I = fb ? CornerDownRight : CHN[k].icon, name = fb ? L('SMS fallback', 'SMS 備援') : CHN[k].name
-  // the same format on every row; SMS fallback's count is the people Device Notifications missed (its place,
-  // indented under Device Notifications, says so)
+  // the same format on every row; SMS fallback's count is the people Mobile notifications missed (its place,
+  // indented under Mobile notifications, says so)
   const line = !started ? L('Not sent yet', '尚未傳送')
     : fb && !of ? L('Not needed', '不需要')
     : L(fmtN(ok) + ' / ' + fmtN(of) + ' delivered', fmtN(ok) + ' / ' + fmtN(of) + ' 已送達')
@@ -137,13 +137,13 @@ export function AudienceList({ tags, groups, onRemove }: { tags: RTag[]; groups:
             name = g ? g.name : o ? o.code : t.id!; sub = g ? L('Audience group', '收件群組') : o ? o.no : ''
             lead = circle(g ? Users : Building2)
             end = <Button variant="link" size="sm" className="!h-auto !min-w-0 shrink-0 !p-0 tabular-nums" aria-label={L('See the ' + people.length + ' members of ', '查看成員：') + name}
-              onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people, group: g ? g.id : undefined })}>{P(people.length, 'person', '人', 'people')}</Button>
+              onClick={() => setMem({ name, kind: g ? L('Group', '群組') : L('Org', '組織'), people, group: g ? g.id : undefined })}>{P(people.length, 'audience', '人', 'audiences')}</Button>
           } else if (t.type === 'person') {
             const p = PMAP[t.id!]
             lead = p ? <PAvatar p={p} /> : icon(Users); name = p ? p.en + ' ' + p.zh : t.id!; sub = p ? [p.org, p.nt, p.emp].filter(Boolean).join(' · ') : ''
           } else {
             const ph = isExtPhone(t)
-            lead = circle(ph ? Phone : Mail); name = t.email!
+            lead = circle(isExtMvpn(t) ? Hash : ph ? Phone : Mail); name = t.email!
             sub = ph ? L('External phone · SMS only', '外部電話・只收 SMS') : L('External email · Email only', '外部 Email・只收 Email')
           }
           return (

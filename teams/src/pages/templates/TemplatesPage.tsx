@@ -2,7 +2,7 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty,
-  Input, SegmentedControl, SegmentedControlItem, Tag, Textarea,
+  Input, PersonDisplay, SegmentedControl, SegmentedControlItem, Tag, Textarea,
 } from '@qijenchen/design-system'
 import { NO_HIDE, Trunc } from '../../components/ui'
 import { ME_SPACE, spaceName, spaceTeam, tplInSpace } from '../../lib/teams'
@@ -25,17 +25,17 @@ import { L, P } from '../../lib/i18n'
 interface TEd {
   id: string | null; isNew: boolean; role: 'Owner' | 'Viewer'; name: string; sender: string; title: string; content: string; sms: string
   emailMode: 'same' | 'own'; subject: string; html: string; bodyText: string; htmlKey: number
-  shared: [string, string][]; owner: string; team: string | null; updated: string; sq: string; sOpen: boolean; tried: boolean; dirty: boolean
+  shared: [string, string][]; owner: string; team: string | null; updated: string; updater: string; sq: string; sOpen: boolean; tried: boolean; dirty: boolean
 }
 interface TS { view: 'list' | 'edit'; q: string; cf: Confirm | null; ed: TEd | null }
 
 function makeTplEd(t: Template | null, dup?: boolean): TEd {
   const base = { sq: '', sOpen: false, tried: false, dirty: false, htmlKey: Date.now() % 100000 }
-  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', emailMode: 'same', subject: '', html: '', bodyText: '', shared: [], owner: ME, team: spaceTeam(), updated: '' }
+  if (!t) return { ...base, id: null, isNew: true, role: 'Owner', name: '', sender: '', title: '', content: '', sms: '', emailMode: 'same', subject: '', html: '', bodyText: '', shared: [], owner: ME, team: spaceTeam(), updated: '', updater: ME }
   const own = tplHasEmail(t), h = own ? t.email.html || '' : ''
   const body = { sender: t.sender || '', title: t.title || '', content: t.content || '', sms: t.sms || '', emailMode: (own ? 'own' : 'same') as 'own' | 'same', subject: own ? t.email.subject || '' : '', html: h, bodyText: htmlToText(h) }
-  if (dup) return { ...base, ...body, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + t.name).slice(0, LIM.name), shared: [], owner: ME, team: spaceTeam(), updated: '', dirty: true }
-  return { ...base, ...body, id: t.id, isNew: false, role: 'Owner', name: t.name, shared: (t.shared || []).map(x => x.slice() as [string, string]), owner: t.owner, team: t.team || null, updated: t.updated }
+  if (dup) return { ...base, ...body, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + t.name).slice(0, LIM.name), shared: [], owner: ME, team: spaceTeam(), updated: '', updater: ME, dirty: true }
+  return { ...base, ...body, id: t.id, isNew: false, role: 'Owner', name: t.name, shared: (t.shared || []).map(x => x.slice() as [string, string]), owner: t.owner, updater: t.updater || t.owner, team: t.team || null, updated: t.updated }
 }
 let seq = 0
 function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>)) => void) {
@@ -95,7 +95,7 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
     saveTpl() {
       const ed = get().ed!, e = m.errs()
       if (Object.keys(e).length) { m.setEd({ tried: true }, true); flash(L('Fix the highlighted fields', '請修正標示的欄位'), 'err'); return }
-      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updated: fmtDT(new Date()).slice(0, 10), fresh: Date.now() }
+      const patch: Partial<Template> = { team: ed.team, name: ed.name.trim(), sender: ed.sender.trim(), title: ed.title.trim(), content: ed.content.trim(), sms: ed.sms.trim(), email: ed.emailMode === 'own' ? { mode: 'own', subject: ed.subject.trim(), html: cleanHtml(ed.html) } : { mode: 'same' }, shared: ed.shared.map(x => x.slice() as [string, string]), updater: ME, updated: fmtDT(new Date()).slice(0, 10), fresh: Date.now() }
       if (ed.id) setApp(a => ({ templates: a.templates.map(t => t.id === ed.id ? { ...t, ...patch } : t) }))
       else setApp(a => ({ templates: [{ id: 'tt' + (++seq), owner: ME, ...patch } as Template].concat(a.templates) }))
       set({ view: 'list', ed: null, q: '' })
@@ -140,7 +140,8 @@ function TplList({ m }: { m: TCtl }) {
     ) } }),
     tcol.display({ id: 'fmt', header: L('Channels', '通道'), meta: { width: 140 }, cell: i => <FmtChips list={tplFormats(i.row.original)} /> }),
     tcol.display({ id: 'text', header: L('Text', '內容'), meta: { width: 300 }, cell: i => { const t = i.row.original, text = (t.content || htmlToText(t.email && t.email.html)).replace(/\s+/g, ' '); return <Trunc text={text} className="text-fg-secondary" /> } }),
-    tcol.accessor('updated', { header: L('Updated', '更新日期'), meta: { width: 112 } }),
+    // who changed it last and when (2026-11-23)
+    tcol.accessor('updated', { header: L('Last update', '最後更新'), meta: { width: 280 }, cell: i => { const x = i.row.original, p = PMAP[x.updater || x.owner] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PersonDisplay value={personVal(p)} /><span className="shrink-0 text-caption tabular-nums text-fg-secondary">{x.updated}</span></span> } }),
     // the personal space holds only your own templates, so Created by appears in team spaces only
     ...(app.space === ME_SPACE ? [] : [tcol.accessor(t => personVal(PMAP[t.owner] || PEOPLE[0], t.owner === ME), { id: 'owner', header: L('Creator', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.space])
@@ -174,7 +175,7 @@ function TplEditor({ m }: { m: TCtl }) {
   const title = ed.name.trim() || (ed.isNew ? L('New template', '新模板') : L('Untitled template', '未命名模板'))
   return (
     <div className="flex min-h-full flex-col">
-      <PageHeader crumbs={[{ label: spaceName(getApp().space), onClick: () => m.goList() }, { label: title }]} actions={<>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Updated ' + ed.updated + ' · by ' + ow.en, ed.updated + ' 更新 · ' + ow.en)}</span>}</>} />
+      <PageHeader crumbs={[{ label: spaceName(getApp().space), onClick: () => m.goList() }, { label: title }]} actions={<>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Last update ' + ed.updated + ' · by ' + (PMAP[ed.updater] || ow).en, ed.updated + ' 最後更新 · ' + (PMAP[ed.updater] || ow).en)}</span>}</>} />
       <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
         {ro ? <Banner tone="neutral" action={<Button size="sm" variant="secondary" startIcon={Copy} onClick={() => m.openEd(saved, true)}>{L('Duplicate', '複製')}</Button>}>{L(ow.en + ' shared this with you. Duplicate it to make changes.', ow.en + ' 分享給你的模板。想修改請先複製一份。')}</Banner> : null}
         <FormField id="t-name" label={L('Template name', '模板名稱')} required count={ed.name.length + ' / ' + LIM.name} over={ed.name.length > LIM.name} error={show('name')}>
@@ -183,8 +184,8 @@ function TplEditor({ m }: { m: TCtl }) {
         <Section title={L('Content', '內容')} sub={L('Fill in the channels you need. Only the text is saved.', '填寫需要的通道就好，模板只存文字。')}>
           <div className="flex flex-col gap-[var(--layout-space-loose)]">
             {ed.tried && e.formats ? <Banner tone="error">{e.formats}</Banner> : null}
-            <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Device Notifications', 'Device Notifications')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop OS', '桌面通知')}</Tag></span>}>
-              <FormField id="t-sender" label={L('Sender', '寄件人')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Needed when sending to Device Notifications; optional for Desktop OS.', '發 Device Notifications 時必填；桌面通知可不填。')} error={show('sender')}>
+            <Block icon={MessageSquareText} title={L('Notification', '通知')} right={<span className="flex gap-1.5"><Tag size="sm" icon={Smartphone}>{L('Mobile notifications', 'Mobile notifications')}</Tag><Tag size="sm" icon={Monitor}>{L('Desktop notifications', '桌面通知')}</Tag></span>}>
+              <FormField id="t-sender" label={L('Sender', '寄件人')} count={ed.sender.length + ' / ' + LIM.sender} over={ed.sender.length > LIM.sender} hint={L('Needed when sending to Mobile notifications; optional for Desktop notifications.', '發 Mobile notifications 時必填；桌面通知可不填。')} error={show('sender')}>
                 <Input id="t-sender" disabled={ro} value={ed.sender} error={!!show('sender')} onChange={ev => m.setEd({ sender: ev.target.value })} placeholder={L('e.g. IT Service Desk', '例如：IT Service Desk')} />
               </FormField>
               <FormField id="t-title" label={L('Title', '標題')} count={ed.title.length + ' / ' + LIM.title} over={ed.title.length > LIM.title} error={show('title')}>
@@ -194,7 +195,7 @@ function TplEditor({ m }: { m: TCtl }) {
                 <Textarea id="t-content" rows={4} disabled={ro} value={ed.content} error={!!show('content')} onChange={ev => m.setEd({ content: ev.target.value })} placeholder={L('What’s happening and what to do', '發生什麼事、需要做什麼')} />
               </FormField>
             </Block>
-            <Block icon={CHN.sms.icon} tone="warn" title={L('Device Notifications (SMS)', 'Device Notifications（SMS）')} right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
+            <Block icon={CHN.sms.icon} tone="warn" title={L('Mobile notifications (SMS)', 'Mobile notifications（SMS）')} right={<Tag size="sm" unbounded>{L('Optional', '選填')}</Tag>}>
               <FormField id="t-sms" label={L('SMS content', 'SMS 內容')} count={ed.sms.length + ' / ' + smsMax(ed.sms)} over={ed.sms.length > smsMax(ed.sms)} hint={L('Up to 534 half-width characters, or 267 if any character is full-width.', '半形最多 534 字；只要有任一個全形字元，最多 267 字。')} error={show('sms')}>
                 <Textarea id="t-sms" rows={2} disabled={ro} value={ed.sms} error={!!show('sms')} onChange={ev => m.setEd({ sms: ev.target.value })} placeholder={L('Short version for SMS fallback', 'SMS 備援用的簡短版本')} />
               </FormField>

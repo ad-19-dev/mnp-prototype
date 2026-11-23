@@ -71,7 +71,7 @@ const FIELDS = 'Task ID（2026-11-19 從 Message ID 改名）、Channel、Status
 function Flow({ go }: { go: (k: TabKey) => void }) {
   return (
     <>
-      <Section eyebrow="Flow" title="從列表出發的操作流程" lead="一則訊息選了幾個通道，列表就有幾筆紀錄（Device Notifications 加 SMS 備援算一筆）。所有操作都從列表開始：點標題開這一筆的訊息詳情（大 modal），能改的欄位直接在裡面改；快速動作也在每一筆的 ⋮ 選單裡。都只作用在這一個通道。">
+      <Section eyebrow="Flow" title="從列表出發的操作流程" lead="一則訊息選了幾個通道，列表就有幾筆紀錄（Mobile notifications 加 SMS 備援算一筆）。所有操作都從列表開始：點標題開這一筆的訊息詳情（大 modal），能改的欄位直接在裡面改；快速動作也在每一筆的 ⋮ 選單裡。都只作用在這一個通道。">
         <div className="flow-map" role="list">
           <Stop sub="專案的 Send messages">訊息列表</Stop><span className="flow-arrow" aria-hidden>→</span>
           <Stop sub="搜尋、狀態、通道">找到那一筆</Stop><span className="flow-arrow" aria-hidden>→</span>
@@ -87,7 +87,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
 
       <Section eyebrow="1" title="訊息列表" lead={<>每一列是一個通道的紀錄，每一列都顯示自己的完整資料；同一次發送的紀錄有相同的訊息 ID（例：10154），排在一起。欄位見「<button type="button" className="flow-spec-link" onClick={() => go('list')}>列表</button>」。</>}>
         <Figure label="訊息列表（UX Team）" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
-          { n: 1, title: '通道', body: 'Device Notifications、Device Notifications (SMS)、Desktop OS、Email。' },
+          { n: 1, title: '通道', body: 'Mobile notifications、Mobile notifications (SMS)、Desktop notifications、Email。' },
           { n: 2, title: '訊息 ID、標題 / 內容', body: '訊息 ID 標籤，後面是這個通道的標題與內文；點標題開訊息詳情。' },
           { n: 3, title: '狀態', body: '這一筆的狀態。' },
           { n: 4, title: '收件人數', body: '這個通道要寄給的人數。' },
@@ -139,17 +139,17 @@ function Overview() {
     <>
       <Section eyebrow="Concept" title="一個通道一筆紀錄" lead="發送時可以一次選好幾個通道；訊息紀錄則是每個通道各一筆，每一筆有自己的狀態與收件人數。">
         <SpecTable head={['發送時的選擇', '列表上的紀錄', '通道欄']} nowrap={[0]} rows={[
-          ['Device Notifications', '1 筆', '手機圖示'],
-          ['Device Notifications ＋ SMS 備援', '1 筆', '手機圖示（滑過顯示 Device Notifications (SMS)）'],
-          ['Desktop OS', '1 筆', '螢幕圖示'],
+          ['Mobile notifications', '1 筆', '手機圖示'],
+          ['Mobile notifications ＋ SMS 備援', '1 筆', '手機圖示（滑過顯示 Mobile notifications (SMS)）'],
+          ['Desktop notifications', '1 筆', '螢幕圖示'],
           ['Email', '1 筆', '信封圖示'],
-          ['好幾個通道（例：Device Notifications ＋ SMS 備援 ＋ Email）', '每個通道一筆（此例 2 筆）', '同一則訊息的紀錄排在一起，順序：Device Notifications → Desktop OS → Email'],
+          ['好幾個通道（例：Mobile notifications ＋ SMS 備援 ＋ Email）', '每個通道一筆（此例 2 筆）', '同一則訊息的紀錄排在一起，順序：Mobile notifications → Desktop notifications → Email'],
         ]} />
-        <Notes items={[{ title: 'SMS 備援', body: 'SMS 是 Device Notifications 的備援，和它算同一筆，列表上沒有單獨的 SMS 列。' }]} />
+        <Notes items={[{ title: 'SMS 備援', body: 'SMS 是 Mobile notifications 的備援，和它算同一筆，列表上沒有單獨的 SMS 列。' }]} />
       </Section>
       <Section eyebrow="Model" title="Message 與 Channel" lead="一次發送是一個 Message（一個訊息 ID），底下有一個或多個 Channel。列表的每一列是一個 Channel 的紀錄。">
         <SpecTable head={['', 'Message', 'Channel']} nowrap={[0]} rows={[
-          ['代表', '同一批發送（同一個訊息 ID）', '實際發送的渠道，例如 Email、Device Notifications'],
+          ['代表', '同一批發送（同一個訊息 ID）', '實際發送的渠道，例如 Email、Mobile notifications'],
           ['列表上', '訊息 ID 標籤（在標題前）', '一列'],
           ['操作', '目前沒有一次操作多個通道的功能', '所有操作都以一個 Channel 為單位'],
         ]} />
@@ -168,20 +168,20 @@ function ListTab() {
     <>
       <Section eyebrow="Page" title="列表" lead="一列一個通道的紀錄。頁首、搜尋與篩選、表格、分頁。">
         <Figure label="UX Team" sub="1680 × 940" shot="list" max={1180} wideNotes notes={[
-          { n: 1, title: '通道', body: <>只顯示圖示，滑過顯示通道名稱。Device Notifications (SMS) 用「手機加小信封」的圖示，和 Device Notifications 的手機圖示區分。設計系統與 lucide 都沒有這個圖示，是自己畫的（lucide 24px 格線、2px 線寬）。</> },
-          { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開訊息詳情）加一行內文，過長截斷，不顯示滑過提示。Email 顯示主旨與內文；Device Notifications (SMS) 顯示 Device Notifications 的文字。</> },
+          { n: 1, title: '通道', body: <>只顯示圖示，滑過顯示通道名稱。Mobile notifications (SMS) 用「手機加小信封」的圖示，和 Mobile notifications 的手機圖示區分。設計系統與 lucide 都沒有這個圖示，是自己畫的（lucide 24px 格線、2px 線寬）。</> },
+          { n: 2, title: '標題 / 內容', body: <>標題（藍字，點了開訊息詳情）加一行內文，過長截斷，不顯示滑過提示。Email 顯示主旨與內文；Mobile notifications (SMS) 顯示 Mobile notifications 的文字。</> },
           { n: 3, title: '狀態', body: '這一筆的狀態，見「狀態與合併規則」。' },
-          { n: 4, title: '收件人數', body: <>這個通道要寄給的人數，數字與表頭都齊右。<C>Device Notifications (SMS)</C> 用 Device Notifications 的人數。</> },
+          { n: 4, title: '收件人數', body: <>這個通道要寄給的人數，數字與表頭都齊右。<C>Mobile notifications (SMS)</C> 用 Mobile notifications 的人數。</> },
           { n: 5, title: '{n} not sent', body: '紅色文字連結，在狀態標籤下方，點了開 Sent details（已篩選成 Not sent）。有 SMS 備援的，只算推播與 SMS 都沒送到的人。' },
           { n: 6, title: '列尾 ⋮', body: <>列選單，只有快速動作，見「列選單」。沒有 ⓘ：點標題就開訊息詳情。</> },
           { n: 7, title: '狀態篩選', body: '多選；只列出這個空間有的狀態與數量，依生命週期排序。' },
           { n: 9, title: '建立日期篩選', body: <>按鈕加選單（和 Status、Channel 相同的 tertiary 按鈕與 DropdownMenu），在 Status 左邊。按鈕文字是 <Copy en="Created: <範圍>" zh="建立時間：<範圍>" />，寫出篩的是 Created；一定有值，所以不顯示為選取（不變藍、沒有角標）。選單沒有標題，直接是單選選項：<C>Last 7 days</C>、<C>Last 2 weeks</C>（預設）、<C>Last 30 days</C>、<C>Last 3 months</C>、<C>All time</C>。依 Created 篩選，今天也算在內。空狀態的 Clear filters 會改成 All time。</> },
-          { n: 8, title: '通道篩選', body: <>多選：<C>Device Notifications</C>、<C>Device Notifications (SMS)</C>、<C>Desktop OS</C>、<C>Email</C>，旁邊是數量。</> },
+          { n: 8, title: '通道篩選', body: <>多選：<C>Mobile notifications</C>、<C>Mobile notifications (SMS)</C>、<C>Desktop notifications</C>、<C>Email</C>，旁邊是數量。</> },
         ]} />
       </Section>
       <Section eyebrow="Columns" title="欄位" lead="寬度單位 px，都是 4 的倍數。除了 Title / Content，每一欄都設了最大寬度（設計系統表格的 meta.maxWidth），所以表格多出的寬度全部給 Title / Content，讓標題與內容顯示得更完整。">
         <SpecTable head={['欄位', '寬度', '內容', '排序']} nowrap={[0]} rows={[
-          [<Copy en="Sender" zh="寄件人" />, '140（固定）', 'Device Notifications 與 Desktop OS 的寄件人；Email 沒有寄件人，顯示「—」。每一列都顯示。', '可'],
+          [<Copy en="Sender" zh="寄件人" />, '140（固定）', 'Mobile notifications 與 Desktop notifications 的寄件人；Email 沒有寄件人，顯示「—」。每一列都顯示。', '可'],
           [<Copy en="Channel" zh="通道" />, '96（固定；同一次發送有標題列時 128）', '通道圖示', '—'],
           [<Copy en="Title / Content" zh="標題 / 內容" />, '最小 320，其餘寬度都給它', '訊息 ID 標籤（Tag sm、neutral，例：10154），後面是標題；下一行是內文', '—'],
           [<Copy en="Status" zh="狀態" />, '168（固定）', '狀態標籤；下方是 {n} not sent', '—'],
@@ -195,9 +195,9 @@ function ListTab() {
         ]} />
       </Section>
       <Section eyebrow="Group" title="同一次發送的紀錄" lead="同一個訊息 ID 的紀錄排在一起，但每一列都是獨立的紀錄：欄位都顯示，操作也只作用在那一列。">
-        <Figure label="同一個訊息 ID 的兩筆紀錄" sub="Device Notifications (SMS) ＋ Email" shot="group" max={1180} wideNotes notes={[
+        <Figure label="同一個訊息 ID 的兩筆紀錄" sub="Mobile notifications (SMS) ＋ Email" shot="group" max={1180} wideNotes notes={[
           { n: 1, title: '寄件人', body: 'Email 沒有寄件人，顯示「—」。' },
-          { n: 2, title: '通道', body: 'Device Notifications (SMS)：只有手機圖示，滑過顯示名稱。' },
+          { n: 2, title: '通道', body: 'Mobile notifications (SMS)：只有手機圖示，滑過顯示名稱。' },
           { n: 3, title: '狀態與未送出', body: '每一筆各自顯示。' },
           { n: 4, title: '收件人數', body: '每一筆是自己通道的人數。' },
           { n: 5, title: '訊息 ID', body: '兩列的訊息 ID 相同，表示是同一次發送。' },
@@ -205,7 +205,7 @@ function ListTab() {
         <Notes cols items={[
           { title: '「—」', body: '沒有值，例如沒用模板、Email 沒有寄件人。' },
           { title: '分頁', body: '以訊息為單位，每頁最多 20 則；同一個訊息 ID 的紀錄一定在同一頁。頁尾只有分頁控制。' },
-          { title: '排序', body: '以訊息為單位；同一個訊息 ID 的紀錄順序固定：Device Notifications → Desktop OS → Email。' },
+          { title: '排序', body: '以訊息為單位；同一個訊息 ID 的紀錄順序固定：Mobile notifications → Desktop notifications → Email。' },
         ]} />
       </Section>
       <Section eyebrow="Filter" title="篩選、搜尋與空狀態">
@@ -233,9 +233,9 @@ function Rules() {
       <Section eyebrow="Status" title="每一筆的狀態" lead="核准是整則訊息一起送審的，所以待核准、已駁回時每個通道狀態相同；之後的 Send now、Reschedule、Cancel sending 只改一個通道，送出後各通道也各自進行，狀態可以不同。">
         <SpecTable head={['情況', '這一筆的狀態', '例子']} nowrap={[0]} rows={[
           ['還沒送出', '待核准、已排程、已駁回或排程已過期（單獨重新排程、取消的通道除外，各通道相同）', '—'],
-          ['這個通道送完了', <StatusTag s="sent" />, 'Device Notifications 送完，Email 還在送'],
+          ['這個通道送完了', <StatusTag s="sent" />, 'Mobile notifications 送完，Email 還在送'],
           ['這個通道還在送', <StatusTag s="progress" />, 'Email 15 / 21'],
-          ['有 SMS 備援，推播或 SMS 還在送', <StatusTag s="progress" />, 'Device Notifications 送完，SMS 還在送'],
+          ['有 SMS 備援，推播或 SMS 還在送', <StatusTag s="progress" />, 'Mobile notifications 送完，SMS 還在送'],
           ['有 SMS 備援，推播全部送到', <StatusTag s="sent" />, '不需要 SMS；訊息詳情的 SMS fallback 寫 Not needed'],
           ['有 SMS 備援，SMS 傳送錯誤', <StatusTag s="error" />, '推播送出，SMS 閘道失敗'],
           ['這個通道傳送錯誤', <StatusTag s="error" />, 'Email 被郵件伺服器退件'],
@@ -244,7 +244,7 @@ function Rules() {
       </Section>
       <Section eyebrow="Numbers" title="收件人數與未送出人數">
         <SpecTable head={['項目', '規則']} nowrap={[0]} rows={[
-          ['收件人數', '這個通道要寄給的人數。Device Notifications (SMS) 用 Device Notifications 的人數。'],
+          ['收件人數', '這個通道要寄給的人數。Mobile notifications (SMS) 用 Mobile notifications 的人數。'],
           ['未送出人數', '送完（已送出或傳送錯誤）才顯示，0 人不顯示。有 SMS 備援的，只算推播與 SMS 都沒送到的人。'],
           ['未送出名單', '點 {n} not sent 開對話框。'],
           ['送達明細', '訊息詳情不顯示送達人數（2026-11-16 拿掉 n / m sent）；每個人送到沒有，看 Sent details。'],
@@ -347,7 +347,7 @@ function StatusTab() {
         ['未送出人數', '送完才顯示'],
         ['傳送時間', '排程時間或建立時間'],
         ['列選單', 'Duplicate'],
-        ['訊息詳情', panel('有 SMS 備援時，Device Notifications 已送完、SMS 還在送，Status 仍是 In progress。')],
+        ['訊息詳情', panel('有 SMS 備援時，Mobile notifications 已送完、SMS 還在送，Status 仍是 In progress。')],
       ]} />
       <StatusSpec id="已送出" s="sent" tagDesc="這一筆已送完。" shots={['st-sent']} panel="detail-sent-fb" urg="urg-sent" rows={[
         ['收件人數', '顯示'],
@@ -384,7 +384,7 @@ function StatusTab() {
         ['傳送時間', '原訂的傳送時間'],
         ['列選單', 'Duplicate'],
         ['訊息詳情', panel('')],
-        ['同一個訊息 ID', '圖中 Email 已取消，Device Notifications (SMS) 仍是排程已過期。'],
+        ['同一個訊息 ID', '圖中 Email 已取消，Mobile notifications (SMS) 仍是排程已過期。'],
       ]} />
     </>
   )
@@ -408,11 +408,11 @@ function Data() {
   return (
     <Section eyebrow="Data" title="prototype 的範例資料" lead="側邊欄群組標題 Projects，四個專案（UX Team、Platform Ops、Fab 18 Communications、ESH Emergency），沒有個人空間；打開時是 UX Team。每個空間都有各種狀態的訊息。">
       <SpecTable head={['要看什麼', '去哪裡']} nowrap={[0]} rows={[
-        ['各通道狀態不同', 'UX Team「Fire alarm test…」（Device Notifications 已送出，SMS 與 Email 傳送中）；ESH「Chemical delivery at Dock 2」（推播送出、SMS 傳送錯誤）；UX Team「Team lunch Fri 11/7 11/7」（Device Notifications 已送出、Email 傳送錯誤）'],
+        ['各通道狀態不同', 'UX Team「Fire alarm test…」（Mobile notifications 已送出，SMS 與 Email 傳送中）；ESH「Chemical delivery at Dock 2」（推播送出、SMS 傳送錯誤）；UX Team「Team lunch Fri 11/7 11/7」（Mobile notifications 已送出、Email 傳送錯誤）'],
         ['多種收件人', 'UX Team「Design review with Northwind Studio」；Platform Ops「tWorkspace 5.2 is live」；Fab 18「Water shutdown」；ESH「Chemical delivery」；UX Team「Usability study invitation」'],
-        ['SMS 備援與未送出人數', 'UX Team「Design review…」：Device Notifications 4 人未送達，SMS 補寄後仍有 1 人未送出'],
+        ['SMS 備援與未送出人數', 'UX Team「Design review…」：Mobile notifications 4 人未送達，SMS 補寄後仍有 1 人未送出'],
         ['待核准、已駁回、排程已過期', 'UX Team「Atlas demo moves to 11/10」、「Badge photo update by 11/7」、「UX sync moves to Tue 11/4」；每個團隊空間也各有一則'],
-        ['已取消的通道', 'UX Team「B lobby badge reader outage」：Email 已取消，Device Notifications (SMS) 排程已過期'],
+        ['已取消的通道', 'UX Team「B lobby badge reader outage」：Email 已取消，Mobile notifications (SMS) 排程已過期'],
         ['緊急送出（七種狀態）', 'UX Team「Parking lot A closed…」（待核准）、「Network maintenance Fri 12/18…」（已排程）、「Water leak on 5F…」（傳送中）、「Elevator 3 out until…」（已送出）、「Power dip in Building C…」（傳送錯誤）、「Fire drill moved…」（已駁回）、「Badge reader outage…」（排程已過期）'],
         ['傳送錯誤', 'UX Team「On-call swap」；Fab 18「Shift handover…」；UX Team「Reminder: send design review topics」'],
       ]} />

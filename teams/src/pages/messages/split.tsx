@@ -28,14 +28,14 @@ import { DeliveryLogDialog } from './DeliveryLog'
 
 // ---------- records ----------
 // One record per channel of a message. SMS fallback isn't a record of its own: a message sent with it is one
-// "Device Notifications (SMS)" record (k = 'sms'), a message without it a "Device Notifications" record (k = 'push').
-// Either way the record holds the Device Notifications numbers (ok / of / unk / pst) and, when SMS fallback was on,
+// "Mobile notifications (SMS)" record (k = 'sms'), a message without it a "Mobile notifications" record (k = 'push').
+// Either way the record holds the Mobile notifications numbers (ok / of / unk / pst) and, when SMS fallback was on,
 // the fallback's own (fb). st is the one status the list shows for the record.
 export interface Part { ok: number; of: number; unk?: boolean; st: Status }
-// pst: Device Notifications' own status (st also counts the fallback)
+// pst: Mobile notifications' own status (st also counts the fallback)
 export interface Rec extends Part { id: string; r: Row; k: Channel; fb?: Part; pst: Status }
 const recId = (r: Row, k: Channel) => r.id + '~' + k
-// the channels as records, in order: Device Notifications (with or without SMS), Desktop OS, Email
+// the channels as records, in order: Mobile notifications (with or without SMS), Desktop notifications, Email
 export const REC_ORDER: Channel[] = ['push', 'sms', 'desktop', 'email']
 export const recKinds = (r: Row): Channel[] => REC_ORDER.filter(k => (k === 'push' ? r.channels.indexOf('push') >= 0 && !r.sms : k === 'sms' ? !!r.sms : r.channels.indexOf(k) >= 0))
 export function recordsOf(m: SendCtl, rows: Row[]): Rec[] {
@@ -45,7 +45,7 @@ export function recordsOf(m: SendCtl, rows: Row[]): Rec[] {
       const x = m.chStats(r).find(y => y.k === k)
       if (!x) return null
       const p: Part = { ok: x.ok, of: x.of, st: r.status }
-      // SMS without its own numbers: known only once Device Notifications has finished
+      // SMS without its own numbers: known only once Mobile notifications has finished
       if (k === 'sms' && !(r.byCh && r.byCh.sms)) {
         if (r.status === 'sent') { p.of = Math.max(0, r.total - r.ok); p.ok = p.of } else { p.unk = true; p.ok = 0; p.of = 0 }
       }
@@ -56,7 +56,7 @@ export function recordsOf(m: SendCtl, rows: Row[]): Rec[] {
     recKinds(r).forEach(k => {
       const main = part(k === 'sms' ? 'push' : k) || { ok: 0, of: 0, st: r.status } as Part, fb = k === 'sms' ? part('sms') || undefined : undefined
       const all = fb ? [main, fb] : [main]
-      // one status for the record: still sending if either part is, failed if either failed, else Device Notifications' own
+      // one status for the record: still sending if either part is, failed if either failed, else Mobile notifications' own
       const st: Status = all.some(x => x.st === 'progress') ? 'progress' : all.some(x => x.st === 'error') ? 'error' : main.st
       out.push({ id: recId(r, k), r, k, ok: main.ok, of: main.of, unk: main.unk, st, fb, pst: main.st })
     })
@@ -71,23 +71,23 @@ export function recordById(m: SendCtl, rows: Row[], id: string | null): Rec | nu
   const all = recordsOf(m, [r])
   return all.find(x => x.k === k) || all[0] || null
 }
-// People it failed for: with SMS fallback, only those SMS didn't reach either (it goes to everyone Device Notifications missed)
+// People it failed for: with SMS fallback, only those SMS didn't reach either (it goes to everyone Mobile notifications missed)
 const done = (st: Status) => st === 'sent' || st === 'error'
 export const failsOf = (x: Rec) => (x.fb ? (!x.fb.unk && done(x.st) ? Math.max(0, x.fb.of - x.fb.ok) : 0) : !x.unk && done(x.st) ? Math.max(0, x.of - x.ok) : 0)
 export const chName = (k: Channel) => CHN[k].name
 
-// the channel's own words: Desktop OS has its own text; Email its subject and body; SMS has no title
+// the channel's own words: Desktop notifications has its own text; Email its subject and body; SMS has no title
 export function recText(r: Row, k: Channel) {
-  // "Device Notifications (SMS)" shows the Device Notifications text; the SMS text is in its details
+  // "Mobile notifications (SMS)" shows the Mobile notifications text; the SMS text is in its details
   if (k === 'email' && r.email && r.email.mode === 'own') return { title: r.email.subject || r.title, content: htmlToText(r.email.html) || r.content }
   if (k === 'desktop' && r.desk) return { title: r.desk.title, content: r.desk.content }
   return dedupe(r.title, r.content)
 }
-// only Device Notifications and Desktop OS carry a sender name
+// only Mobile notifications and Desktop notifications carry a sender name
 export const recSender = (r: Row, k: Channel) => (k === 'push' || k === 'sms' ? r.sender : k === 'desktop' ? (r.desk ? r.desk.sender : r.sender) : '')
 
-// the channel as an icon only; its name is in the tooltip and the accessible label. Device Notifications (SMS) has
-// a phone with a small envelope, apart from Device Notifications' plain phone.
+// the channel as an icon only; its name is in the tooltip and the accessible label. Mobile notifications (SMS) has
+// a phone with a small envelope, apart from Mobile notifications' plain phone.
 function ChCell({ k }: { k: Channel }) {
   const I = CHN[k].icon
   return (
@@ -145,7 +145,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
 
 // the record's count: delivered / audience on this channel only
 // Audience: how many people this channel goes to, nothing more (decided with PM 2026-11-05). SMS fallback's
-// number is known only once Device Notifications has gone out.
+// number is known only once Mobile notifications has gone out.
 export function AudienceN({ x }: { x: Rec }) {
   if (x.unk) return (
     <span className="flex min-w-0 flex-col items-end text-right">
@@ -366,7 +366,7 @@ export function SplitList({ m, intro, group = 'none' }: { m: SendCtl; intro?: Re
 }
 
 // ---------- details of one record ----------
-// the audiences that apply to this record: external phones only get SMS (so only on "Device Notifications (SMS)"), external emails only Email
+// the audiences that apply to this record: external phones only get SMS (so only on "Mobile notifications (SMS)"), external emails only Email
 export const tagsFor = (r: Row, k: Channel) => audToTags((r.chAud && r.chAud[k]) || r.aud).filter((t: RTag) => t.type !== 'ext' || (isExtPhone(t) ? k === 'sms' : k === 'email'))
 
 // What the panel adds to the row it opens from: the channel's full content, whom it went to, and where the

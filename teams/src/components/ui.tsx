@@ -20,7 +20,7 @@ export function personVal(p: Person, you?: boolean): PersonData {
 }
 
 // ---------- channels and statuses ----------
-// Device Notifications (SMS): a phone with a small envelope, so it reads apart from Device Notifications. Neither the
+// Mobile notifications (SMS): a phone with a small envelope, so it reads apart from Mobile notifications. Neither the
 // DS nor lucide has one, so it's drawn here on lucide's 24px grid and 2px stroke, and takes the same props.
 const SmartphoneMail = React.forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement> & { size?: number | string }>(({ size = 24, className, ...rest }, ref) => {
   const id = 'pm' + React.useId().replace(/:/g, '')
@@ -35,10 +35,11 @@ const SmartphoneMail = React.forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElem
 const CH_ICON: Record<Channel, LucideIcon> = { push: Smartphone, desktop: Monitor, email: Mail, sms: SmartphoneMail }
 export function chn(k: Channel) {
   const names: Record<Channel, [string, string, string, string, string, string]> = {
-    push: ['Device Notifications', 'Device Notifications', 'Device', 'Device', 'Push to the app on company phones, with optional SMS fallback.', '推播到公務手機的 App，可加 SMS 備援。'],
-    desktop: ['Desktop OS', '桌面通知', 'Desktop', '桌面', 'Pop-up on company Windows PCs.', '在公司 Windows 電腦跳出通知。'],
+    // 2026-11-23: renamed Mobile notifications / Desktop notifications; the app on the phones is still called "Device Notifications"
+    push: ['Mobile notifications', 'Mobile notifications', 'Mobile', 'Mobile', 'Push to the "Device Notifications" App on company iPhones, with optional SMS fallback.', '推播到公務 iPhone 上的「Device Notifications」App，可加 SMS 備援。'],
+    desktop: ['Desktop notifications', '桌面通知', 'Desktop', '桌面', 'Push to the company Windows PCs.', '推播到公司的 Windows 電腦。'],
     email: ['Email', 'Email', 'Email', 'Email', 'Company mailbox, with formatting and files.', '寄到公司信箱，可加格式和附件。'],
-    sms: ['Device Notifications (SMS)', 'Device Notifications（SMS）', 'SMS', 'SMS', '', ''],
+    sms: ['Mobile notifications (SMS)', 'Mobile notifications（SMS）', 'SMS', 'SMS', '', ''],
   }
   const x = names[k]
   return { name: L(x[0], x[1]), short: L(x[2], x[3]), desc: L(x[4], x[5]), icon: CH_ICON[k] }
@@ -83,7 +84,7 @@ export function ChIcons({ list }: { list: Channel[] }) {
   )
 }
 // A template's formats, shown with the same icons as the Send channel column:
-// notification text fills Device Notifications and Desktop OS, then Email and SMS
+// notification text fills Mobile notifications and Desktop notifications, then Email and SMS
 export function FmtChips({ list }: { list: Fmt[] }) {
   const chs: Channel[] = []
   if (list.indexOf('notif') >= 0) chs.push('push', 'desktop')

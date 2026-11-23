@@ -2,7 +2,7 @@
 import * as React from 'react'
 import {
   Button, DataTable, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, Empty,
-  Input, Pagination, Tag, Textarea,
+  Input, Pagination, PersonDisplay, Tag, Textarea,
   Checkbox, Tooltip, TooltipContent, TooltipTrigger, cn,
 } from '@qijenchen/design-system'
 import { ListKindField, NO_HIDE, Trunc, Tip, PageSize, listKindExample } from '../../components/ui'
@@ -29,7 +29,7 @@ type Role = 'Owner' | 'Editor' | 'Viewer'
 interface Fb { added: number; by: Record<string, number>; orgs: { code: string; n: number }[]; dup: number; amb: { id: string; tok: string; cands: string[] }[]; miss: { id: string; tok: string; why: string }[]; undo: string[]; undone?: number }
 interface Ed {
   id: string | null; isNew: boolean; role: Role; name: string; desc: string; collabs: { pid: string; role: Role }[]; aud: RTag[]
-  updated: string; creator: string; team: string | null; input: string; fb: Fb | null; picks: Record<string, Record<string, boolean>>
+  updated: string; updater: string; creator: string; team: string | null; input: string; fb: Fb | null; picks: Record<string, Record<string, boolean>>
   cq: string; cOpen: boolean; cRole: Role; mq: string; mf: 'all' | 'dev' | 'desk' | 'email' | 'sms'; mpage: number
   fresh: Record<string, boolean>; tried: boolean; dirty: boolean; ri: RiState; showPaste: boolean; listKind: ListKind | null
 }
@@ -37,13 +37,13 @@ interface GS { view: 'list' | 'edit'; q: string; cf: Confirm | null; ed: Ed | nu
 
 function makeEd(g: Group | null, dup?: boolean): Ed {
   const base = { listKind: null as ListKind | null, input: '', fb: null, picks: {}, cq: '', cOpen: false, cRole: 'Editor' as Role, mq: '', mf: 'all' as const, mpage: 1, fresh: {}, tried: false, dirty: false, ri: { type: 'person' as const, q: '', open: false, exp: null }, showPaste: false }
-  if (!g) return { ...base, id: null, isNew: true, role: 'Owner', name: '', desc: '', collabs: [{ pid: ME, role: 'Owner' }], aud: [], updated: '', creator: ME, team: spaceTeam() }
+  if (!g) return { ...base, id: null, isNew: true, role: 'Owner', name: '', desc: '', collabs: [{ pid: ME, role: 'Owner' }], aud: [], updated: '', updater: ME, creator: ME, team: spaceTeam() }
   const seed = GSEED[g.id] || ({} as any)
   // the audience as added; older groups (a list of people) come in one person per row
   const aud: RTag[] = g.aud ? g.aud.map(t => ({ ...t })) : membersFor(g).map(x => { const p = PMAP[x.pid]; return p && p.extKind ? { key: 'e:' + p.value, type: 'ext' as const, email: p.value } : { key: 'p:' + x.pid, type: 'person' as const, id: x.pid } })
   const collabs = g.collabs ? g.collabs.map(x => ({ pid: x.pid, role: x.role as Role })) : ((seed.col || [[g.creator, 'Owner']]) as [string, Role][]).map(x => ({ pid: x[0], role: x[1] }))
-  if (dup) return { ...base, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + g.name).slice(0, 50), desc: g.desc, collabs: [{ pid: ME, role: 'Owner' }], aud, updated: '', creator: ME, team: spaceTeam(), dirty: true }
-  return { ...base, id: g.id, isNew: false, role: 'Owner', name: g.name, desc: g.desc, collabs, aud, updated: g.updated, creator: g.creator, team: g.team || null }
+  if (dup) return { ...base, id: null, isNew: true, role: 'Owner', name: (L('Copy of ', '複製 - ') + g.name).slice(0, 50), desc: g.desc, collabs: [{ pid: ME, role: 'Owner' }], aud, updated: '', updater: ME, creator: ME, team: spaceTeam(), dirty: true }
+  return { ...base, id: g.id, isNew: false, role: 'Owner', name: g.name, desc: g.desc, collabs, aud, updated: g.updated, updater: g.updater || g.creator, creator: g.creator, team: g.team || null }
 }
 
 let seq = 0
@@ -103,7 +103,7 @@ function makeCtl(get: () => GS, set: (p: Partial<GS> | ((s: GS) => Partial<GS>))
       if (!name || name.length > 50 || ed.desc.length > 200 || dupName) { m.setEd({ tried: true }, true); flash(L('Check the group name', '請檢查群組名稱'), 'err'); scrollTop(); return }
       if (!ed.aud.length) { m.setEd({ tried: true }, true); flash(L('Add at least one member', '請加入至少一位成員'), 'err'); return }
       const mine = ed.collabs.find(c => c.pid === ME)
-      const patch = { team: ed.team, name, desc: ed.desc.trim(), count: membersFor({ aud: ed.aud } as Group, groups).length, updated: fmtDT(new Date()), aud: ed.aud.map(t => ({ ...t })), members: undefined, collabs: ed.collabs.map(c => ({ pid: c.pid, role: c.role })), role: mine ? mine.role : ed.role, fresh: Date.now() }
+      const patch = { team: ed.team, name, desc: ed.desc.trim(), count: membersFor({ aud: ed.aud } as Group, groups).length, updated: fmtDT(new Date()), updater: ME, aud: ed.aud.map(t => ({ ...t })), members: undefined, collabs: ed.collabs.map(c => ({ pid: c.pid, role: c.role })), role: mine ? mine.role : ed.role, fresh: Date.now() }
       if (ed.id) setApp(a => ({ groups: a.groups.map(g => g.id === ed.id ? { ...g, ...patch } : g) }))
       else setApp(a => ({ groups: [{ id: 'gn' + (++seq), creator: ME, ...patch } as Group].concat(a.groups) }))
       set({ view: 'list', ed: null })
@@ -139,8 +139,9 @@ function GroupList({ m }: { m: GCtl }) {
         <Trunc text={i.row.original.desc || L('No description', '沒有說明')} className="text-caption text-fg-secondary" />
       </span>
     ) }),
-    gcol.accessor('count', { header: L('Members', '人數'), meta: { width: 96 }, cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
-    gcol.accessor('updated', { header: L('Updated', '更新時間'), meta: { width: 140 }, cell: i => { const p = i.getValue().split(' '); return <Two a={p[0]} b={p[1]} /> } }),
+    gcol.accessor('count', { header: L('Audience', '人數'), meta: { width: 96 }, cell: i => <span className="font-medium tabular-nums">{fmtN(i.getValue())}</span> }),
+    // who changed it last and when (2026-11-23)
+    gcol.accessor('updated', { header: L('Last update', '最後更新'), meta: { width: 300 }, cell: i => { const x = i.row.original, p = PMAP[x.updater || x.creator] || PEOPLE[0]; return <span className="flex min-w-0 items-center gap-2"><PersonDisplay value={personVal(p)} /><span className="shrink-0 text-caption tabular-nums text-fg-secondary">{x.updated}</span></span> } }),
     // the personal space holds only your own groups, so Created by appears in team spaces only
     ...(app.space === ME_SPACE ? [] : [gcol.accessor(g => personVal(PMAP[g.creator] || PEOPLE[0]), { id: 'creator', header: L('Creator', '建立者'), meta: { width: 200, type: 'person' } })]),
   ], [m, app.lang, app.space])
@@ -169,7 +170,7 @@ function GroupEditor({ m }: { m: GCtl }) {
   const title = nm || (ed.isNew ? L('New group', '新群組') : L('Untitled group', '未命名群組'))
   return (
     <div className="flex min-h-full flex-col">
-      <PageHeader crumbs={[{ label: spaceName(getApp().space), onClick: () => m.backFromEd() }, { label: title }]} actions={<>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Updated ' + ed.updated + ' · by ' + cr.en, ed.updated + ' 更新 · 建立者 ' + cr.en)}</span>}</>} />
+      <PageHeader crumbs={[{ label: spaceName(getApp().space), onClick: () => m.backFromEd() }, { label: title }]} actions={<>{ed.isNew ? null : <span className="hidden text-caption text-fg-secondary lg:inline">{L('Last update ' + ed.updated + ' · by ' + (PMAP[ed.updater] || cr).en, ed.updated + ' 最後更新 · ' + (PMAP[ed.updater] || cr).en)}</span>}</>} />
       <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
         <Section title={L('Details', '基本資料')}>
           <div className="flex flex-col gap-[var(--layout-space-loose)]">

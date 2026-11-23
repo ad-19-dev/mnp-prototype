@@ -1,5 +1,5 @@
 // A rough preview of a message on each channel, drawn with DS surfaces and text styles rather than a
-// realistic device: a notification card for Device Notifications and Desktop OS, a message bubble for SMS
+// realistic device: a notification card for Mobile notifications and Desktop notifications, a message bubble for SMS
 // and a simple email layout. Every word comes in as a prop (plus `zh`).
 import * as React from 'react'
 import { cn } from '@qijenchen/design-system'
@@ -24,7 +24,7 @@ export function ChannelPreview({ ch, msg, zh }: { ch: PreviewChannel; msg: Previ
   const card = 'mx-auto flex w-full flex-col gap-1.5 rounded-lg border border-divider bg-surface p-3 shadow-sm'
   if (ch === 'push' || ch === 'desktop') return (
     <div className={cn(card, 'max-w-[400px]')}>
-      <Head icon={ch === 'push' ? Smartphone : Monitor} name={ch === 'push' ? 'Device Notifications' : T('Desktop OS', '桌面通知')} when={T('now', '現在')} />
+      <Head icon={ch === 'push' ? Smartphone : Monitor} name={ch === 'push' ? 'Device Notifications' : T('Desktop notifications', '桌面通知')} when={T('now', '現在')} />
       {msg.sender ? <span className="text-caption text-fg-secondary">{msg.sender}</span> : null}
       <span className="text-body font-semibold">{msg.title || <Placeholder>{T('Title', '標題')}</Placeholder>}</span>
       <span className={cn('whitespace-pre-wrap text-body', ch === 'push' ? 'line-clamp-4' : 'line-clamp-3')}>{msg.content || <Placeholder>{T('Content', '內容')}</Placeholder>}</span>

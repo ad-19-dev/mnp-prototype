@@ -143,7 +143,7 @@ function Flow({ go }: { go: (k: TabKey) => void }) {
             E('列尾 ×'), R('直接移除這一列', '沒有篩選，也沒有全部移除'),
           ]} />
           <Sub id="1-6" title="看每個通道收得到幾人" start="有收件人、有選通道" items={[
-            N('Message Coverage by Channel', 's1-cov', '收件人下方；按 Check coverage 才計算'), E('Check coverage'), N('每個通道 n / total', 's1-ext', '開 SMS 時 Device Notifications (SMS) 合成一列'), F(['之後又改了收件人、通道或手機', N('數字收起，提示重新檢查', 's1-cov-stale'), E('Check again'), R('重新計算')]),
+            N('Message Coverage by Channel', 's1-cov', '收件人下方；按 Check coverage 才計算'), E('Check coverage'), N('每個通道收得到的人數 n', 's1-ext', '開 SMS 時 Mobile notifications (SMS) 合成一列'), F(['之後又改了收件人、通道或手機', N('數字收起，提示重新檢查', 's1-cov-stale'), E('Check again'), R('重新計算')]),
             F(['都收得到', R('人數綠色，沒有提醒')],
               ['某個通道有人不在涵蓋範圍', N('通道列右側藍字 n messages can’t be sent', 's1-unreach'), E('點連結'), D('{Channel}: n messages can’t be sent', 'dlg-unreach', '唯讀，只有 Close')]),
           ]} />
@@ -249,7 +249,7 @@ function Frame() {
       <Section eyebrow="Entry" title="進入方式" lead="同一個畫面有四種進入方式，頁首標題與預填的內容不同。">
         <SpecTable head={['進入方式', '入口', '頁首標題', '預填內容']} nowrap={[0, 2]} rows={[
           ['新訊息', '列表右上角 New message', 'New message', '全部空白，從步驟 1 開始。'],
-          ['複製', '列表選單或訊息詳情的 Duplicate（單一通道的紀錄）', 'Duplicate message', '只有那一個通道（SMS 的紀錄會勾 Device Notifications 加 SMS 備援）、它的內容與模板；收件人是這個通道收得到的人（外部電話只跟 SMS 的紀錄，外部 Email 只跟 Email 的紀錄）。傳送時間不帶入，預設立即傳送。三個步驟都已解鎖，可以直接點步驟列。'],
+          ['複製', '列表選單或訊息詳情的 Duplicate（單一通道的紀錄）', 'Duplicate message', '只有那一個通道（SMS 的紀錄會勾 Mobile notifications 加 SMS 備援）、它的內容與模板；收件人是這個通道收得到的人（外部電話只跟 SMS 的紀錄，外部 Email 只跟 Email 的紀錄）。傳送時間不帶入，預設立即傳送。三個步驟都已解鎖，可以直接點步驟列。'],
           ['重寄', '（2026-11-16 起不再進入發送流程）', '—', '列表選單的 Resend 開訊息詳情，選 Now 或 Schedule 後直接送出；Sent details 的 Resend to not sent (n) 在訊息詳情的 Resend 模式裡完成。見「Message details 與重新傳送」設計規格。'],
           ['編輯內容', '不經過發送流程：在訊息詳情（modal）裡直接改（Scheduled 儲存；Scheduled expired、Error 改完直接 Resend）', '—', '內容、收件人與傳送時間都在訊息詳情裡改，細節見「Message details 與重新傳送」設計規格。'],
         ]} />
@@ -280,29 +280,29 @@ function Step1() {
           ['類型選單', '搜尋框左側：Person、Org、Group、Phone、Email、MVPN。決定搜尋框找什麼，各類型見下表。'],
           ['搜尋框', <>Person 時的提示文字 <Copy en="Name, NT account or employee ID" zh="姓名、NT 帳號或工號" />；搜尋框下方沒有說明文字。已在名單上的選項顯示 Added，不能再選。</>],
           ['Batch import', '搜尋框右側（tertiary，上傳圖示），開批次匯入對話框。'],
-          ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、Phone、Email）；組織與群組後面接藍字總人數 n people，點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。沒有分頁：超過 8 列時表格固定高度（約 8 列），在框內捲動，表單其他部分位置不變；加了收件人會捲到新加的第一列（加一個人就是最後面，批次匯入就是那一批的開頭）（2026-11-20）。'],
+          ['收件人表格', '只回答「選了誰」：Audience 一欄，固定行高、每格一行、內容垂直置中（設計系統表格規則）。個人是設計系統的人員顯示（大頭照加姓名）；其他類型是灰色圓底圖示、名稱、類型 Tag（Org、Group、Phone、Email、MVPN）；組織與群組後面接藍字總人數 n audiences（1 個時 audience），點了看成員。勾了 SMS 備援時，多出 Company phone、Personal phone 兩欄（見「SMS 寄到哪支手機」）。列尾 × 移除。沒有分頁：超過 8 列時表格固定高度（約 8 列），在框內捲動，表單其他部分位置不變；加了收件人會捲到新加的第一列（加一個人就是最後面，批次匯入就是那一批的開頭）（2026-11-20）。'],
           ['沒有收件人', <>表格位置顯示空狀態 <Copy en="No audience yet" zh="還沒有收件人" />，說明 <Copy en="Search above, or use Batch import." zh="在上方搜尋，或使用批次匯入。" /></>],
         ]} />
         <SpecTable head={['搜尋類型', '輸入', '下拉選單與加入方式', '錯誤與找不到']} nowrap={[0]} rows={[
           ['Person', '姓名、NT 帳號或工號', '輸入後列出符合的人（最多 8 筆）：大頭照、英文名 中文名、組織代號 · NT · 工號。點選，或按 Enter 加入第一筆。', <><Copy en="No one named “<輸入>” found." zh="找不到叫「<輸入>」的人。" />（不提示切換到 Phone、Email 或 Group）</>],
           ['Org', '組織 ID、編號或名稱（提示 Org ID or name）', '沒輸入也列出全部組織：代碼、編號、人數。加入後下拉選單不關，可以連續加入。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
           ['Group', '群組名稱', '沒輸入時，標題 Your groups 下列出這個空間的群組：名稱、說明、人數。加入後下拉選單不關。', <Copy en="No match for “<輸入>”." zh="找不到「<輸入>」。" />],
-          ['Phone', <>先選地區再輸入號碼（2026-11-19）：DS FieldControlGroup 把地區 Select（+886 (TW)、+1 (US)、+81 (JP)、+86 (CN)，預設 TW）和號碼 Input 接成一個欄位；提示文字依地區換（0912-345-678、415-555-0123、090-1234-5678、138-0013-8000）。</>, '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。沒選 PNS + SMS fallback 時，外部號碼不能加入（收不到任何通道），員工的號碼照常加入員工。', <>依地區：<Copy en="Enter a 10-digit mobile number starting with 09." zh="請輸入 09 開頭的 10 碼手機號碼。" />（TW）、<Copy en="Enter a 10-digit number." zh="請輸入 10 碼號碼。" />（US）、<Copy en="Enter a mobile number starting with 070, 080 or 090." zh="請輸入 070、080 或 090 開頭的手機號碼。" />（JP）、<Copy en="Enter an 11-digit mobile number starting with 1." zh="請輸入 1 開頭的 11 碼手機號碼。" />（CN）　<Copy en="Select SMS fallback in Channels to add outside numbers." zh="在 Channels 選擇 SMS 備援才能加入外部號碼。" /></>],
+          ['Phone', <>先選地區再輸入號碼（2026-11-19）：DS FieldControlGroup 把地區 Select（+886 (TW)、+1 (US)、+81 (JP)、+86 (CN)，預設 TW）和號碼 Input 接成一個欄位；提示文字依地區換（0912-345-678、415-555-0123、090-1234-5678、138-0013-8000）。</>, '按 Add 或 Enter 加入。號碼是員工的公務手機或私人手機：加入那位員工（選項註明 Company mobile / Personal phone）；不是員工的號碼：加入為外部電話，顯示成 0987-654-321。沒選 PNS + SMS fallback 時，外部號碼不能加入（收不到任何通道），員工的號碼照常加入員工。', <>依地區（2026-11-23）：<Copy en="Phone numbers should be 10 characters." zh="電話號碼應為 10 碼。" />（TW、US）、<Copy en="Phone numbers should be 11 characters." zh="電話號碼應為 11 碼。" />（JP、CN）　<Copy en="Select SMS fallback in Channels to add outside numbers." zh="在 Channels 選擇 SMS 備援才能加入外部號碼。" /></>],
           ['Email', 'Email 地址', '按 Add 或 Enter 加入。公司網域的地址：加入對應的員工（註明 Company email）；其他網域：加入為外部 Email。Channels 沒勾 Email 時，外部 Email 不能加入（收不到任何通道），公司信箱照常加入員工。', <><Copy en="Enter a full email address." zh="請輸入完整的 Email。" />　<Copy en="No employee has this address." zh="沒有員工用這個信箱。" />　<Copy en="Select Email in Channels to add outside addresses." zh="在 Channels 勾選 Email 才能加入外部信箱。" /></>],
-          ['MVPN', '7 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。', <><Copy en="MVPN is up to 7 digits." zh="MVPN 最多 7 碼。" />　<Copy en="No one has this MVPN." zh="沒有人用這個 MVPN。" /></>],
+          ['MVPN', '7 碼 MVPN', '列出用這個 MVPN 的員工，右側註明 MVPN 號碼。7 碼但沒有員工用：加入為 MVPN 號碼本身（# 圖示，說明 Not tied to a person · SMS only，類型 Tag MVPN）；跟外部電話一樣，沒選 SMS 備援時不能加入（2026-11-23）。', <><Copy en="Phone numbers should be 7 characters." zh="電話號碼應為 7 碼。" />（不是 7 碼數字，或不滿 7 碼又找不到人）　<Copy en="Select SMS fallback in Channels to add outside numbers." zh="在 Channels 選擇 SMS 備援才能加入外部號碼。" /></>],
         ]} />
         <Gallery items={[['s1-phone-region', 'Phone：先選地區', 'DS FieldControlGroup：地區 Select 接號碼 Input'], ['s1-cov', 'Message Coverage：還沒檢查', '按 Check coverage 才計算'], ['s1-cov-stale', 'Message Coverage：要重新檢查', '收件人或通道改了之後']]} />
         <Notes items={[
           { title: '錯誤顯示位置', body: '下拉選單關著時，錯誤在搜尋框下方（紅字）；下拉選單開著時，錯誤在選單裡（紅色圖示加文字）。' },
-          { title: '人數計算', body: <>Audience 右上角不顯示總人數。人數（Message Coverage by Channel 裡的 total）是展開之後的人數：組織與群組展開成人，同一個人不管從哪裡加入只算一次；外部 Email 與外部電話各算 1；群組裡存的外包人員算外部。沒有人數上限。</> },
+          { title: '人數計算', body: <>Audience 右上角不顯示總人數。人數（Message Coverage by Channel 裡的人數）是展開之後的人數：組織與群組展開成人，同一個人不管從哪裡加入只算一次；外部 Email 與外部電話各算 1；群組裡存的外包人員算外部。沒有人數上限。</> },
           { title: '人員名稱', body: '到處都是英文名在前、中文名在後（Grace Wu 吳佳穎）：表格、搜尋下拉、對話框的清單、訊息詳情的收件人與建立者都一樣。' },
           { title: '大頭照', body: '內部人員顯示大頭照（設計系統人員顯示的 avatarUrl，沒有照片時退回姓名第一個字母）；本頁的示意圖是範例。外部電話與外部 Email 沒有大頭照，一律是灰色圓底的圖示。' },
           { title: '重複加入', body: '同一個項目已在名單上時不會重複加入（下拉選單裡顯示 Added）。' },
         ]} />
         <SpecTable head={['收件人類型', '表格 Audience 欄（訊息詳情的 Audience 表格相同）']} nowrap={[0]} rows={[
           ['個人', '人員顯示：大頭照、英文名 中文名（組織、NT、工號在滑過的人員卡片）'],
-          ['組織', '大樓圖示（灰色圓底）、組織代號、Tag Org、藍字 n people'],
-          ['群組', '兩個人圖示（灰色圓底）、群組名稱、Tag Group、藍字 n people'],
+          ['組織', '大樓圖示（灰色圓底）、組織代號、Tag Org、藍字 n audiences'],
+          ['群組', '兩個人圖示（灰色圓底）、群組名稱、Tag Group、藍字 n audiences'],
           ['外部 Email', '信封圖示（灰色圓底）、Email、Tag Email'],
           ['外部電話', '電話圖示（灰色圓底）、號碼、Tag Phone'],
         ]} />
@@ -312,23 +312,23 @@ function Step1() {
 
       <Section eyebrow="Step 1" title="通道" lead="區塊標題 Channels。三張卡片可以複選。">
         <SpecTable head={['卡片', '說明文字']} nowrap={[0]} rows={[
-          [<Copy en="Device Notifications" zh="Device Notifications" />, <>{<Copy en="Push to the app on company phones, with optional SMS fallback." zh="推播到公務手機的 App，可加 SMS 備援。" />}（optional SMS fallback 用 500 字重）</>],
-          [<Copy en="Desktop OS" zh="Desktop OS" />, <Copy en="Pop-up on company Windows PCs." zh="公司 Windows 電腦的彈出通知。" />],
+          [<Copy en="Mobile notifications" zh="Mobile notifications" />, <>{<Copy en="Push to the app on company phones, with optional SMS fallback." zh="推播到公務手機的 App，可加 SMS 備援。" />}（optional SMS fallback 用 500 字重）</>],
+          [<Copy en="Desktop notifications" zh="Desktop notifications" />, <Copy en="Pop-up on company Windows PCs." zh="公司 Windows 電腦的彈出通知。" />],
           [<Copy en="Email" zh="Email" />, <Copy en="Company mailbox, with formatting and files." zh="公司信箱，可加格式與附件。" />],
         ]} />
         <Notes items={[
           { title: '卡片', body: '整張可點；勾選時藍框、淡藍底，右上角是勾選框。卡片只用來選通道，不顯示人數。' },
           { title: '順序', body: '步驟 1 由上而下：Channels → Audience → Message Coverage by Channel。先選通道，收件人表格才知道要不要顯示 SMS 的手機欄位；加了收件人之後，下方 Message Coverage by Channel 的人數跟著更新。' },
-          { title: '收不到的人', body: <>某個通道的 n（分子）小於 total（分母）時，那一列最右側顯示藍色連結 <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />（1 時用單數 message），N = total − n；n = total 時不顯示。Device Notifications (SMS) 合併列也一樣顯示。點了開這個通道的名單。框下方沒有統一的警告列。</> },
+          { title: '收不到的人', body: <>某個通道的 n（分子）小於 total（分母）時，那一列最右側顯示藍色連結 <Copy en="N messages can’t be sent" zh="N 則訊息無法送出" />（1 時用單數 message），N = total − n；n = total 時不顯示。Mobile notifications (SMS) 合併列也一樣顯示。點了開這個通道的名單。框下方沒有統一的警告列。</> },
           { title: '收不到的人不擋 Next', body: '批次匯入、群組裡難免有人收不到某些通道，所以「有人收不到」只是即時提醒，不算錯誤，也不會停在這一步；使用者可以點各通道下方的連結看是誰，決定要不要調整通道。會擋 Next 的只有：沒有收件人、沒有通道、開 SMS 時有一列公務手機和私人手機都沒勾、外部 Email 沒勾 Email 通道、外部電話沒選 SMS 備援。' },
-          { title: '通道的連動', body: 'SMS 備援是 Device Notifications 的傳送方式之一：勾了 Device Notifications 才出現 Delivery method；取消 Device Notifications 會回到 PNS only。至少要勾一個通道。' },
+          { title: '通道的連動', body: 'SMS 備援是 Mobile notifications 的傳送方式之一：勾了 Mobile notifications 才出現 Delivery method；取消 Mobile notifications 會回到 PNS only。至少要勾一個通道。' },
           { title: '需要主管核准', body: '有外部收件人時仍需要主管核准，但步驟 1 不顯示提示（不放黃字）；送出後由審核流程處理。' },
-          { title: 'Message Coverage by Channel', body: <>2026-11-19 起按下按鈕才計算（工程評估即時計算不容易）：框裡先是一行說明 <Copy en="Check reachable and undeliverable messages for each channel." zh="查看每個通道可送達與無法送達的訊息。" /> 與右側 <C>Check coverage</C>（secondary sm，計算機圖示，按下後轉圈）；算完才出現下面的各通道列。之後再改收件人、通道或手機，數字收起，改成黃字 <Copy en="Audience or channels updated. Check again to refresh coverage." zh="收件人或通道已更新，請重新檢查以更新涵蓋範圍。" /> 與 <C>Check again</C>。不檢查也可以按 Next。有收件人、有選通道時出現在收件人下方。標題 <Copy en="Message Coverage by Channel" zh="各通道訊息涵蓋" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的 n / total（像收件人表格裡組織名稱後面接人數）（不寫 people；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Device Notifications 與 SMS 不分兩列，合成一列 <Copy en="Device Notifications (SMS)" zh="Device Notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
+          { title: 'Message Coverage by Channel', body: <>2026-11-19 起按下按鈕才計算（工程評估即時計算不容易）：框裡先是一行說明 <Copy en="Check reachable and undeliverable messages for each channel." zh="查看每個通道可送達與無法送達的訊息。" /> 與右側 <C>Check coverage</C>（secondary sm，計算機圖示，按下後轉圈）；算完才出現下面的各通道列。之後再改收件人、通道或手機，數字收起，改成黃字 <Copy en="Audience or channels updated. Check again to refresh coverage." zh="收件人或通道已更新，請重新檢查以更新涵蓋範圍。" /> 與 <C>Check again</C>。不檢查也可以按 Next。有收件人、有選通道時出現在收件人下方。標題 <Copy en="Message Coverage by Channel" zh="各通道訊息涵蓋" />，說明 <Copy en="Estimated reach across selected channels." zh="所選通道預估可觸及的人數。" />。一個框，每個勾選的通道一列，都只有一行：圖示、通道名稱、緊跟在名稱後面的收得到的人數 n（2026-11-23 拿掉 / total；不寫 audiences；全部收得到時綠色）、最右側是收不到的連結；開 SMS 備援時，Mobile notifications 與 SMS 不分兩列，合成一列 <Copy en="Mobile notifications (SMS)" zh="Mobile notifications（SMS）" />：App 收得到或 SMS 寄得到都算涵蓋。有人收不到時，該列最右側加藍色連結（見上一則）。不放紅字、黃字。</> },
         ]} />
-        <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop OS 時'], ['dlg-unreach', '收不到的人']]} />
+        <Gallery items={[['s1-unreach', '有人收不到', '只勾 Desktop notifications 時'], ['dlg-unreach', '收不到的人']]} />
       </Section>
 
-      <Section eyebrow="Step 1" title="Delivery method 與緊急送出" lead="勾了 Device Notifications 才出現，在通道卡片下方。">
+      <Section eyebrow="Step 1" title="Delivery method 與緊急送出" lead="勾了 Mobile notifications 才出現，在通道卡片下方。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['Delivery method', <>淺灰底（neutral-1）、細框線、圓角的區塊，內距 tight，在三張通道卡片下方、同寬。區塊標題 <Copy en="Delivery method" zh="傳送方式" />（semibold）；下方二選一（設計系統 RadioGroup，直向），兩個選項名稱也是 semibold。預設 PNS only。</>],
           ['選項一', <><Copy en="PNS only" zh="只用 PNS" />；說明 <Copy en="Send a push notification via PNS only. No SMS if the device is unreachable." zh="只透過 PNS 傳送推播通知；裝置收不到時不改發 SMS。" /></>],
@@ -397,7 +397,7 @@ function ImportTab() {
       <Section eyebrow="Entry points" title="其他入口" lead="同一個對話框，只有下面幾點不同。">
         <SpecTable head={['入口', '差別']} nowrap={[0]} rows={[
           ['New message 步驟 1', '外部 Email 要勾 Email 通道、外部電話要選 SMS 備援，否則是紅色標籤（原因寫哪個通道沒選）。'],
-          ['訊息詳情的 Audience（可以編輯的紀錄）', '只加到這一個通道：外部電話只能加在 Device Notifications (SMS)，外部 Email 只能加在 Email；其他的會被略過並提示。'],
+          ['訊息詳情的 Audience（可以編輯的紀錄）', '只加到這一個通道：外部電話只能加在 Mobile notifications (SMS)，外部 Email 只能加在 Email；其他的會被略過並提示。'],
           ['Audience group 的 Audience', <>文案用 members：<Copy en="{n} valid members. Click a tag to edit it." zh="{n} 位成員有效。點標籤可以修改。" />、toast <Copy en="Added n members" zh="已加入 n 位成員" />。不檢查通道，外部 Email、電話都可以加。</>],
         ]} />
         <Gallery items={[['dlg-import-group', 'Audience group 的 Batch import', '同一個對話框，說明文字寫 members']]} />
@@ -405,7 +405,7 @@ function ImportTab() {
       <Section eyebrow="Spec" title="規格" lead="2026-11-18 起改為批次匯入提案的 A 版（標籤，像郵件的收件人欄）：每一筆一輸入就變成標籤並立即比對；找到的是灰色標籤，找不到的是紅色標籤，點任何標籤（灰色也可以，2026-11-18）都能就地修改。只有一層對話框。">
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['尺寸', '寬 1120，DS Dialog height="fill"（高度填滿視窗，加入標籤時外框不會跳動）。2026-11-18 從 720 加大：使用者會貼上活動報名名單，一次可能上千筆。原型試過 1,200 筆，約 1.6 秒顯示完。'],
-          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織是一列（藍色 n people 開成員名單），不展開成個人，也沒有各通道的欄位。搜尋列沒有 Group 類型：群組裡不能再放群組（2026-11-19，層層套疊太複雜）。'],
+          ['共用', 'Audience group 的成員、訊息詳情的收件人也用同一個 Batch import 對話框。Audience group 的編輯頁（2026-11-18）也用步驟 1 的收件人表格：組織是一列（藍色 n audiences 開成員名單），不展開成個人，也沒有各通道的欄位。搜尋列沒有 Group 類型：群組裡不能再放群組（2026-11-19，層層套疊太複雜）。'],
           ['Data type', '必填：NT accounts、Employee IDs、Emails、Phone numbers、MVPN、Org IDs（2026-11-19 從 Org codes 改名）。沒選之前名單欄位停用（DS disabled 底色）。不提供 Names：公司超過 10 萬名員工，同名同姓很多。'],
           ['List', <>DS 欄位外框（border、hover、focus 藍框），佔滿對話框剩下的高度（至少 200），超過時框內捲動，裡面是標籤和一個輸入處。Enter、逗號、換行或貼上整份名單（可以是 Excel 的一欄）就會切成一筆一筆的標籤；輸入處空著時按 Backspace 移除最後一個標籤。</>],
           ['找到的', <>DS Tag（neutral）：人員是 16px 大頭照加「英文名 中文名」，不截斷；組織是大樓圖示加組織代號；外部聯絡人是信封或電話圖示加 Email／號碼。每個標籤都有 ✕。</>],
@@ -428,24 +428,24 @@ function Step2() {
   return (
     <>
       <Section eyebrow="Step 2" title="Message details" lead={<>標題 Message details，說明 <Copy en="Compose the message title and body to be sent to your audience." zh="撰寫要傳送給收件人的訊息標題和內容。" /></>}>
-        <Big name="s2-filled" title="填好的內容" sub="Device Notifications、SMS、Email" />
+        <Big name="s2-filled" title="填好的內容" sub="Mobile notifications、SMS、Email" />
         <SpecTable head={['項目', '規格']} nowrap={[0]} rows={[
           ['New / Use template', '兩個選項。選 Use template 後，右側的模板選單可用（可搜尋）。選了模板會先確認是否取代目前的內容。'],
-          ['通道區塊', '每個勾選的通道一個有框的區塊，順序：Device Notifications、SMS、Desktop OS、Email。區塊頂端是標題列（淺灰底、下方分隔線）：通道圖示加通道名稱（半粗體），SMS 下面再一行說明；欄位在框內。區塊之間留大間距，一眼分得出哪段是哪個通道。'],
+          ['通道區塊', '每個勾選的通道一個有框的區塊，順序：Mobile notifications、SMS、Desktop notifications、Email。區塊頂端是標題列（淺灰底、下方分隔線）：通道圖示加通道名稱（半粗體），SMS 下面再一行說明；欄位在框內。區塊之間留大間距，一眼分得出哪段是哪個通道。'],
         ]} />
         <SpecTable head={['區塊', '欄位', '必填', '上限', '說明與錯誤']} nowrap={[0, 1, 2, 3]} rows={[
-          ['Device Notifications', 'Sender', '是', '26', <>說明開頭加粗強調 <Copy en="English only." zh="只能輸入英文。" />，接著 <Copy en="Recipients see this name as the notification source in the Device Notifications app (PNS)." zh="收件人會在 Device Notifications App（PNS）看到這個名稱作為通知來源。" />；提示文字 e.g. ESH Emergency。{REQ}<Copy en="English only: use half-width English letters, numbers, and spaces." zh="只能輸入英文：請使用半形英文字母、數字和空格。" /></>],
+          ['Mobile notifications', 'Sender', '是', '26', <>說明開頭加粗強調 <Copy en="English only." zh="只能輸入英文。" />，接著 <Copy en="Recipients see this name as the notification source in the Mobile notifications app (PNS)." zh="收件人會在 Mobile notifications App（PNS）看到這個名稱作為通知來源。" />；提示文字 e.g. ESH Emergency。{REQ}<Copy en="English only: use half-width English letters, numbers, and spaces." zh="只能輸入英文：請使用半形英文字母、數字和空格。" /></>],
           ['', 'Title', '是', '30', <>2026-11-18 新增（PM）。不分全半形，一個字算一個。列表上的標題就是這個欄位。{REQ}</>],
           ['', 'Content', '是', '750', <>不分全半形（2026-11-18 由 534 改為 750）。{REQ}</>],
           ['SMS', 'SMS content', '是', '534／267', <>欄位名稱由 SMS text 改為 SMS content（2026-11-18）。全部是半形時最多 534 字；只要有任一個全形字元（中文、全形標點等），整則算全形，最多 267 字，字數上限跟著變。說明 <Copy en="Up to 534 half-width characters, or 267 if any character is full-width." zh="半形最多 534 字；只要有任一個全形字元，最多 267 字。" />；超過時 <Copy en="Up to 267 characters when the SMS has any full-width character." zh="SMS 有任何全形字元時，最多 267 字。" />。區塊說明 <Copy en="Sent as a backup via SMS only if the push notification can’t be sent." zh="只有推播未送出時，才會用 SMS 補送。" />{REQ}</>],
-          ['Desktop OS', 'Sender', '否', '26', '欄位標題 Sender (Optional)，下方沒有說明文字。錯誤同 Device Notifications 的 Sender。'],
+          ['Desktop notifications', 'Sender', '否', '26', '欄位標題 Sender (Optional)，下方沒有說明文字。錯誤同 Mobile notifications 的 Sender。'],
           ['', 'Title', '是', '20', REQ],
           ['', 'Content', '是', '70', <><Copy en="Supports Chinese, English, and numbers only." zh="僅支援中文、英文、數字。" />{REQ}</>],
           ['Email', 'Subject', '是', '70', REQ],
           ['', 'Content', '是', '—', <>文字編輯器（粗體、斜體、底線、連結、清單、清除格式）。提示 <Copy en="Supports text, tables, and images." zh="支援文字、表格、圖片。" />整體超過 100 KB：<Copy en="Message content exceeds the 100 KB limit. Please reduce content size or remove/compress embedded images." zh="訊息內容超過 100 KB 上限。請減少內容，或移除、壓縮內嵌圖片。" />{REQ}</>],
         ]} />
         <Notes items={[
-          { title: '提示文字', body: <>第二步的文字欄位只有 Device Notifications 的 Sender 有提示文字（e.g. ESH Emergency），其他欄位標題已經說明要填什麼。模板選單也有：<Copy en="Choose a template" zh="選擇模板" />，搜不到時顯示 <Copy en="No matching templates" zh="找不到符合的模板" />。</> },
+          { title: '提示文字', body: <>第二步的文字欄位只有 Mobile notifications 的 Sender 有提示文字（e.g. ESH Emergency），其他欄位標題已經說明要填什麼。模板選單也有：<Copy en="Choose a template" zh="選擇模板" />，搜不到時顯示 <Copy en="No matching templates" zh="找不到符合的模板" />。</> },
           { title: '字數', body: '字數 n / 上限在欄位下方右側，跟說明文字或錯誤訊息同一列；超過時數字變紅，錯誤 Up to n characters.' },
           { title: '必填', body: <>沒填一律顯示 {REQ}</> },
         ]} />
@@ -453,14 +453,14 @@ function Step2() {
       </Section>
       <Section eyebrow="Step 2" title="模板與預填">
         <SpecTable head={['情況', '行為', 'Toast']} nowrap={[0]} rows={[
-          ['選 Use template', '右側模板選單可用，列出這個空間的模板：名稱，下方一行是它含的通道（例如 Device Notifications · Email）。', '—'],
+          ['選 Use template', '右側模板選單可用，列出這個空間的模板：名稱，下方一行是它含的通道（例如 Mobile notifications · Email）。', '—'],
           ['選模板，而且目前沒填任何內容（或選的是已套用的同一個）', '直接套用。', <Copy en="Template applied" zh="已套用模板" />],
           ['選模板，但已經填了內容', <>先問 Replace your text?：Replace 才套用，Cancel 保持原樣。</>, <><Copy en="Template applied" zh="已套用模板" />（按 Replace 後）</>],
           ['套用模板', '寄件人、通知標題與內容、SMS content、Email 主旨與內文換成模板的；收件人、通道、排程不變。', '—'],
           ['選回 New', '模板選項清掉，已填的內容保留。', <Copy en="Template removed. Your text stays." zh="已取消模板，內容保留。" />],
-          ['模板沒有通知內容', '勾了 Device Notifications 或 Desktop OS 時，區塊最上方一則灰色提示框：這個模板沒有通知內容。', '—'],
+          ['模板沒有通知內容', '勾了 Mobile notifications 或 Desktop notifications 時，區塊最上方一則灰色提示框：這個模板沒有通知內容。', '—'],
           ['Save as template', '內容有錯時不開對話框，改顯示錯誤並出現 toast；沒有錯才開 Save as template 對話框，存好後模板出現在這個空間的模板清單。', <><Copy en="Finish the message first" zh="請先完成訊息內容" />（有錯時，紅色）、<Copy en="Template saved" zh="已存成模板" /></>],
-          ['只勾 Email', '沒勾 Device Notifications 與 Desktop OS、Email 還是空的，而通知欄位已經填了：用通知的標題與內容預填 Email 主旨與內文。', '—'],
+          ['只勾 Email', '沒勾 Mobile notifications 與 Desktop notifications、Email 還是空的，而通知欄位已經填了：用通知的標題與內容預填 Email 主旨與內文。', '—'],
         ]} />
       </Section>
       <Section eyebrow="Step 2" title="紅字出現的時機">
@@ -486,12 +486,12 @@ function Step3() {
           ['Schedule', <>區塊說明 Taipei time (GMT+8)。兩張選項卡片：<Copy en="Send now" zh="立即傳送" />、<Copy en="Scheduled send" zh="排程傳送" />（說明 <Copy en="Up to 3 months ahead" zh="3 個月內任一時間" />）。</>],
           ['需要核准時的提示', <>選 Send now 且需要核准（勾了 SMS 備援但沒勾 It’s urgent，或有外部收件人）時，選項卡片下方一行黃字（時鐘圖示，text-warning-text，和步驟裡其他提示同一種樣式）：<Copy en="Not sent right away: it goes out once <核准人> approves it." zh="不會立即傳送：<核准人>核准後才會送出。" />（核准人：the SMS reviewer、your supervisor）。2026-11-19 加；原本是藍色 Alert，太佔空間改成一行。</>],
           ['Date and time', '選 Scheduled send 才出現；預設隔天 09:00。欄位下方提示 Sends <日期時間>；需要核准時加 if approved by then。'],
-          ['Preview', <>區塊標題 <Copy en="Preview" zh="預覽" />，標題正下方是說明 <Copy en="For reference only. Actual appearance may vary depending on recipient’s device and settings." zh="僅供參考。實際呈現會因收件人的裝置與設定而不同。" />；下面一個框，右上角切換通道（Device Notifications、SMS、Desktop OS、Email），框內是預覽，不顯示人數。</>],
+          ['Preview', <>區塊標題 <Copy en="Preview" zh="預覽" />，標題正下方是說明 <Copy en="For reference only. Actual appearance may vary depending on recipient’s device and settings." zh="僅供參考。實際呈現會因收件人的裝置與設定而不同。" />；下面一個框，右上角切換通道（Mobile notifications、SMS、Desktop notifications、Email），框內是預覽，不顯示人數。</>],
         ]} />
         <Gallery items={[['s3-schedule', '排程傳送'], ['s3-error', '日期錯誤'], ['s3-preview-email', '預覽 Email']]} />
         <Notes items={[
           { title: '排程錯誤', body: <>選到過去或超過 3 個月：<Copy en="Please select a date between now and next 3 months." zh="請選擇現在到未來 3 個月內的日期。" /></> },
-          { title: '預覽', body: 'Device Notifications 的預覽有寄件人、標題與內容；Email 預覽主旨與內文。只有一個通道時不顯示切換，只顯示通道名稱。' },
+          { title: '預覽', body: 'Mobile notifications 的預覽有寄件人、標題與內容；Email 預覽主旨與內文。只有一個通道時不顯示切換，只顯示通道名稱。' },
           { title: '排程時間', body: '日曆上今天以前的日期是灰色、不能點（DS DatePicker 之後會提供這個設定，目前原型先自行處理）。選 Scheduled send 時預設明天 09:00；改回 Send now 欄位隱藏，再選回來保留上次選的時間。時間填錯的錯誤，填了值就顯示，不用等按 Create message。' },
           { title: 'Send me a test', body: '只檢查步驟 2 的內容。有錯時不寄，標記步驟 2 的錯誤並出現紅色 toast；沒錯就寄給自己。' },
         ]} />
@@ -527,7 +527,7 @@ function Dialogs() {
         <Gallery items={[['dlg-import-list', 'Batch import', '寬 1120、高度填滿視窗；Cancel、Proceed']]} />
       </Section>
       <Section eyebrow="Step 1" title="收件人相關">
-        <Gallery items={[['dlg-unreach', '{Channel}: N messages can’t be sent', '唯讀名單：Audience、Source（從組織或群組加入的是名稱加 Org / Group 標籤；直接加入的只有 Person、Phone 或 Email 標籤；同一人有多個來源時每個一行）、Reason（Device Notifications 為 App unregistered、Desktop OS 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
+        <Gallery items={[['dlg-unreach', '{Channel}: N messages can’t be sent', '唯讀名單：Audience、Source（從組織或群組加入的是名稱加 Org / Group 標籤；直接加入的只有 Person、Phone 或 Email 標籤；同一人有多個來源時每個一行）、Reason（Mobile notifications 為 App unregistered、Desktop notifications 為 No desktop agent、外部為 Email only 或 Phone only）。組織、群組展開到個人並去重；不顯示 SMS 補發資訊；可依姓名搜尋；超過 10 人分頁；只有 Close，不能改收件人'], ['dlg-save-group', 'Save as group', 'Group name 必填 50 字、Description 200 字']]} />
       </Section>
       <Section eyebrow="Confirm" title="確認對話框">
         <Gallery items={[['dlg-save-tpl', 'Save as template'], ['dlg-leave', 'Leave without sending?']]} max={520} />

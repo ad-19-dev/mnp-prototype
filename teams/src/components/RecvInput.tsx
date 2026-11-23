@@ -2,7 +2,7 @@
 // Shared by the send flow (receivers) and the Audience Group editor (members).
 import * as React from 'react'
 import { Button, FieldControlGroup, Input, Popover, PopoverAnchor, PopoverContent, Select, cn } from '@qijenchen/design-system'
-import { Building2, ChevronDown, ChevronRight, CircleAlert, Globe, Mail, Phone, Plus, Search, Smartphone, Users, BookUser } from 'lucide-react'
+import { Building2, ChevronDown, ChevronRight, CircleAlert, Globe, Hash, Mail, Phone, Plus, Search, Smartphone, Users, BookUser } from 'lucide-react'
 import {
   DOMAIN, EMAIL_RE, ORGS, PEOPLE, PMAP, fmtExtPhone, membersFor, phoneDigits, plural, type Group, type Person,
 } from '../lib/data'
@@ -18,13 +18,13 @@ export interface RiState { type: RiType; q: string; open: boolean; exp: string |
 export type Region = 'TW' | 'US' | 'JP' | 'CN'
 const grp = (d: string, ...n: number[]) => { const out: string[] = []; let i = 0; n.forEach(k => { out.push(d.slice(i, i + k)); i += k }); return out.join('-') }
 export const REGIONS: { v: Region; code: string; ph: string; err: string; norm: (d: string) => string }[] = [
-  { v: 'TW', code: '+886', ph: '0912-345-678', err: L('Enter a 10-digit mobile number starting with 09.', '請輸入 09 開頭的 10 碼手機號碼。'),
+  { v: 'TW', code: '+886', ph: '0912-345-678', err: L('Phone numbers should be 10 characters.', '電話號碼應為 10 碼。'),
     norm: d => { d = d.replace(/^886/, '0'); if (/^9\d{8}$/.test(d)) d = '0' + d; return /^09\d{8}$/.test(d) ? d : '' } },
-  { v: 'US', code: '+1', ph: '415-555-0123', err: L('Enter a 10-digit number.', '請輸入 10 碼號碼。'),
+  { v: 'US', code: '+1', ph: '415-555-0123', err: L('Phone numbers should be 10 characters.', '電話號碼應為 10 碼。'),
     norm: d => { if (/^1\d{10}$/.test(d)) d = d.slice(1); return /^\d{10}$/.test(d) ? '+1 ' + grp(d, 3, 3, 4) : '' } },
-  { v: 'JP', code: '+81', ph: '090-1234-5678', err: L('Enter a mobile number starting with 070, 080 or 090.', '請輸入 070、080 或 090 開頭的手機號碼。'),
+  { v: 'JP', code: '+81', ph: '090-1234-5678', err: L('Phone numbers should be 11 characters.', '電話號碼應為 11 碼。'),
     norm: d => { d = d.replace(/^81/, '').replace(/^0/, ''); return /^[789]0\d{8}$/.test(d) ? '+81 ' + grp(d, 2, 4, 4) : '' } },
-  { v: 'CN', code: '+86', ph: '138-0013-8000', err: L('Enter an 11-digit mobile number starting with 1.', '請輸入 1 開頭的 11 碼手機號碼。'),
+  { v: 'CN', code: '+86', ph: '138-0013-8000', err: L('Phone numbers should be 11 characters.', '電話號碼應為 11 碼。'),
     norm: d => { d = d.replace(/^86(?=1\d{10}$)/, ''); return /^1\d{10}$/.test(d) ? '+86 ' + grp(d, 3, 4, 4) : '' } },
 ]
 const regionOf = (ri: RiState) => REGIONS.find(x => x.v === (ri.region || 'TW'))!
@@ -51,20 +51,23 @@ interface Opt { item: RiItem; av?: Person; icon?: typeof Users; name: string; su
 function riOptions(ri: RiState, groups: Group[], excludeGroup: string | undefined, isAdded: (it: RiItem) => boolean, noExtEmail?: boolean, noExtPhone?: boolean) {
   const q = ri.q.trim(), low = q.toLowerCase(), out = { opts: [] as Opt[], err: '', tip: '' }
   const person = (p: Person, meta?: string): Opt => ({ item: { kind: 'person', id: p.id }, av: p, name: p.en + ' ' + p.zh, sub: [p.org, p.nt, p.emp].filter(Boolean).join(' · '), meta: meta || '' })
-  const ext = (v: string): Opt => ({ item: { kind: 'ext', value: v }, icon: v.indexOf('@') < 0 ? Phone : Mail, name: v, sub: v.indexOf('@') < 0 ? L('External · SMS only', '外部 · 只收 SMS') : L('External · Email only', '外部 · 只收 Email'), meta: L('External', '外部') })
+  const ext = (v: string): Opt => v.indexOf('MVPN ') === 0
+    ? { item: { kind: 'ext', value: v }, icon: Hash, name: v, sub: L('Not tied to a person · SMS only', '沒有對應的人 · 只收 SMS'), meta: 'MVPN' }
+    : ({ item: { kind: 'ext', value: v }, icon: v.indexOf('@') < 0 ? Phone : Mail, name: v, sub: v.indexOf('@') < 0 ? L('External · SMS only', '外部 · 只收 SMS') : L('External · Email only', '外部 · 只收 Email'), meta: L('External', '外部') })
   if (ri.type === 'person') {
     if (!q) out.tip = ''
     else out.opts = PEOPLE.filter(p => [p.zh, p.en, p.nt, p.emp].some(v => v.toLowerCase().indexOf(low) >= 0)).slice(0, 8).map(p => person(p))
   } else if (ri.type === 'org') {
-    out.opts = ORGS.filter(x => !q || x.code.toLowerCase().indexOf(low) >= 0 || x.no.toLowerCase().indexOf(low) >= 0 || x.name.toLowerCase().indexOf(low) >= 0).map(x => ({ item: { kind: 'org', id: x.code }, icon: Building2, name: x.code, sub: x.no, meta: P(x.count, 'member', '人') }))
+    out.opts = ORGS.filter(x => !q || x.code.toLowerCase().indexOf(low) >= 0 || x.no.toLowerCase().indexOf(low) >= 0 || x.name.toLowerCase().indexOf(low) >= 0).map(x => ({ item: { kind: 'org', id: x.code }, icon: Building2, name: x.code, sub: x.no, meta: P(x.count, 'audience', '人', 'audiences') }))
   } else if (ri.type === 'group') {
-    out.opts = groups.filter(g => g.id !== excludeGroup && (!q || (g.name + ' ' + g.desc).toLowerCase().indexOf(low) >= 0)).map(g => ({ item: { kind: 'group', id: g.id }, icon: Users, name: g.name, sub: g.desc, meta: P(g.count, 'member', '人'), group: g }))
+    out.opts = groups.filter(g => g.id !== excludeGroup && (!q || (g.name + ' ' + g.desc).toLowerCase().indexOf(low) >= 0)).map(g => ({ item: { kind: 'group', id: g.id }, icon: Users, name: g.name, sub: g.desc, meta: P(g.count, 'audience', '人', 'audiences'), group: g }))
   } else if (ri.type === 'mvpn') {
     const d = q.replace(/\D/g, '')
     if (!q) out.tip = ''
-    else if (!/^\d{1,7}$/.test(q)) out.err = L('MVPN is up to 7 digits.', 'MVPN 最多 7 碼。')
+    else if (!/^\d{1,7}$/.test(q)) out.err = L('Phone numbers should be 7 characters.', '電話號碼應為 7 碼。')
     else out.opts = PEOPLE.filter(p => p.mvpn && p.mvpn.indexOf(d) === 0).slice(0, 8).map(p => person(p, 'MVPN ' + p.mvpn))
-    if (q && !out.err && !out.opts.length) out.err = L('No one has this MVPN.', '沒有人用這個 MVPN。')
+    // a full MVPN no one uses: the MVPN itself (2026-11-23); a shorter one with no match still says how long it should be
+    if (q && !out.err && !out.opts.length) { if (d.length === 7 && noExtPhone) out.err = L('Select SMS fallback in Channels to add outside numbers.', '在 Channels 選擇 SMS 備援才能加入外部號碼。'); else if (d.length === 7) out.opts.push(ext('MVPN ' + d)); else out.err = L('Phone numbers should be 7 characters.', '電話號碼應為 7 碼。') }
   } else if (ri.type === 'phone') {
     const R = regionOf(ri), n = R.norm(q.replace(/\D/g, ''))
     if (!q) out.tip = L('For contractors. Employee numbers add the employee.', '給外包人員用。輸入員工的號碼會加入該員工。')
