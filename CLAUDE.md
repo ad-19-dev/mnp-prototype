@@ -17,6 +17,6 @@
 - The phone-number de-duplication study is `teams/phone-dedupe.html` (`teams/src/spec/phone/`).
 - The DS component map for developers is `teams/dsmap.html` (`teams/src/spec/dsmap/`).
 - The "which phone gets the SMS" comparison for PM is `teams/smsphone.html` (`teams/src/spec/smsphone/`); it does not change the prototype.
-- The "coverage on the right" demo (2026-11-26: New message step 1 with Message Coverage by Channel in a sticky column on the right, so the Audience table grows with the page; 1280 wide; opens on New message with three channels and a long audience) is `teams/covside.html` (the prototype with the `src/lib/demo.ts` switch on, built by `vite.covside.config.ts`, locked as "Coverage 放右側 Demo"); it does not change the prototype.
+- The "coverage on the right" demo (2026-11-26: New message step 1 with Message Coverage by Channel in a sticky column on the right, so the Audience table grows with the page; 1280 wide; opens on New message with three channels and a long audience) is `teams/covside.html` (the prototype with the `src/lib/demo.ts` switch on; the switch is built into the JS by `vite.covside.config.ts`, since the lock tool drops scripts in the HTML; locked as "Coverage 放右側 Demo"); it does not change the prototype.
 - The prototype artifact's page title is "MNP Prototype (Final)" (since 2026-11-19); lock it with that title.
 - The lock password is never written into this repo.

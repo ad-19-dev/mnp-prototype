@@ -8,5 +8,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
+  // the demo switch (src/lib/demo.ts), inside the JS so the locked page keeps it
+  define: { 'import.meta.env.VITE_COVSIDE': JSON.stringify('1') },
   build: { outDir: 'covside/dist', emptyOutDir: true, assetsInlineLimit: 100_000_000, rollupOptions: { input: 'covside.html' } },
 })
