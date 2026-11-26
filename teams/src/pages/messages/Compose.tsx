@@ -7,6 +7,7 @@ import {
 import { NO_HIDE, Tip } from '../../components/ui'
 import { groupInSpace, spaceName, tplInSpace } from '../../lib/teams'
 import { scopeLabel } from './ctl'
+import { COV_SIDE } from '../../lib/demo'
 import { } from '../../lib/store'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
@@ -46,7 +47,8 @@ export function ComposeView({ m }: { m: SendCtl }) {
       />
       {c.result ? <ResultView m={m} /> : (
         <>
-          <div data-layout-space="lg" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]">
+          {/* the coverage-on-the-right demo is 1280 wide (every step, so the step bar doesn't jump): room for the channel cards next to the coverage column */}
+          <div data-layout-space="lg" className={cn('mx-auto flex w-full flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)] p-[var(--layout-space-loose)] pb-[var(--layout-space-bottom)]', COV_SIDE ? 'max-w-[1280px]' : 'max-w-[1120px]')}>
             {c.only ? null : <StepBar m={m} e={e} />}
             {c.only ? <Step2 m={m} e={e} /> : c.step === 1 ? <Step1 m={m} e={e} /> : c.step === 2 ? <Step2 m={m} e={e} /> : <Step3 m={m} e={e} />}
           </div>
@@ -174,7 +176,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   if (!c.receivers.length) return <Empty icon={Users} title={L('No audience yet', '還沒有收件人')} description={L('Search above, or use Batch import.', '在上方搜尋，或使用批次匯入。')} />
   return (
     <div ref={wrapRef} className="flex flex-col gap-2">
-      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={rows.length > 8 ? '360px' : 'auto'} getRowId={x => x.t.key}
+      <DataTable tableOptions={NO_HIDE} columns={cols as any} data={rows} bordered height={!COV_SIDE && rows.length > 8 ? '360px' : 'auto'} getRowId={x => x.t.key}
         rowActions={(x: RRow) => <Button variant="text" size="xs" iconOnly startIcon={X} aria-label={L('Remove ', '移除 ') + x.label} onClick={() => m.removeRecv(x.t.key)} />} />
       <MembersDialog set={mem} onClose={() => setMem(null)} />
     </div>
@@ -200,7 +202,9 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const ap = approval(c), sms = smsOn(c), noNum = noNumber(c), anyCh = c.ch.push || c.ch.desktop || c.ch.email
-  return (
+  // the demo (covside): Channels and Audience on the left, Message Coverage by Channel in a column on the right that
+  // stays in view while the page scrolls; the Audience table grows with the page (no box of its own to scroll)
+  const main = (
     <>
       <Section title={L('Channels', '通道')}>
         <div className="flex flex-col gap-[var(--layout-space-tight)]">
@@ -246,8 +250,21 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
         </div>
       </Section>
 
-      {hasR && anyCh ? <ReachByChannel m={m} rc={rc} /> : null}
+      {!COV_SIDE && hasR && anyCh ? <ReachByChannel m={m} rc={rc} /> : null}
     </>
+  )
+  if (!COV_SIDE) return main
+  return (
+    <div className="flex items-start gap-[calc(var(--layout-space-loose)*2)]">
+      <div className="flex min-w-0 flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)]">{main}</div>
+      <aside className="sticky top-[var(--layout-space-loose)] w-[320px] shrink-0">
+        {hasR && anyCh ? <ReachByChannel m={m} rc={rc} side /> : (
+          <Section title={L('Message Coverage by Channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
+            <div className="rounded-md border border-divider px-3 py-3 text-body text-fg-secondary">{L('Choose channels and add an audience to check coverage.', '選擇通道並加入收件人後，就能檢查涵蓋範圍。')}</div>
+          </Section>
+        )}
+      </aside>
+    </div>
   )
 }
 
@@ -256,7 +273,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
 // "n messages can't be sent" on its right, opening that channel's list.
 // what coverage depends on: the audience, the channels and the SMS phones
 export const coverageKey = (c: Compose) => JSON.stringify([c.receivers.map(t => t.key), c.ch, smsOn(c), c.smsCO, c.smsPP])
-function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
+function ReachByChannel({ m, rc, side }: { m: SendCtl; rc: Reach; side?: boolean }) {
   const app = useApp(), c = m.s.c, sms = smsOn(c)
   const [open, setOpen] = React.useState<CoverCh | null>(null), [busy, setBusy] = React.useState(false)
   // worked out on request (2026-11-19): Check coverage asks the server once; the numbers stay until something they
@@ -289,7 +306,8 @@ function ReachByChannel({ m, rc }: { m: SendCtl; rc: Reach }) {
           {c.ch.email ? line('email') : null}
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-3 rounded-md border border-divider px-3 py-2">
+        // the side column (demo): the sentence above its button, the button full width
+        <div className={cn('flex flex-wrap items-center gap-3 rounded-md border border-divider px-3 py-2', side && 'flex-col items-stretch py-3')}>
           <span className={cn('flex-1 text-body', stale ? 'text-warning-text' : 'text-fg-secondary')}>
             {stale ? L('Audience or channels updated. Check again to refresh coverage.', '收件人或通道已更新，請重新檢查以更新涵蓋範圍。')
               : L('Check reachable and undeliverable messages for each channel.', '查看每個通道可送達與無法送達的訊息。')}
@@ -519,7 +537,7 @@ function FootBar({ m }: { m: SendCtl }) {
   const primary = L('Create message', '建立訊息')
   return (
     <div className="sticky bottom-0 z-10 border-t border-divider bg-surface">
-      <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center gap-2 px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]">
+      <div className={cn('mx-auto flex w-full flex-wrap items-center gap-2 px-[var(--layout-space-loose)] py-[var(--layout-space-tight)]', COV_SIDE ? 'max-w-[1280px]' : 'max-w-[1120px]')}>
         {/* left: leave or go back (Cancel, Back); right: what this step can do, and the way forward (2026-11-18).
             Every button has an icon except Cancel (2026-11-18) */}
         <div className="flex flex-wrap gap-2">

@@ -13,7 +13,8 @@ import { L } from '../../lib/i18n'
 import { SendList } from './List'
 import { DetailSheet, NotSentDialog, RescheduleDialog } from './Detail'
 import { SplitDetailSheet, SplitFailDialog, SplitList } from './split'
-import { MODAL, SPLIT } from '../../lib/data'
+import { MODAL, PEOPLE, SPLIT, type Tag } from '../../lib/data'
+import { COV_SIDE } from '../../lib/demo'
 import { DetailModal } from './DetailModal'
 import { ComposeView } from './Compose'
 import { ImportDialog, NumbersDialog, SaveGroupDialog, SaveTplDialog, TplPickerDialog } from './Modals'
@@ -36,6 +37,14 @@ export function MessagesPage() {
     m.applyTemplate(t, true)
     m.setC({ dirty: false }, true)
   }, [app.useTemplateId, m])
+  // the coverage-on-the-right demo opens on New message with three channels and a long audience, so the page scrolls
+  React.useEffect(() => {
+    if (!COV_SIDE) return
+    m.startCompose('new')
+    const ppl = PEOPLE.filter(p => !p.extKind && !p.gen).slice(0, 24)
+    const tags: Tag[] = [{ key: 'o:PUX', type: 'org', id: 'PUX' } as Tag].concat(ppl.map(p => ({ key: 'p:' + p.id, type: 'person', id: p.id }) as Tag))
+    m.setC({ ch: { push: true, desktop: true, email: true, sms: false }, receivers: tags, dirty: false }, true)
+  }, [m])
   return (
     <>
       {s.view === 'compose' ? <ComposeView m={m} /> : (
