@@ -183,7 +183,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   )
 }
 
-// Channels only picks channels; what each reaches is in Message Coverage by Channel below the audiences
+// Channels only picks channels; what each reaches is in Message coverage by channel below the audiences
 function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
   const c = m.s.c, on = !!c.ch[k], meta = CHN[k], id = 'ch-' + k
   return (
@@ -198,11 +198,11 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
 }
 
 // Channels first (so the audience table can offer the SMS phone columns when SMS fallback is on), then audiences,
-// then Message Coverage by Channel, which needs both.
+// then Message coverage by channel, which needs both.
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const ap = approval(c), sms = smsOn(c), noNum = noNumber(c), anyCh = c.ch.push || c.ch.desktop || c.ch.email
-  // the demo (covside): Channels and Audience on the left, Message Coverage by Channel in a column on the right that
+  // the demo (covside): Channels and Audience on the left, Message coverage by channel in a column on the right that
   // stays in view while the page scrolls; the Audience table grows with the page (no box of its own to scroll)
   const main = (
     <>
@@ -259,16 +259,14 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
       <div className="flex min-w-0 flex-1 flex-col gap-[calc(var(--layout-space-loose)*2)]">{main}</div>
       <aside className="sticky top-[var(--layout-space-loose)] w-[320px] shrink-0">
         {hasR && anyCh ? <ReachByChannel m={m} rc={rc} side /> : (
-          <Section title={L('Message Coverage by Channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
-            <div className="rounded-md border border-divider px-3 py-3 text-body text-fg-secondary">{L('Choose channels and add an audience to check coverage.', '選擇通道並加入收件人後，就能檢查涵蓋範圍。')}</div>
-          </Section>
+          <CoveragePanel><span className="text-body text-fg-secondary">{L('Choose channels and add an audience to check coverage.', '選擇通道並加入收件人後，就能檢查涵蓋範圍。')}</span></CoveragePanel>
         )}
       </aside>
     </div>
   )
 }
 
-// Message Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
+// Message coverage by channel: how many of everyone picked each chosen channel covers (green: all of them). With
 // SMS fallback on, Mobile notifications and its SMS are one row, counted together. A row that misses people has
 // "n messages can't be sent" on its right, opening that channel's list.
 // what coverage depends on: the audience, the channels and the SMS phones
@@ -297,8 +295,47 @@ function ReachByChannel({ m, rc, side }: { m: SendCtl; rc: Reach; side?: boolean
       </div>
     )
   }
+  const dlg = <NotCoveredDialog k={open} name={open === 'push' && sms ? L('Mobile notifications (SMS)', 'Mobile notifications（SMS）') : open ? CHN[open].name : ''} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
+  // the side column (demo, 2026-11-26): a summary panel, quieter than the page's sections; each channel's name with its
+  // count on the right, the link to who can't get it on a small line under it
+  if (side) {
+    const row = (k: CoverCh) => {
+      const merged = k === 'push' && sms
+      const I = CHN[merged ? 'sms' : k].icon, miss = notCovered(c, app.groups, k).length, got = rc.total - miss
+      return (
+        <div key={k} className="flex flex-col gap-0.5 py-2.5">
+          <div className="flex items-center gap-2">
+            <I className="size-4 shrink-0 text-fg-secondary" aria-hidden />
+            <span className="min-w-0 flex-1 truncate text-body">{merged ? L('Mobile notifications (SMS)', 'Mobile notifications（SMS）') : CHN[k].name}</span>
+            <span className={cn('text-body font-semibold tabular-nums', miss ? 'text-foreground' : 'text-success-text')}>{fmtN(got)}</span>
+          </div>
+          {miss ? <Button variant="link" size="sm" className="ml-6 !h-auto !min-w-0 self-start !p-0 !text-caption" onClick={() => setOpen(k)}>{L(P(miss, 'message', '', 'messages') + ' can’t be sent', miss + ' 則訊息無法送出')}</Button> : null}
+        </div>
+      )
+    }
+    return (
+      <CoveragePanel>
+        {checked ? (
+          <div className="flex flex-col divide-y divide-divider">
+            {c.ch.push ? row('push') : null}
+            {c.ch.desktop ? row('desktop') : null}
+            {c.ch.email ? row('email') : null}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <span className={cn('text-body', stale ? 'text-warning-text' : 'text-fg-secondary')}>
+              {stale ? L('Audience or channels updated. Check again to refresh coverage.', '收件人或通道已更新，請重新檢查以更新涵蓋範圍。')
+                : L('Check reachable and undeliverable messages for each channel.', '查看每個通道可送達與無法送達的訊息。')}
+            </span>
+            <Button variant="secondary" size="sm" startIcon={Calculator} loading={busy} disabled={busy} onClick={check} className="w-full">{stale ? L('Check again', '重新檢查') : L('Check coverage', '檢查涵蓋')}</Button>
+          </div>
+        )}
+        {dlg}
+      </CoveragePanel>
+    )
+  }
   return (
-    <Section title={L('Message Coverage by Channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
+    <Section title={L('Message coverage by channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
       {checked ? (
         <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
           {c.ch.push ? line('push') : null}
@@ -306,8 +343,7 @@ function ReachByChannel({ m, rc, side }: { m: SendCtl; rc: Reach; side?: boolean
           {c.ch.email ? line('email') : null}
         </div>
       ) : (
-        // the side column (demo): the sentence above its button, the button full width
-        <div className={cn('flex flex-wrap items-center gap-3 rounded-md border border-divider px-3 py-2', side && 'flex-col items-stretch py-3')}>
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-divider px-3 py-2">
           <span className={cn('flex-1 text-body', stale ? 'text-warning-text' : 'text-fg-secondary')}>
             {stale ? L('Audience or channels updated. Check again to refresh coverage.', '收件人或通道已更新，請重新檢查以更新涵蓋範圍。')
               : L('Check reachable and undeliverable messages for each channel.', '查看每個通道可送達與無法送達的訊息。')}
@@ -315,8 +351,21 @@ function ReachByChannel({ m, rc, side }: { m: SendCtl; rc: Reach; side?: boolean
           <Button variant="secondary" size="sm" startIcon={Calculator} loading={busy} disabled={busy} onClick={check}>{stale ? L('Check again', '重新檢查') : L('Check coverage', '檢查涵蓋')}</Button>
         </div>
       )}
-      <NotCoveredDialog k={open} name={open === 'push' && sms ? L('Mobile notifications (SMS)', 'Mobile notifications（SMS）') : open ? CHN[open].name : ''} list={open ? notCovered(c, app.groups, open) : []} onClose={() => setOpen(null)} />
+      {dlg}
     </Section>
+  )
+}
+
+// the coverage panel in the side column (demo): a light grey card, a smaller title than the page's sections
+function CoveragePanel({ children }: { children: React.ReactNode }) {
+  return (
+    <section aria-label={L('Message coverage by channel', '各通道訊息涵蓋')} className="flex flex-col gap-3 rounded-lg border border-divider bg-[var(--color-neutral-1)] p-[var(--layout-space-tight)]">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-body font-semibold">{L('Message coverage by channel', '各通道訊息涵蓋')}</h2>
+        <span className="text-caption text-fg-secondary">{L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}</span>
+      </div>
+      {children}
+    </section>
   )
 }
 

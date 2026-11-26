@@ -18,7 +18,7 @@ export interface Compose {
   // SMS fallback, per audience row (key), as in GMC: the company phone is ticked by default (smsCO false = unticked),
   // the personal phone only when ticked
   smsCO: Record<string, boolean>; smsPP: Record<string, boolean>
-  // Message Coverage by Channel is worked out on request (2026-11-19: engineering can't recount it live): the inputs
+  // Message coverage by channel is worked out on request (2026-11-19: engineering can't recount it live): the inputs
   // it was checked for; when the audience, channels or phones change, it has to be checked again
   covKey?: string | null
   ch: Record<Channel, boolean>
