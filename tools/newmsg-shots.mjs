@@ -38,8 +38,8 @@ async function shot(name, target, list = [], pad = 0) {
   marks[name] = { w: Math.round(box.width), h: Math.round(box.height), marks: out };
 }
 const dlg = () => p.getByRole('dialog').last();
-// Message coverage by channel is worked out on request (2026-11-19): press Check coverage / Check again when it's there
-const covSec = () => p.getByRole('heading', { name: 'Message coverage by channel' }).locator('xpath=ancestor::section[1]');
+// Message Coverage by Channel is worked out on request (2026-11-19): press Check coverage / Check again when it's there
+const covSec = () => p.getByRole('heading', { name: 'Message Coverage by Channel' }).locator('xpath=ancestor::section[1]');
 const checkCov = async () => { const b = p.getByRole('button', { name: /^(Check coverage|Check again)$/ }); if (await b.count()) { await b.first().click(); await wait(1300) } };
 const big = async (h = 1300) => { await p.setViewportSize({ width: 1680, height: h }); await wait(300) };
 const page = async name => { await hideToasts(); await shot(name, null) };
@@ -238,7 +238,7 @@ await step('s1-types', async () => {
   const aud = p.getByRole('heading', { name: 'Audience', exact: true }).locator('xpath=ancestor::section[1]');
   await shot('s1-phones', (await aud.count()) ? aud : null, [], 12);
   await checkCov();
-  const reachSec = p.getByRole('heading', { name: 'Message coverage by channel' }).locator('xpath=ancestor::section[1]');
+  const reachSec = p.getByRole('heading', { name: 'Message Coverage by Channel' }).locator('xpath=ancestor::section[1]');
   await shot('s1-ext', (await reachSec.count()) ? reachSec : null, [], 12);
 });
 

@@ -183,7 +183,7 @@ function RecvTable({ m }: { m: SendCtl }) {
   )
 }
 
-// Channels only picks channels; what each reaches is in Message coverage by channel below the audiences
+// Channels only picks channels; what each reaches is in Message Coverage by Channel below the audiences
 function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
   const c = m.s.c, on = !!c.ch[k], meta = CHN[k], id = 'ch-' + k
   return (
@@ -198,11 +198,11 @@ function ChCard({ m, k }: { m: SendCtl; k: Channel }) {
 }
 
 // Channels first (so the audience table can offer the SMS phone columns when SMS fallback is on), then audiences,
-// then Message coverage by channel, which needs both.
+// then Message Coverage by Channel, which needs both.
 function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   const app = useApp(), s = m.s, c = s.c, tried = c.tried || {}, rc = m.reach(), total = rc.total, hasR = c.receivers.length > 0
   const ap = approval(c), sms = smsOn(c), noNum = noNumber(c), anyCh = c.ch.push || c.ch.desktop || c.ch.email
-  // the demo (covside): Channels and Audience on the left, Message coverage by channel in a column on the right that
+  // the demo (covside): Channels and Audience on the left, Message Coverage by Channel in a column on the right that
   // stays in view while the page scrolls; the Audience table grows with the page (no box of its own to scroll)
   const main = (
     <>
@@ -266,7 +266,7 @@ function Step1({ m, e }: { m: SendCtl; e: Errs }) {
   )
 }
 
-// Message coverage by channel: how many of everyone picked each chosen channel covers (green: all of them). With
+// Message Coverage by Channel: how many of everyone picked each chosen channel covers (green: all of them). With
 // SMS fallback on, Mobile notifications and its SMS are one row, counted together. A row that misses people has
 // "n messages can't be sent" on its right, opening that channel's list.
 // what coverage depends on: the audience, the channels and the SMS phones
@@ -335,7 +335,7 @@ function ReachByChannel({ m, rc, side }: { m: SendCtl; rc: Reach; side?: boolean
     )
   }
   return (
-    <Section title={L('Message coverage by channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
+    <Section title={L('Message Coverage by Channel', '各通道訊息涵蓋')} sub={L('Estimated reach across selected channels.', '所選通道預估可觸及的人數。')}>
       {checked ? (
         <div className="flex flex-col divide-y divide-divider rounded-md border border-divider">
           {c.ch.push ? line('push') : null}
@@ -356,7 +356,8 @@ function ReachByChannel({ m, rc, side }: { m: SendCtl; rc: Reach; side?: boolean
   )
 }
 
-// the coverage panel in the side column (demo): a light grey card, a smaller title than the page's sections
+// the coverage panel in the side column (demo): a light grey card, a smaller title than the page's sections, in
+// sentence case ("Message coverage by channel", the demo only, 2026-11-26)
 function CoveragePanel({ children }: { children: React.ReactNode }) {
   return (
     <section aria-label={L('Message coverage by channel', '各通道訊息涵蓋')} className="flex flex-col gap-3 rounded-lg border border-divider bg-[var(--color-neutral-1)] p-[var(--layout-space-tight)]">
