@@ -9,7 +9,7 @@ import { ListKindField, NO_HIDE, Trunc, Tip, PageSize, listKindExample } from '.
 import { ME_SPACE, groupInSpace, spaceName, spaceTeam } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
-  Check, Copy, FileText, Lock, Mail, MessageSquareText, Monitor, MoreVertical, Pencil, Plus,
+  Check, Copy, FileText, Lock, Mail, MessageSquareText, Monitor, Pencil, Plus,
   Search, Smartphone, Trash2, Undo2, Upload, Users, Wand2, X, CircleAlert, BookUser } from 'lucide-react'
 import {
   GSEED, ME, PEOPLE, PMAP, LIST_SAMPLES, extPerson, fmtDT, fmtN, maskPhone, membersFor, orgMembers, parseListAs, plural,
@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, CHN, ConfirmDialog, ErrText, FormField, PAvatar, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
+import { Banner, HiddenLabel, MoreButton, CHN, ConfirmDialog, ErrText, FormField, PAvatar, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RecvInput, riKey, type RiItem, type RiState } from '../../components/RecvInput'
 import { AudTable } from '../messages/DetailModal'
@@ -117,15 +117,17 @@ type GCtl = ReturnType<typeof makeCtl>
 
 const gcol = createColumnHelper<Group>()
 function GroupMenu({ m, g }: { m: GCtl; g: Group }) {
+  const lid = React.useId()
   return (
+    <><HiddenLabel id={lid}>{L('Actions for ', '操作：') + g.name}</HiddenLabel>
     <DropdownMenu>
-      <DropdownMenuTrigger asChild><Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + g.name} /></DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild><MoreButton labelId={lid} /></DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={208}>
         <DropdownMenuItem startIcon={Pencil} onSelect={() => m.openEd(g)}>{L('Edit', '編輯')}</DropdownMenuItem>
         <DropdownMenuItem startIcon={Copy} onSelect={() => m.openEd(g, true)}>{L('Duplicate', '複製')}</DropdownMenuItem>
         <DropdownMenuSeparator /><DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => m.askDelete(g.id)}>{L('Delete', '刪除')}</DropdownMenuItem>
       </DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenu></>
   )
 }
 

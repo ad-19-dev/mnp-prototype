@@ -291,7 +291,8 @@ const detail = async (name, text, title, list = []) => {
   await step(name, async () => {
     // search first so the message is at the top of the list, in view
     await main.getByPlaceholder(/Search task ID/).fill(text); await wait(500);
-    await main.getByText(title).first().click(); await wait(800);
+    // visible text only: each row's menu has a hidden label with the title in it ("Actions for …", 2026-11-27)
+    await main.getByText(title).locator('visible=true').first().click(); await wait(800);
     await panel(name, list); await closeAside();
     await main.getByPlaceholder(/Search task ID/).fill(''); await wait(400);
   });

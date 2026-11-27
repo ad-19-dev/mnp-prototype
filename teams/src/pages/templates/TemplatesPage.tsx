@@ -8,7 +8,7 @@ import { NO_HIDE, Trunc } from '../../components/ui'
 import { ME_SPACE, spaceName, spaceTeam, tplInSpace } from '../../lib/teams'
 import { createColumnHelper } from '@tanstack/react-table'
 import {
-  Check, CircleAlert, Copy, LayoutTemplate, MoreVertical, Pencil, Plus,
+  Check, CircleAlert, Copy, LayoutTemplate, Pencil, Plus,
   Search, Send, Trash2,
 } from 'lucide-react'
 import {
@@ -17,7 +17,7 @@ import {
 } from '../../lib/data'
 import { flash, getApp, go, setApp, useApp } from '../../lib/store'
 import { useLogic, scrollTop } from '../../lib/logic'
-import { Banner, CHN, ConfirmDialog, FmtChips, FormatBlock, FormField, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
+import { Banner, HiddenLabel, MoreButton, CHN, ConfirmDialog, FmtChips, FormatBlock, FormField, Section, Two, personVal, pname, type Confirm } from '../../components/ui'
 import { PageHeader, SpaceIntro, SpaceSettings, useNavHome } from '../../components/shell'
 import { RichText } from '../../components/RichText'
 import { L, P } from '../../lib/i18n'
@@ -116,16 +116,18 @@ function makeCtl(get: () => TS, set: (p: Partial<TS> | ((s: TS) => Partial<TS>))
 type TCtl = ReturnType<typeof makeCtl>
 
 function TplMenu({ m, t }: { m: TCtl; t: Template }) {
+  const lid = React.useId()
   return (
+    <><HiddenLabel id={lid}>{L('Actions for ', '操作：') + t.name}</HiddenLabel>
     <DropdownMenu>
-      <DropdownMenuTrigger asChild><Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + t.name} /></DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild><MoreButton labelId={lid} /></DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={208}>
         <DropdownMenuItem startIcon={Send} onSelect={() => m.useTemplate(t)}>{L('Use', '使用')}</DropdownMenuItem>
         <DropdownMenuItem startIcon={Pencil} onSelect={() => m.openEd(t)}>{L('Edit', '編輯')}</DropdownMenuItem>
         <DropdownMenuItem startIcon={Copy} onSelect={() => m.openEd(t, true)}>{L('Duplicate', '複製')}</DropdownMenuItem>
         <DropdownMenuSeparator /><DropdownMenuItem startIcon={Trash2} className="text-error-text" onSelect={() => m.askDelete(t)}>{L('Delete', '刪除')}</DropdownMenuItem>
       </DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenu></>
   )
 }
 

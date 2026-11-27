@@ -8,7 +8,7 @@ import {
   Field, FieldDescription, FieldError, FieldLabel, ProgressBar, Select, Tag, Tooltip, TooltipContent, TooltipTrigger, cn, useTruncated,
   type CategoricalColor, type PersonData,
 } from '@qijenchen/design-system'
-import { AlertTriangle, Ban, Calendar, CalendarX2, CheckCircle2, ChevronDown, CircleX, Hourglass, Filter, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
+import { AlertTriangle, Ban, MoreVertical, Calendar, CalendarX2, CheckCircle2, ChevronDown, CircleX, Hourglass, Filter, Globe, Hash, Mail, MessageSquareText, Monitor, Send, Smartphone, type LucideIcon } from 'lucide-react'
 import type { Channel, Fmt, ListKind, Person, Status } from '../lib/data'
 import { LIST_KINDS } from '../lib/data'
 import { L } from '../lib/i18n'
@@ -339,3 +339,11 @@ export function FormatBlock({ title, desc, icon: I, uses, children }: { title: s
     </section>
   )
 }
+
+// the ⋮ that opens a row's menu (2026-11-27): no hover tooltip. The DS icon-only Button turns a text aria-label into a
+// tooltip, so its name ("Actions for …", for screen readers) comes from a hidden label (HiddenLabel, beside the menu,
+// since the menu trigger takes a single element) through aria-labelledby instead.
+export const MoreButton = React.forwardRef<HTMLButtonElement, { labelId: string } & React.ButtonHTMLAttributes<HTMLButtonElement>>(function MoreButton({ labelId, ...rest }, ref) {
+  return <Button ref={ref} variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-labelledby={labelId} {...rest} />
+})
+export function HiddenLabel({ id, children }: { id: string; children: string }) { return <span id={id} hidden>{children}</span> }

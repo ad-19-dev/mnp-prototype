@@ -11,13 +11,13 @@ import {
   DescriptionList, DescriptionItem, PersonDisplay, Accordion, AccordionContent, AccordionItem, AccordionTrigger, Pagination, Tag, Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@qijenchen/design-system'
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
-import { CalendarClock, ChevronDown, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, MoreVertical, Pencil, Plus, RotateCw, Search, Send, Ban } from 'lucide-react'
+import { CalendarClock, ChevronDown, ChevronRight, CornerDownRight, CircleAlert, Copy, ExternalLink, Info, Pencil, Plus, RotateCw, Search, Send, Ban } from 'lucide-react'
 import {
   CH_ORDER, ICSD, MODAL, PEOPLE, flatten, PMAP, STATUS_ORDER, audToTags, chFailList, fmtN, htmlToText, isExtPhone, reqIdFor, rowChs,
   type Channel, type Row, type Status, type Tag as RTag,
 } from '../../lib/data'
 import { flash, useApp } from '../../lib/store'
-import { Banner, CHN, ChIcons, FilterMenu, personVal, pname, NO_HIDE, PAvatar, PageSize, StatusTag, statusLabel, Tip, Trunc, Two } from '../../components/ui'
+import { Banner, HiddenLabel, MoreButton, CHN, ChIcons, FilterMenu, personVal, pname, NO_HIDE, PAvatar, PageSize, StatusTag, statusLabel, Tip, Trunc, Two } from '../../components/ui'
 import { ShellAside } from '../../components/shell'
 import { L, tx } from '../../lib/i18n'
 import { type SendCtl } from './ctl'
@@ -117,11 +117,12 @@ export function duplicateCh(m: SendCtl, x: Rec) {
 
 // lite: a channel row under its message row, where the message row holds the whole-message actions
 function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
-  const r = x.r, st = x.st
+  const r = x.r, st = x.st, lid = React.useId()
   return (
+    <><HiddenLabel id={lid}>{L('Actions for ', '操作：') + recText(r, x.k).title}</HiddenLabel>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="text" size="xs" iconOnly startIcon={MoreVertical} aria-label={L('Actions for ', '操作：') + recText(r, x.k).title} />
+        <MoreButton labelId={lid} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" minWidth={232}>
         {/* Detail modal study: the title opens the details, and content is edited there, so the menu keeps only quick actions */}
@@ -139,7 +140,7 @@ function RecMenu({ m, x, lite }: { m: SendCtl; x: Rec; lite?: boolean }) {
         </> : null}
         </>}
       </DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenu></>
   )
 }
 
